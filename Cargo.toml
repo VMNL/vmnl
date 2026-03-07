@@ -1,10 +1,10 @@
-[package]
-name = "vmnl"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-vulkano = "0.35.2"
+[workspace]
+members = ["crates/vmnl_native", "crates/vmnl", "examples/test"]
+resolver = "2"
 
 [profile.dev]
-opt-level = 1
+opt-level = 3
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
