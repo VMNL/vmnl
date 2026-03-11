@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [[ $# -eq 1 && $1 -eq '-s' ]]; then
+    cargo run -p test --features safe
+    exit 0
+fi
+
+cargo run -p test

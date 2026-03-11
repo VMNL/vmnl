@@ -7,6 +7,7 @@ use glfw::{
     Action,
     Key
 };
+use std::sync::Arc;
 
 pub type VMNLResult<T> = Result<T, VMNLError>;
 
@@ -35,20 +36,20 @@ impl fmt::Display for VMNLError
 impl Error for VMNLError {}
 
 /// cf: https://github.com/PistonDevelopers/glfw-rs
-pub struct WindowHandle
+struct WindowHandle
 {
     instance:             glfw::Glfw,
     context:              glfw::PWindow,
     events:               glfw::GlfwReceiver<(f64, glfw::WindowEvent)>
 }
 
-pub struct WindowState
+struct WindowState
 {
     is_ready:             bool,
     is_open:              bool
 }
 
-pub struct WindowConfig
+struct WindowConfig
 {
     is_close_with_escape: bool,
     title:                String,
@@ -83,6 +84,11 @@ impl Window
         title: &str
     ) -> VMNLResult<Self>
     {
+        #[cfg(feature = "safe")] {
+            if ready == false {
+                return;
+            }
+        }
         let mut instance = glfw::init(glfw::fail_on_errors)
         .map_err(|_| VMNLError::VMNLInitFailed)?;
         println!("VMNL log: Window Initialized.");
@@ -98,7 +104,7 @@ impl Window
         Ok(Self {
             window_handle: WindowHandle {
                 instance,
-                context: window,
+                context: window.into(),
                 events
             },
             window_state: WindowState {
@@ -116,6 +122,11 @@ impl Window
 
     pub fn is_open(&mut self) -> bool
     {
+        #[cfg(feature = "safe")] {
+            if ready == false {
+                return false;
+            }
+        }
         self.window_state.is_open = !self.window_handle.context.should_close();
         return self.window_state.is_open;
     }
@@ -135,6 +146,11 @@ impl Window
 
     pub fn poll_event(&mut self) -> ()
     {
+        #[cfg(feature = "safe")] {
+            if ready == false {
+                return;
+            }
+        }
         self.window_handle.instance.poll_events();
         for (_, event) in glfw::flush_messages(&self.window_handle.events) {
             match event {
@@ -156,6 +172,11 @@ impl Window
     pub fn get_height(&self) -> u32
     {
         return self.window_config.height;
+    }
+
+    pub fn get_glfw_window(&self) -> &glfw::PWindow
+    {
+        return &self.window_handle.context;
     }
 
 }

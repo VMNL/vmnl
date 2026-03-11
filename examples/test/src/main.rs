@@ -2,11 +2,11 @@ use vmnl::{Window, Graphics};
 
 fn main()
 {
-    let mut _win = Window::new(1920, 1080, "Window")
+    let mut win = Window::new(1920, 1080, "Window")
     .expect("Failed");
-    let _graphics = Graphics::new();
+    let _graphics = Graphics::new(&win);
 
-    // while win.is_open() {
-    //     win.poll_event();
-    // }
+    while win.is_open() {
+        win.poll_event();
+    }
 }

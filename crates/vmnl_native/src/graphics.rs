@@ -1,5 +1,6 @@
 mod vmnl_instance;
 use vmnl_instance::VMNLInstance;
+use crate::Window;
 
 pub struct Graphics
 {
@@ -8,10 +9,12 @@ pub struct Graphics
 
 impl Graphics
 {
-    pub fn new() -> Self
+    pub fn new(
+        window: &Window
+    ) -> Self
     {
         Self {
-            vmnl_instance: VMNLInstance::new()
+            vmnl_instance: VMNLInstance::new(window)
         }
     }
 }
