@@ -12,6 +12,9 @@ use vulkano::swapchain::{PresentMode, Surface, Swapchain, SwapchainCreateInfo};
 use vulkano::image::{Image, ImageUsage};
 use vulkano::image::view::{ImageView, ImageViewCreateInfo, ImageViewType};
 use vulkano::{pipeline::graphics::vertex_input::Vertex};
+use vulkano::command_buffer::allocator::{
+    StandardCommandBufferAllocator, StandardCommandBufferAllocatorCreateInfo,
+};
 
 /// VMNL types definition
 pub type VMNLIndexBuffer  = Subbuffer<[u32]>;
@@ -71,7 +74,9 @@ pub struct VMNLInstance
 
     pub images:           Vec<Arc<Image>>,
 
-    pub image_views:     Vec<Arc<ImageView>>
+    pub image_views:     Vec<Arc<ImageView>>,
+
+    pub command_buffer_allocator: Arc<StandardCommandBufferAllocator>
 }
 
 #[repr(C)]
@@ -247,6 +252,16 @@ impl VMNLInstance
             .expect("Failed to create Swapchain");
     }
 
+    fn create_command_buffer_allocator(
+        device: &Arc<Device>
+    ) -> Arc<StandardCommandBufferAllocator>
+    {
+        return StandardCommandBufferAllocator::new(
+            device.clone(),
+            StandardCommandBufferAllocatorCreateInfo::default(),
+        ).into();
+    }
+
     /// cf: https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-memory-allocator
     fn create_memory_allocator(
         device: &Arc<Device>
@@ -331,6 +346,7 @@ impl VMNLInstance
             [frame_buffer_width as u32, frame_buffer_height as u32]
         );
         let image_views: Vec<Arc<ImageView>> = Self::create_image_views(&images);
+        let command_buffer_allocator = Self::create_command_buffer_allocator(&device);
 
         println!("VMNL log: Instance created.");
         Self {
@@ -343,7 +359,8 @@ impl VMNLInstance
             surface,
             swapchain,
             images,
-            image_views
+            image_views,
+            command_buffer_allocator
         }
     }
 }
