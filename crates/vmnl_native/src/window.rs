@@ -7,7 +7,6 @@ use glfw::{
     Action,
     Key
 };
-use std::sync::Arc;
 
 pub type VMNLResult<T> = Result<T, VMNLError>;
 

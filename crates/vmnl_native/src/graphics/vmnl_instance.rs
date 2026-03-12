@@ -1,20 +1,22 @@
 extern crate vulkano;
+use crate::Window;
 use std::sync::Arc;
-use vulkano::VulkanLibrary;
+use vulkano::{VulkanLibrary};
 use vulkano::device::physical::{PhysicalDevice};
 use vulkano::device::{Device, DeviceCreateInfo, QueueCreateInfo, QueueFlags, Queue};
 use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo};
 use vulkano::buffer::{Buffer, BufferCreateInfo, BufferUsage, Subbuffer, BufferContents};
 use vulkano::memory::allocator::{StandardMemoryAllocator, AllocationCreateInfo, MemoryTypeFilter};
 use bytemuck::{Pod, Zeroable};
-use vulkano::swapchain::Surface;
+use vulkano::swapchain::{PresentMode, Surface, Swapchain, SwapchainCreateInfo};
+use vulkano::image::{Image, ImageUsage};
+use vulkano::image::view::{ImageView, ImageViewCreateInfo, ImageViewType};
 use vulkano::{pipeline::graphics::vertex_input::Vertex};
-use crate::Window;
 
 /// VMNL types definition
-type VMNLIndexBuffer  = Subbuffer<[u32]>;
-type VMNLVertexBuffer = Subbuffer<[VMNLVertex]>;
-type VMNLFrameUbos    = Subbuffer<VMNLFrameUbo>;
+pub type VMNLIndexBuffer  = Subbuffer<[u32]>;
+pub type VMNLVertexBuffer = Subbuffer<[VMNLVertex]>;
+pub type VMNLFrameUbos    = Subbuffer<VMNLFrameUbo>;
 
 /// Represents the core Vulkan context used by the graphical part.
 /// Initialization order represented here cf Vulkano documentation:
@@ -31,48 +33,54 @@ pub struct VMNLInstance
     /// present on the system (for example via `libvulkan.so`).
     /// It is responsible for exposing Vulkan entry points used to
     /// create instances.
-    library:          Arc<VulkanLibrary>,
+    pub library:          Arc<VulkanLibrary>,
 
     /// Vulkan instance.
     /// The instance represents the connection between the application
     /// and the Vulkan API. It defines the enabled extensions, validation
     /// layers, and global state for the Vulkan application.
     /// All other Vulkan objects are created from this instance.
-    instance:         Arc<Instance>,
+    pub instance:         Arc<Instance>,
 
     /// Selected physical device.
     /// Represents a physical GPU available on the system.
     /// Need to selects one physical device to create a logical device.
-    physical_device:  Arc<PhysicalDevice>,
+    pub physical_device:  Arc<PhysicalDevice>,
 
     /// Logical device.
     /// Represents the application's interface to the selected GPU.
     /// It enables specific device features and provides access to
     /// command submission through queues.
-    device:           Arc<Device>,
+    pub device:           Arc<Device>,
 
     /// Device queue used for submitting GPU work.
     /// Queues are retrieved from queue families supported by the
     /// physical device. They are used to submit command buffers
     /// for execution on the GPU.
-    queues:           Arc<Queue>,
+    pub queues:           Arc<Queue>,
 
     /// Memory allocator used to manage GPU memory.
     /// `StandardMemoryAllocator` from Vulkano simplifies Vulkan's
     /// explicit memory management by handling allocation and reuse
     /// of device memory for buffers and images.
-    memory_allocator: Arc<StandardMemoryAllocator>,
+    pub memory_allocator: Arc<StandardMemoryAllocator>,
 
-    surface:          Arc<Surface>
+    pub surface:          Arc<Surface>,
+
+    pub swapchain:        Arc<Swapchain>,
+
+    pub images:           Vec<Arc<Image>>,
+
+    pub image_views:     Vec<Arc<ImageView>>
 }
 
 #[repr(C)]
 #[derive(Vertex, Pod, Zeroable, Clone, Copy, Default, Debug)]
 pub struct VMNLVertex {
     #[format(R32G32_SFLOAT)]
-    position: [f32; 2],
+    pub position: [f32; 2],
     #[format(R32G32_SFLOAT)]
-    uv: [f32; 2]
+    pub uv: [f32; 2]
 }
 
 #[repr(C)]
@@ -149,6 +157,28 @@ impl VMNLInstance
         .expect("Failed to create frame ubo buffer.");
     }
 
+    fn create_image_views(
+        images: &[Arc<Image>]
+    )-> Vec<Arc<ImageView>>
+    {
+        return images
+            .iter()
+            .map(|image| {
+                ImageView::new(
+                    image.clone(),
+                    ImageViewCreateInfo {
+                        view_type: ImageViewType::Dim2d,
+                        format: image.format(),
+                        subresource_range: image.subresource_range(),
+                        ..Default::default()
+                    },
+                )
+                .expect("Failed to create swapchain image view")
+            })
+            .collect()
+    }
+
+    /// cf: https://docs.rs/vulkano/latest/vulkano/swapchain/struct.Surface.html
     fn create_surface(
         instance: &Arc<Instance>,
         window  : &glfw::PWindow
@@ -157,7 +187,64 @@ impl VMNLInstance
         unsafe {
             return Surface::from_window_ref(instance.clone(), window)
             .expect("Failed to created Surface");
+        } // C'est chiant de faire passer un "Arc<PWindow>" depuis mon module glfw donc je passe en ref mais c'est pas fou
+    }
+
+    /// cf: https://docs.rs/vulkano/latest/vulkano/swapchain/index.html
+    fn create_swapchain(
+        device:        &Arc<Device>,
+        surface:       &Arc<Surface>,
+        window_extent: [u32; 2]
+    ) -> (Arc<Swapchain>, Vec<Arc<Image>>)
+    {
+        let surface_capabilities = device
+        .physical_device()
+        .surface_capabilities(&surface, Default::default())
+        .expect("Failed to create surface capabilities");
+        let (image_format, image_color_space) = device
+        .physical_device()
+        .surface_formats(&surface, Default::default())
+        .expect("Failed to create surface format")[0];
+        let mut min_image_count = surface_capabilities.min_image_count.max(2);
+        if let Some(max_image_count) = surface_capabilities.max_image_count {
+            min_image_count = min_image_count.min(max_image_count);
         }
+        let image_extent =
+        if let Some(current_extent) = surface_capabilities.current_extent {
+            current_extent
+        } else {
+            [
+                window_extent[0].clamp(
+                    surface_capabilities.min_image_extent[0],
+                    surface_capabilities.max_image_extent[0],
+                ),
+                window_extent[1].clamp(
+                    surface_capabilities.min_image_extent[1],
+                    surface_capabilities.max_image_extent[1],
+                ),
+            ]
+        };
+
+        return Swapchain::new(
+            device.clone(),
+            surface.clone(),
+            SwapchainCreateInfo {
+                min_image_count,
+                image_format,
+                image_color_space,
+                image_extent,
+                image_usage: ImageUsage::COLOR_ATTACHMENT,
+                composite_alpha: surface_capabilities
+                .supported_composite_alpha
+                .into_iter()
+                .next()
+                .expect("Not supported surface composite alpha."),
+                pre_transform: surface_capabilities.current_transform,
+                present_mode: PresentMode::Fifo,
+                ..Default::default()
+            }
+        )
+            .expect("Failed to create Swapchain");
     }
 
     /// cf: https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-memory-allocator
@@ -227,19 +314,36 @@ impl VMNLInstance
             },
         )
         .expect("failed to create instance");
-        let physical_device = Self::create_physical_device(&instance);
-        let (device, queues) = Self::create_device(&physical_device);
-        let memory_allocator = Self::create_memory_allocator(&device);
-        let surface          = Self::create_surface(&instance, window.get_glfw_window());
+        let physical_device: Arc<PhysicalDevice>           = Self::create_physical_device(&instance);
+        let (device, queues): (Arc<Device>, Arc<Queue>)    = Self::create_device(&physical_device);
+        let memory_allocator: Arc<StandardMemoryAllocator> = Self::create_memory_allocator(&device);
+        let surface: Arc<Surface>                          = Self::create_surface(&instance, window.get_glfw_window());
+        let (
+            frame_buffer_width,
+            frame_buffer_height
+        ): (i32, i32) = window.get_glfw_window().get_framebuffer_size();
+        let (
+            swapchain,
+            images
+        ): (Arc<Swapchain>, Vec<Arc<Image>>) = Self::create_swapchain(
+            &device,
+            &surface,
+            [frame_buffer_width as u32, frame_buffer_height as u32]
+        );
+        let image_views: Vec<Arc<ImageView>> = Self::create_image_views(&images);
+
         println!("VMNL log: Instance created.");
         Self {
-            library:          library,
-            instance:         instance.clone(),
-            physical_device:  physical_device,
-            device:           device,
-            queues:           queues,
-            memory_allocator: memory_allocator,
-            surface:          surface
+            library,
+            instance: instance.clone(),
+            physical_device,
+            device,
+            queues,
+            memory_allocator,
+            surface,
+            swapchain,
+            images,
+            image_views
         }
     }
 }
