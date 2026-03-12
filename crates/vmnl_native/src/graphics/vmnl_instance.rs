@@ -3,7 +3,7 @@ use crate::Window;
 use std::sync::Arc;
 use vulkano::{VulkanLibrary};
 use vulkano::device::physical::{PhysicalDevice};
-use vulkano::device::{Device, DeviceCreateInfo, QueueCreateInfo, QueueFlags, Queue};
+use vulkano::device::{Device, DeviceCreateInfo, QueueCreateInfo, QueueFlags, Queue, DeviceExtensions};
 use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo};
 use vulkano::buffer::{Buffer, BufferCreateInfo, BufferUsage, Subbuffer, BufferContents};
 use vulkano::memory::allocator::{StandardMemoryAllocator, AllocationCreateInfo, MemoryTypeFilter};
@@ -249,7 +249,7 @@ impl VMNLInstance
                 ..Default::default()
             }
         )
-            .expect("Failed to create Swapchain");
+        .expect("Failed to create Swapchain");
     }
 
     fn create_command_buffer_allocator(
@@ -294,6 +294,10 @@ impl VMNLInstance
                 queue_family_properties.queue_flags.contains(QueueFlags::GRAPHICS)
             })
             .expect("couldn't find a graphical queue family") as u32;
+        let device_extensions = DeviceExtensions {
+            khr_swapchain: true,
+            ..DeviceExtensions::empty()
+        };
         let (device, mut queues) = Device::new(
             physical_device.clone(),
             DeviceCreateInfo {
@@ -301,6 +305,7 @@ impl VMNLInstance
                     queue_family_index,
                     ..Default::default()
                 }],
+                enabled_extensions: device_extensions,
                 ..Default::default()
             },
         )
