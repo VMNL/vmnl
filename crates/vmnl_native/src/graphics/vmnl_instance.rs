@@ -62,6 +62,8 @@ pub struct VMNLInstance
     /// for execution on the GPU.
     pub queues:           Arc<Queue>,
 
+    pub graphics_queue_family_index: u32,
+
     /// Memory allocator used to manage GPU memory.
     /// `StandardMemoryAllocator` from Vulkano simplifies Vulkan's
     /// explicit memory management by handling allocation and reuse
@@ -271,33 +273,44 @@ impl VMNLInstance
     }
 
     /// cf: https://vulkano.rs/02-initialization/01-initialization.html#enumerating-physical-devices
-    fn create_physical_device(
-        instance: &Arc<Instance>
-    ) -> Arc<PhysicalDevice>
+    fn select_physical_device(
+        instance: &Arc<Instance>,
+        surface: &Arc<Surface>,
+        device_extensions: &DeviceExtensions
+    ) -> (Arc<PhysicalDevice>, u32)
     {
-        return instance
-        .enumerate_physical_devices()
-        .expect("could not enumerate devices")
-        .next()
-        .expect("no devices available");
+        instance
+            .enumerate_physical_devices()
+            .expect("could not enumerate devices")
+            .filter(|physical_device| {
+                physical_device
+                    .supported_extensions()
+                    .contains(device_extensions)
+            })
+            .filter_map(|physical_device| {
+                physical_device
+                    .queue_family_properties()
+                    .iter()
+                    .enumerate()
+                    .position(|(queue_family_index, queue_family_properties)| {
+                        queue_family_properties.queue_flags.contains(QueueFlags::GRAPHICS)
+                            && physical_device
+                                .surface_support(queue_family_index as u32, surface)
+                                .unwrap_or(false)
+                    })
+                    .map(|queue_family_index| (physical_device, queue_family_index as u32))
+            })
+            .next()
+            .expect("couldn't find a physical device with graphics + present support")
     }
 
     /// cf: https://vulkano.rs/02-initialization/02-device-creation.html#device-creation
     fn create_device(
-        physical_device: &Arc<PhysicalDevice>
+        physical_device: &Arc<PhysicalDevice>,
+        queue_family_index: u32,
+        device_extensions: DeviceExtensions
     ) -> (Arc<Device>, Arc<Queue>)
     {
-        let queue_family_index = physical_device
-            .queue_family_properties()
-            .iter()
-            .position(|queue_family_properties| {
-                queue_family_properties.queue_flags.contains(QueueFlags::GRAPHICS)
-            })
-            .expect("couldn't find a graphical queue family") as u32;
-        let device_extensions = DeviceExtensions {
-            khr_swapchain: true,
-            ..DeviceExtensions::empty()
-        };
         let (device, mut queues) = Device::new(
             physical_device.clone(),
             DeviceCreateInfo {
@@ -310,11 +323,12 @@ impl VMNLInstance
             },
         )
         .expect("failed to create device");
-        let graphics_queue = queues
-        .next()
-        .expect("device created without any queue");
 
-        return (device, graphics_queue);
+        let graphics_queue = queues
+            .next()
+            .expect("device created without any queue");
+
+        (device, graphics_queue)
     }
 
     /// cf: https://vulkano.rs/02-initialization/01-initialization.html#creating-an-instance
@@ -324,7 +338,7 @@ impl VMNLInstance
     {
         let library = VulkanLibrary::new().expect("no local Vulkan library/DLL");
         let required_extensions = Surface::required_extensions(window.get_glfw_window())
-        .expect("Failed to query required surface extensions");
+            .expect("Failed to query required surface extensions");
         let instance = Instance::new(
             library.clone(),
             InstanceCreateInfo {
@@ -334,32 +348,41 @@ impl VMNLInstance
             },
         )
         .expect("failed to create instance");
-        let physical_device: Arc<PhysicalDevice>           = Self::create_physical_device(&instance);
-        let (device, queues): (Arc<Device>, Arc<Queue>)    = Self::create_device(&physical_device);
-        let memory_allocator: Arc<StandardMemoryAllocator> = Self::create_memory_allocator(&device);
-        let surface: Arc<Surface>                          = Self::create_surface(&instance, window.get_glfw_window());
-        let (
-            frame_buffer_width,
-            frame_buffer_height
-        ): (i32, i32) = window.get_glfw_window().get_framebuffer_size();
-        let (
-            swapchain,
-            images
-        ): (Arc<Swapchain>, Vec<Arc<Image>>) = Self::create_swapchain(
-            &device,
-            &surface,
-            [frame_buffer_width as u32, frame_buffer_height as u32]
-        );
+        let surface: Arc<Surface> =
+            Self::create_surface(&instance, window.get_glfw_window());
+        let device_extensions = DeviceExtensions {
+            khr_swapchain: true,
+            ..DeviceExtensions::empty()
+        };
+        let (physical_device, graphics_queue_family_index) =
+            Self::select_physical_device(&instance, &surface, &device_extensions);
+        let (device, queues) =
+            Self::create_device(
+                &physical_device,
+                graphics_queue_family_index,
+                device_extensions
+            );
+        let memory_allocator: Arc<StandardMemoryAllocator> =
+            Self::create_memory_allocator(&device);
+        let (frame_buffer_width, frame_buffer_height): (i32, i32) =
+            window.get_glfw_window().get_framebuffer_size();
+        let (swapchain, images): (Arc<Swapchain>, Vec<Arc<Image>>) =
+            Self::create_swapchain(
+                &device,
+                &surface,
+                [frame_buffer_width as u32, frame_buffer_height as u32]
+            );
         let image_views: Vec<Arc<ImageView>> = Self::create_image_views(&images);
         let command_buffer_allocator = Self::create_command_buffer_allocator(&device);
 
         println!("VMNL log: Instance created.");
         Self {
             library,
-            instance: instance.clone(),
+            instance,
             physical_device,
             device,
             queues,
+            graphics_queue_family_index,
             memory_allocator,
             surface,
             swapchain,
