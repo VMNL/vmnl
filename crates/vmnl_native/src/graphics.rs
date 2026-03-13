@@ -193,13 +193,18 @@ impl Graphics
         .expect("Failed to create graphics pipeline")
     }
 
-    pub fn new(window: &Window) -> Self
+    pub fn create_triangle(
+        window: &Window,
+        vertice1: [f32; 4],
+        vertice2: [f32; 4],
+        vertice3: [f32; 4]
+    ) -> Self
     {
         let vmnl_instance = VMNLInstance::new(window);
         let vertices = [
-            VMNLVertex { position: [-0.5, -0.5], uv: [0.0, 0.0] },
-            VMNLVertex { position: [ 0.0,  0.5], uv: [0.5, 1.0] },
-            VMNLVertex { position: [ 0.5, -0.5], uv: [1.0, 0.0] },
+            VMNLVertex { position: [vertice1[0], vertice1[1]], uv: [vertice1[2], vertice1[3]] },
+            VMNLVertex { position: [vertice2[0],  vertice2[1]], uv: [vertice2[2], vertice2[3]] },
+            VMNLVertex { position: [vertice3[0], vertice3[1]], uv: [vertice3[2], vertice3[3]] },
         ];
         let vertex_buffer = vmnl_instance.create_vertex_buffer(&vertices);
         let render_pass = Self::create_render_pass(&vmnl_instance);
