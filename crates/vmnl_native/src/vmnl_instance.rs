@@ -1,25 +1,16 @@
 extern crate vulkano;
-use crate::Window;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock, Mutex};
 use vulkano::{VulkanLibrary};
 use vulkano::device::physical::{PhysicalDevice};
 use vulkano::device::{Device, DeviceCreateInfo, QueueCreateInfo, QueueFlags, Queue, DeviceExtensions};
 use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo};
-use vulkano::buffer::{Buffer, BufferCreateInfo, BufferUsage, Subbuffer, BufferContents};
-use vulkano::memory::allocator::{StandardMemoryAllocator, AllocationCreateInfo, MemoryTypeFilter};
-use bytemuck::{Pod, Zeroable};
+use vulkano::memory::allocator::{StandardMemoryAllocator};
 use vulkano::swapchain::{PresentMode, Surface, Swapchain, SwapchainCreateInfo};
 use vulkano::image::{Image, ImageUsage};
 use vulkano::image::view::{ImageView, ImageViewCreateInfo, ImageViewType};
-use vulkano::{pipeline::graphics::vertex_input::Vertex};
 use vulkano::command_buffer::allocator::{
     StandardCommandBufferAllocator, StandardCommandBufferAllocatorCreateInfo,
 };
-
-/// VMNL types definition
-pub type VMNLIndexBuffer  = Subbuffer<[u32]>;
-pub type VMNLVertexBuffer = Subbuffer<[VMNLVertex]>;
-pub type VMNLFrameUbos    = Subbuffer<VMNLFrameUbo>;
 
 /// Represents the core Vulkan context used by the graphical part.
 /// Initialization order represented here cf Vulkano documentation:
@@ -29,6 +20,7 @@ pub type VMNLFrameUbos    = Subbuffer<VMNLFrameUbo>;
 /// 4. Create a logical device and queues: https://vulkano.rs/02-initialization/02-device-creation.html
 /// 5. Initialize memory allocation utilities: https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-memory-allocator
 /// 6. Create a buffer (Index, Vertex, UBO): https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-buffer
+#[derive(Debug)]
 pub struct VMNLInstance
 {
     /// Handle to the Vulkan loader library.
@@ -81,89 +73,8 @@ pub struct VMNLInstance
     pub command_buffer_allocator: Arc<StandardCommandBufferAllocator>
 }
 
-#[repr(C)]
-#[derive(Vertex, Pod, Zeroable, Clone, Copy, Default, Debug)]
-pub struct VMNLVertex {
-    #[format(R32G32_SFLOAT)]
-    pub position: [f32; 2],
-    #[format(R32G32_SFLOAT)]
-    pub uv: [f32; 2]
-}
-
-#[repr(C)]
-#[derive(BufferContents, Clone, Copy, Debug, Default)]
-pub struct VMNLFrameUbo
-{
-    color: [f32; 4]
-}
-
 impl VMNLInstance
 {
-    pub fn create_vertex_buffer(
-        &self,
-        vertices: &[VMNLVertex]
-    ) -> VMNLVertexBuffer
-    {
-        return Buffer::from_iter
-        (
-            self.memory_allocator.clone(),
-            BufferCreateInfo {
-                usage: BufferUsage::VERTEX_BUFFER,
-                ..Default::default()
-            },
-            AllocationCreateInfo {
-                memory_type_filter:
-                MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                ..Default::default()
-            },
-            vertices.iter().cloned()
-        )
-        .expect("Failed to create vertex buffer.");
-    }
-
-    pub fn create_index_buffer(
-        &self,
-        indices: &[u32]
-    ) -> VMNLIndexBuffer
-    {
-        return Buffer::from_iter
-        (
-            self.memory_allocator.clone(),
-            BufferCreateInfo {
-                usage: BufferUsage::INDEX_BUFFER,
-                ..Default::default()
-            },
-            AllocationCreateInfo {
-                memory_type_filter:
-                MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                ..Default::default()
-            },
-            indices.iter().cloned()
-        )
-        .expect("Failed to create index buffer.");
-    }
-
-    pub fn create_frame_ubo_buffer(
-        &self,
-        ubo: VMNLFrameUbo
-    ) -> VMNLFrameUbos
-    {
-        return Buffer::from_data(
-            self.memory_allocator.clone(),
-            BufferCreateInfo {
-                usage: BufferUsage::UNIFORM_BUFFER,
-                ..Default::default()
-            },
-            AllocationCreateInfo {
-                memory_type_filter:
-                    MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                ..Default::default()
-            },
-            ubo,
-        )
-        .expect("Failed to create frame ubo buffer.");
-    }
-
     fn create_image_views(
         images: &[Arc<Image>]
     )-> Vec<Arc<ImageView>>
@@ -194,7 +105,7 @@ impl VMNLInstance
         unsafe {
             return Surface::from_window_ref(instance.clone(), window)
             .expect("Failed to created Surface");
-        } // C'est chiant de faire passer un "Arc<PWindow>" depuis mon module glfw donc je passe en ref mais c'est pas fou
+        }
     }
 
     /// cf: https://docs.rs/vulkano/latest/vulkano/swapchain/index.html
@@ -333,11 +244,11 @@ impl VMNLInstance
 
     /// cf: https://vulkano.rs/02-initialization/01-initialization.html#creating-an-instance
     pub fn new(
-        window: &Window
+        window: &glfw::PWindow
     ) -> Self
     {
         let library = VulkanLibrary::new().expect("no local Vulkan library/DLL");
-        let required_extensions = Surface::required_extensions(window.get_glfw_window())
+        let required_extensions = Surface::required_extensions(&window)
             .expect("Failed to query required surface extensions");
         let instance = Instance::new(
             library.clone(),
@@ -349,7 +260,7 @@ impl VMNLInstance
         )
         .expect("failed to create instance");
         let surface: Arc<Surface> =
-            Self::create_surface(&instance, window.get_glfw_window());
+            Self::create_surface(&instance, &window);
         let device_extensions = DeviceExtensions {
             khr_swapchain: true,
             ..DeviceExtensions::empty()
@@ -365,7 +276,7 @@ impl VMNLInstance
         let memory_allocator: Arc<StandardMemoryAllocator> =
             Self::create_memory_allocator(&device);
         let (frame_buffer_width, frame_buffer_height): (i32, i32) =
-            window.get_glfw_window().get_framebuffer_size();
+            window.get_framebuffer_size();
         let (swapchain, images): (Arc<Swapchain>, Vec<Arc<Image>>) =
             Self::create_swapchain(
                 &device,
@@ -399,4 +310,32 @@ impl Drop for VMNLInstance
     {
         println!("VMNL log: Instance destroyed.");
     }
+}
+
+static VMNL_INSTANCE: LazyLock<Mutex<Option<Arc<VMNLInstance>>>> =
+    LazyLock::new(|| Mutex::new(None));
+
+pub fn init_vmnl_instance(instance: VMNLInstance) {
+    let mut slot = VMNL_INSTANCE.lock().unwrap();
+
+    assert!(slot.is_none(), "VMNLInstance already initialized");
+
+    *slot = Some(Arc::new(instance));
+}
+
+pub fn vmnl_instance() -> Arc<VMNLInstance> {
+    let slot = VMNL_INSTANCE.lock().unwrap();
+
+    slot.as_ref()
+        .expect("VMNLInstance not initialized")
+        .clone()
+}
+
+pub fn shutdown_vmnl_instance() {
+    let old = {
+        let mut slot = VMNL_INSTANCE.lock().unwrap();
+        slot.take()
+    };
+
+    drop(old);
 }
