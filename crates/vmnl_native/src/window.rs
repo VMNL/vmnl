@@ -55,13 +55,13 @@ mod vs {
             #version 460
 
             layout(location = 0) in vec2 position;
-            layout(location = 1) in vec2 uv;
+            layout(location = 1) in vec3 color;
 
-            layout(location = 0) out vec2 out_uv;
+            layout(location = 0) out vec3 out_color;
 
             void main() {
                 gl_Position = vec4(position, 0.0, 1.0);
-                out_uv = uv;
+                out_color = color;
             }
         ",
     }
@@ -73,11 +73,11 @@ mod fs {
         src: r"
             #version 460
 
-            layout(location = 0) in vec2 in_uv;
+            layout(location = 0) in vec3 in_color;
             layout(location = 0) out vec4 f_color;
 
             void main() {
-                f_color = vec4(in_uv, 0.0, 1.0);
+                f_color = vec4(in_color, 1.0);
             }
         ",
     }
@@ -265,7 +265,7 @@ impl Window
     ) -> VMNLResult<Self>
     {
         #[cfg(feature = "safe")] {
-            if ready == false {
+            if is_ready == true {
                 return;
             }
         }
@@ -275,7 +275,7 @@ impl Window
         instance.window_hint(glfw::WindowHint::ClientApi(glfw::ClientApiHint::NoApi));
         let (mut window, events) =
         Window::init_window(instance.clone(), width, height, title);
-        let vmnl = VMNLInstance::new(&window);
+        let vmnl = VMNLInstance::new(&window, width, height);
         init_vmnl_instance(vmnl);
 
         if window.is_visible() == false {

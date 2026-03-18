@@ -13,13 +13,6 @@ use vulkano::command_buffer::allocator::{
 };
 
 /// Represents the core Vulkan context used by the graphical part.
-/// Initialization order represented here cf Vulkano documentation:
-/// 1. Load Vulkan library: https://vulkano.rs/02-initialization/01-initialization.html
-/// 2. Create Vulkan instance: https://vulkano.rs/02-initialization/01-initialization.html#creating-an-instance
-/// 3. Select a physical device: https://vulkano.rs/02-initialization/01-initialization.html#enumerating-physical-devices
-/// 4. Create a logical device and queues: https://vulkano.rs/02-initialization/02-device-creation.html
-/// 5. Initialize memory allocation utilities: https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-memory-allocator
-/// 6. Create a buffer (Index, Vertex, UBO): https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-buffer
 #[derive(Debug)]
 pub struct VMNLInstance
 {
@@ -70,7 +63,11 @@ pub struct VMNLInstance
 
     pub image_views:     Vec<Arc<ImageView>>,
 
-    pub command_buffer_allocator: Arc<StandardCommandBufferAllocator>
+    pub command_buffer_allocator: Arc<StandardCommandBufferAllocator>,
+
+    pub window_width: u32,
+
+    pub window_height: u32
 }
 
 impl VMNLInstance
@@ -244,7 +241,9 @@ impl VMNLInstance
 
     /// cf: https://vulkano.rs/02-initialization/01-initialization.html#creating-an-instance
     pub fn new(
-        window: &glfw::PWindow
+        window: &glfw::PWindow,
+        window_width:  u32,
+        window_height: u32
     ) -> Self
     {
         let library = VulkanLibrary::new().expect("no local Vulkan library/DLL");
@@ -299,7 +298,9 @@ impl VMNLInstance
             swapchain,
             images,
             image_views,
-            command_buffer_allocator
+            command_buffer_allocator,
+            window_width,
+            window_height
         }
     }
 }
@@ -312,18 +313,21 @@ impl Drop for VMNLInstance
     }
 }
 
-static VMNL_INSTANCE: LazyLock<Mutex<Option<Arc<VMNLInstance>>>> =
-    LazyLock::new(|| Mutex::new(None));
+static VMNL_INSTANCE:
+LazyLock<Mutex<Option<Arc<VMNLInstance>>>> = LazyLock::new(|| Mutex::new(None));
 
-pub fn init_vmnl_instance(instance: VMNLInstance) {
+pub fn init_vmnl_instance(
+    instance: VMNLInstance
+) -> ()
+{
     let mut slot = VMNL_INSTANCE.lock().unwrap();
 
     assert!(slot.is_none(), "VMNLInstance already initialized");
-
     *slot = Some(Arc::new(instance));
 }
 
-pub fn vmnl_instance() -> Arc<VMNLInstance> {
+pub fn vmnl_instance() -> Arc<VMNLInstance>
+{
     let slot = VMNL_INSTANCE.lock().unwrap();
 
     slot.as_ref()
@@ -331,7 +335,8 @@ pub fn vmnl_instance() -> Arc<VMNLInstance> {
         .clone()
 }
 
-pub fn shutdown_vmnl_instance() {
+pub fn shutdown_vmnl_instance() -> ()
+{
     let old = {
         let mut slot = VMNL_INSTANCE.lock().unwrap();
         slot.take()

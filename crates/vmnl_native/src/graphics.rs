@@ -16,8 +16,8 @@ pub type VMNLFrameUbos    = Subbuffer<VMNLFrameUbo>;
 pub struct VMNLVertex {
     #[format(R32G32_SFLOAT)]
     pub position: [f32; 2],
-    #[format(R32G32_SFLOAT)]
-    pub uv: [f32; 2]
+    #[format(R32G32B32_SFLOAT)]
+    pub color: [f32; 3]
 }
 
 #[repr(C)]
@@ -99,16 +99,59 @@ impl Graphics
         .expect("Failed to create frame ubo buffer.");
     }
 
+    fn vertex_position_transform_x(
+        x: f32,
+        window_width: u32
+    ) -> f32
+    {
+        let width: f32 = window_width as f32;
+
+        return (x / width) * 2.0 - 1.0;
+    }
+
+    fn vertex_position_transform_y(
+        y: f32,
+        window_height: u32
+    ) -> f32
+    {
+        let height: f32 = window_height as f32;
+
+        return 1.0 - (y / height) * 2.0;
+    }
+
     pub fn create_vertex(
-        vertice1: [f32; 4],
-        vertice2: [f32; 4],
-        vertice3: [f32; 4]
+        vertex1: VMNLVertex,
+        vertex2: VMNLVertex,
+        vertex3: VMNLVertex,
     ) -> Self
     {
+        let vertex1position0: f32 = Self::vertex_position_transform_x(vertex1.position[0], vmnl_instance().window_width);
+        let vertex2position0: f32 = Self::vertex_position_transform_x(vertex2.position[0], vmnl_instance().window_width);
+        let vertex3position0: f32 = Self::vertex_position_transform_x(vertex3.position[0], vmnl_instance().window_width);
+        let vertex1position1: f32 = Self::vertex_position_transform_y(vertex1.position[1], vmnl_instance().window_height);
+        let vertex2position1: f32 = Self::vertex_position_transform_y(vertex2.position[1], vmnl_instance().window_height);
+        let vertex3position1: f32 = Self::vertex_position_transform_y(vertex3.position[1], vmnl_instance().window_height);
         let vertices = [
-            VMNLVertex { position: [vertice1[0], vertice1[1]], uv: [vertice1[2], vertice1[3]] },
-            VMNLVertex { position: [vertice2[0],  vertice2[1]], uv: [vertice2[2], vertice2[3]] },
-            VMNLVertex { position: [vertice3[0], vertice3[1]], uv: [vertice3[2], vertice3[3]] },
+            VMNLVertex {
+                position: [
+                    vertex1position0,
+                    vertex1position1
+                ],
+                color: [vertex1.color[0] / 255.0, vertex1.color[1] / 255.0, vertex1.color[2] / 255.0]
+            },
+            VMNLVertex {
+                position: [
+                    vertex2position0,
+                    vertex2position1
+                ],
+                color: [vertex2.color[0] / 255.0, vertex2.color[1] / 255.0, vertex2.color[2] / 255.0]
+            },
+            VMNLVertex { position: [
+                    vertex3position0,
+                    vertex3position1
+                ],
+                color: [vertex3.color[0] / 255.0, vertex3.color[1] / 255.0, vertex3.color[2] / 255.0]
+            },
         ];
         let vertex_buffer = Self::create_vertex_buffer(&vertices, &vmnl_instance().memory_allocator);
 
