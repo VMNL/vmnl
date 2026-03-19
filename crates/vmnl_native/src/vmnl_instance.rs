@@ -1,4 +1,5 @@
 extern crate vulkano;
+use crate::{VMNLResult};
 use std::sync::{Arc, LazyLock, Mutex};
 use vulkano::{VulkanLibrary};
 use vulkano::device::physical::{PhysicalDevice};
@@ -244,7 +245,7 @@ impl VMNLInstance
         window: &glfw::PWindow,
         window_width:  u32,
         window_height: u32
-    ) -> Self
+    ) -> VMNLResult<Self>
     {
         let library = VulkanLibrary::new().expect("no local Vulkan library/DLL");
         let required_extensions = Surface::required_extensions(&window)
@@ -286,7 +287,7 @@ impl VMNLInstance
         let command_buffer_allocator = Self::create_command_buffer_allocator(&device);
 
         println!("VMNL log: Instance created.");
-        Self {
+        Ok(Self {
             library,
             instance,
             physical_device,
@@ -301,7 +302,7 @@ impl VMNLInstance
             command_buffer_allocator,
             window_width,
             window_height
-        }
+        })
     }
 }
 

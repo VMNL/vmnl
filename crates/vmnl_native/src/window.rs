@@ -1,11 +1,6 @@
 extern crate glfw;
-use crate::{Graphics};
-use crate::{VMNLInstance, VMNLVertex};
+use crate::{Graphics, VMNLResult, VMNLError, VMNLInstance, VMNLVertex};
 use crate::vmnl_instance::{init_vmnl_instance, vmnl_instance, shutdown_vmnl_instance};
-use std::{
-    error::Error,
-    fmt
-};
 use glfw::{
     Action,
     Key
@@ -46,7 +41,6 @@ use vulkano::render_pass::{
 };
 use vulkano::sync::{self, GpuFuture};
 use vulkano::swapchain::{self, SwapchainPresentInfo};
-pub type VMNLResult<T> = Result<T, VMNLError>;
 
 mod vs {
     vulkano_shaders::shader! {
@@ -83,30 +77,6 @@ mod fs {
     }
 }
 
-#[derive(Debug)]
-pub enum VMNLError
-{
-    VMNLInitFailed,
-    WindowCreationFailed,
-    VulkanInitFailed,
-    InvalidState(&'static str),
-}
-
-impl fmt::Display for VMNLError
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
-    {
-        match self {
-            Self::VMNLInitFailed =>                     write!(f, "VMNL Error: VMNL initialization failed"),
-            Self::WindowCreationFailed =>               write!(f, "VMNL Error: window creation failed"),
-            Self::VulkanInitFailed =>                   write!(f, "VMNL Error: Vulkan initialization failed"),
-            Self::InvalidState(msg) =>   write!(f, "VMNL Error: invalid state: {msg}"),
-        }
-    }
-}
-
-impl Error for VMNLError {}
-
 /// cf: https://github.com/PistonDevelopers/glfw-rs
 struct WindowHandle
 {
@@ -141,7 +111,9 @@ pub struct Window
 
 impl Window
 {
-    fn create_render_pass(vmnl_instance: &VMNLInstance) -> Arc<RenderPass>
+    fn create_render_pass(
+        vmnl_instance: &VMNLInstance
+    ) -> Arc<RenderPass>
     {
         vulkano::single_pass_renderpass!(
             vmnl_instance.device.clone(),
@@ -191,15 +163,12 @@ impl Window
             .expect("Failed to load vertex shader");
         let fs = fs::load(vmnl_instance.device.clone())
             .expect("Failed to load fragment shader");
-
         let vs = vs.entry_point("main").expect("Missing vertex entry point");
         let fs = fs.entry_point("main").expect("Missing fragment entry point");
-
         let stages = [
             PipelineShaderStageCreateInfo::new(vs.clone()),
             PipelineShaderStageCreateInfo::new(fs),
         ];
-
         let layout = PipelineLayout::new(
             vmnl_instance.device.clone(),
             PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
@@ -207,17 +176,14 @@ impl Window
                 .expect("Failed to create pipeline layout info"),
         )
         .expect("Failed to create pipeline layout");
-
         let extent = vmnl_instance.swapchain.image_extent();
         let viewport = Viewport {
             offset: [0.0, 0.0],
             extent: [extent[0] as f32, extent[1] as f32],
             depth_range: 0.0..=1.0,
         };
-
         let subpass = Subpass::from(render_pass.clone(), 0)
             .expect("Failed to create subpass");
-
         let vertex_input_state = VMNLVertex::per_vertex()
             .definition(&vs)
             .expect("Failed to create vertex input state");
@@ -265,19 +231,20 @@ impl Window
     ) -> VMNLResult<Self>
     {
         #[cfg(feature = "safe")] {
-            if is_ready == true {
+            if self.is_ready == true {
                 return;
             }
         }
         let mut instance = glfw::init(glfw::fail_on_errors)
-        .map_err(|_| VMNLError::VMNLInitFailed)?;
+            .map_err(|_| VMNLError::VMNLInitFailed)?;
         println!("VMNL log: Window Initialized.");
         instance.window_hint(glfw::WindowHint::ClientApi(glfw::ClientApiHint::NoApi));
         let (mut window, events) =
         Window::init_window(instance.clone(), width, height, title);
-        let vmnl = VMNLInstance::new(&window, width, height);
-        init_vmnl_instance(vmnl);
+        let vmnl: VMNLInstance = VMNLInstance::new(&window, width, height)
+            .expect("Failed to create VMNLInstance");
 
+        init_vmnl_instance(vmnl);
         if window.is_visible() == false {
             window.show();
         }
@@ -298,7 +265,7 @@ impl Window
             },
             window_state: WindowState {
                 is_ready: true,
-                is_open: false
+                is_open:  false
             },
             window_config: WindowConfig {
                 is_close_with_escape: true,
@@ -312,7 +279,7 @@ impl Window
     pub fn is_open(&mut self) -> bool
     {
         #[cfg(feature = "safe")] {
-            if ready == false {
+            if self.is_ready == false {
                 return false;
             }
         }
@@ -336,7 +303,7 @@ impl Window
     pub fn poll_event(&mut self) -> ()
     {
         #[cfg(feature = "safe")] {
-            if ready == false {
+            if self.is_ready {
                 return;
             }
         }
@@ -381,7 +348,7 @@ impl Window
         unsafe {
             builder.begin_render_pass(
                     RenderPassBeginInfo {
-                        clear_values: vec![Some([0.1, 0.1, 0.1, 1.0].into())],
+                        clear_values: vec![Some([0.0, 0.0, 0.0, 0.0].into())],
                         ..RenderPassBeginInfo::framebuffer(framebuffer)
                     },
                     SubpassBeginInfo {
