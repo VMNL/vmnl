@@ -12,4 +12,4 @@ if [[ $? -eq 2 ]]; then
     SHADERC_LIB_DIR=/usr/lib64 cargo run
 fi
 
-valgrind cargo run -p test
+cargo run -p test
