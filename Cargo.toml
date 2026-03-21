@@ -1,0 +1,10 @@
+[workspace]
+members = ["crates/vmnl_native", "crates/vmnl", "examples/test"]
+resolver = "2"
+
+[profile.dev]
+opt-level = 3
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

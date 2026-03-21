@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [[ $# -eq 1 && $1 -eq '-s' ]]; then
+    cargo run -p test --features safe
+    exit 0
+fi
+
+ls /usr/lib64/libshaderc_combined.a
+if [[ $? -eq 2 ]]; then
+    sudo dnf install libshaderc-devel libshaderc-static
+    cargo clean
+    SHADERC_LIB_DIR=/usr/lib64 cargo run
+fi
+
+cargo run -p test

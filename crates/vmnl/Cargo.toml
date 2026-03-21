@@ -1,0 +1,11 @@
+[package]
+name    = "vmnl"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+libc = "0.2.182"
+vmnl_native = { path = "../vmnl_native" }
+
+[lib]
+crate-type = ["rlib", "cdylib"]
