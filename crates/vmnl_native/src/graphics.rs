@@ -1,15 +1,15 @@
-use crate::vmnl_instance::{vmnl_instance};
+use crate::VMNLContext;
 use std::sync::Arc;
-use vulkano::buffer::{Subbuffer, BufferContents};
+use vulkano::buffer::{Subbuffer, /* BufferContents */};
 use vulkano::buffer::{Buffer, BufferCreateInfo, BufferUsage};
 use vulkano::memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, StandardMemoryAllocator};
 use vulkano::{pipeline::graphics::vertex_input::Vertex};
 use bytemuck::{Pod, Zeroable};
 
 /// VMNL types definition
-pub type VMNLIndexBuffer    = Subbuffer<[u32]>;
+// pub type VMNLIndexBuffer    = Subbuffer<[u32]>;
 pub type VMNLVertexBuffer   = Subbuffer<[VMNLVertex]>;
-pub type VMNLFrameUboBuffer = Subbuffer<VMNLFrameUbo>;
+// pub type VMNLFrameUboBuffer = Subbuffer<VMNLFrameUbo>;
 pub type VMNLrbg            = [f32; 3];
 pub type VMNLrgba           = [f32; 4];
 pub type VMNLVector2f       = [f32; 2];
@@ -25,12 +25,12 @@ pub struct VMNLVertex {
     pub color: VMNLrbg
 }
 
-#[repr(C)]
-#[derive(BufferContents, Clone, Copy, Debug, Default)]
-pub struct VMNLFrameUbo
-{
-    color: VMNLrgba
-}
+// #[repr(C)]
+// #[derive(BufferContents, Clone, Copy, Debug, Default)]
+// pub struct VMNLFrameUbo
+// {
+//     color: VMNLrgba
+// }
 
 pub struct Graphics
 {
@@ -63,60 +63,48 @@ impl Graphics
         .expect("Failed to create vertex buffer.");
     }
 
-    fn create_index_buffer(
-        indices: &[u32],
-        memory_allocator: &Arc<StandardMemoryAllocator>
-    ) -> VMNLIndexBuffer
-    {
-        return Buffer::from_iter
-        (
-            memory_allocator.clone(),
-            BufferCreateInfo {
-                usage: BufferUsage::INDEX_BUFFER,
-                ..Default::default()
-            },
-            AllocationCreateInfo {
-                memory_type_filter:
-                MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                ..Default::default()
-            },
-            indices.iter().cloned()
-        )
-        .expect("Failed to create index buffer.");
-    }
+    // fn create_index_buffer(
+    //     indices: &[u32],
+    //     memory_allocator: &Arc<StandardMemoryAllocator>
+    // ) -> VMNLIndexBuffer
+    // {
+    //     return Buffer::from_iter
+    //     (
+    //         memory_allocator.clone(),
+    //         BufferCreateInfo {
+    //             usage: BufferUsage::INDEX_BUFFER,
+    //             ..Default::default()
+    //         },
+    //         AllocationCreateInfo {
+    //             memory_type_filter:
+    //             MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+    //             ..Default::default()
+    //         },
+    //         indices.iter().cloned()
+    //     )
+    //     .expect("Failed to create index buffer.");
+    // }
 
-    fn create_frame_ubo_buffer(
-        ubo: VMNLFrameUbo,
-        memory_allocator: &Arc<StandardMemoryAllocator>
-    ) -> VMNLFrameUboBuffer
-    {
-        return Buffer::from_data(
-            memory_allocator.clone(),
-            BufferCreateInfo {
-                usage: BufferUsage::UNIFORM_BUFFER,
-                ..Default::default()
-            },
-            AllocationCreateInfo {
-                memory_type_filter:
-                    MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                ..Default::default()
-            },
-            ubo,
-        )
-        .expect("Failed to create frame ubo buffer.");
-    }
-
-    fn vertex_position_transform(
-        vertex: VMNLVector2f,
-        window_height: u32,
-        window_width: u32
-    ) -> VMNLVector2f
-    {
-        let height: f32 = window_height as f32;
-        let width: f32 = window_width as f32;
-
-        return [(vertex[0] / width) * 2.0 - 1.0, 1.0 - (vertex[1] / height) * 2.0];
-    }
+    // fn create_frame_ubo_buffer(
+    //     ubo: VMNLFrameUbo,
+    //     memory_allocator: &Arc<StandardMemoryAllocator>
+    // ) -> VMNLFrameUboBuffer
+    // {
+    //     return Buffer::from_data(
+    //         memory_allocator.clone(),
+    //         BufferCreateInfo {
+    //             usage: BufferUsage::UNIFORM_BUFFER,
+    //             ..Default::default()
+    //         },
+    //         AllocationCreateInfo {
+    //             memory_type_filter:
+    //                 MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+    //             ..Default::default()
+    //         },
+    //         ubo,
+    //     )
+    //     .expect("Failed to create frame ubo buffer.");
+    // }
 
     fn vertex_color_overflow(
         color: VMNLrbg,
@@ -134,44 +122,30 @@ impl Graphics
     }
 
     pub fn create_vertices(
-        vertex1: VMNLVertex,
-        vertex2: VMNLVertex,
-        vertex3: VMNLVertex,
+        vmnl_context: &VMNLContext,
+        vertex1:      VMNLVertex,
+        vertex2:      VMNLVertex,
+        vertex3:      VMNLVertex
     ) -> Self
     {
-        let vertex1_pos:   VMNLVector2f = Self::vertex_position_transform(
-            vertex1.position,
-            vmnl_instance().window_height,
-            vmnl_instance().window_width
-        );
-        let vertex2_pos:   VMNLVector2f = Self::vertex_position_transform(
-            vertex2.position,
-            vmnl_instance().window_height,
-            vmnl_instance().window_width
-        );
-        let vertex3_pos:   VMNLVector2f = Self::vertex_position_transform(
-            vertex3.position,
-            vmnl_instance().window_height,
-            vmnl_instance().window_width
-        );
         let vertex1_color: VMNLrbg      = Self::vertex_color_overflow(vertex1.color);
         let vertex2_color: VMNLrbg      = Self::vertex_color_overflow(vertex2.color);
         let vertex3_color: VMNLrbg      = Self::vertex_color_overflow(vertex3.color);
         let vertices = [
             VMNLVertex {
-                position: vertex1_pos,
+                position: vertex1.position,
                 color: vertex1_color
             },
             VMNLVertex {
-                position: vertex2_pos,
+                position: vertex2.position,
                 color: vertex2_color
             },
             VMNLVertex {
-                position: vertex3_pos,
+                position: vertex3.position,
                 color: vertex3_color
             },
         ];
-        let vertex_buffer: VMNLVertexBuffer = Self::create_vertex_buffer(&vertices, &vmnl_instance().memory_allocator);
+        let vertex_buffer: VMNLVertexBuffer = Self::create_vertex_buffer(&vertices, &vmnl_context.inner.memory_allocator);
 
         Self {
             vertex_buffer,

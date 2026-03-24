@@ -1,49 +1,65 @@
 extern crate vulkano;
-use crate::{VMNLResult};
-use std::sync::{Arc, Mutex};
+use crate::{VMNLResult, VMNLError};
+use std::sync::{Arc};
+use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo, InstanceExtensions};
+use vulkano::{VulkanLibrary};
+use vulkano::device::physical::PhysicalDeviceType;
 use vulkano::device::physical::{PhysicalDevice};
 use vulkano::device::{Device, DeviceCreateInfo, QueueCreateInfo, QueueFlags, Queue, DeviceExtensions};
-use vulkano::instance::{Instance};
 use vulkano::memory::allocator::{StandardMemoryAllocator};
-use vulkano::swapchain::{Surface};
 use vulkano::command_buffer::allocator::{
     StandardCommandBufferAllocator, StandardCommandBufferAllocatorCreateInfo,
 };
 
+#[derive(Clone)]
+pub struct VMNLContext
+{
+    pub(crate) inner: std::sync::Arc<VMNLInstance>,
+}
+
+impl VMNLContext
+{
+    pub fn new() -> VMNLResult<Self>
+    {
+        let inner: Arc<VMNLInstance> = Arc::new(VMNLInstance::new()?);
+
+        Ok(Self {
+            inner
+        })
+    }
+}
+
 /// Represents the core Vulkan context used by the graphical part.
 #[derive(Debug)]
-pub struct VMNLInstance
+pub(crate) struct VMNLInstance
 {
+    pub(crate) instance:        Arc<Instance>,
     /// Selected physical device.
     /// Represents a physical GPU available on the system.
     /// Need to selects one physical device to create a logical device.
-    pub physical_device:  Arc<PhysicalDevice>,
+    pub(crate) physical_device:  Arc<PhysicalDevice>,
 
     /// Logical device.
     /// Represents the application's interface to the selected GPU.
     /// It enables specific device features and provides access to
     /// command submission through queues.
-    pub device:           Arc<Device>,
+    pub(crate) device:           Arc<Device>,
 
     /// Device queue used for submitting GPU work.
     /// Queues are retrieved from queue families supported by the
     /// physical device. They are used to submit command buffers
     /// for execution on the GPU.
-    pub queues:           Arc<Queue>,
+    pub(crate) graphics_queue:           Arc<Queue>,
 
-    pub graphics_queue_family_index: u32,
+    pub(crate) graphics_queue_family_index: u32,
 
     /// Memory allocator used to manage GPU memory.
     /// `StandardMemoryAllocator` from Vulkano simplifies Vulkan's
     /// explicit memory management by handling allocation and reuse
     /// of device memory for buffers and images.
-    pub memory_allocator: Arc<StandardMemoryAllocator>,
+    pub(crate) memory_allocator: Arc<StandardMemoryAllocator>,
 
-    pub command_buffer_allocator: Arc<StandardCommandBufferAllocator>,
-
-    pub window_width: u32,
-
-    pub window_height: u32
+    pub(crate) command_buffer_allocator: Arc<StandardCommandBufferAllocator>
 }
 
 impl VMNLInstance
@@ -66,36 +82,42 @@ impl VMNLInstance
         return Arc::new(StandardMemoryAllocator::new_default(device.clone()));
     }
 
+    fn select_graphics_queue_family_index(
+        physical_device: &Arc<PhysicalDevice>,
+    ) -> u32 {
+        physical_device
+            .queue_family_properties()
+            .iter()
+            .enumerate()
+            .find(|(_, q)| q.queue_flags.contains(QueueFlags::GRAPHICS))
+            .map(|(index, _)| index as u32)
+            .expect("no graphics queue family found")
+    }
+
     /// cf: https://vulkano.rs/02-initialization/01-initialization.html#enumerating-physical-devices
     fn select_physical_device(
         instance: &Arc<Instance>,
-        surface: &Arc<Surface>,
-        device_extensions: &DeviceExtensions
-    ) -> (Arc<PhysicalDevice>, u32)
-    {
+        required_extensions: &DeviceExtensions,
+    ) -> Arc<PhysicalDevice> {
         instance
             .enumerate_physical_devices()
-            .expect("could not enumerate devices")
-            .filter(|physical_device| {
-                physical_device
-                    .supported_extensions()
-                    .contains(device_extensions)
-            })
-            .filter_map(|physical_device| {
-                physical_device
-                    .queue_family_properties()
+            .expect("could not enumerate physical devices")
+            .filter(|pd| pd.supported_extensions().contains(required_extensions))
+            .filter(|pd| {
+                pd.queue_family_properties()
                     .iter()
-                    .enumerate()
-                    .position(|(queue_family_index, queue_family_properties)| {
-                        queue_family_properties.queue_flags.contains(QueueFlags::GRAPHICS)
-                            && physical_device
-                                .surface_support(queue_family_index as u32, surface)
-                                .unwrap_or(false)
-                    })
-                    .map(|queue_family_index| (physical_device, queue_family_index as u32))
+                    .any(|q| q.queue_flags.contains(QueueFlags::GRAPHICS))
             })
-            .next()
-            .expect("couldn't find a physical device with graphics + present support")
+            .max_by_key(|pd| {
+                match pd.properties().device_type {
+                    PhysicalDeviceType::DiscreteGpu => 1000,
+                    PhysicalDeviceType::IntegratedGpu => 100,
+                    PhysicalDeviceType::VirtualGpu => 50,
+                    PhysicalDeviceType::Cpu => 10,
+                    _ => 0,
+                }
+            })
+            .expect("no suitable physical device found")
     }
 
     /// cf: https://vulkano.rs/02-initialization/02-device-creation.html#device-creation
@@ -126,38 +148,47 @@ impl VMNLInstance
     }
 
     /// cf: https://vulkano.rs/02-initialization/01-initialization.html#creating-an-instance
-    pub fn new(
-        surface:       &Arc<Surface>,
-        window_width:  u32,
-        window_height: u32
-    ) -> VMNLResult<Self>
+    pub fn new() -> VMNLResult<Self>
     {
+        let glfw = glfw::init(glfw::fail_on_errors)
+            .map_err(|_| VMNLError::VMNLInitFailed)?;
+        let required_instance_extensions: InstanceExtensions = glfw
+            .get_required_instance_extensions()
+            .expect("GLFW: Vulkan instance extensions unavailable")
+            .iter()
+            .map(String::as_str)
+            .collect();
+        let library = VulkanLibrary::new()
+            .expect("no local Vulkan library/DLL");
+        let instance = Instance::new(
+            library,
+            InstanceCreateInfo {
+                enabled_extensions: required_instance_extensions,
+                flags: InstanceCreateFlags::ENUMERATE_PORTABILITY,
+                ..Default::default()
+            },
+        )
+        .expect("failed to create instance");
         let device_extensions = DeviceExtensions {
             khr_swapchain: true,
             ..DeviceExtensions::empty()
         };
-        let (physical_device, graphics_queue_family_index) =
-            Self::select_physical_device(&vulkan_instance(), &surface, &device_extensions);
-        let (device, queues) =
-            Self::create_device(
-                &physical_device,
-                graphics_queue_family_index,
-                device_extensions
-            );
-        let memory_allocator: Arc<StandardMemoryAllocator> =
-            Self::create_memory_allocator(&device);
+        let physical_device =
+            Self::select_physical_device(&instance, &device_extensions);
+        let graphics_queue_family_index =
+            Self::select_graphics_queue_family_index(&physical_device);
+        let (device, graphics_queue) =
+            Self::create_device(&physical_device, graphics_queue_family_index, device_extensions);
+        let memory_allocator = Self::create_memory_allocator(&device);
         let command_buffer_allocator = Self::create_command_buffer_allocator(&device);
-
-        println!("VMNL log: Instance created.");
         Ok(Self {
+            instance,
             physical_device,
             device,
-            queues,
+            graphics_queue,
             graphics_queue_family_index,
             memory_allocator,
             command_buffer_allocator,
-            window_width,
-            window_height
         })
     }
 }
@@ -168,72 +199,4 @@ impl Drop for VMNLInstance
     {
         println!("VMNL log: Instance destroyed.");
     }
-}
-
-static VMNL_INSTANCE: Mutex<Option<Arc<VMNLInstance>>> = Mutex::new(None);
-
-pub fn init_vmnl_instance(instance: VMNLInstance)
-{
-    let mut slot = VMNL_INSTANCE.lock().unwrap();
-
-    if slot.is_none() {
-        *slot = Some(Arc::new(instance));
-    }
-}
-
-pub fn vmnl_instance() -> Arc<VMNLInstance>
-{
-    let slot = VMNL_INSTANCE.lock().unwrap();
-
-    slot.as_ref()
-        .expect("VMNLInstance not initialized")
-        .clone()
-}
-
-pub fn destroy_vmnl_instance()
-{
-    let mut slot = VMNL_INSTANCE.lock().unwrap();
-
-    if let Some(instance) = slot.as_ref() {
-        if Arc::strong_count(instance) != 1 {
-            eprintln!("VMNLInstance still in use");
-            return;
-        }
-    }
-
-    let _ = slot.take();
-}
-
-static VULKAN_INSTANCE: Mutex<Option<Arc<Instance>>> = Mutex::new(None);
-
-pub fn init_vulkan_instance(instance: Arc<Instance>)
-{
-    let mut slot = VULKAN_INSTANCE.lock().unwrap();
-
-    if slot.is_none() {
-        *slot = Some(instance);
-    }
-}
-
-pub fn vulkan_instance() -> Arc<Instance>
-{
-    let slot = VULKAN_INSTANCE.lock().unwrap();
-
-    slot.as_ref()
-        .expect("Vulkan Instance not initialized")
-        .clone()
-}
-
-pub fn destroy_vulkan_instance()
-{
-    let mut slot = VULKAN_INSTANCE.lock().unwrap();
-
-    if let Some(instance) = slot.as_ref() {
-        if Arc::strong_count(instance) != 1 {
-            eprintln!("Vulkan Instance still in use");
-            return;
-        }
-    }
-
-    let _ = slot.take();
 }

@@ -1,25 +1,13 @@
 extern crate glfw;
+use crate::vmnl_instance::{VMNLInstance};
 use crate::{
-    Graphics,
-    VMNLResult,
-    VMNLError,
-    VMNLInstance,
-    VMNLVertex
-};
-use crate::vmnl_instance::{
-    init_vmnl_instance,
-    vmnl_instance,
-    destroy_vmnl_instance,
-    init_vulkan_instance,
-    vulkan_instance,
-    destroy_vulkan_instance
+    Graphics, VMNLContext, VMNLError, VMNLResult, VMNLVertex
 };
 use glfw::{
     Action,
     Key
 };
-use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo};
-use vulkano::{VulkanLibrary};
+use vulkano::instance::{Instance};
 use vulkano::device::Device;
 use std::sync::Arc;
 use vulkano::Validated;
@@ -46,6 +34,7 @@ use vulkano::pipeline::graphics::{
     viewport::{Viewport, ViewportState},
     GraphicsPipelineCreateInfo,
 };
+use vulkano::pipeline::Pipeline;
 use vulkano::pipeline::layout::PipelineDescriptorSetLayoutCreateInfo;
 use vulkano::pipeline::{
     GraphicsPipeline,
@@ -67,23 +56,6 @@ use vulkano::swapchain::{self, SwapchainPresentInfo};
  * This macro compiles the embedded GLSL source into SPIR-V at build time
  * and generates strongly-typed Rust bindings to interface with the shader
  * (entry points, descriptor layouts, etc.).
- *
- * ? Shader Behavior:
- * - Inputs:
- *     - `location = 0`: `vec2 position`
- *         2D vertex position in normalized device coordinates (NDC).
- *     - `location = 1`: `vec3 color`
- *         Per-vertex color attribute.
- *
- * - Outputs:
- *     - `location = 0`: `vec3 out_color`
- *         Forwarded to the fragment shader for interpolation.
- *
- * - Main Operation:
- *     - Converts the 2D position into a 4D homogeneous coordinate:
- *         `gl_Position = vec4(position, 0.0, 1.0)`
- *     - Passes the input color to the next stage unchanged.
- *
  * ? Invariants / Requirements:
  * - Vertex buffer layout in Rust must match:
  *     - `location 0 → vec2` (e.g. `[f32; 2]`)
@@ -114,13 +86,22 @@ mod vs {
         src: r"
             #version 460
 
+            layout(push_constant) uniform PushConstants {
+                vec2 window_size;
+            } pc;
+
             layout(location = 0) in vec2 position;
             layout(location = 1) in vec3 color;
 
             layout(location = 0) out vec3 out_color;
 
             void main() {
-                gl_Position = vec4(position, 0.0, 1.0);
+                vec2 ndc = vec2(
+                    (2.0 * position.x / pc.window_size.x) - 1.0,
+                    1.0 - (2.0 * position.y / pc.window_size.y)
+                );
+
+                gl_Position = vec4(ndc, 0.0, 1.0);
                 out_color = color;
             }
         ",
@@ -190,6 +171,12 @@ mod fs {
     }
 }
 
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+struct PushConstants {
+    window_size: [f32; 2],
+}
+
 /**
  * * Encapsulates low-level resources required to manage a window and its
  * * associated rendering state.
@@ -223,13 +210,13 @@ mod fs {
  */
 struct WindowHandle
 {
+    vmnl_instance:        Arc<VMNLInstance>,
     /// * List of framebuffers associated with the swapchain images.
     framebuffers:         Vec<Arc<Framebuffer>>,
     /// * Preconfigured Vulkan graphics pipeline used to render into the framebuffer
     graphics_pipeline:    Arc<GraphicsPipeline>,
     /// * Synchronization primitive representing the completion of the previous frame.
     previous_frame_end:   Option<Box<dyn GpuFuture>>,
-
     swapchain:        Arc<Swapchain>,
     /// * GLFW context responsible for managing windowing and event polling.
     instance:             glfw::Glfw,
@@ -417,12 +404,12 @@ impl Window
      *   https://docs.rs/vulkano/latest/vulkano/render_pass/index.html
      */
     fn create_render_pass(
-        vmnl_instance: &VMNLInstance,
+        device:        &Arc<Device>,
         swapchain:     &Arc<Swapchain>
     ) -> Arc<RenderPass>
     {
         vulkano::single_pass_renderpass!(
-            vmnl_instance.device.clone(),
+            device.clone(),
             attachments: {
                 color: {
                     format: swapchain.image_format(),
@@ -546,14 +533,14 @@ impl Window
      *   https://docs.rs/vulkano/latest/vulkano/pipeline/graphics/
      */
     fn create_graphics_pipeline(
-        vmnl_instance: &VMNLInstance,
+        device:        &Arc<Device>,
         swapchain:     &Arc<Swapchain>,
         render_pass:   &Arc<RenderPass>
     ) -> Arc<GraphicsPipeline>
     {
-        let vs = vs::load(vmnl_instance.device.clone())
+        let vs = vs::load(device.clone())
             .expect("Failed to load vertex shader");
-        let fs = fs::load(vmnl_instance.device.clone())
+        let fs = fs::load(device.clone())
             .expect("Failed to load fragment shader");
         let vs = vs.entry_point("main").expect("Missing vertex entry point");
         let fs = fs.entry_point("main").expect("Missing fragment entry point");
@@ -562,9 +549,9 @@ impl Window
             PipelineShaderStageCreateInfo::new(fs),
         ];
         let layout = PipelineLayout::new(
-            vmnl_instance.device.clone(),
+            device.clone(),
             PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
-                .into_pipeline_layout_create_info(vmnl_instance.device.clone())
+                .into_pipeline_layout_create_info(device.clone())
                 .expect("Failed to create pipeline layout info"),
         )
         .expect("Failed to create pipeline layout");
@@ -581,7 +568,7 @@ impl Window
             .expect("Failed to create vertex input state");
 
         GraphicsPipeline::new(
-            vmnl_instance.device.clone(),
+            device.clone(),
             None,
             GraphicsPipelineCreateInfo {
                 stages: stages.into_iter().collect(),
@@ -804,16 +791,31 @@ impl Window
         graphics: &Graphics
     ) -> Arc<PrimaryAutoCommandBuffer>
     {
-        let framebuffer = self.window_handle.framebuffers[image_index as usize].clone();
+        let extent = self.window_handle.swapchain.image_extent();
+
+        let push_constants = PushConstants {
+            window_size: [extent[0] as f32, extent[1] as f32],
+        };
+
+        let framebuffer =
+            self.window_handle.framebuffers[image_index as usize].clone();
+
         let mut builder = AutoCommandBufferBuilder::primary(
-            vmnl_instance().command_buffer_allocator.clone(),
-            vmnl_instance().queues.queue_family_index(),
+            self.window_handle
+                .vmnl_instance
+                .command_buffer_allocator
+                .clone(),
+            self.window_handle
+                .vmnl_instance
+                .graphics_queue
+                .queue_family_index(),
             CommandBufferUsage::OneTimeSubmit,
         )
         .expect("Failed to create command buffer builder");
 
         unsafe {
-            builder.begin_render_pass(
+            builder
+                .begin_render_pass(
                     RenderPassBeginInfo {
                         clear_values: vec![Some([0.0, 0.0, 0.0, 0.0].into())],
                         ..RenderPassBeginInfo::framebuffer(framebuffer)
@@ -826,6 +828,12 @@ impl Window
                 .expect("Failed to begin render pass")
                 .bind_pipeline_graphics(self.window_handle.graphics_pipeline.clone())
                 .expect("Failed to bind graphics pipeline")
+                .push_constants(
+                    self.window_handle.graphics_pipeline.layout().clone(),
+                    0,
+                    push_constants,
+                )
+                .expect("Failed to push constants")
                 .bind_vertex_buffers(0, graphics.vertex_buffer.clone())
                 .expect("Failed to bind vertex buffer")
                 .draw(graphics.vertex_buffer.len() as u32, 1, 0, 0)
@@ -833,6 +841,7 @@ impl Window
                 .end_render_pass(SubpassEndInfo::default())
                 .expect("Failed to end render pass");
         }
+
         builder.build()
             .expect("Failed to build command buffer")
     }
@@ -862,10 +871,10 @@ impl Window
             .take()
             .expect("previous_frame_end was None")
             .join(acquire_future)
-            .then_execute(vmnl_instance().queues.clone(), command_buffer)
+            .then_execute(self.window_handle.vmnl_instance.graphics_queue.clone(), command_buffer)
             .expect("Failed to execute command buffer")
             .then_swapchain_present(
-                vmnl_instance().queues.clone(),
+                self.window_handle.vmnl_instance.graphics_queue.clone(),
                 SwapchainPresentInfo::swapchain_image_index(
                     self.window_handle.swapchain.clone(),
                     image_index,
@@ -879,13 +888,13 @@ impl Window
             Err(Validated::Error(VulkanError::OutOfDate)) => {
                 eprintln!("Present returned OutOfDate: resize handling not implemented yet.");
                 self.window_handle.previous_frame_end =
-                    Some(sync::now(vmnl_instance().device.clone()).boxed());
+                    Some(sync::now(self.window_handle.vmnl_instance.device.clone()).boxed());
                 return;
             }
             Err(error) => {
                 eprintln!("Failed to flush future: {error:?}");
                 self.window_handle.previous_frame_end =
-                    Some(sync::now(vmnl_instance().device.clone()).boxed());
+                    Some(sync::now(self.window_handle.vmnl_instance.device.clone()).boxed());
                 return;
             }
         }
@@ -914,49 +923,44 @@ impl Window
      * - The first time of calling this function while created the vmnl instance at the same time
      */
     pub fn new(
-        width: u32,
-        height: u32,
-        title: &str
+        vmnl_context:  &VMNLContext,
+        width:         u32,
+        height:        u32,
+        title:         &str
     ) -> VMNLResult<Self>
     {
+        let vmnl_instance: Arc<VMNLInstance> = vmnl_context.inner.clone();
         let mut instance = glfw::init(glfw::fail_on_errors)
             .map_err(|_| VMNLError::VMNLInitFailed)?;
         instance.window_hint(glfw::WindowHint::ClientApi(glfw::ClientApiHint::NoApi));
         let (mut window, events) =
             Window::init_window(instance.clone(), width, height, title);
-        let library = VulkanLibrary::new().expect("no local Vulkan library/DLL");
-        let required_extensions = Surface::required_extensions(&window)
-            .expect("Failed to query required surface extensions");
-        init_vulkan_instance(Instance::new(
-            library.clone(),
-            InstanceCreateInfo {
-                enabled_extensions: required_extensions,
-                flags: InstanceCreateFlags::ENUMERATE_PORTABILITY,
-                ..Default::default()
-            },
-        ).expect("failed to create instance"));
         let surface: Arc<Surface> =
-            Self::create_surface(&vulkan_instance(), &window);
-        init_vmnl_instance(VMNLInstance::new(&surface, width, height)
-            .expect("Failed to create VMNLInstance"));
+            Self::create_surface(&vmnl_instance.instance, &window);
+        let supports_present = vmnl_instance.physical_device
+            .surface_support(vmnl_instance.graphics_queue_family_index, &surface)
+            .expect("failed to query surface support");
+        if !supports_present {
+            panic!("selected queue family does not support presentation on this surface");
+        }
         let (frame_buffer_width, frame_buffer_height): (i32, i32) =
             window.get_framebuffer_size();
         let (swapchain, images): (Arc<Swapchain>, Vec<Arc<Image>>) =
             Self::create_swapchain(
-                &vmnl_instance().device,
+                &vmnl_instance.device,
                 &surface,
                 [frame_buffer_width as u32, frame_buffer_height as u32]
             );
         let image_views: Vec<Arc<ImageView>> =
             Self::create_image_views(&images);
         let render_pass: Arc<RenderPass>
-            = Self::create_render_pass(&vmnl_instance(), &swapchain);
+            = Self::create_render_pass(&vmnl_instance.device, &swapchain);
         let framebuffers: Vec<Arc<Framebuffer>>
             = Self::create_framebuffers(&image_views, &render_pass);
         let graphics_pipeline: Arc<GraphicsPipeline>
-            = Self::create_graphics_pipeline(&vmnl_instance(), &swapchain, &render_pass);
+            = Self::create_graphics_pipeline(&vmnl_instance.device, &swapchain, &render_pass);
         let previous_frame_end: Option<Box<dyn GpuFuture>>
-            = Some(sync::now(vmnl_instance().device.clone()).boxed());
+            = Some(sync::now(vmnl_instance.device.clone()).boxed());
 
         if window.is_visible() == false {
             window.show();
@@ -966,6 +970,7 @@ impl Window
         Ok(Self {
             window_handle: WindowHandle {
                 instance,
+                vmnl_instance,
                 context: window,
                 events,
                 framebuffers,
@@ -993,7 +998,5 @@ impl Drop for Window
     fn drop(&mut self) -> ()
     {
         eprintln!("VMNL log: Window named \"{}\" destroyed.", self.window_config.title);
-        destroy_vmnl_instance();
-        destroy_vulkan_instance();
     }
 }
