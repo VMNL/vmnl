@@ -1,7 +1,16 @@
+////////////////////////////////////////////////////////////////////////////////
+/// SPDX-FileCopyrightText: 2026 Hugo Duda
+/// SPDX-License-Identifier: MIT
+///
+/// * Window module of the VMNL library, encapsulating window management and rendering logic.
+/// This module defines the `Window` struct, which serves as the primary interface for
+/// creating and managing application windows, handling events, and coordinating rendering.
+////////////////////////////////////////////////////////////////////////////////
+
 extern crate glfw;
 use crate::vmnl_instance::{VMNLInstance};
 use crate::{
-    Graphics, VMNLContext, VMNLError, VMNLResult, VMNLVertex
+    Graphics, Context, VMNLError, VMNLResult, VMNLVertex
 };
 use glfw::{
     Action,
@@ -11,8 +20,8 @@ use vulkano::instance::{Instance};
 use vulkano::device::Device;
 use std::sync::Arc;
 use vulkano::Validated;
-use vulkano::pipeline::graphics::vertex_input::Vertex;
 use vulkano::VulkanError;
+use vulkano::pipeline::graphics::vertex_input::Vertex;
 use vulkano::command_buffer::{
     AutoCommandBufferBuilder,
     CommandBufferUsage,
@@ -56,23 +65,10 @@ use vulkano::swapchain::{self, SwapchainPresentInfo};
  * This macro compiles the embedded GLSL source into SPIR-V at build time
  * and generates strongly-typed Rust bindings to interface with the shader
  * (entry points, descriptor layouts, etc.).
- * ? Invariants / Requirements:
- * - Vertex buffer layout in Rust must match:
- *     - `location 0 → vec2` (e.g. `[f32; 2]`)
- *     - `location 1 → vec3` (e.g. `[f32; 3]`)
- * - Pipeline vertex input state must reflect this exact layout.
- *
- * ? Notes:
- * - Coordinates are expected in NDC space [-1, 1].
- * - No transformation (MVP) is applied here; vertices are used as-is.
  *
  * ? Generated API (by macro):
  * - `vs::load(device)` → loads the compiled shader module.
  * - `vs::entry_point("main")` → retrieves the shader entry point.
- *
- * ! Failure Modes:
- * - Mismatch between shader inputs and vertex buffer → undefined behavior
- *   or validation errors.
  *
  * ? Sources:
  * - Vulkan Spec (Shader Interfaces):
@@ -115,39 +111,9 @@ mod vs {
  * and generates Rust bindings to interface with the shader (entry points,
  * descriptor layouts, etc.).
  *
- * ? Shader Behavior:
- * - Inputs:
- *     - `location = 0`: `vec3 in_color`
- *         Interpolated color received from the vertex shader.
- *
- * - Outputs:
- *     - `location = 0`: `vec4 f_color`
- *         Final color written to the framebuffer attachment.
- *
- * - Main Operation:
- *     - Converts the incoming RGB color into RGBA by adding a constant
- *       alpha value of 1.0 (fully opaque):
- *         `f_color = vec4(in_color, 1.0)`
- *
- * ? Invariants / Requirements:
- * - Input interface must match the vertex shader output:
- *     - `location 0 → vec3`
- * - The render pass color attachment format must be compatible with
- *   a `vec4` output (e.g., `R8G8B8A8_UNORM`, `B8G8R8A8_SRGB`, etc.).
- *
- * ? Notes:
- * - No lighting, blending, or gamma correction is applied here.
- * - Alpha is hardcoded to 1.0 → no transparency unless blending is enabled
- *   in the pipeline.
- *
  * ? Generated API (by macro):
  * - `fs::load(device)` → loads the compiled shader module.
  * - `fs::entry_point("main")` → retrieves the shader entry point.
- *
- * ! Failure Modes:
- * - Mismatch between vertex output and fragment input locations/types
- *   → validation errors or undefined rendering.
- * - Incompatible framebuffer format → pipeline creation failure.
  *
  * ? Sources:
  * - Vulkan Spec (Fragment Shader Stage):
@@ -185,19 +151,6 @@ struct PushConstants {
  * rendering resources tied to that window. It acts as the bridge between
  * platform-specific window handling and GPU-side rendering execution.
  *
- * ? Invariants / Requirements:
- * - `framebuffers.len()` must match the number of swapchain images.
- * - `graphics_pipeline` must be created with a render pass compatible
- *   with the framebuffers.
- * - `previous_frame_end` must be properly flushed and updated each frame
- *   to maintain correct GPU synchronization.
- *
- * ! Lifecycle Notes:
- * - All Vulkan resources (framebuffers, pipeline, futures) must be
- *   recreated when the swapchain is rebuilt (e.g., window resize).
- * - GLFW resources (`instance`, `context`, `events`) must remain valid
- *   for the entire lifetime of the window.
- *
  * ? Sources:
  * - Vulkan synchronization:
  *   https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap7.html
@@ -217,6 +170,7 @@ struct WindowHandle
     graphics_pipeline:    Arc<GraphicsPipeline>,
     /// * Synchronization primitive representing the completion of the previous frame.
     previous_frame_end:   Option<Box<dyn GpuFuture>>,
+    /// * Vulkan surface representing the OS window for presentation.
     swapchain:        Arc<Swapchain>,
     /// * GLFW context responsible for managing windowing and event polling.
     instance:             glfw::Glfw,
@@ -310,7 +264,19 @@ impl Window
             .collect()
     }
 
-    /// cf: https://docs.rs/vulkano/latest/vulkano/swapchain/struct.Surface.html
+    /**
+     * * Creates a Vulkan surface for the given GLFW window.
+     *
+     * ! Parameters:
+     * - `instance`: Vulkan instance used to create the surface.
+     * - `window`: GLFW window handle for which the surface will be created.
+     *
+     * ! Returns:
+     * - `Arc<Surface>`: A reference-counted Vulkan surface associated with the GLFW window.
+     *
+     * ? Sources:
+     * - https://docs.rs/vulkano/latest/vulkano/swapchain/struct.Surface.html
+     */
     fn create_surface(
         instance: &Arc<Instance>,
         window  : &glfw::PWindow
@@ -322,7 +288,20 @@ impl Window
         }
     }
 
-    /// cf: https://docs.rs/vulkano/latest/vulkano/swapchain/index.html
+    /**
+     * * Creates a Vulkan swapchain for the given surface and device, along with the associated swapchain images.
+     *
+     * ! Parameters:
+     * - `device`: Vulkan logical device used to create the swapchain and query surface capabilities.
+     * - `surface`: Vulkan surface representing the OS window to present rendered images to.
+     * - `window_extent`: Desired dimensions of the swapchain images, typically matching the window size.
+     *
+     * ! Returns:
+     * - `(Arc<Swapchain>, Vec<Arc<Image>>)`: A tuple containing the created swapchain and a vector of its associated images.
+     *
+     * ? Sources:
+     * - https://docs.rs/vulkano/latest/vulkano/swapchain/index.html
+     */
     fn create_swapchain(
         device:        &Arc<Device>,
         surface:       &Arc<Surface>,
@@ -383,11 +362,6 @@ impl Window
      * * Create a render pass, that describes the overall process of drawing a frame.
      * * It is subdivided into one or more subpasses.
      *
-     * Render passes are typically created at initialization only
-     * (for example during a loading screen) because they can be costly.
-     * While framebuffers can be created and destroyed either at initialization or during the frame.
-     * Consequently you can create graphics pipelines from a render pass object alone.
-     *
      * ! Parameter:
      * - `vmnl_instance`: Vulkan context holding the device and the swapchain
      *   resources required to build framebuffer attachments.
@@ -429,11 +403,6 @@ impl Window
     /**
      * * Creates one framebuffer for each swapchain image.
      *
-     * This function builds a set of `Framebuffer` objects compatible with the
-     * provided render pass. Each framebuffer typically wraps a single swapchain
-     * image view, or multiple attachments if the render pass also uses depth,
-     * stencil, or additional color targets.
-     *
      * ! Parameters:
      * - `vmnl_instance`: Vulkan context holding the device and the swapchain
      *   resources required to build framebuffer attachments.
@@ -443,29 +412,6 @@ impl Window
      * ! Returns:
      * - `Vec<Arc<Framebuffer>>`: List of framebuffers, generally one per
      *   swapchain image.
-     *
-     * ? Invariants / Requirements:
-     * - Each framebuffer must use attachments whose formats and ordering match
-     *   the attachments declared in `render_pass`.
-     * - The framebuffer extent must match the dimensions expected for rendering,
-     *   usually the current swapchain extent.
-     * - If the swapchain is recreated (for example after a resize), the
-     *   framebuffers must also be recreated.
-     *
-     * ? Typical Usage:
-     * - Create image views from swapchain images.
-     * - For each image view, create a framebuffer bound to the same render pass.
-     * - Reuse the resulting framebuffer list during command buffer recording.
-     *
-     * ! Failure Modes:
-     * - Attachment count mismatch with the render pass.
-     * - Attachment format incompatibility.
-     * - Using outdated swapchain resources after a resize or surface change.
-     *
-     * ? Performance Notes:
-     * - Framebuffer creation is not done every frame.
-     * - Recreate only when dependent resources change, especially on swapchain
-     *   rebuild.
      *
      * ? Sources:
      * - Vulkan Specification, Framebuffer chapter:
@@ -496,11 +442,6 @@ impl Window
     /**
      * * Creates and configures a Vulkan graphics pipeline.
      *
-     * This function builds a `GraphicsPipeline` object using the provided
-     * VMNL instance and render pass. The pipeline encapsulates the full
-     * fixed-function and programmable stages required for rendering
-     * (shader stages, vertex input, rasterization, viewport, etc.).
-     *
      * ! Parameters:
      * - `vmnl_instance`: Global Vulkan context containing the logical device,
      *   allocators, and queue configuration used to create pipeline resources.
@@ -509,22 +450,6 @@ impl Window
      *
      * ! Returns:
      * - `Arc<GraphicsPipeline>`: Shared handle to the created graphics pipeline.
-     *
-     * ? Invariants / Requirements:
-     * - The pipeline layout (descriptor sets, push constants) must match
-     *   the shaders used in the pipeline.
-     * - The vertex input description must match the memory layout of the
-     *   bound vertex buffers.
-     * - The render pass must be compatible with the framebuffer used during
-     *   command buffer recording (same attachments/formats).
-     *
-     * ? Performance Notes:
-     * - Pipeline creation is expensive; it should be done once and reused.
-     * - Consider pipeline caching (`VkPipelineCache`) to reduce creation cost.
-     *
-     * ! Failure Modes:
-     * - Invalid shader modules or mismatched layouts will cause pipeline creation
-     *   to fail at runtime (validation layers strongly recommended).
      *
      * ? Sources:
      * - Vulkan Specification:
@@ -593,12 +518,6 @@ impl Window
 
     /**
      * * Initializes a GLFW window along with its associated event receiver.
-     *
-     * This function creates a window using the provided GLFW instance and
-     * configures it with the given dimensions and title. It also sets up
-     * an event channel to receive window-related events (keyboard, mouse,
-     * resize, etc.).
-     *
      * ! Parameters:
      * - `instance`: Initialized GLFW context used to create the window.
      * - `width`: Width of the window in pixels.
@@ -609,12 +528,6 @@ impl Window
      * - `glfw::PWindow`: The created window handle.
      * - `glfw::GlfwReceiver<(f64, glfw::WindowEvent)>`:
      *     Event receiver used to poll and handle window events.
-     *
-     * ? Invariants / Notes:
-     * - The GLFW instance must be properly initialized before calling this function.
-     * - The returned event receiver must be polled regularly to keep the window responsive.
-     * - Failure to process events may result in the window being marked as unresponsive
-     *   by the operating system.
      *
      * ? Source:
      * - GLFW documentation: https://www.glfw.org/docs/latest/window_guide.html
@@ -634,10 +547,6 @@ impl Window
     /**
      * * Updates and returns the current open state of the window.
      *
-     * This method queries the underlying GLFW window to determine whether a
-     * close event has been requested (e.g., user clicks the close button or
-     * presses a bound key). It updates the internal `is_open` flag accordingly.
-     *
      * ? Behavior:
      * - If the `safe` feature is enabled, the method first checks whether the
      *   window is ready. If not, it returns `false` immediately.
@@ -648,11 +557,6 @@ impl Window
      * - `true` if the window should remain open.
      * - `false` if a close event has been triggered or the window is not ready
      *   (when `safe` is enabled).
-     *
-     * ? Invariants:
-     * - `is_open == false` implies the main loop should terminate.
-     * - Must be called regularly (typically once per frame) to keep the state
-     *   in sync with user actions.
      *
      * ? Typical Usage:
      * - Main loop condition:
@@ -677,10 +581,6 @@ impl Window
     /**
      * * Returns whether the window is fully initialized and ready for use.
      *
-     * This method exposes the internal `is_ready` flag from `WindowState`,
-     * indicating that all required resources (window context, Vulkan objects,
-     * swapchain, etc.) have been successfully created.
-     *
      * ! Returns:
      * - `true` if the window is ready for rendering and event processing.
      * - `false` if initialization is incomplete or has failed.
@@ -697,9 +597,6 @@ impl Window
 
     /**
      * * Enables or disables closing the window when the Escape key is pressed.
-     *
-     * This method updates the window configuration flag controlling whether
-     * an Escape key press should trigger a window close event.
      *
      * ! Parameters:
      * - `closed`:
@@ -744,15 +641,8 @@ impl Window
     /**
      * * Returns the current window width in pixels.
      *
-     * This method exposes the width stored in `WindowConfig`.
-     * It reflects the configured logical size of the window.
-     *
      * ! Returns:
      * - `u32`: Window width in pixels.
-     *
-     * ? Invariants:
-     * - Value is set during initialization or updated on resize events.
-     * - May differ from framebuffer extent used by Vulkan swapchain.
      *
      * ? Notes:
      * - For rendering, prefer querying the framebuffer size if DPI scaling
@@ -766,15 +656,8 @@ impl Window
     /**
      * * Returns the current window height in pixels.
      *
-     * This method exposes the height stored in `WindowConfig`.
-     * It reflects the configured logical size of the window.
-     *
      * ! Returns:
      * - `u32`: Window height in pixels.
-     *
-     * ? Invariants:
-     * - Value is set during initialization or updated on resize events.
-     * - May differ from framebuffer extent used by Vulkan swapchain.
      *
      * ? Notes:
      * - For rendering, prefer querying the framebuffer size if DPI scaling
@@ -902,14 +785,9 @@ impl Window
 
     /**
      * * Initializes a VMNL window along with its associated event receiver.
-     *
      * This function creates a window and configures it with the given dimensions and title.
      * It also sets up an event channel to receive window-related events (keyboard, mouse,
      * resize, etc.).
-     *
-     * ? Behavior:
-     * - If the `safe` feature is enabled, the method first checks whether the
-     *   window is ready. If not, it returns `false` immediately.
      *
      * ! Parameters:
      * - `width`: Width of the window in pixels.
@@ -923,7 +801,7 @@ impl Window
      * - The first time of calling this function while created the vmnl instance at the same time
      */
     pub fn new(
-        vmnl_context:  &VMNLContext,
+        vmnl_context:  &Context,
         width:         u32,
         height:        u32,
         title:         &str

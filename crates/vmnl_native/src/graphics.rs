@@ -1,4 +1,11 @@
-use crate::VMNLContext;
+////////////////////////////////////////////////////////////////////////////////
+/// SPDX-FileCopyrightText: 2026 Hugo Duda
+/// SPDX-License-Identifier: MIT
+///
+/// en chantier
+////////////////////////////////////////////////////////////////////////////////
+
+use crate::{Context};
 use std::sync::Arc;
 use vulkano::buffer::{Subbuffer, /* BufferContents */};
 use vulkano::buffer::{Buffer, BufferCreateInfo, BufferUsage};
@@ -106,31 +113,30 @@ impl Graphics
     //     .expect("Failed to create frame ubo buffer.");
     // }
 
-    fn vertex_color_overflow(
-        color: VMNLrbg,
+    fn vertex_color_transform(
+        color: VMNLrbg
     ) -> VMNLrbg
     {
-        let mut new_color: VMNLrbg = color;
-
-        if color[0] > 255.0 { new_color[0] = 255.0; }
-        if color[1] > 255.0 { new_color[1] = 255.0; }
-        if color[2] > 255.0 { new_color[2] = 255.0; }
-        if color[0] < 0.0   { new_color[0] = 0.0; }
-        if color[1] < 0.0   { new_color[1] = 0.0; }
-        if color[2] < 0.0   { new_color[2] = 0.0; }
-        return [ new_color[0] / 255.0, new_color[1] / 255.0, new_color[2] / 255.0 ];
+        if color.iter().any(|&c| c > 255.0) {
+            eprintln!("VMNL Warning: color value overflow detected. Clamping to [0, 255].");
+        }
+        return [
+            (color[0] / 255.0).clamp(0.0, 1.0),
+            (color[1] / 255.0).clamp(0.0, 1.0),
+            (color[2] / 255.0).clamp(0.0, 1.0),
+        ];
     }
 
     pub fn create_vertices(
-        vmnl_context: &VMNLContext,
+        vmnl_context: &Context,
         vertex1:      VMNLVertex,
         vertex2:      VMNLVertex,
         vertex3:      VMNLVertex
     ) -> Self
     {
-        let vertex1_color: VMNLrbg      = Self::vertex_color_overflow(vertex1.color);
-        let vertex2_color: VMNLrbg      = Self::vertex_color_overflow(vertex2.color);
-        let vertex3_color: VMNLrbg      = Self::vertex_color_overflow(vertex3.color);
+        let vertex1_color: VMNLrbg      = Self::vertex_color_transform(vertex1.color);
+        let vertex2_color: VMNLrbg      = Self::vertex_color_transform(vertex2.color);
+        let vertex3_color: VMNLrbg      = Self::vertex_color_transform(vertex3.color);
         let vertices = [
             VMNLVertex {
                 position: vertex1.position,
