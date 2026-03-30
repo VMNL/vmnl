@@ -67,7 +67,7 @@ impl Graphics
             },
             vertices.iter().cloned()
         )
-        .expect("Failed to create vertex buffer.");
+        .expect("VMNL error: Failed to create vertex buffer.");
     }
 
     // fn create_index_buffer(

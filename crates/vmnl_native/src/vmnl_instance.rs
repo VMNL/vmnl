@@ -37,7 +37,7 @@ pub struct Context
      *   This field is wrapped in an `Arc` to allow for shared ownership and thread-safe reference.
      *   The `VMNLInstance` struct encapsulates the VMNLInstance, witch is hidden from the public API.
      */
-    pub(crate) inner: Arc<VMNLInstance>
+    pub(crate) inner: Arc<VMNLInstance>,
 }
 
 impl Context
@@ -75,37 +75,50 @@ pub(crate) struct VMNLInstance
      */
     pub(crate) instance:                    Arc<Instance>,
 
-    /// * Selected physical device.
-    /// Represents a physical GPU available on the system.
-    /// Need to selects one physical device to create a logical device.
+    /**
+     * * Selected physical device.
+     *   Represents a physical GPU available on the system.
+     *   Need to selects one physical device to create a logical device.
+     */
     pub(crate) physical_device:             Arc<PhysicalDevice>,
 
-    /// * Logical device.
-    /// Represents the application's interface to the selected GPU.
-    /// It enables specific device features and provides access to
-    /// command submission through queues.
+    /**
+     * * Logical device.
+     *   Represents the application's interface to the selected GPU.
+     *   It enables specific device features and provides access to
+     *   command submission through queues.
+     */
     pub(crate) device:                      Arc<Device>,
 
-    /// * Device queue used for submitting GPU work.
-    /// Queues are retrieved from queue families supported by the
-    /// physical device. They are used to submit command buffers
-    /// for execution on the GPU.
+    /**
+     * * Device queue used for submitting GPU work.
+     *   Queues are retrieved from queue families supported by the
+     *   physical device. They are used to submit command buffers
+     *   for execution on the GPU.
+     */
     pub(crate) graphics_queue:              Arc<Queue>,
 
-    /// * Index of the graphics queue family.
-    /// Identifies which queue family supports graphics operations.
+    /**
+     * * Index of the graphics queue family.
+     *   Identifies which queue family supports graphics operations.
+     *   This index is used when creating the logical device and retrieving the graphics queue.
+     */
     pub(crate) graphics_queue_family_index: u32,
 
-    /// * Memory allocator used to manage GPU memory.
-    /// `StandardMemoryAllocator` from Vulkano simplifies Vulkan's
-    /// explicit memory management by handling allocation and reuse
-    /// of device memory for buffers and images.
+    /**
+     * * Memory allocator used to manage GPU memory.
+     *   `StandardMemoryAllocator` from Vulkano simplifies Vulkan's
+     *   explicit memory management by handling allocation and reuse
+     *   of device memory for buffers and images.
+     */
     pub(crate) memory_allocator:            Arc<StandardMemoryAllocator>,
 
-    /// * Command buffer allocator used to manage command buffers.
-    /// `StandardCommandBufferAllocator` from Vulkano manages the
-    /// allocation and reuse of command buffers, which are used to
-    /// record commands that will be submitted to the GPU for execution.
+    /**
+     * * Command buffer allocator used to manage command buffers.
+     *   `StandardCommandBufferAllocator` from Vulkano manages the
+     *   allocation and reuse of command buffers, which are used to
+     *   record commands that will be submitted to the GPU for execution.
+     */
     pub(crate) command_buffer_allocator:    Arc<StandardCommandBufferAllocator>
 }
 
@@ -116,8 +129,8 @@ pub(crate) struct VMNLInstance
  * - select_graphics_queue_family_index: Selects the index of a queue family that supports graphics operations.
  * - select_physical_device: Selects a suitable physical device based on required extensions and graphics support.
  * - create_device: Creates a logical device and retrieves the graphics queue.
- * ! - new: Initializes the VMNLInstance by creating the Vulkan instance, selecting a physical device,
- * ! creating a logical device, and setting up the memory and command buffer allocators.
+ * - new: Initializes the VMNLInstance by creating the Vulkan instance, selecting a physical device,
+ *   creating a logical device, and setting up the memory and command buffer allocators.
  */
 impl VMNLInstance
 {
@@ -161,14 +174,15 @@ impl VMNLInstance
      */
     fn select_graphics_queue_family_index(
         physical_device: &Arc<PhysicalDevice>,
-    ) -> u32 {
+    ) -> u32
+    {
         physical_device
             .queue_family_properties()
             .iter()
             .enumerate()
             .find(|(_, q)| q.queue_flags.contains(QueueFlags::GRAPHICS))
             .map(|(index, _)| index as u32)
-            .expect("no graphics queue family found")
+            .expect("VMNL error: No graphics queue family found")
     }
 
     /**
@@ -187,18 +201,19 @@ impl VMNLInstance
     fn select_physical_device(
         instance: &Arc<Instance>,
         required_extensions: &DeviceExtensions,
-    ) -> Arc<PhysicalDevice> {
+    ) -> Arc<PhysicalDevice>
+    {
         instance
             .enumerate_physical_devices()
-            .expect("could not enumerate physical devices")
-            .filter(|pd| pd.supported_extensions().contains(required_extensions))
-            .filter(|pd| {
-                pd.queue_family_properties()
+            .expect("VMNL error: Could not enumerate physical devices")
+            .filter(|physical_device| physical_device.supported_extensions().contains(required_extensions))
+            .filter(|physical_device| {
+                physical_device.queue_family_properties()
                     .iter()
-                    .any(|q| q.queue_flags.contains(QueueFlags::GRAPHICS))
+                    .any(|queue| queue.queue_flags.contains(QueueFlags::GRAPHICS))
             })
-            .max_by_key(|pd| {
-                match pd.properties().device_type {
+            .max_by_key(|physical_device| {
+                match physical_device.properties().device_type {
                     PhysicalDeviceType::DiscreteGpu => 1000,
                     PhysicalDeviceType::IntegratedGpu => 100,
                     PhysicalDeviceType::VirtualGpu => 50,
@@ -206,7 +221,7 @@ impl VMNLInstance
                     _ => 0,
                 }
             })
-            .expect("no suitable physical device found")
+            .expect("VMNL error: No suitable physical device found")
     }
 
     /**
@@ -240,11 +255,11 @@ impl VMNLInstance
                 ..Default::default()
             },
         )
-        .expect("failed to create device");
+        .expect("VMNL error: Failed to create device");
 
         let graphics_queue = queues
             .next()
-            .expect("device created without any queue");
+            .expect("VMNL error: Device created without any queue");
 
         (device, graphics_queue)
     }
@@ -265,12 +280,12 @@ impl VMNLInstance
             .map_err(|_| VMNLError::VMNLInitFailed)?;
         let required_instance_extensions: InstanceExtensions = glfw
             .get_required_instance_extensions()
-            .expect("GLFW: Vulkan instance extensions unavailable")
+            .expect("VMNL error: Vulkan instance extensions unavailable")
             .iter()
             .map(String::as_str)
             .collect();
         let library = VulkanLibrary::new()
-            .expect("no local Vulkan library/DLL");
+            .expect("VMNL error: No local Vulkan library/DLL");
         let instance = Instance::new(
             library,
             InstanceCreateInfo {
@@ -279,7 +294,7 @@ impl VMNLInstance
                 ..Default::default()
             },
         )
-            .expect("failed to create instance");
+            .expect("VMNL error: Failed to create instance");
         let device_extensions = DeviceExtensions {
             khr_swapchain: true,
             ..DeviceExtensions::empty()
