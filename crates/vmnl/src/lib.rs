@@ -5,6 +5,7 @@ pub use vmnl_native::{
     VMNLVertex,
     VMNLResult,
     Key,
+    Event,
     MouseButton,
     VMNLVector2f,
     VMNLrbg,

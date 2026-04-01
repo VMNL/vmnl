@@ -69,6 +69,30 @@ pub struct KeyboardState
 
 impl KeyboardState
 {
+    pub(crate) fn from_glfw(
+        key: GlfwKey
+    ) -> Option<Key>
+    {
+        match key {
+            GlfwKey::A => Some(Key::A), GlfwKey::B => Some(Key::B), GlfwKey::C => Some(Key::C),
+            GlfwKey::D => Some(Key::D), GlfwKey::E => Some(Key::E), GlfwKey::F => Some(Key::F), GlfwKey::G => Some(Key::G),
+            GlfwKey::H => Some(Key::H), GlfwKey::I => Some(Key::I), GlfwKey::J => Some(Key::J), GlfwKey::K => Some(Key::K),
+            GlfwKey::L => Some(Key::L), GlfwKey::M => Some(Key::M), GlfwKey::N => Some(Key::N), GlfwKey::O => Some(Key::O),
+            GlfwKey::P => Some(Key::P), GlfwKey::Q => Some(Key::Q), GlfwKey::R => Some(Key::R), GlfwKey::S => Some(Key::S),
+            GlfwKey::T => Some(Key::T), GlfwKey::U => Some(Key::U), GlfwKey::V => Some(Key::V), GlfwKey::W => Some(Key::W),
+            GlfwKey::X => Some(Key::X), GlfwKey::Y => Some(Key::Y), GlfwKey::Z => Some(Key::Z), GlfwKey::Num0 => Some(Key::Num0),
+            GlfwKey::Num1 => Some(Key::Num1), GlfwKey::Num2 => Some(Key::Num2), GlfwKey::Num3 => Some(Key::Num3),
+            GlfwKey::Num4 => Some(Key::Num4), GlfwKey::Num5 => Some(Key::Num5), GlfwKey::Num6 => Some(Key::Num6),
+            GlfwKey::Num7 => Some(Key::Num7), GlfwKey::Num8 => Some(Key::Num8), GlfwKey::Num9 => Some(Key::Num9),
+            GlfwKey::Escape => Some(Key::Escape), GlfwKey::Enter => Some(Key::Enter),GlfwKey ::Tab=>Some( Key ::Tab ), GlfwKey::Backspace=>Some( Key ::Backspace),
+            GlfwKey::Left => Some(Key::Left), GlfwKey::Right => Some(Key::Right), GlfwKey::Up => Some(Key::Up), GlfwKey::Down => Some(Key::Down),
+            GlfwKey::F1 => Some(Key::F1), GlfwKey::F2 => Some(Key::F2), GlfwKey::F3 => Some(Key::F3), GlfwKey::F4 => Some(Key::F4),
+            GlfwKey::F5 => Some(Key::F5), GlfwKey::F6 => Some(Key::F6), GlfwKey::F7 => Some(Key::F7), GlfwKey::F8 => Some(Key::F8),
+            GlfwKey::F9 => Some(Key::F9), GlfwKey::F10 => Some(Key::F10), GlfwKey::F11 => Some(Key::F11), GlfwKey::F12 => Some(Key::F12),
+            _ => None
+        }
+    }
+
     /**
      * * Converts a Key enum variant to the corresponding GLFW key. This function is used to translate
      * the internal representation of keys used by the VMNL application into GLFW key codes for event handling.
@@ -79,7 +103,7 @@ impl KeyboardState
      * ! Returns:
      * - The corresponding GLFW key code, or GlfwKey::Unknown if the key is not recognized or does not have a direct GLFW equivalent.
      */
-    fn key_to_glfw(
+    pub(crate) fn to_glfw(
         key: Key
     ) -> Option<GlfwKey>
     {
@@ -138,7 +162,7 @@ impl KeyboardState
         self.previous = self.current;
 
         for &key in ALL_KEYS {
-            if let Some(glfw_key) = Self::key_to_glfw(key) {
+            if let Some(glfw_key) = Self::to_glfw(key) {
                 self.current[Self::index(key)] =
                     window.get_key(glfw_key) == glfw::Action::Press;
             }

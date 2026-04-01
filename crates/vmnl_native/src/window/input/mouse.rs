@@ -62,10 +62,36 @@ pub struct MouseState
 impl MouseState
 {
     /**
+     * * Converts a GLFW mouse button to the corresponding MouseButton enum variant.
+     *
+     * ! Parameters:
+     * - `button`: The GLFW mouse button to convert.
+     *
+     * ! Returns:
+     * - An Option containing the corresponding MouseButton enum variant if the conversion is successful,
+     *   or None if the GLFW mouse button does not have a corresponding MouseButton variant.
+     */
+    pub(crate) fn from_glfw(
+        button: GlfwMouseButton
+    ) -> Option<MouseButton>
+    {
+        match button {
+            GlfwMouseButton::Left => Some(MouseButton::Left),
+            GlfwMouseButton::Right => Some(MouseButton::Right),
+            GlfwMouseButton::Middle => Some(MouseButton::Middle),
+            GlfwMouseButton::Button4 => Some(MouseButton::Button4),
+            GlfwMouseButton::Button5 => Some(MouseButton::Button5),
+            GlfwMouseButton::Button6 => Some(MouseButton::Button6),
+            GlfwMouseButton::Button7 => Some(MouseButton::Button7),
+            GlfwMouseButton::Button8 => Some(MouseButton::Button8)
+        }
+    }
+
+    /**
      * * Converts a MouseButton enum variant to the corresponding GLFW mouse button.
      *   This function is used to map the VMNL MouseButton enum to the GLFW mouse button
      */
-    pub(crate) fn mouse_to_glfw(
+    pub(crate) fn to_glfw(
         button: MouseButton
     ) -> Option<GlfwMouseButton>
     {
@@ -108,7 +134,7 @@ impl MouseState
         self.previous = self.current;
 
         for &button in ALL_MOUSE_BUTTONS {
-            if let Some(glfw_button) = Self::mouse_to_glfw(button) {
+            if let Some(glfw_button) = Self::to_glfw(button) {
                 self.current[Self::index(button)] =
                     window.get_mouse_button(glfw_button) == glfw::Action::Press;
             }

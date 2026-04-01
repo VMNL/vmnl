@@ -14,14 +14,13 @@
 extern crate vulkano;
 use crate::{VMNLResult, VMNLError};
 use std::sync::{Arc};
-use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo, InstanceExtensions};
 use vulkano::{VulkanLibrary};
-use vulkano::device::physical::PhysicalDeviceType;
-use vulkano::device::physical::{PhysicalDevice};
+use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo, InstanceExtensions};
+use vulkano::device::physical::{PhysicalDevice, PhysicalDeviceType};
 use vulkano::device::{Device, DeviceCreateInfo, QueueCreateInfo, QueueFlags, Queue, DeviceExtensions};
 use vulkano::memory::allocator::{StandardMemoryAllocator};
 use vulkano::command_buffer::allocator::{
-    StandardCommandBufferAllocator, StandardCommandBufferAllocatorCreateInfo,
+    StandardCommandBufferAllocator, StandardCommandBufferAllocatorCreateInfo
 };
 
 /**
@@ -187,13 +186,13 @@ impl VMNLInstance
         physical_device: &Arc<PhysicalDevice>,
     ) -> u32
     {
-        physical_device
+        return physical_device
             .queue_family_properties()
             .iter()
             .enumerate()
             .find(|(_, q)| q.queue_flags.contains(QueueFlags::GRAPHICS))
             .map(|(index, _)| index as u32)
-            .expect("VMNL error: No graphics queue family found")
+            .expect("VMNL error: No graphics queue family found");
     }
 
     /**
@@ -214,7 +213,7 @@ impl VMNLInstance
         required_extensions: &DeviceExtensions,
     ) -> Arc<PhysicalDevice>
     {
-        instance
+        return instance
             .enumerate_physical_devices()
             .expect("VMNL error: Could not enumerate physical devices")
             .filter(|physical_device| physical_device.supported_extensions().contains(required_extensions))
@@ -232,7 +231,7 @@ impl VMNLInstance
                     _ => 0,
                 }
             })
-            .expect("VMNL error: No suitable physical device found")
+            .expect("VMNL error: No suitable physical device found");
     }
 
     /**
@@ -267,12 +266,12 @@ impl VMNLInstance
             },
         )
         .expect("VMNL error: Failed to create device");
-
-        let graphics_queue = queues
+        let graphics_queue: Arc<Queue> =
+            queues
             .next()
             .expect("VMNL error: Device created without any queue");
 
-        (device, graphics_queue)
+        return (device, graphics_queue);
     }
 
     /**
@@ -315,11 +314,11 @@ impl VMNLInstance
                 khr_swapchain: true,
                 ..DeviceExtensions::empty()
             };
-        let physical_device =
+        let physical_device: Arc<PhysicalDevice> =
             Self::select_physical_device(&instance, &device_extensions);
-        let graphics_queue_family_index =
+        let graphics_queue_family_index: u32 =
             Self::select_graphics_queue_family_index(&physical_device);
-        let (device, graphics_queue) =
+        let (device, graphics_queue): (Arc<Device>, Arc<Queue>) =
             Self::create_device(&physical_device, graphics_queue_family_index, device_extensions);
         let memory_allocator =
             Self::create_memory_allocator(&device);
