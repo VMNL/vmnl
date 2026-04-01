@@ -8,6 +8,3 @@ vulkano         = "0.35.2"
 vulkano-shaders = "0.35"
 glfw            = "0.62.0"
 bytemuck        = "1.25.0"
-
-[features]
-safe = []

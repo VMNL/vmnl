@@ -13,14 +13,11 @@ use super::{
     Graphics
 };
 use crate::window::PushConstants;
+use std::sync::Arc;
+use vulkano::{VulkanError, Validated};
+use vulkano::device::{Queue, Device};
 use vulkano::render_pass::Framebuffer;
 use vulkano::sync::future::FenceSignalFuture;
-use vulkano::device::{Queue};
-use std::sync::Arc;
-use vulkano::device::Device;
-use vulkano::Validated;
-use vulkano::VulkanError;
-use vulkano::swapchain::SwapchainAcquireFuture;
 use vulkano::command_buffer::{
     AutoCommandBufferBuilder,
     CommandBufferUsage,
@@ -30,10 +27,9 @@ use vulkano::command_buffer::{
     SubpassContents,
     SubpassEndInfo,
 };
-use vulkano::swapchain::{Swapchain};
 use vulkano::pipeline::Pipeline;
 use vulkano::sync::{self, GpuFuture};
-use vulkano::swapchain::{self, SwapchainPresentInfo};
+use vulkano::swapchain::{self, SwapchainPresentInfo, SwapchainAcquireFuture, Swapchain};
 
 impl Window
 {

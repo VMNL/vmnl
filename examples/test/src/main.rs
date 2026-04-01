@@ -1,4 +1,4 @@
-use vmnl::{Window, Graphics, Context, VMNLVertex, VMNLResult, Key, MouseButton};
+use vmnl::{Window, Graphics, Context, VMNLVertex, VMNLResult, Key, MouseButton, Event};
 
 fn main() -> VMNLResult<()>
 {
@@ -18,7 +18,53 @@ fn main() -> VMNLResult<()>
     );
 
     while win.is_open() {
-        win.poll_event();
+        for event in win.poll_events() {
+            match event {
+                Event::Closed => {
+                    println!("[Event] Closed");
+                    win.close();
+                }
+                Event::FocusGained => {
+                    println!("[Event] Focus gained");
+                }
+                Event::FocusLost => {
+                    println!("[Event] Focus lost");
+                }
+                Event::Resized {width, height} => {
+                    println!("[Event] Resized: {}x{}", width, height);
+                }
+                Event::FramebufferResized {width, height} => {
+                    println!("[Event] Framebuffer resized: {}x{}", width, height);
+                }
+                Event::KeyPressed {key, repeat} => {
+                    println!("[Event] Key pressed: {:?} (repeat: {})", key, repeat);
+                }
+                Event::KeyReleased {key} => {
+                    println!("[Event] Key released: {:?}", key);
+                }
+                Event::MouseMoved {x, y} => {
+                    println!("[Event] Mouse moved: {} {}", x, y);
+                }
+                Event::MouseEntered => {
+                    println!("[Event] Mouse entered window");
+                }
+                Event::MouseLeft => {
+                    println!("[Event] Mouse left window");
+                }
+                Event::MouseButtonPressed {button} => {
+                    println!("[Event] Mouse button pressed: {:?}", button);
+                }
+                Event::MouseButtonReleased {button} => {
+                    println!("[Event] Mouse button released: {:?}", button);
+                }
+                Event::MouseScrolled {dx, dy} => {
+                    println!("[Event] Mouse scrolled: {} {}", dx, dy);
+                }
+                Event::Text(c) => {
+                    println!("[Event] Text input: {}", c);
+                }
+            }
+        }
         if win.input().mouse().is_released(MouseButton::Left) {
             println!("Mouse button left is released");
         }
@@ -27,5 +73,5 @@ fn main() -> VMNLResult<()>
         }
         win.render(&[&vertex, &vertex2]);
     }
-    Ok(())
+    return Ok(());
 }

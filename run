@@ -58,10 +58,6 @@ run_cargo()
     exec cargo run -p test
 }
 
-if [[ "${1:-}" == "-s" ]]; then
-    exec cargo run -p test --features safe
-fi
-
 if [[ ! -f "$SHADERC_LIB" ]]; then
     echo "[INFO] shaderc missing -> installing..."
     install_shaderc

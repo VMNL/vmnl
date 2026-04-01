@@ -11,20 +11,19 @@ extern crate glfw;
 pub mod input;
 pub mod render;
 pub mod event;
+use vulkano::format::Format;
 pub use event::{EventQueue, Event};
-pub use input::{Input, Key, MouseButton, KeyboardState};
+pub use input::{Input, Key, MouseButton, KeyboardState, MouseState};
+use vulkano::shader::{EntryPoint, ShaderModule};
 use crate::vmnl_instance::{VMNLInstance};
-use crate::{
-    Graphics, Context, VMNLError, VMNLResult, VMNLVertex
-};
-use vulkano::instance::{Instance};
-use vulkano::device::{Device};
+use crate::{Graphics, Context, VMNLError, VMNLResult, VMNLVertex};
+use vulkano::instance::Instance;
+use vulkano::device::Device;
 use std::sync::Arc;
-use vulkano::pipeline::graphics::vertex_input::Vertex;
-use vulkano::swapchain::{PresentMode, Surface, Swapchain, SwapchainCreateInfo};
+use vulkano::swapchain::{PresentMode, Surface, Swapchain, SwapchainCreateInfo, ColorSpace, SurfaceCapabilities};
 use vulkano::image::{Image, ImageUsage};
 use vulkano::image::view::{ImageView, ImageViewCreateInfo, ImageViewType};
-use vulkano::pipeline::graphics::vertex_input::{VertexDefinition};
+use vulkano::pipeline::graphics::vertex_input::{VertexDefinition, Vertex, VertexInputState};
 use vulkano::pipeline::graphics::{
     color_blend::{ColorBlendAttachmentState, ColorBlendState},
     input_assembly::InputAssemblyState,
@@ -34,17 +33,8 @@ use vulkano::pipeline::graphics::{
     GraphicsPipelineCreateInfo,
 };
 use vulkano::pipeline::layout::PipelineDescriptorSetLayoutCreateInfo;
-use vulkano::pipeline::{
-    GraphicsPipeline,
-    PipelineLayout,
-    PipelineShaderStageCreateInfo,
-};
-use vulkano::render_pass::{
-    Framebuffer,
-    FramebufferCreateInfo,
-    RenderPass,
-    Subpass,
-};
+use vulkano::pipeline::{GraphicsPipeline, PipelineLayout, PipelineShaderStageCreateInfo};
+use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass, Subpass};
 use vulkano::sync::{self, GpuFuture};
 
 /**
@@ -261,7 +251,7 @@ impl Window
                 )
                 .expect("VMNL error: Failed to create swapchain image view")
             })
-            .collect()
+            .collect();
     }
 
     /**
@@ -284,7 +274,7 @@ impl Window
     {
         unsafe {
             return Surface::from_window_ref(instance.clone(), window)
-                .expect("VMNL error: Failed to create Surface");
+            .expect("VMNL error: Failed to create Surface");
         }
     }
 
@@ -308,33 +298,36 @@ impl Window
         window_extent: [u32; 2]
     ) -> (Arc<Swapchain>, Vec<Arc<Image>>)
     {
-        let surface_capabilities = device
+        let surface_capabilities: SurfaceCapabilities =
+            device
             .physical_device()
             .surface_capabilities(&surface, Default::default())
             .expect("VMNL error: Failed to create surface capabilities");
-        let (image_format, image_color_space) = device
+        let (image_format, image_color_space): (Format, ColorSpace) =
+            device
             .physical_device()
             .surface_formats(&surface, Default::default())
             .expect("VMNL error: Failed to create surface format")[0];
-        let mut min_image_count = surface_capabilities.min_image_count.max(2);
+        let mut min_image_count: u32 =
+            surface_capabilities.min_image_count.max(2);
         if let Some(max_image_count) = surface_capabilities.max_image_count {
             min_image_count = min_image_count.min(max_image_count);
         }
-        let image_extent =
-        if let Some(current_extent) = surface_capabilities.current_extent {
-            current_extent
-        } else {
-            [
-                window_extent[0].clamp(
-                    surface_capabilities.min_image_extent[0],
-                    surface_capabilities.max_image_extent[0],
-                ),
-                window_extent[1].clamp(
-                    surface_capabilities.min_image_extent[1],
-                    surface_capabilities.max_image_extent[1],
-                ),
-            ]
-        };
+        let image_extent: [u32; 2] =
+            if let Some(current_extent) = surface_capabilities.current_extent {
+                current_extent
+            } else {
+                [
+                    window_extent[0].clamp(
+                        surface_capabilities.min_image_extent[0],
+                        surface_capabilities.max_image_extent[0],
+                    ),
+                    window_extent[1].clamp(
+                        surface_capabilities.min_image_extent[1],
+                        surface_capabilities.max_image_extent[1],
+                    ),
+                ]
+            };
 
         return Swapchain::new(
             device.clone(),
@@ -424,7 +417,7 @@ impl Window
         render_pass: &Arc<RenderPass>,
     ) -> Vec<Arc<Framebuffer>>
     {
-        image_views
+        return image_views
             .iter()
             .map(|image_view| {
                 Framebuffer::new(
@@ -436,7 +429,7 @@ impl Window
                 )
                 .expect("VMNL error: Failed to create framebuffer")
             })
-            .collect()
+            .collect();
     }
 
     /**
@@ -463,36 +456,49 @@ impl Window
         render_pass:   &Arc<RenderPass>
     ) -> Arc<GraphicsPipeline>
     {
-        let vs = vs::load(device.clone())
+        let vs: Arc<ShaderModule> =
+            vs::load(device.clone())
             .expect("VMNL error: Failed to load vertex shader");
-        let fs = fs::load(device.clone())
+        let fs: Arc<ShaderModule> =
+            fs::load(device.clone())
             .expect("VMNL error: Failed to load fragment shader");
-        let vs = vs.entry_point("main").expect("VMNL error: Missing vertex entry point");
-        let fs = fs.entry_point("main").expect("VMNL error: Missing fragment entry point");
-        let stages = [
+        let vs: EntryPoint =
+            vs
+            .entry_point("main")
+            .expect("VMNL error: Missing vertex entry point");
+        let fs: EntryPoint =
+            fs
+            .entry_point("main")
+            .expect("VMNL error: Missing fragment entry point");
+        let stages: [PipelineShaderStageCreateInfo; 2] = [
             PipelineShaderStageCreateInfo::new(vs.clone()),
             PipelineShaderStageCreateInfo::new(fs),
         ];
-        let layout = PipelineLayout::new(
-            device.clone(),
-            PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
+        let layout: Arc<PipelineLayout> =
+            PipelineLayout::new(
+                device.clone(),
+                PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
                 .into_pipeline_layout_create_info(device.clone())
                 .expect("VMNL error: Failed to create pipeline layout info"),
-        )
-        .expect("VMNL error: Failed to create pipeline layout");
-        let extent = swapchain.image_extent();
-        let viewport = Viewport {
-            offset: [0.0, 0.0],
-            extent: [extent[0] as f32, extent[1] as f32],
-            depth_range: 0.0..=1.0,
-        };
-        let subpass = Subpass::from(render_pass.clone(), 0)
+            ).expect("VMNL error: Failed to create pipeline layout");
+        let extent: [u32; 2] =
+            swapchain
+            .image_extent();
+        let viewport: Viewport =
+            Viewport {
+                offset: [0.0, 0.0],
+                extent: [extent[0] as f32, extent[1] as f32],
+                depth_range: 0.0..=1.0,
+            };
+        let subpass: Subpass =
+            Subpass::from(render_pass.clone(), 0)
             .expect("VMNL error: Failed to create subpass");
-        let vertex_input_state = VMNLVertex::per_vertex()
+        let vertex_input_state: VertexInputState =
+            VMNLVertex::per_vertex()
             .definition(&vs)
             .expect("VMNL error: Failed to create vertex input state");
 
-        GraphicsPipeline::new(
+        return GraphicsPipeline::new(
             device.clone(),
             None,
             GraphicsPipelineCreateInfo {
@@ -513,7 +519,7 @@ impl Window
                 ..GraphicsPipelineCreateInfo::layout(layout)
             },
         )
-        .expect("VMNL error: Failed to create graphics pipeline")
+        .expect("VMNL error: Failed to create graphics pipeline");
     }
 
     /**
@@ -549,8 +555,7 @@ impl Window
      *
      * ! Returns:
      * - `true` if the window should remain open.
-     * - `false` if a close event has been triggered or the window is not ready
-     *   (when `safe` is enabled).
+     * - `false` if a close event has been triggered.
      *
      * ? Typical Usage:
      * - Main loop condition:
@@ -562,11 +567,6 @@ impl Window
      */
     pub fn is_open(&mut self) -> bool
     {
-        #[cfg(feature = "safe")] {
-            if !self.window_state.is_ready {
-                return;
-            }
-        }
         self.window_state.is_open = !self.window_handle.context.should_close();
         return self.window_state.is_open;
     }
@@ -618,16 +618,11 @@ impl Window
         self.window_handle.context.set_should_close(true);
     }
 
-    pub fn poll_event(&mut self) -> ()
+    pub fn poll_events(&mut self) -> Vec<Event>
     {
-        #[cfg(feature = "safe")] {
-            if !self.window_state.is_ready {
-                return;
-            }
-        }
         self.window_handle.instance.poll_events();
         self.window_handle.input.update(&self.window_handle.context);
-        self.window_handle.events.poll_events();
+        self.window_handle.events.poll_events()
     }
 
     /**
@@ -729,6 +724,15 @@ impl Window
             Some(sync::now(vmnl_instance.device.clone()).boxed());
         let input: Input = Input::new();
 
+        window.set_char_polling(true);
+        window.set_mouse_button_polling(true);
+        window.set_cursor_pos_polling(true);
+        window.set_cursor_enter_polling(true);
+        window.set_scroll_polling(true);
+        window.set_size_polling(true);
+        window.set_framebuffer_size_polling(true);
+        window.set_focus_polling(true);
+        window.set_close_polling(true);
         window.set_key_polling(true);
         println!("VMNL log: Window named \"{}\" with [{}, {}] created.", title, height, width);
         Ok(Self {

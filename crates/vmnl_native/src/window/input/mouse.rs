@@ -61,16 +61,29 @@ pub struct MouseState
 
 impl MouseState
 {
+    /**
+     * * Converts a GLFW mouse button to the corresponding MouseButton enum variant.
+     *
+     * ! Parameters:
+     * - `button`: The GLFW mouse button to convert.
+     *
+     * ! Returns:
+     * - An Option containing the corresponding MouseButton enum variant if the conversion is successful,
+     *   or None if the GLFW mouse button does not have a corresponding MouseButton variant.
+     */
     pub(crate) fn from_glfw(
         button: GlfwMouseButton
     ) -> Option<MouseButton>
     {
         match button {
-            GlfwMouseButton::Left => Some(MouseButton::Left), GlfwMouseButton::Right => Some(MouseButton::Right),
-            GlfwMouseButton::Middle => Some(MouseButton::Middle), GlfwMouseButton::Button4 => Some(MouseButton::Button4),
-            GlfwMouseButton::Button5 => Some(MouseButton::Button5), GlfwMouseButton::Button6 => Some(MouseButton::Button6),
-            GlfwMouseButton::Button7 => Some(MouseButton::Button7), GlfwMouseButton::Button8 => Some(MouseButton::Button8),
-            _ => None
+            GlfwMouseButton::Left => Some(MouseButton::Left),
+            GlfwMouseButton::Right => Some(MouseButton::Right),
+            GlfwMouseButton::Middle => Some(MouseButton::Middle),
+            GlfwMouseButton::Button4 => Some(MouseButton::Button4),
+            GlfwMouseButton::Button5 => Some(MouseButton::Button5),
+            GlfwMouseButton::Button6 => Some(MouseButton::Button6),
+            GlfwMouseButton::Button7 => Some(MouseButton::Button7),
+            GlfwMouseButton::Button8 => Some(MouseButton::Button8)
         }
     }
 
