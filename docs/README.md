@@ -1,4 +1,4 @@
-# VMNL — Vulkan Multimedia Networking Library
+# VMNL - Vulkan Multimedia Networking Library
 
 <div align="center">
 
@@ -46,6 +46,15 @@ VMNL unifies:
 - Networking *(planned)*
 
 Constraint: **no hidden complexity, only structured complexity.**
+
+---
+
+## ⚠️ Current State
+
+- API unstable
+- Modules incomplete
+- Architecture still evolving
+- Breaking changes expected
 
 ---
 
@@ -135,15 +144,6 @@ git clone git@github.com:VMNL/vmnl.git
 cd vmnl
 cargo run
 ```
-
----
-
-## ⚠️ Current State
-
-- API unstable
-- Modules incomplete
-- Architecture still evolving
-- Breaking changes expected
 
 ---
 
