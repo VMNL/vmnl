@@ -2,7 +2,7 @@
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// en chantier
+/// * en chantier
 ////////////////////////////////////////////////////////////////////////////////
 
 use crate::{Context};
@@ -15,19 +15,29 @@ use bytemuck::{Pod, Zeroable};
 
 /// VMNL types definition
 // pub type VMNLIndexBuffer    = Subbuffer<[u32]>;
-pub type VMNLVertexBuffer   = Subbuffer<[VMNLVertex]>;
 // pub type VMNLFrameUboBuffer = Subbuffer<VMNLFrameUbo>;
+/// * Defines a type alias VMNLVertexBuffer for a vertex buffer containing an array of VMNLVertex instances, which represent the vertices used for rendering in the VMNL library.
+pub type VMNLVertexBuffer   = Subbuffer<[VMNLVertex]>;
 pub type VMNLrbg            = [f32; 3];
+/// * Defines a type alias VMNLrgba for an RGBA color represented as an array of four f32 values.
 pub type VMNLrgba           = [f32; 4];
+/// * Defines a type alias VMNLVector2f for a 2D vector represented as an array of two f32 values.
 pub type VMNLVector2f       = [f32; 2];
+/// * Defines a type alias VMNLVector2i for a 2D vector represented as an array of two i32 values.
 pub type VMNLVector2i       = [i32; 2];
+/// * Defines a type alias VMNLRect for a rectangle represented as an array of four f32 values.
 pub type VMNLRect           = [f32; 4];
 
+/**
+ * * Defines the VMNLVertex struct, which represents a vertex with a position and color.
+ */
 #[repr(C)]
 #[derive(Vertex, Pod, Zeroable, Clone, Copy, Default, Debug)]
 pub struct VMNLVertex {
+    /// * The position of the vertex, represented as a 2D vector of f32 values.
     #[format(R32G32_SFLOAT)]
     pub position: VMNLVector2f,
+    /// * The color of the vertex, represented as an RGB color of f32 values.
     #[format(R32G32B32_SFLOAT)]
     pub color: VMNLrbg
 }
@@ -39,8 +49,12 @@ pub struct VMNLVertex {
 //     color: VMNLrgba
 // }
 
+/**
+ * * Defines the Graphics struct, which encapsulates the vertex buffer and other graphics-related resources.
+ */
 pub struct Graphics
 {
+    /// * The vertex buffer containing the vertices to be rendered.
     pub vertex_buffer: VMNLVertexBuffer
     // pub index_buffer:  VMNLIndexBuffer
     // pub frame_ubo_buffer: FrameUboBuffer
@@ -48,6 +62,16 @@ pub struct Graphics
 
 impl Graphics
 {
+    /**
+     * * Creates a vertex buffer from an array of VMNLVertex instances using the provided memory allocator.
+     *
+     * ! Parameters:
+     * - `vertices`: A slice of VMNLVertex instances that define the vertices to be rendered.
+     * - `memory_allocator`: A reference to the memory allocator used to allocate the vertex buffer.
+     *
+     * ! Returns:
+     * - A VMNLVertexBuffer containing the created vertex buffer ready for rendering.
+     */
     fn create_vertex_buffer(
         vertices: &[VMNLVertex],
         memory_allocator: &Arc<StandardMemoryAllocator>
@@ -67,7 +91,7 @@ impl Graphics
             },
             vertices.iter().cloned()
         )
-        .expect("Failed to create vertex buffer.");
+        .expect("VMNL error: Failed to create vertex buffer.");
     }
 
     // fn create_index_buffer(
@@ -113,6 +137,9 @@ impl Graphics
     //     .expect("Failed to create frame ubo buffer.");
     // }
 
+    /**
+     * * Transforms vertex color values from the [0, 255] range to the [0.0, 1.0] range expected by Vulkan.
+     */
     fn vertex_color_transform(
         color: VMNLrbg
     ) -> VMNLrbg
@@ -127,6 +154,16 @@ impl Graphics
         ];
     }
 
+    /**
+     * * Creates a Graphics instance by transforming the input vertices and creating a vertex buffer.
+     *
+     * ! Parameters:
+     * - `vmnl_context`: A reference to the VMNL context, which provides access to the memory allocator.
+     * - `vertex1`, `vertex2`, `vertex3`: The three vertices that define the geometry to be rendered, each containing a position and color.
+     *
+     * ! Returns:
+     * - A new instance of the Graphics struct, containing the created vertex buffer ready for rendering.
+     */
     pub fn create_vertices(
         vmnl_context: &Context,
         vertex1:      VMNLVertex,
@@ -151,10 +188,9 @@ impl Graphics
                 color: vertex3_color
             },
         ];
-        let vertex_buffer: VMNLVertexBuffer = Self::create_vertex_buffer(&vertices, &vmnl_context.inner.memory_allocator);
 
         Self {
-            vertex_buffer,
+            vertex_buffer: Self::create_vertex_buffer(&vertices, &vmnl_context.inner.memory_allocator),
         }
     }
 
