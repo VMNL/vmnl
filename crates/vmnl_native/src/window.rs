@@ -8,9 +8,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 extern crate glfw;
-pub mod keyboard;
-pub mod draw;
-pub use keyboard::{Input, Key};
+pub mod input;
+pub mod render;
+pub use input::{Input, Key, MouseButton};
 use crate::vmnl_instance::{VMNLInstance};
 use crate::{
     Graphics, Context, VMNLError, VMNLResult, VMNLVertex
@@ -693,15 +693,19 @@ impl Window
         title:         &str
     ) -> VMNLResult<Self>
     {
-        let vmnl_instance: Arc<VMNLInstance> = vmnl_context.inner.clone();
-        let mut instance = glfw::init(glfw::fail_on_errors)
+        let vmnl_instance: Arc<VMNLInstance> =
+            vmnl_context.inner.clone();
+        let mut instance: glfw::Glfw =
+            glfw::init(glfw::fail_on_errors)
             .map_err(|_| VMNLError::VMNLInitFailed)?;
         instance.window_hint(glfw::WindowHint::ClientApi(glfw::ClientApiHint::NoApi));
-        let (mut window, events) =
+        let (mut window, events):
+        (glfw::PWindow, glfw::GlfwReceiver<(f64, glfw::WindowEvent)>) =
             Window::init_window(instance.clone(), width, height, title);
         let surface: Arc<Surface> =
             Self::create_surface(&vmnl_instance.instance, &window);
-        let supports_present = vmnl_instance.physical_device
+        let supports_present: bool =
+            vmnl_instance.physical_device
             .surface_support(vmnl_instance.graphics_queue_family_index, &surface)
             .expect("VMNL error: Failed to query surface support");
         if !supports_present {
@@ -717,14 +721,14 @@ impl Window
             );
         let image_views: Vec<Arc<ImageView>> =
             Self::create_image_views(&images);
-        let render_pass: Arc<RenderPass>
-            = Self::create_render_pass(&vmnl_instance.device, &swapchain);
-        let framebuffers: Vec<Arc<Framebuffer>>
-            = Self::create_framebuffers(&image_views, &render_pass);
-        let graphics_pipeline: Arc<GraphicsPipeline>
-            = Self::create_graphics_pipeline(&vmnl_instance.device, &swapchain, &render_pass);
-        let previous_frame_end: Option<Box<dyn GpuFuture>>
-            = Some(sync::now(vmnl_instance.device.clone()).boxed());
+        let render_pass: Arc<RenderPass> =
+            Self::create_render_pass(&vmnl_instance.device, &swapchain);
+        let framebuffers: Vec<Arc<Framebuffer>> =
+            Self::create_framebuffers(&image_views, &render_pass);
+        let graphics_pipeline: Arc<GraphicsPipeline> =
+            Self::create_graphics_pipeline(&vmnl_instance.device, &swapchain, &render_pass);
+        let previous_frame_end: Option<Box<dyn GpuFuture>> =
+            Some(sync::now(vmnl_instance.device.clone()).boxed());
         let input: Input = Input::new();
 
         window.set_key_polling(true);

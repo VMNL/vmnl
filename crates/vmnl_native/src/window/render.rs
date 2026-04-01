@@ -10,6 +10,7 @@
 extern crate glfw;
 use super::{Window, Graphics};
 use crate::window::PushConstants;
+use vulkano::render_pass::Framebuffer;
 use vulkano::sync::future::FenceSignalFuture;
 use vulkano::device::{Queue};
 use std::sync::Arc;
@@ -34,33 +35,39 @@ use vulkano::swapchain::{self, SwapchainPresentInfo};
 impl Window
 {
     /**
-     * * Unfinished
-     * ! TODO: Need to split clear, draw, and present into separate functions.
+     * * Builds a Vulkan command buffer for rendering the provided graphics objects to the specified swapchain image.
+     *
+     * ! Parameters:
+     * - `image_index`: The index of the swapchain image to render to.
+     * - `graphics_list`: A slice of references to `Graphics` objects containing the vertex data and other necessary information for rendering.
+     *
+     * ! Returns:
+     * - `Arc<PrimaryAutoCommandBuffer>`: An Arc containing the built command buffer ready for execution.
      */
     fn build_command_buffer(
         &self,
         image_index: u32,
-        graphics: &Graphics
+        graphics_list: &[&Graphics]
     ) -> Arc<PrimaryAutoCommandBuffer>
     {
-        let extent = self.window_handle.swapchain.image_extent();
-        let push_constants = PushConstants {
-            window_size: [extent[0] as f32, extent[1] as f32],
-        };
-        let framebuffer =
+        let extent: [u32; 2] =
+            self.window_handle.swapchain.image_extent();
+        let framebuffer: Arc<Framebuffer> =
             self.window_handle.framebuffers[image_index as usize].clone();
-        let mut builder = AutoCommandBufferBuilder::primary(
-            self.window_handle
-                .vmnl_instance
-                .command_buffer_allocator
-                .clone(),
-            self.window_handle
-                .vmnl_instance
-                .graphics_queue
-                .queue_family_index(),
-            CommandBufferUsage::OneTimeSubmit,
-        )
-        .expect("VMNL error: Failed to create command buffer builder");
+        let mut builder: AutoCommandBufferBuilder<PrimaryAutoCommandBuffer> =
+            AutoCommandBufferBuilder::primary(
+                self.window_handle
+                    .vmnl_instance
+                    .command_buffer_allocator
+                    .clone(),
+                self.window_handle
+                    .vmnl_instance
+                    .graphics_queue
+                    .queue_family_index(),
+                CommandBufferUsage::OneTimeSubmit,
+            )
+            .expect("VMNL error: Failed to create command buffer builder");
+
         unsafe {
             builder
                 .begin_render_pass(
@@ -75,21 +82,27 @@ impl Window
                 )
                 .expect("VMNL error: Failed to begin render pass")
                 .bind_pipeline_graphics(self.window_handle.graphics_pipeline.clone())
-                .expect("VMNL error: Failed to bind graphics pipeline")
-                .push_constants(
-                    self.window_handle.graphics_pipeline.layout().clone(),
-                    0,
-                    push_constants,
-                )
-                .expect("VMNL error: Failed to push constants")
-                .bind_vertex_buffers(0, graphics.vertex_buffer.clone())
-                .expect("VMNL error: Failed to bind vertex buffer")
-                .draw(graphics.vertex_buffer.len() as u32, 1, 0, 0)
-                .expect("VMNL error: Failed to record draw command")
+                .expect("VMNL error: Failed to bind graphics pipeline");
+                for graphics in graphics_list {
+                    let push_constants: PushConstants = PushConstants {
+                        window_size: [extent[0] as f32, extent[1] as f32],
+                    };
+                    builder
+                    .push_constants(
+                        self.window_handle.graphics_pipeline.layout().clone(),
+                        0,
+                        push_constants,
+                    )
+                    .expect("VMNL error: Failed to push constants")
+                    .bind_vertex_buffers(0, graphics.vertex_buffer.clone())
+                    .expect("VMNL error: Failed to bind vertex buffer")
+                    .draw(graphics.vertex_buffer.len() as u32, 1, 0, 0)
+                    .expect("VMNL error: Failed to record draw command");
+            }
+            builder
                 .end_render_pass(SubpassEndInfo::default())
                 .expect("VMNL error: Failed to end render pass");
         }
-
         builder.build()
             .expect("VMNL error: Failed to build command buffer")
     }
@@ -230,20 +243,21 @@ impl Window
      *  and managing the synchronization of GPU operations to ensure smooth rendering.
      *
      * ! Parameters:
-     * - `graphics`: Reference to the `Graphics` object containing the vertex data and other necessary information for rendering.
+     * - `graphics_list`: Reference to the slice of `Graphics` objects containing the vertex data and other necessary information for rendering.
      */
-    pub fn draw(&mut self, graphics: &Graphics)
+    pub fn render(&mut self, graphics_list: &[&Graphics])
     {
         Self::begin_frame(&mut self.window_handle.previous_frame_end);
         let (image_index, suboptimal, acquire_future):
-            (u32, bool, SwapchainAcquireFuture) =
+        (u32, bool, SwapchainAcquireFuture) =
             Self::acquire_next_image_from_swapchain(&self.window_handle.swapchain, None);
         if suboptimal {
             eprintln!("VMNL warning: Swapchain is suboptimal: resize handling not implemented yet.");
         }
-        let command_buffer = self.build_command_buffer(image_index, graphics);
-        let future: Result<Box<dyn GpuFuture>, Validated<VulkanError>>
-            = Self::frame_sync(
+        let command_buffer: Arc<PrimaryAutoCommandBuffer> =
+            self.build_command_buffer(image_index, graphics_list);
+        let future: Result<Box<dyn GpuFuture>, Validated<VulkanError>> =
+            Self::frame_sync(
                 &mut self.window_handle.previous_frame_end,
                 acquire_future,
                 command_buffer,

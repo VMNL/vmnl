@@ -134,6 +134,16 @@ pub(crate) struct VMNLInstance
  */
 impl VMNLInstance
 {
+    /**
+     * * Initializes the command buffer allocator for the Vulkan device.
+     *
+     * ! Parameters:
+     * - `device`: A reference-counted pointer to the Vulkan logical device for which the command buffer allocator will be created.
+     *
+     * ? Source:
+     * - https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-buffer
+     */
+    #[inline]
     fn create_command_buffer_allocator(
         device: &Arc<Device>
     ) -> Arc<StandardCommandBufferAllocator>
@@ -153,6 +163,7 @@ impl VMNLInstance
      * ? Source:
      * - https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-memory-allocator
      */
+    #[inline]
     fn create_memory_allocator(
         device: &Arc<Device>
     ) -> Arc<StandardMemoryAllocator>
@@ -276,29 +287,34 @@ impl VMNLInstance
      */
     pub fn new() -> VMNLResult<Self>
     {
-        let glfw = glfw::init(glfw::fail_on_errors)
+        let glfw: glfw::Glfw =
+            glfw::init(glfw::fail_on_errors)
             .map_err(|_| VMNLError::VMNLInitFailed)?;
-        let required_instance_extensions: InstanceExtensions = glfw
+        let required_instance_extensions: InstanceExtensions =
+            glfw
             .get_required_instance_extensions()
             .expect("VMNL error: Vulkan instance extensions unavailable")
             .iter()
             .map(String::as_str)
             .collect();
-        let library = VulkanLibrary::new()
+        let library: Arc<VulkanLibrary> =
+            VulkanLibrary::new()
             .expect("VMNL error: No local Vulkan library/DLL");
-        let instance = Instance::new(
-            library,
-            InstanceCreateInfo {
-                enabled_extensions: required_instance_extensions,
-                flags: InstanceCreateFlags::ENUMERATE_PORTABILITY,
-                ..Default::default()
-            },
-        )
+        let instance: Arc<Instance> =
+            Instance::new(
+                library,
+                InstanceCreateInfo {
+                    enabled_extensions: required_instance_extensions,
+                    flags: InstanceCreateFlags::ENUMERATE_PORTABILITY,
+                    ..Default::default()
+                },
+            )
             .expect("VMNL error: Failed to create instance");
-        let device_extensions = DeviceExtensions {
-            khr_swapchain: true,
-            ..DeviceExtensions::empty()
-        };
+        let device_extensions: DeviceExtensions =
+            DeviceExtensions {
+                khr_swapchain: true,
+                ..DeviceExtensions::empty()
+            };
         let physical_device =
             Self::select_physical_device(&instance, &device_extensions);
         let graphics_queue_family_index =
