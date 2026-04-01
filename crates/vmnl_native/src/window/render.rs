@@ -8,7 +8,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 extern crate glfw;
-use super::{Window, Graphics};
+use super::{
+    Window,
+    Graphics
+};
 use crate::window::PushConstants;
 use vulkano::render_pass::Framebuffer;
 use vulkano::sync::future::FenceSignalFuture;

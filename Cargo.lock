@@ -436,9 +436,9 @@ dependencies = [
 
 [[package]]
 name = "glfw"
-version = "0.61.0"
+version = "0.62.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bff0db61068e07806efba8c2b89773b01244b46ead84e10995ad0349fcc2c2a"
+checksum = "61c38183b2df227d4b59fcabc647ccc65d04ed9a14420ea9c1520e5ed09b6a79"
 dependencies = [
  "bitflags 1.3.2",
  "glfw-sys",
@@ -451,9 +451,9 @@ dependencies = [
 
 [[package]]
 name = "glfw-sys"
-version = "7.0.0"
+version = "8.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50a4a2b313a5df35deac3388d89944a29e7edbebdf62a004aa628228f799d62c"
+checksum = "b5b92fb706b28b5ccb8e93edb0b7fc8a153f626430abe8e354bc5e4ad29860b0"
 dependencies = [
  "cmake",
  "pkg-config",

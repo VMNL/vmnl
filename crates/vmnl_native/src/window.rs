@@ -10,7 +10,9 @@
 extern crate glfw;
 pub mod input;
 pub mod render;
-pub use input::{Input, Key, MouseButton};
+pub mod event;
+pub use event::{EventQueue, Event};
+pub use input::{Input, Key, MouseButton, KeyboardState};
 use crate::vmnl_instance::{VMNLInstance};
 use crate::{
     Graphics, Context, VMNLError, VMNLResult, VMNLVertex
@@ -164,10 +166,8 @@ struct WindowHandle
     /// * Handle to the actual OS window (GLFW window).
     context:              glfw::PWindow,
     /// * Event receiver channel used to retrieve window events.
-    events:               glfw::GlfwReceiver<(
-                            f64,
-                            glfw::WindowEvent
-                          )>,
+    events:               EventQueue,
+    /// * Input state manager for keyboard and mouse events.
     input:                Input
 }
 
@@ -627,11 +627,7 @@ impl Window
         }
         self.window_handle.instance.poll_events();
         self.window_handle.input.update(&self.window_handle.context);
-        for (_, event) in glfw::flush_messages(&self.window_handle.events) {
-            match event {
-                _ => {}
-            }
-        }
+        self.window_handle.events.poll_events();
     }
 
     /**
@@ -699,9 +695,11 @@ impl Window
             glfw::init(glfw::fail_on_errors)
             .map_err(|_| VMNLError::VMNLInitFailed)?;
         instance.window_hint(glfw::WindowHint::ClientApi(glfw::ClientApiHint::NoApi));
-        let (mut window, events):
+        let (mut window, events_glfw):
         (glfw::PWindow, glfw::GlfwReceiver<(f64, glfw::WindowEvent)>) =
             Window::init_window(instance.clone(), width, height, title);
+        let events: EventQueue =
+            EventQueue::new(events_glfw);
         let surface: Arc<Surface> =
             Self::create_surface(&vmnl_instance.instance, &window);
         let supports_present: bool =

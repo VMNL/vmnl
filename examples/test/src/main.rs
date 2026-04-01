@@ -19,13 +19,13 @@ fn main() -> VMNLResult<()>
 
     while win.is_open() {
         win.poll_event();
-        win.render(&[&vertex, &vertex2]);
         if win.input().mouse().is_released(MouseButton::Left) {
             println!("Mouse button left is released");
         }
         if win.input().keyboard().is_down(Key::A) {
             println!("Key A is down");
         }
+        win.render(&[&vertex, &vertex2]);
     }
     Ok(())
 }
