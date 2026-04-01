@@ -190,8 +190,6 @@ cargo run
 
 ## ✍️ Authors
 
-## ✍️ Authors
-
 - [Hugo DUDA](https://github.com/hugoduda) - **Lead tech** Vulkan/GLFW & low-level/high-level **referent/developer**
 - [Maxence PIERRE](https://github.com/Anexoms) - **Product owner** & Low-level **developer**
 - [Nathan FLACHAT](https://github.com/NathanFlachat) - low-level/high-level **developer**
