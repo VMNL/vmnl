@@ -1,67 +1,326 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
-SHADERC_LIB="/usr/lib64/libshaderc_combined.a"
-install_shaderc()
+
+PROJECT_PACKAGE="${PROJECT_PACKAGE:-test}"
+
+DO_CLEAN=0
+DO_RUN=1
+DO_BUILD=0
+DO_VERBOSE=0
+
+usage()
 {
-    if [[ -r /etc/os-release ]]; then
-        # https://www.freedesktop.org/software/systemd/man/os-release.html
-        . /etc/os-release
+    cat <<'EOF'
+Usage: ./run.sh [-c] [-r] [-b] [-v]
+
+Options:
+  -c    cargo clean only
+  -r    cargo clean && cargo run
+  -b    cargo build
+  -v    verbose cargo output (-vv)
+
+Default:
+  cargo run
+EOF
+}
+
+while getopts ":crbv" opt; do
+    case "${opt}" in
+        c)
+            DO_CLEAN=1
+            DO_RUN=0
+            DO_BUILD=0
+            ;;
+        r)
+            DO_CLEAN=1
+            DO_RUN=1
+            DO_BUILD=0
+            ;;
+        b)
+            DO_CLEAN=0
+            DO_RUN=0
+            DO_BUILD=1
+            ;;
+        v)
+            DO_VERBOSE=1
+            ;;
+        \?)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+if [[ -t 1 ]]; then
+    C_RESET="\033[0m"
+    C_BOLD="\033[1m"
+    C_DIM="\033[2m"
+    C_RED="\033[1;31m"
+    C_GREEN="\033[1;32m"
+    C_YELLOW="\033[1;33m"
+    C_BLUE="\033[1;34m"
+    C_MAGENTA="\033[1;35m"
+else
+    C_RESET=""
+    C_BOLD=""
+    C_DIM=""
+    C_RED=""
+    C_GREEN=""
+    C_YELLOW=""
+    C_BLUE=""
+    C_MAGENTA=""
+fi
+
+log()   { printf "${C_BLUE}[INFO]${C_RESET} %s\n" "$*" >&2; }
+ok()    { printf "${C_GREEN}[OK]${C_RESET} %s\n" "$*" >&2; }
+warn()  { printf "${C_YELLOW}[WARN]${C_RESET} %s\n" "$*" >&2; }
+err()   { printf "${C_RED}[ERROR]${C_RESET} %s\n" "$*" >&2; exit 1; }
+debug() { printf "${C_DIM}[DEBUG]${C_RESET} %s\n" "$*" >&2; }
+
+section()
+{
+    printf "\n${C_BOLD}${C_MAGENTA}==> %s${C_RESET}\n" "$*" >&2
+}
+
+require_cmd()
+{
+    command -v "$1" >/dev/null 2>&1 || err "missing command: $1"
+}
+
+load_os_release()
+{
+    [[ -r /etc/os-release ]] || err "/etc/os-release not found"
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    debug "OS: ID=${ID:-?} ID_LIKE=${ID_LIKE:-?}"
+}
+
+diagnostic_shaderc()
+{
+    section "shaderc diagnostic"
+
+    if command -v pkg-config >/dev/null 2>&1; then
+        if pkg-config --exists shaderc; then
+            ok "pkg-config: shaderc found"
+            debug "version: $(pkg-config --modversion shaderc || true)"
+            debug "libdir:  $(pkg-config --variable=libdir shaderc || true)"
+            debug "flags:   $(pkg-config --libs --cflags shaderc || true)"
+        else
+            warn "pkg-config: shaderc NOT found"
+        fi
     else
-        echo "[ERROR] /etc/os-release not found or not readable"
-        exit 1
+        warn "pkg-config not installed"
     fi
+
+    for path in \
+        /usr/lib64 \
+        /usr/lib/x86_64-linux-gnu \
+        /usr/lib/aarch64-linux-gnu \
+        /usr/lib/arm-linux-gnueabihf \
+        /usr/lib \
+        /usr/local/lib64 \
+        /usr/local/lib
+    do
+        if compgen -G "${path}/libshaderc*" > /dev/null 2>&1; then
+            ok "found shaderc libs in ${path}"
+            ls -l "${path}"/libshaderc* || true
+        else
+            debug "no shaderc in ${path}"
+        fi
+    done
+}
+
+install_packages()
+{
+    section "install shaderc"
+
+    load_os_release
+
     case "${ID:-}" in
         fedora)
-            sudo dnf install -y libshaderc-devel libshaderc-static
+            sudo dnf install -y \
+                libshaderc-devel libshaderc-static \
+                pkgconf-pkg-config cmake git python3
             ;;
         rhel|centos|rocky|almalinux)
-            sudo dnf install -y shaderc-devel
+            sudo dnf install -y \
+                shaderc-devel \
+                pkgconf-pkg-config cmake git python3
             ;;
         ubuntu|debian)
             sudo apt-get update
-            sudo apt-get install -y libshaderc-dev
+            sudo apt-get install -y \
+                libshaderc-dev \
+                pkg-config cmake git python3
             ;;
         arch)
-            sudo pacman -Sy --needed shaderc
+            sudo pacman -Sy --needed \
+                shaderc pkgconf cmake git python
             ;;
         opensuse*|sles)
-            sudo zypper --non-interactive install shaderc shaderc-devel
+            sudo zypper --non-interactive install \
+                shaderc shaderc-devel \
+                pkg-config cmake git python3
             ;;
         *)
             case "${ID_LIKE:-}" in
-                *rhel*|*fedora*)
-                    sudo dnf install -y shaderc-devel
+                *fedora*|*rhel*)
+                    sudo dnf install -y \
+                        shaderc-devel \
+                        pkgconf-pkg-config cmake git python3
                     ;;
                 *debian*)
                     sudo apt-get update
-                    sudo apt-get install -y libshaderc-dev
+                    sudo apt-get install -y \
+                        libshaderc-dev \
+                        pkg-config cmake git python3
                     ;;
                 *arch*)
-                    sudo pacman -Sy --needed shaderc
+                    sudo pacman -Sy --needed \
+                        shaderc pkgconf cmake git python
                     ;;
                 *suse*)
-                    sudo zypper --non-interactive install shaderc shaderc-devel
+                    sudo zypper --non-interactive install \
+                        shaderc shaderc-devel \
+                        pkg-config cmake git python3
                     ;;
                 *)
-                    echo "[ERROR] OS unsupported: ID='${ID:-unknown}', ID_LIKE='${ID_LIKE:-unknown}'"
-                    exit 1
+                    err "unsupported OS: ID='${ID:-unknown}', ID_LIKE='${ID_LIKE:-unknown}'"
                     ;;
             esac
             ;;
     esac
+
+    ok "installation complete"
+}
+
+find_shaderc_lib_dir()
+{
+    section "search shaderc"
+
+    local candidate=""
+
+    if [[ -n "${SHADERC_LIB_DIR:-}" ]]; then
+        if [[ -d "${SHADERC_LIB_DIR}" ]]; then
+            ok "using SHADERC_LIB_DIR=${SHADERC_LIB_DIR}"
+            printf '%s\n' "${SHADERC_LIB_DIR}"
+            return 0
+        fi
+        warn "invalid SHADERC_LIB_DIR=${SHADERC_LIB_DIR}"
+    fi
+
+    if command -v pkg-config >/dev/null 2>&1; then
+        if pkg-config --exists shaderc; then
+            candidate="$(pkg-config --variable=libdir shaderc 2>/dev/null || true)"
+            if [[ -n "${candidate}" && -d "${candidate}" ]]; then
+                ok "found via pkg-config: ${candidate}"
+                printf '%s\n' "${candidate}"
+                return 0
+            fi
+        fi
+    fi
+
+    for candidate in \
+        /usr/lib64 \
+        /usr/lib/x86_64-linux-gnu \
+        /usr/lib/aarch64-linux-gnu \
+        /usr/lib/arm-linux-gnueabihf \
+        /usr/lib \
+        /usr/local/lib64 \
+        /usr/local/lib
+    do
+        if compgen -G "${candidate}/libshaderc*" > /dev/null 2>&1; then
+            ok "found in ${candidate}"
+            printf '%s\n' "${candidate}"
+            return 0
+        fi
+    done
+
+    warn "shaderc not found"
+    return 1
+}
+
+ensure_build_tooling()
+{
+    section "tooling check"
+
+    require_cmd cargo
+
+    for tool in cmake git python3; do
+        if command -v "${tool}" >/dev/null 2>&1; then
+            ok "${tool} found"
+        else
+            warn "${tool} missing (needed for shaderc fallback build)"
+        fi
+    done
 }
 
 run_cargo()
 {
-    export SHADERC_LIB_DIR="/usr/lib64"
-    exec cargo run -p test
+    local lib_dir="$1"
+    local cargo_flags=()
+
+    section "cargo execution"
+
+    [[ -d "${lib_dir}" ]] || err "invalid shaderc lib dir: ${lib_dir}"
+    [[ "${lib_dir}" != *$'\n'* ]] || err "shaderc lib dir contains newline"
+    [[ "${lib_dir}" = /* ]] || err "shaderc lib dir is not absolute: ${lib_dir}"
+
+    export SHADERC_LIB_DIR="${lib_dir}"
+    log "SHADERC_LIB_DIR=${SHADERC_LIB_DIR}"
+
+    if [[ "${DO_VERBOSE}" -eq 1 ]]; then
+        cargo_flags+=("-vv")
+        log "verbose mode enabled"
+    fi
+
+    if [[ "${DO_CLEAN}" -eq 1 ]]; then
+        log "cargo clean"
+        cargo clean
+    fi
+
+    if [[ "${DO_BUILD}" -eq 1 ]]; then
+        log "cargo build -p ${PROJECT_PACKAGE}"
+        exec cargo build "${cargo_flags[@]}" -p "${PROJECT_PACKAGE}"
+    fi
+
+    if [[ "${DO_RUN}" -eq 1 ]]; then
+        log "cargo run -p ${PROJECT_PACKAGE}"
+        exec cargo run "${cargo_flags[@]}" -p "${PROJECT_PACKAGE}"
+    fi
+
+    ok "nothing to run, exiting"
 }
 
-if [[ ! -f "$SHADERC_LIB" ]]; then
-    echo "[INFO] shaderc missing -> installing..."
-    install_shaderc
-    cargo clean
-fi
+main()
+{
+    section "start"
 
-run_cargo
+    ensure_build_tooling
+    diagnostic_shaderc
+
+    local lib_dir=""
+    if lib_dir="$(find_shaderc_lib_dir)"; then
+        ok "shaderc ready"
+        run_cargo "${lib_dir}"
+    fi
+
+    warn "shaderc missing -> installing"
+    install_packages
+
+    diagnostic_shaderc
+
+    if ! lib_dir="$(find_shaderc_lib_dir)"; then
+        err "shaderc still not found after install"
+    fi
+
+    if [[ "${DO_CLEAN}" -eq 0 && "${DO_BUILD}" -eq 0 && "${DO_RUN}" -eq 1 ]]; then
+        log "forcing clean after fresh shaderc install"
+        DO_CLEAN=1
+    fi
+
+    run_cargo "${lib_dir}"
+}
+
+main "$@"
