@@ -8,16 +8,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 extern crate glfw;
+pub mod handle;
+pub mod config;
+pub mod state;
 pub mod input;
 pub mod render;
+pub mod shaders;
 pub mod event;
-use vulkano::format::Format;
 pub use event::{EventQueue, Event};
 pub use input::{Input, Key, MouseButton, KeyboardState, MouseState};
-use vulkano::shader::{EntryPoint, ShaderModule};
+pub use shaders::{vs, fs};
+use config::WindowConfig;
+use handle::WindowHandle;
+use state::WindowState;
 use crate::vmnl_instance::{VMNLInstance};
 use crate::{Graphics, Context, VMNLError, VMNLResult, VMNLVertex};
+use vulkano::shader::{EntryPoint, ShaderModule};
 use vulkano::instance::Instance;
+use vulkano::format::Format;
 use vulkano::device::Device;
 use std::sync::Arc;
 use vulkano::swapchain::{PresentMode, Surface, Swapchain, SwapchainCreateInfo, ColorSpace, SurfaceCapabilities};
@@ -37,171 +45,11 @@ use vulkano::pipeline::{GraphicsPipeline, PipelineLayout, PipelineShaderStageCre
 use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass, Subpass};
 use vulkano::sync::{self, GpuFuture};
 
-/**
- * * Vertex shader module definition using `vulkano_shaders::shader!`.
- *
- * This macro compiles the embedded GLSL source into SPIR-V at build time
- * and generates strongly-typed Rust bindings to interface with the shader
- * (entry points, descriptor layouts, etc.).
- *
- * ? Generated API (by macro):
- * - `vs::load(device)` → loads the compiled shader module.
- * - `vs::entry_point("main")` → retrieves the shader entry point.
- *
- * ? Sources:
- * - Vulkan Spec (Shader Interfaces):
- *   https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap14.html
- * - Vulkano shader macro:
- *   https://docs.rs/vulkano-shaders/latest/vulkano_shaders/
- */
-mod vs {
-    vulkano_shaders::shader! {
-        ty: "vertex",
-        src: r"
-            #version 460
-
-            layout(push_constant) uniform PushConstants {
-                vec2 window_size;
-            } pc;
-
-            layout(location = 0) in vec2 position;
-            layout(location = 1) in vec3 color;
-
-            layout(location = 0) out vec3 out_color;
-
-            void main() {
-                vec2 ndc = vec2(
-                    (2.0 * position.x / pc.window_size.x) - 1.0,
-                    1.0 - (2.0 * position.y / pc.window_size.y)
-                );
-
-                gl_Position = vec4(ndc, 0.0, 1.0);
-                out_color = color;
-            }
-        ",
-    }
-}
-
-/**
- * * Fragment shader module definition using `vulkano_shaders::shader!`.
- *
- * This macro compiles the embedded GLSL source into SPIR-V at build time
- * and generates Rust bindings to interface with the shader (entry points,
- * descriptor layouts, etc.).
- *
- * ? Generated API (by macro):
- * - `fs::load(device)` → loads the compiled shader module.
- * - `fs::entry_point("main")` → retrieves the shader entry point.
- *
- * ? Sources:
- * - Vulkan Spec (Fragment Shader Stage):
- *   https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap14.html
- * - Vulkano shader macro:
- *   https://docs.rs/vulkano-shaders/latest/vulkano_shaders/
- */
-mod fs {
-    vulkano_shaders::shader! {
-        ty: "fragment",
-        src: r"
-            #version 460
-
-            layout(location = 0) in vec3 in_color;
-            layout(location = 0) out vec4 f_color;
-
-            void main() {
-                f_color = vec4(in_color, 1.0);
-            }
-        ",
-    }
-}
-
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 struct PushConstants
 {
     window_size: [f32; 2],
-}
-
-/**
- * * Encapsulates low-level resources required to manage a window and its
- * * associated rendering state.
- *
- * This structure groups together both GLFW windowing objects and Vulkan
- * rendering resources tied to that window. It acts as the bridge between
- * platform-specific window handling and GPU-side rendering execution.
- *
- * ? Sources:
- * - Vulkan synchronization:
- *   https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap7.html
- * - Vulkano futures:
- *   https://docs.rs/vulkano/latest/vulkano/sync/
- * - GLFW windowing:
- *   https://www.glfw.org/docs/latest/window_guide.html
- * - glfw-rs:
- *   https://github.com/PistonDevelopers/glfw-rs
- */
-struct WindowHandle
-{
-    vmnl_instance:        Arc<VMNLInstance>,
-    /// * List of framebuffers associated with the swapchain images.
-    framebuffers:         Vec<Arc<Framebuffer>>,
-    /// * Preconfigured Vulkan graphics pipeline used to render into the framebuffer
-    graphics_pipeline:    Arc<GraphicsPipeline>,
-    /// * Synchronization primitive representing the completion of the previous frame.
-    previous_frame_end:   Option<Box<dyn GpuFuture>>,
-    /// * Vulkan surface representing the OS window for presentation.
-    swapchain:            Arc<Swapchain>,
-    /// * GLFW context responsible for managing windowing and event polling.
-    instance:             glfw::Glfw,
-    /// * Handle to the actual OS window (GLFW window).
-    context:              glfw::PWindow,
-    /// * Event receiver channel used to retrieve window events.
-    events:               EventQueue,
-    /// * Input state manager for keyboard and mouse events.
-    input:                Input
-}
-
-/**
- * * Represents the runtime state of a window.
- *
- * This structure stores transient flags describing the current lifecycle
- * and availability of the window.
- *
- * ? Invariants:
- * - `is_ready == true` implies that all required resources (context,
- *   surface, swapchain, etc.) are initialized.
- * - `is_open == false` implies that no further rendering or event polling
- *   should be performed.
- */
-struct WindowState
-{
-    /// * Indicates whether the window is fully initialized and ready for use.
-    is_ready:             bool,
-    /// * Indicates whether the window is currently open.
-    is_open:              bool
-}
-
-/**
- * * Represents the parameter configuration of the window instance.
- *
- * This structure have all information that describe the window instance.
- *
- * ? Invariants:
- * - `is_close_with_espace` is set as true by default and can be
- *   set with the `should_close_with_escape_pressed(closed: bool)` function.
- * - `width` can't be set below 64 pixels.
- * - `height` can't be set below 64 pixels.
- */
-struct WindowConfig
-{
-    /// * Indicates whether the window can be closed by pressed the espace keyboard.
-    is_close_with_escape: bool,
-    /// * Actual window instance title.
-    title:                String,
-    /// * Actual window instance width (64 or above).
-    width:                u32,
-    /// * Actual window instance height (64 or above).
-    height:               u32
 }
 
 /**
@@ -548,116 +396,6 @@ impl Window
         return instance
             .create_window(width, height, title, glfw::WindowMode::Windowed)
             .expect("VMNL Error: Failed to create VMNL window.");
-    }
-
-    /**
-     * * Updates and returns the current open state of the window.
-     *
-     * ! Returns:
-     * - `true` if the window should remain open.
-     * - `false` if a close event has been triggered.
-     *
-     * ? Typical Usage:
-     * - Main loop condition:
-     *     `while window.is_open() { ... }`
-     *
-     * ! Failure Modes:
-     * - Skipping this call may cause the application to ignore close events.
-     *
-     */
-    pub fn is_open(&mut self) -> bool
-    {
-        self.window_state.is_open = !self.window_handle.context.should_close();
-        return self.window_state.is_open;
-    }
-
-
-    /**
-     * * Returns whether the window is fully initialized and ready for use.
-     *
-     * ! Returns:
-     * - `true` if the window is ready for rendering and event processing.
-     * - `false` if initialization is incomplete or has failed.
-     *
-     * ? Invariants:
-     * - When `true`, it is safe to perform rendering operations.
-     * - When `false`, dependent systems should not attempt to use GPU or
-     *   window-related resources.
-    */
-    pub fn is_ready(&self) -> bool
-    {
-        return self.window_state.is_ready;
-    }
-
-    /**
-     * * Enables or disables closing the window when the Escape key is pressed.
-     *
-     * ! Parameters:
-     * - `closed`:
-     *     - `true`  → pressing Escape will request window closure.
-     *     - `false` → Escape key will be ignored for closing behavior.
-     *
-     * ? Invariants:
-     * - It's set at true by default.
-     *
-     * ? Typical Usage:
-     * - Configure behavior at initialization:
-     *     `window.should_close_with_escape_pressed(false);`
-     */
-    pub fn should_close_with_escape_pressed(
-        &mut self,
-        closed: bool
-    ) -> ()
-    {
-        self.window_config.is_close_with_escape = closed;
-    }
-
-    pub fn close(&mut self) -> ()
-    {
-        println!("VMNL log: Window named \"{}\" is closing.", self.window_config.title);
-        self.window_handle.context.set_should_close(true);
-    }
-
-    pub fn poll_events(&mut self) -> Vec<Event>
-    {
-        self.window_handle.instance.poll_events();
-        self.window_handle.input.update(&self.window_handle.context);
-        self.window_handle.events.poll_events()
-    }
-
-    /**
-     * * Returns the current window width in pixels.
-     *
-     * ! Returns:
-     * - `u32`: Window width in pixels.
-     *
-     * ? Notes:
-     * - For rendering, prefer querying the framebuffer size if DPI scaling
-     *   is involved.
-     */
-    pub fn get_width(&self) -> u32
-    {
-        return self.window_config.width;
-    }
-
-    /**
-     * * Returns the current window height in pixels.
-     *
-     * ! Returns:
-     * - `u32`: Window height in pixels.
-     *
-     * ? Notes:
-     * - For rendering, prefer querying the framebuffer size if DPI scaling
-     *   is involved.
-     */
-    pub fn get_height(&self) -> u32
-    {
-        return self.window_config.height;
-    }
-
-    pub fn input(&self) -> &Input
-    {
-        return &self.window_handle.input;
     }
 
     /**

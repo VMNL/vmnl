@@ -34,26 +34,35 @@ pub enum Event
     FocusLost,
     /// * Represents the event when the window is resized, containing the new width and height of the window.
     Resized {
+        /// * The new width of the window after resizing.
         width: u32,
+        /// * The new height of the window after resizing.
         height: u32
     },
     /// * Represents the event when the framebuffer is resized, containing the new width and height of the framebuffer.
     FramebufferResized {
+        /// * The new width of the framebuffer after resizing.
         width: u32,
+        /// * The new height of the framebuffer after resizing.
         height: u32
     },
     /// * Represents the event when a key is pressed, containing the key that was pressed and whether it is a repeat event.
     KeyPressed {
+        /// * The key that was pressed.
         key: VMNLKey,
+        /// * Indicates whether the key press is a repeat event.
         repeat: bool
     },
     /// * Represents the event when a key is released, containing the key that was released.
     KeyReleased {
+        /// * The key that was released.
         key: VMNLKey
     },
     /// * Represents the event when the mouse is moved, containing the new x and y coordinates of the mouse cursor.
     MouseMoved {
+        /// * The new x-coordinate of the mouse cursor after movement.
         x: f64,
+        /// * The new y-coordinate of the mouse cursor after movement.
         y: f64
     },
     /// * Represents the event when the mouse enters the window.
@@ -62,15 +71,19 @@ pub enum Event
     MouseLeft,
     /// * Represents the event when a mouse button is pressed, containing the button that was pressed.
     MouseButtonPressed {
+        /// * The mouse button that was pressed.
         button: VMNLMouseButton
     },
     /// * Represents the event when a mouse button is released, containing the button that was released.
     MouseButtonReleased {
+        /// * The mouse button that was released.
         button: VMNLMouseButton
     },
     /// * Represents the event when the mouse wheel is scrolled, containing the scroll offsets in the x and y directions.
     MouseScrolled {
+        /// * The scroll offset in the x-direction.
         dx: f64,
+        /// * The scroll offset in the y-direction.
         dy: f64
     },
     /// * Represents the event when text input is received, containing the character that was input.

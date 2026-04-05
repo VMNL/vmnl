@@ -5,7 +5,7 @@
 /// * en chantier
 ////////////////////////////////////////////////////////////////////////////////
 
-use crate::{Context};
+mod vertex;
 use std::sync::Arc;
 use vulkano::buffer::{Subbuffer, /* BufferContents */};
 use vulkano::buffer::{Buffer, BufferCreateInfo, BufferUsage};
@@ -138,9 +138,9 @@ impl Graphics
     // }
 
     /**
-     * * Transforms vertex color values from the [0, 255] range to the [0.0, 1.0] range expected by Vulkan.
+     * * Transforms color values from the [0, 255] range to the [0.0, 1.0] range expected by Vulkan.
      */
-    fn vertex_color_transform(
+    fn color_transform(
         color: VMNLrbg
     ) -> VMNLrbg
     {
@@ -152,46 +152,6 @@ impl Graphics
             (color[1] / 255.0).clamp(0.0, 1.0),
             (color[2] / 255.0).clamp(0.0, 1.0),
         ];
-    }
-
-    /**
-     * * Creates a Graphics instance by transforming the input vertices and creating a vertex buffer.
-     *
-     * ! Parameters:
-     * - `vmnl_context`: A reference to the VMNL context, which provides access to the memory allocator.
-     * - `vertex1`, `vertex2`, `vertex3`: The three vertices that define the geometry to be rendered, each containing a position and color.
-     *
-     * ! Returns:
-     * - A new instance of the Graphics struct, containing the created vertex buffer ready for rendering.
-     */
-    pub fn create_vertices(
-        vmnl_context: &Context,
-        vertex1:      VMNLVertex,
-        vertex2:      VMNLVertex,
-        vertex3:      VMNLVertex
-    ) -> Self
-    {
-        let vertex1_color: VMNLrbg      = Self::vertex_color_transform(vertex1.color);
-        let vertex2_color: VMNLrbg      = Self::vertex_color_transform(vertex2.color);
-        let vertex3_color: VMNLrbg      = Self::vertex_color_transform(vertex3.color);
-        let vertices = [
-            VMNLVertex {
-                position: vertex1.position,
-                color: vertex1_color
-            },
-            VMNLVertex {
-                position: vertex2.position,
-                color: vertex2_color
-            },
-            VMNLVertex {
-                position: vertex3.position,
-                color: vertex3_color
-            },
-        ];
-
-        Self {
-            vertex_buffer: Self::create_vertex_buffer(&vertices, &vmnl_context.inner.memory_allocator),
-        }
     }
 
 }
