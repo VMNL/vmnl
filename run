@@ -86,11 +86,6 @@ section()
     printf '\n%b\n' "${B}${CYA}==> $*${R}" >&2
 }
 
-info()
-{
-    printf '%b\n' "${BLU}ℹ${R}  $*" >&2
-}
-
 ok()
 {
     printf '%b\n' "${GRN}[Success]${R}  $*" >&2
@@ -98,7 +93,7 @@ ok()
 
 warn()
 {
-    printf '%b\n' "${YEL}[Warn]${R}  $*" >&2
+    printf '%b\n' "${YEL}[Warning]${R}  $*" >&2
 }
 
 debug()
@@ -154,22 +149,19 @@ print_runtime_config()
 diagnostic_shaderc()
 {
     section "Shaderc diagnostics"
-
     if command -v pkg-config >/dev/null 2>&1; then
         ok "pkg-config detected"
     else
         warn "pkg-config not installed"
     fi
-
     if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists shaderc; then
         ok "pkg-config knows shaderc"
-        kv "shaderc version" "$(pkg-config --modversion shaderc || true)"
-        kv "shaderc libdir"  "$(pkg-config --variable=libdir shaderc || true)"
-        kv "shaderc flags"   "$(pkg-config --libs --cflags shaderc || true)"
+        kv "[Info] shaderc version" "$(pkg-config --modversion shaderc || true)"
+        kv "[Info] shaderc libdir"  "$(pkg-config --variable=libdir shaderc || true)"
+        kv "[Info] shaderc flags"   "$(pkg-config --libs --cflags shaderc || true)"
     else
         warn "pkg-config does not know shaderc"
     fi
-
     for path in \
         /usr/lib64 \
         /usr/lib/x86_64-linux-gnu \
@@ -190,7 +182,7 @@ diagnostic_shaderc()
 
 install_packages()
 {
-    section "Installing shaderc packages"
+    section "Installing system dependencies"
 
     load_os_release
     kv "ID"      "${ID:-unknown}"
@@ -198,62 +190,105 @@ install_packages()
 
     case "${ID:-}" in
         fedora)
-            cmd "sudo dnf install -y libshaderc-devel libshaderc-static pkgconf-pkg-config cmake git python3"
+            cmd "sudo dnf install -y libshaderc-devel libshaderc-static pkgconf-pkg-config cmake git python3 ninja-build gcc-c++ make vulkan-loader-devel vulkan-tools glfw-devel wayland-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel"
             sudo dnf install -y \
                 libshaderc-devel libshaderc-static \
-                pkgconf-pkg-config cmake git python3
+                pkgconf-pkg-config cmake git python3 ninja-build \
+                gcc-c++ make \
+                vulkan-loader-devel vulkan-tools \
+                glfw-devel \
+                wayland-devel libxkbcommon-devel \
+                libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel
             ;;
         rhel|centos|rocky|almalinux)
-            cmd "sudo dnf install -y shaderc-devel pkgconf-pkg-config cmake git python3"
+            cmd "sudo dnf install -y shaderc-devel pkgconf-pkg-config cmake git python3 ninja-build gcc-c++ make vulkan-loader-devel vulkan-tools glfw-devel wayland-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel"
             sudo dnf install -y \
                 shaderc-devel \
-                pkgconf-pkg-config cmake git python3
+                pkgconf-pkg-config cmake git python3 ninja-build \
+                gcc-c++ make \
+                vulkan-loader-devel vulkan-tools \
+                glfw-devel \
+                wayland-devel libxkbcommon-devel \
+                libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel
             ;;
         ubuntu|debian)
             cmd "sudo apt-get update"
             sudo apt-get update
-            cmd "sudo apt-get install -y libshaderc-dev pkg-config cmake git python3"
+            cmd "sudo apt-get install -y libshaderc-dev pkg-config cmake git python3 ninja-build build-essential libvulkan-dev vulkan-tools libglfw3-dev libwayland-dev libxkbcommon-dev xorg-dev"
             sudo apt-get install -y \
                 libshaderc-dev \
-                pkg-config cmake git python3
+                pkg-config cmake git python3 ninja-build \
+                build-essential \
+                libvulkan-dev vulkan-tools \
+                libglfw3-dev \
+                libwayland-dev libxkbcommon-dev xorg-dev
             ;;
         arch)
-            cmd "sudo pacman -Sy --needed shaderc pkgconf cmake git python"
+            cmd "sudo pacman -Sy --needed shaderc pkgconf cmake git python ninja base-devel vulkan-headers vulkan-tools glfw wayland libxkbcommon libxcursor libxi libxinerama libxrandr"
             sudo pacman -Sy --needed \
-                shaderc pkgconf cmake git python
+                shaderc pkgconf cmake git python ninja \
+                base-devel \
+                vulkan-headers vulkan-tools \
+                glfw \
+                wayland libxkbcommon \
+                libxcursor libxi libxinerama libxrandr
             ;;
         opensuse*|sles)
-            cmd "sudo zypper --non-interactive install shaderc shaderc-devel pkg-config cmake git python3"
+            cmd "sudo zypper --non-interactive install shaderc shaderc-devel pkg-config cmake git python3 ninja gcc-c++ make vulkan-devel vulkan-tools libglfw3-devel wayland-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel"
             sudo zypper --non-interactive install \
                 shaderc shaderc-devel \
-                pkg-config cmake git python3
+                pkg-config cmake git python3 ninja \
+                gcc-c++ make \
+                vulkan-devel vulkan-tools \
+                libglfw3-devel \
+                wayland-devel libxkbcommon-devel \
+                libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel
             ;;
         *)
             case "${ID_LIKE:-}" in
                 *fedora*|*rhel*)
-                    cmd "sudo dnf install -y shaderc-devel pkgconf-pkg-config cmake git python3"
+                    cmd "sudo dnf install -y shaderc-devel pkgconf-pkg-config cmake git python3 ninja-build gcc-c++ make vulkan-loader-devel vulkan-tools glfw-devel wayland-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel"
                     sudo dnf install -y \
                         shaderc-devel \
-                        pkgconf-pkg-config cmake git python3
+                        pkgconf-pkg-config cmake git python3 ninja-build \
+                        gcc-c++ make \
+                        vulkan-loader-devel vulkan-tools \
+                        glfw-devel \
+                        wayland-devel libxkbcommon-devel \
+                        libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel
                     ;;
                 *debian*)
                     cmd "sudo apt-get update"
                     sudo apt-get update
-                    cmd "sudo apt-get install -y libshaderc-dev pkg-config cmake git python3"
+                    cmd "sudo apt-get install -y libshaderc-dev pkg-config cmake git python3 ninja-build build-essential libvulkan-dev vulkan-tools libglfw3-dev libwayland-dev libxkbcommon-dev xorg-dev"
                     sudo apt-get install -y \
                         libshaderc-dev \
-                        pkg-config cmake git python3
+                        pkg-config cmake git python3 ninja-build \
+                        build-essential \
+                        libvulkan-dev vulkan-tools \
+                        libglfw3-dev \
+                        libwayland-dev libxkbcommon-dev xorg-dev
                     ;;
                 *arch*)
-                    cmd "sudo pacman -Sy --needed shaderc pkgconf cmake git python"
+                    cmd "sudo pacman -Sy --needed shaderc pkgconf cmake git python ninja base-devel vulkan-headers vulkan-tools glfw wayland libxkbcommon libxcursor libxi libxinerama libxrandr"
                     sudo pacman -Sy --needed \
-                        shaderc pkgconf cmake git python
+                        shaderc pkgconf cmake git python ninja \
+                        base-devel \
+                        vulkan-headers vulkan-tools \
+                        glfw \
+                        wayland libxkbcommon \
+                        libxcursor libxi libxinerama libxrandr
                     ;;
                 *suse*)
-                    cmd "sudo zypper --non-interactive install shaderc shaderc-devel pkg-config cmake git python3"
+                    cmd "sudo zypper --non-interactive install shaderc shaderc-devel pkg-config cmake git python3 ninja gcc-c++ make vulkan-devel vulkan-tools libglfw3-devel wayland-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel"
                     sudo zypper --non-interactive install \
                         shaderc shaderc-devel \
-                        pkg-config cmake git python3
+                        pkg-config cmake git python3 ninja \
+                        gcc-c++ make \
+                        vulkan-devel vulkan-tools \
+                        libglfw3-devel \
+                        wayland-devel libxkbcommon-devel \
+                        libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel
                     ;;
                 *)
                     die "unsupported OS: ID='${ID:-unknown}', ID_LIKE='${ID_LIKE:-unknown}'"
@@ -262,7 +297,7 @@ install_packages()
             ;;
     esac
 
-    ok "package installation completed"
+    ok "system dependencies installation completed"
 }
 
 find_shaderc_lib_dir()
@@ -276,7 +311,6 @@ find_shaderc_lib_dir()
         fi
         warn "invalid SHADERC_LIB_DIR ignored: ${SHADERC_LIB_DIR}"
     fi
-
     if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists shaderc; then
         candidate="$(pkg-config --variable=libdir shaderc 2>/dev/null || true)"
         if [[ -n "${candidate}" && -d "${candidate}" ]]; then
@@ -284,7 +318,6 @@ find_shaderc_lib_dir()
             return 0
         fi
     fi
-
     for candidate in \
         /usr/lib64 \
         /usr/lib/x86_64-linux-gnu \
@@ -299,24 +332,51 @@ find_shaderc_lib_dir()
             return 0
         fi
     done
-
     return 1
 }
 
 ensure_build_tooling()
 {
     section "Build tooling"
-
     require_cmd cargo
     ok "cargo found"
-
+    require_cmd cc
+    ok "C compiler (cc) found"
+    require_cmd c++
+    ok "C++ compiler (c++) found"
     for tool in cmake git python3; do
         if command -v "${tool}" >/dev/null 2>&1; then
             ok "${tool} found"
         else
-            warn "${tool} missing (needed if shaderc-sys falls back to source build)"
+            warn "${tool} missing (required for shaderc-sys fallback build)"
         fi
     done
+    if command -v ninja >/dev/null 2>&1; then
+        ok "ninja found"
+    else
+        debug "ninja missing (optional on Linux, useful for source builds)"
+    fi
+    if command -v pkg-config >/dev/null 2>&1; then
+        ok "pkg-config found"
+    else
+        warn "pkg-config missing (system shaderc/glfw detection will likely fail)"
+    fi
+    if command -v vulkaninfo >/dev/null 2>&1; then
+        ok "vulkaninfo found (vulkan-tools)"
+    else
+        debug "vulkaninfo missing (optional, useful for Vulkan diagnostics)"
+    fi
+    if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists shaderc; then
+        ok "shaderc detected via pkg-config"
+    else
+        warn "shaderc not found via pkg-config (shaderc-sys may fall back to source build)"
+    fi
+    if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists glfw3; then
+        ok "GLFW detected via pkg-config"
+    else
+        warn "GLFW not found via pkg-config"
+        debug "(not necessarily a problem if build succeeds)"
+    fi
 }
 
 run_cargo()
@@ -325,47 +385,38 @@ run_cargo()
     local cargo_flags=()
 
     section "Cargo execution"
-
     [[ -n "${lib_dir}" ]] || die "empty shaderc lib dir"
     [[ -d "${lib_dir}" ]] || die "invalid shaderc lib dir: ${lib_dir}"
     [[ "${lib_dir}" = /* ]] || die "shaderc lib dir is not absolute: ${lib_dir}"
     [[ "${lib_dir}" != *$'\n'* ]] || die "shaderc lib dir contains newline"
-
     export SHADERC_LIB_DIR="${lib_dir}"
-
     kv "SHADERC_LIB_DIR" "${SHADERC_LIB_DIR}"
-
     if [[ "${DO_VERBOSE}" -eq 1 ]]; then
         cargo_flags+=("-vv")
         ok "verbose mode enabled"
     fi
-
     if [[ "${DO_CLEAN}" -eq 1 ]]; then
         step "cleaning cargo artifacts"
         cmd "cargo clean"
         cargo clean
         ok "cargo clean done"
     fi
-
     if [[ "${DO_BUILD}" -eq 1 ]]; then
         step "building package"
         cmd "cargo build ${cargo_flags[*]:-} -p ${PROJECT_PACKAGE}"
         exec cargo build "${cargo_flags[@]}" -p "${PROJECT_PACKAGE}"
     fi
-
     if [[ "${DO_RUN}" -eq 1 ]]; then
         step "running package"
         cmd "cargo run ${cargo_flags[*]:-} -p ${PROJECT_PACKAGE}"
         exec cargo run "${cargo_flags[@]}" -p "${PROJECT_PACKAGE}"
     fi
-
     ok "nothing else to do"
 }
 
 main()
 {
     title "Testing script for vmnl"
-
     print_runtime_config
     ensure_build_tooling
     diagnostic_shaderc
@@ -375,27 +426,23 @@ main()
     section "Shaderc discovery"
     if lib_dir="$(find_shaderc_lib_dir)"; then
         ok "shaderc library directory resolved"
-        kv "resolved lib dir" "${lib_dir}"
+        kv "[Info] resolved lib dir" "${lib_dir}"
         run_cargo "${lib_dir}"
     fi
 
     warn "shaderc not found, installation required"
     install_packages
     diagnostic_shaderc
-
     section "shaderc discovery after installation"
     if ! lib_dir="$(find_shaderc_lib_dir)"; then
         die "shaderc still not found after installation"
     fi
-
     ok "shaderc detected after installation"
-    kv "resolved lib dir" "${lib_dir}"
-
+    kv "[Info] resolved lib dir" "${lib_dir}"
     if [[ "${DO_CLEAN}" -eq 0 && "${DO_BUILD}" -eq 0 && "${DO_RUN}" -eq 1 ]]; then
         warn "forcing clean after fresh shaderc install"
         DO_CLEAN=1
     fi
-
     run_cargo "${lib_dir}"
 }
 
