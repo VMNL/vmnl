@@ -35,6 +35,14 @@ pub(crate) struct WindowConfig
 impl Window
 {
     /**
+     * * Closes the window by setting the GLFW should_close flag to true.
+     */
+    pub fn title(&self) -> &str
+    {
+        return &self.window_config.title;
+    }
+
+    /**
      * * Enables or disables closing the window when the Escape key is pressed.
      *
      * ! Parameters:
@@ -67,7 +75,7 @@ impl Window
      * - For rendering, prefer querying the framebuffer size if DPI scaling
      *   is involved.
      */
-    pub fn get_width(&self) -> u32
+    pub fn width(&self) -> u32
     {
         return self.window_config.width;
     }
@@ -82,7 +90,7 @@ impl Window
      * - For rendering, prefer querying the framebuffer size if DPI scaling
      *   is involved.
      */
-    pub fn get_height(&self) -> u32
+    pub fn height(&self) -> u32
     {
         return self.window_config.height;
     }

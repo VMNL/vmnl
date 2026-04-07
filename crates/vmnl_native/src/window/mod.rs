@@ -97,7 +97,7 @@ impl Window
                         ..Default::default()
                     },
                 )
-                .expect("VMNL error: Failed to create swapchain image view")
+                .expect("[VMNL Error] Failed to create swapchain image view")
             })
             .collect();
     }
@@ -122,7 +122,7 @@ impl Window
     {
         unsafe {
             return Surface::from_window_ref(instance.clone(), window)
-            .expect("VMNL error: Failed to create Surface");
+            .expect("[VMNL Error] Failed to create Surface");
         }
     }
 
@@ -150,12 +150,12 @@ impl Window
             device
             .physical_device()
             .surface_capabilities(&surface, Default::default())
-            .expect("VMNL error: Failed to create surface capabilities");
+            .expect("[VMNL Error] Failed to create surface capabilities");
         let (image_format, image_color_space): (Format, ColorSpace) =
             device
             .physical_device()
             .surface_formats(&surface, Default::default())
-            .expect("VMNL error: Failed to create surface format")[0];
+            .expect("[VMNL Error] Failed to create surface format")[0];
         let mut min_image_count: u32 =
             surface_capabilities.min_image_count.max(2);
         if let Some(max_image_count) = surface_capabilities.max_image_count {
@@ -190,13 +190,13 @@ impl Window
                     .supported_composite_alpha
                     .into_iter()
                     .next()
-                    .expect("VMNL error: Not supported surface composite alpha."),
+                    .expect("[VMNL Error] Not supported surface composite alpha."),
                 pre_transform: surface_capabilities.current_transform,
                 present_mode: PresentMode::Fifo,
                 ..Default::default()
             }
         )
-        .expect("VMNL error: Failed to create Swapchain");
+        .expect("[VMNL Error] Failed to create Swapchain");
     }
 
     /**
@@ -238,7 +238,7 @@ impl Window
                 depth_stencil: {},
             },
         )
-        .expect("VMNL error: Failed to create render pass")
+        .expect("[VMNL Error] Failed to create render pass")
     }
 
     /**
@@ -275,7 +275,7 @@ impl Window
                         ..Default::default()
                     },
                 )
-                .expect("VMNL error: Failed to create framebuffer")
+                .expect("[VMNL Error] Failed to create framebuffer")
             })
             .collect();
     }
@@ -306,18 +306,18 @@ impl Window
     {
         let vs: Arc<ShaderModule> =
             vs::load(device.clone())
-            .expect("VMNL error: Failed to load vertex shader");
+            .expect("[VMNL Error] Failed to load vertex shader");
         let fs: Arc<ShaderModule> =
             fs::load(device.clone())
-            .expect("VMNL error: Failed to load fragment shader");
+            .expect("[VMNL Error] Failed to load fragment shader");
         let vs: EntryPoint =
             vs
             .entry_point("main")
-            .expect("VMNL error: Missing vertex entry point");
+            .expect("[VMNL Error] Missing vertex entry point");
         let fs: EntryPoint =
             fs
             .entry_point("main")
-            .expect("VMNL error: Missing fragment entry point");
+            .expect("[VMNL Error] Missing fragment entry point");
         let stages: [PipelineShaderStageCreateInfo; 2] = [
             PipelineShaderStageCreateInfo::new(vs.clone()),
             PipelineShaderStageCreateInfo::new(fs),
@@ -327,8 +327,8 @@ impl Window
                 device.clone(),
                 PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
                 .into_pipeline_layout_create_info(device.clone())
-                .expect("VMNL error: Failed to create pipeline layout info"),
-            ).expect("VMNL error: Failed to create pipeline layout");
+                .expect("[VMNL Error] Failed to create pipeline layout info"),
+            ).expect("[VMNL Error] Failed to create pipeline layout");
         let extent: [u32; 2] =
             swapchain
             .image_extent();
@@ -340,11 +340,11 @@ impl Window
             };
         let subpass: Subpass =
             Subpass::from(render_pass.clone(), 0)
-            .expect("VMNL error: Failed to create subpass");
+            .expect("[VMNL Error] Failed to create subpass");
         let vertex_input_state: VertexInputState =
             VMNLVertex::per_vertex()
             .definition(&vs)
-            .expect("VMNL error: Failed to create vertex input state");
+            .expect("[VMNL Error] Failed to create vertex input state");
 
         return GraphicsPipeline::new(
             device.clone(),
@@ -367,7 +367,7 @@ impl Window
                 ..GraphicsPipelineCreateInfo::layout(layout)
             },
         )
-        .expect("VMNL error: Failed to create graphics pipeline");
+        .expect("[VMNL Error] Failed to create graphics pipeline");
     }
 
     /**
@@ -438,9 +438,9 @@ impl Window
         let supports_present: bool =
             vmnl_instance.physical_device
             .surface_support(vmnl_instance.graphics_queue_family_index, &surface)
-            .expect("VMNL error: Failed to query surface support");
+            .expect("[VMNL Error] Failed to query surface support");
         if !supports_present {
-            panic!("VMNL error: Selected queue family does not support presentation on this surface");
+            panic!("[VMNL Error] Selected queue family does not support presentation on this surface");
         }
         let (frame_buffer_width, frame_buffer_height): (i32, i32) =
             window.get_framebuffer_size();
@@ -472,7 +472,7 @@ impl Window
         window.set_focus_polling(true);
         window.set_close_polling(true);
         window.set_key_polling(true);
-        println!("VMNL log: Window named \"{}\" with [{}, {}] created.", title, height, width);
+        println!("[VMNL Log] Window named \"{}\" with [{}, {}] created.", title, height, width);
         Ok(Self {
             window_handle: WindowHandle {
                 instance,
@@ -504,6 +504,6 @@ impl Drop for Window
 {
     fn drop(&mut self) -> ()
     {
-        println!("VMNL log: Window named \"{}\" destroyed.", self.window_config.title);
+        println!("[VMNL Log] Window named \"{}\" destroyed.", self.window_config.title);
     }
 }

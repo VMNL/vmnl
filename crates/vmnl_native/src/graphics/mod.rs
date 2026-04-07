@@ -91,7 +91,7 @@ impl Graphics
             },
             vertices.iter().cloned()
         )
-        .expect("VMNL error: Failed to create vertex buffer.");
+        .expect("[VMNL Error] Failed to create vertex buffer.");
     }
 
     // fn create_index_buffer(
@@ -160,6 +160,6 @@ impl Drop for Graphics
 {
     fn drop(&mut self) -> ()
     {
-        println!("VMNL log: Vertex destroyed.");
+        println!("[VMNL Log] Vertex destroyed.");
     }
 }

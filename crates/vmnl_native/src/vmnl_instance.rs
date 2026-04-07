@@ -192,7 +192,7 @@ impl VMNLInstance
             .enumerate()
             .find(|(_, q)| q.queue_flags.contains(QueueFlags::GRAPHICS))
             .map(|(index, _)| index as u32)
-            .expect("VMNL error: No graphics queue family found");
+            .expect("[VMNL Error] No graphics queue family found");
     }
 
     /**
@@ -215,7 +215,7 @@ impl VMNLInstance
     {
         return instance
             .enumerate_physical_devices()
-            .expect("VMNL error: Could not enumerate physical devices")
+            .expect("[VMNL Error] Could not enumerate physical devices")
             .filter(|physical_device| physical_device.supported_extensions().contains(required_extensions))
             .filter(|physical_device| {
                 physical_device.queue_family_properties()
@@ -231,7 +231,7 @@ impl VMNLInstance
                     _ => 0,
                 }
             })
-            .expect("VMNL error: No suitable physical device found");
+            .expect("[VMNL Error] No suitable physical device found");
     }
 
     /**
@@ -265,11 +265,11 @@ impl VMNLInstance
                 ..Default::default()
             },
         )
-        .expect("VMNL error: Failed to create device");
+        .expect("[VMNL Error] Failed to create device");
         let graphics_queue: Arc<Queue> =
             queues
             .next()
-            .expect("VMNL error: Device created without any queue");
+            .expect("[VMNL Error] Device created without any queue");
 
         return (device, graphics_queue);
     }
@@ -292,13 +292,13 @@ impl VMNLInstance
         let required_instance_extensions: InstanceExtensions =
             glfw
             .get_required_instance_extensions()
-            .expect("VMNL error: Vulkan instance extensions unavailable")
+            .expect("[VMNL Error] Vulkan instance extensions unavailable")
             .iter()
             .map(String::as_str)
             .collect();
         let library: Arc<VulkanLibrary> =
             VulkanLibrary::new()
-            .expect("VMNL error: No local Vulkan library/DLL");
+            .expect("[VMNL Error] No local Vulkan library/DLL");
         let instance: Arc<Instance> =
             Instance::new(
                 library,
@@ -308,7 +308,7 @@ impl VMNLInstance
                     ..Default::default()
                 },
             )
-            .expect("VMNL error: Failed to create instance");
+            .expect("[VMNL Error] Failed to create instance");
         let device_extensions: DeviceExtensions =
             DeviceExtensions {
                 khr_swapchain: true,
@@ -341,6 +341,6 @@ impl Drop for VMNLInstance
 {
     fn drop(&mut self)
     {
-        println!("VMNL log: Instance destroyed.");
+        println!("[VMNL Log] Instance destroyed.");
     }
 }
