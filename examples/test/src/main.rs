@@ -2,13 +2,11 @@ use vmnl::{Window, Graphics, Context, VMNLVertex, VMNLResult, Key, MouseButton, 
 
 fn handle_event_test(
     event: &Event,
-    win: &mut Window
 ) -> ()
 {
     match event {
         Event::Closed => {
             println!("[Event] Closed");
-            win.close();
         }
         Event::FocusGained => {
             println!("[Event] Focus gained");
@@ -58,7 +56,6 @@ fn handle_keybind_test(
 {
     if win.input().keyboard().is_pressed(Key::E) {
         println!("[Keybind] Key E is pressed");
-        win.close();
     }
     if win.input().keyboard().is_released(Key::E) {
         println!("[Keybind] Key E is released");
@@ -102,7 +99,7 @@ fn main() -> VMNLResult<()>
 
     while win.is_open() {
         for event in win.poll_events() {
-            handle_event_test(&event, &mut win);
+            handle_event_test(&event);
         }
         handle_keybind_test(&mut win);
         handle_mousebind_test(&mut win);
