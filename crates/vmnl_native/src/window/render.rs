@@ -65,7 +65,7 @@ impl Window
                     .queue_family_index(),
                 CommandBufferUsage::OneTimeSubmit,
             )
-            .expect("VMNL error: Failed to create command buffer builder");
+            .expect("[VMNL Error] Failed to create command buffer builder");
 
         unsafe {
             builder
@@ -79,9 +79,9 @@ impl Window
                         ..Default::default()
                     },
                 )
-                .expect("VMNL error: Failed to begin render pass")
+                .expect("[VMNL Error] Failed to begin render pass")
                 .bind_pipeline_graphics(self.window_handle.graphics_pipeline.clone())
-                .expect("VMNL error: Failed to bind graphics pipeline");
+                .expect("[VMNL Error] Failed to bind graphics pipeline");
                 for graphics in graphics_list {
                     let push_constants: PushConstants = PushConstants {
                         window_size: [extent[0] as f32, extent[1] as f32],
@@ -92,18 +92,18 @@ impl Window
                         0,
                         push_constants,
                     )
-                    .expect("VMNL error: Failed to push constants")
+                    .expect("[VMNL Error] Failed to push constants")
                     .bind_vertex_buffers(0, graphics.vertex_buffer.clone())
-                    .expect("VMNL error: Failed to bind vertex buffer")
+                    .expect("[VMNL Error] Failed to bind vertex buffer")
                     .draw(graphics.vertex_buffer.len() as u32, 1, 0, 0)
-                    .expect("VMNL error: Failed to record draw command");
+                    .expect("[VMNL Error] Failed to record draw command");
             }
             builder
                 .end_render_pass(SubpassEndInfo::default())
-                .expect("VMNL error: Failed to end render pass");
+                .expect("[VMNL Error] Failed to end render pass");
         }
         builder.build()
-            .expect("VMNL error: Failed to build command buffer")
+            .expect("[VMNL Error] Failed to build command buffer")
     }
 
     /**
@@ -144,10 +144,10 @@ impl Window
         return match swapchain::acquire_next_image(swapchain.clone(), timeout) {
             Ok(result) => result,
             Err(Validated::Error(VulkanError::OutOfDate)) => {
-                panic!("VMNL error: Swapchain out of date");
+                panic!("[VMNL Error] Swapchain out of date");
             }
             Err(error) => {
-                panic!("VMNL error: Failed to acquire next image: {error:?}");
+                panic!("[VMNL Error] Failed to acquire next image: {error:?}");
             }
         };
     }
@@ -183,10 +183,10 @@ impl Window
     {
         return previous_frame_end
             .take()
-            .expect("VMNL error: previous_frame_end was None")
+            .expect("[VMNL Error] previous_frame_end was None")
             .join(acquire_future)
             .then_execute(graphics_queue.clone(), command_buffer)
-            .expect("VMNL error: Failed to execute command buffer")
+            .expect("[VMNL Error] Failed to execute command buffer")
             .then_swapchain_present(
                 graphics_queue.clone(),
                 SwapchainPresentInfo::swapchain_image_index(
@@ -224,11 +224,11 @@ impl Window
                 future.boxed()
             }
             Err(Validated::Error(VulkanError::OutOfDate)) => {
-                eprintln!("VMNL warning: Present returned OutOfDate: resize handling not implemented yet.");
+                eprintln!("[VMNL Warning]: Present returned OutOfDate: resize handling not implemented yet.");
                 sync::now(device.clone()).boxed()
             }
             Err(error) => {
-                eprintln!("VMNL error: Failed to flush future: {error:?}");
+                eprintln!("[VMNL Error] Failed to flush future: {error:?}");
                 sync::now(device.clone()).boxed()
             }
         }
@@ -251,7 +251,7 @@ impl Window
         (u32, bool, SwapchainAcquireFuture) =
             Self::acquire_next_image_from_swapchain(&self.window_handle.swapchain, None);
         if suboptimal {
-            eprintln!("VMNL warning: Swapchain is suboptimal: resize handling not implemented yet.");
+            eprintln!("[VMNL Warning]: Swapchain is suboptimal: resize handling not implemented yet.");
         }
         let command_buffer: Arc<PrimaryAutoCommandBuffer> =
             self.build_command_buffer(image_index, graphics_list);

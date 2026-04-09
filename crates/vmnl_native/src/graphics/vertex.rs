@@ -9,6 +9,33 @@ use crate::{Graphics, VMNLVertex, VMNLrbg,  Context};
 
 impl Graphics
 {
+    pub fn create_indexed(
+        vmnl_context: &Context,
+        vertices: &[VMNLVertex],
+        indices: &[u32],
+    ) -> Self
+    {
+        let vertices: Vec<VMNLVertex> = vertices
+            .iter()
+            .map(|vertex| VMNLVertex {
+                position: vertex.position,
+                color: Self::color_transform(vertex.color),
+            })
+            .collect();
+
+        Self {
+            vertex_count: vertices.len() as u32,
+            index_count:  indices.len() as u32,
+            vertex_buffer: Self::create_vertex_buffer(
+                &vertices,
+                &vmnl_context.inner.memory_allocator,
+            ),
+            index_buffer: Some(Self::create_index_buffer(
+                indices,
+                &vmnl_context.inner.memory_allocator,
+            )),
+        }
+    }
 
     /**
      * * Creates a Graphics instance by transforming the input vertices and creating a vertex buffer.

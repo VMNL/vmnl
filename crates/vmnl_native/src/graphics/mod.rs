@@ -7,17 +7,30 @@
 
 mod vertex;
 use std::sync::Arc;
-use vulkano::buffer::{Subbuffer, /* BufferContents */};
-use vulkano::buffer::{Buffer, BufferCreateInfo, BufferUsage};
-use vulkano::memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, StandardMemoryAllocator};
-use vulkano::{pipeline::graphics::vertex_input::Vertex};
-use bytemuck::{Pod, Zeroable};
+use vulkano::pipeline::graphics::vertex_input::Vertex;
+use vulkano::buffer::{
+    Buffer,
+    BufferCreateInfo,
+    BufferUsage,
+    Subbuffer
+};
+use vulkano::memory::allocator::{
+    AllocationCreateInfo,
+    MemoryTypeFilter,
+    StandardMemoryAllocator
+};
+use bytemuck::{
+    Pod,
+    Zeroable
+};
 
 /// VMNL types definition
-// pub type VMNLIndexBuffer    = Subbuffer<[u32]>;
+/// * Defines type aliases for various graphics-related types used in the VMNL library, such as vertex buffers, index buffers, colors, vectors, and rectangles. These type aliases provide a clear and consistent way to refer to these types throughout the codebase, improving readability and maintainability.
+pub type VMNLIndexBuffer    = Subbuffer<[u32]>;
 // pub type VMNLFrameUboBuffer = Subbuffer<VMNLFrameUbo>;
 /// * Defines a type alias VMNLVertexBuffer for a vertex buffer containing an array of VMNLVertex instances, which represent the vertices used for rendering in the VMNL library.
 pub type VMNLVertexBuffer   = Subbuffer<[VMNLVertex]>;
+/// * Defines a type alias VMNLrbg for an RGB color represented as an array of three f32 values.
 pub type VMNLrbg            = [f32; 3];
 /// * Defines a type alias VMNLrgba for an RGBA color represented as an array of four f32 values.
 pub type VMNLrgba           = [f32; 4];
@@ -55,8 +68,13 @@ pub struct VMNLVertex {
 pub struct Graphics
 {
     /// * The vertex buffer containing the vertices to be rendered.
-    pub vertex_buffer: VMNLVertexBuffer
-    // pub index_buffer:  VMNLIndexBuffer
+    pub vertex_buffer: VMNLVertexBuffer,
+    /// * The index buffer containing the indices for rendering.
+    pub index_buffer:  Option<VMNLIndexBuffer>,
+    /// * The number of vertices in the vertex buffer.
+    pub vertex_count:  u32,
+    /// * The number of indices in the index buffer.
+    pub index_count:   u32,
     // pub frame_ubo_buffer: FrameUboBuffer
 }
 
@@ -91,30 +109,30 @@ impl Graphics
             },
             vertices.iter().cloned()
         )
-        .expect("VMNL error: Failed to create vertex buffer.");
+        .expect("[VMNL Error] Failed to create vertex buffer.");
     }
 
-    // fn create_index_buffer(
-    //     indices: &[u32],
-    //     memory_allocator: &Arc<StandardMemoryAllocator>
-    // ) -> VMNLIndexBuffer
-    // {
-    //     return Buffer::from_iter
-    //     (
-    //         memory_allocator.clone(),
-    //         BufferCreateInfo {
-    //             usage: BufferUsage::INDEX_BUFFER,
-    //             ..Default::default()
-    //         },
-    //         AllocationCreateInfo {
-    //             memory_type_filter:
-    //             MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-    //             ..Default::default()
-    //         },
-    //         indices.iter().cloned()
-    //     )
-    //     .expect("Failed to create index buffer.");
-    // }
+    fn create_index_buffer(
+        indices: &[u32],
+        memory_allocator: &Arc<StandardMemoryAllocator>
+    ) -> VMNLIndexBuffer
+    {
+        return Buffer::from_iter
+        (
+            memory_allocator.clone(),
+            BufferCreateInfo {
+                usage: BufferUsage::INDEX_BUFFER,
+                ..Default::default()
+            },
+            AllocationCreateInfo {
+                memory_type_filter:
+                MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                ..Default::default()
+            },
+            indices.iter().cloned()
+        )
+        .expect("Failed to create index buffer.");
+    }
 
     // fn create_frame_ubo_buffer(
     //     ubo: VMNLFrameUbo,
@@ -160,6 +178,6 @@ impl Drop for Graphics
 {
     fn drop(&mut self) -> ()
     {
-        println!("VMNL log: Vertex destroyed.");
+        println!("[VMNL Log] Vertex destroyed.");
     }
 }
