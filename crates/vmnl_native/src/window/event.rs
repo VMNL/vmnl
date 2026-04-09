@@ -99,7 +99,7 @@ pub enum Event
  */
 pub struct EventQueue
 {
-    /// * The receiver for GLFW events, which receives events as tuples of a timestamp and a GLFW WindowEvent.
+    /// * The receiver for GLFW events, which receives events as tuples of a timestamp and a GLFW WindowEvent. */
     events: glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
 }
 
