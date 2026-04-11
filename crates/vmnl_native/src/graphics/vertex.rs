@@ -5,38 +5,10 @@
 /// * Vertex utilities for the VMNL graphics module.
 ////////////////////////////////////////////////////////////////////////////////
 
-use crate::{Graphics, VMNLVertex, VMNLrbg,  Context};
+use crate::{Graphics, VMNLVertex, VMNLrbg, Context};
 
 impl Graphics
 {
-    pub fn create_indexed(
-        vmnl_context: &Context,
-        vertices: &[VMNLVertex],
-        indices: &[u32],
-    ) -> Self
-    {
-        let vertices: Vec<VMNLVertex> = vertices
-            .iter()
-            .map(|vertex| VMNLVertex {
-                position: vertex.position,
-                color: Self::color_transform(vertex.color),
-            })
-            .collect();
-
-        Self {
-            vertex_count: vertices.len() as u32,
-            index_count:  indices.len() as u32,
-            vertex_buffer: Self::create_vertex_buffer(
-                &vertices,
-                &vmnl_context.inner.memory_allocator,
-            ),
-            index_buffer: Some(Self::create_index_buffer(
-                indices,
-                &vmnl_context.inner.memory_allocator,
-            )),
-        }
-    }
-
     /**
      * * Creates a Graphics instance by transforming the input vertices and creating a vertex buffer.
      *
@@ -47,16 +19,16 @@ impl Graphics
      * ! Returns:
      * - A new instance of the Graphics struct, containing the created vertex buffer ready for rendering.
      */
-    pub fn create_vertices(
+    pub fn create_vertices_shape(
         vmnl_context: &Context,
         vertex1:      VMNLVertex,
         vertex2:      VMNLVertex,
         vertex3:      VMNLVertex
     ) -> Self
     {
-        let vertex1_color: VMNLrbg      = Self::color_transform(vertex1.color);
-        let vertex2_color: VMNLrbg      = Self::color_transform(vertex2.color);
-        let vertex3_color: VMNLrbg      = Self::color_transform(vertex3.color);
+        let vertex1_color: VMNLrbg    = Self::color_transform(vertex1.color);
+        let vertex2_color: VMNLrbg    = Self::color_transform(vertex2.color);
+        let vertex3_color: VMNLrbg    = Self::color_transform(vertex3.color);
         let vertices = [
             VMNLVertex {
                 position: vertex1.position,
@@ -73,7 +45,10 @@ impl Graphics
         ];
 
         Self {
+            vertex_count: vertices.len() as u32,
+            index_count: 0,
             vertex_buffer: Self::create_vertex_buffer(&vertices, &vmnl_context.inner.memory_allocator),
+            index_buffer: None,
         }
     }
 }

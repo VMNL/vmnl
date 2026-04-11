@@ -45,7 +45,7 @@ impl Window
      */
     fn build_command_buffer(
         &self,
-        image_index: u32,
+        image_index:   u32,
         graphics_list: &[&Graphics]
     ) -> Arc<PrimaryAutoCommandBuffer>
     {
@@ -94,9 +94,18 @@ impl Window
                     )
                     .expect("[VMNL Error] Failed to push constants")
                     .bind_vertex_buffers(0, graphics.vertex_buffer.clone())
-                    .expect("[VMNL Error] Failed to bind vertex buffer")
-                    .draw(graphics.vertex_buffer.len() as u32, 1, 0, 0)
-                    .expect("[VMNL Error] Failed to record draw command");
+                    .expect("[VMNL Error] Failed to bind vertex buffer");
+                    if let Some(index_buffer) = &graphics.index_buffer {
+                        builder
+                            .bind_index_buffer(index_buffer.clone())
+                            .expect("[VMNL Error] Failed to bind index buffer")
+                            .draw_indexed(graphics.index_count, 1, 0, 0, 0)
+                            .expect("[VMNL Error] Failed to record indexed draw command");
+                    } else {
+                        builder
+                            .draw(graphics.vertex_count, 1, 0, 0)
+                            .expect("[VMNL Error] Failed to record draw command");
+                    }
             }
             builder
                 .end_render_pass(SubpassEndInfo::default())
