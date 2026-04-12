@@ -7,6 +7,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use crate::{Graphics, VMNLVertex, Context};
+use crate::graphics::GraphicsKind::IndexedGeometry;
 
 impl Graphics
 {
@@ -35,14 +36,20 @@ impl Graphics
             })
             .collect();
 
+        println!("{}", crate::vmnl_log(&format!("Creating indexed shape with vertices at positions {}, colors {} and indices {}.",
+            vertices.iter().map(|v| v.position[0].to_string() + ", " + &v.position[1].to_string()).collect::<Vec<String>>().join("], ["),
+            vertices.iter().map(|v| (v.color[0] * 255.0).to_string() + ", " + &(v.color[1] * 255.0).to_string() + ", " + &(v.color[2] * 255.0).to_string()).collect::<Vec<String>>().join("], ["),
+            indices.iter().map(|index| index.to_string()).collect::<Vec<String>>().join(", ")
+        )));
         Self {
-            vertex_count: vertices.len() as u32,
-            index_count:  indices.len() as u32,
+            kind:          IndexedGeometry,
+            vertex_count:  vertices.len() as u32,
+            index_count:   indices.len() as u32,
             vertex_buffer: Self::create_vertex_buffer(
                 &vertices,
                 &vmnl_context.inner.memory_allocator,
             ),
-            index_buffer: Some(Self::create_index_buffer(
+            index_buffer:  Some(Self::create_index_buffer(
                 indices,
                 &vmnl_context.inner.memory_allocator,
             )),
