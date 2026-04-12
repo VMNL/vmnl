@@ -6,6 +6,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 mod vertex;
+mod indexded;
+mod rect;
 use std::sync::Arc;
 use vulkano::pipeline::graphics::vertex_input::Vertex;
 use vulkano::buffer::{
@@ -38,8 +40,16 @@ pub type VMNLrgba           = [f32; 4];
 pub type VMNLVector2f       = [f32; 2];
 /// * Defines a type alias VMNLVector2i for a 2D vector represented as an array of two i32 values.
 pub type VMNLVector2i       = [i32; 2];
-/// * Defines a type alias VMNLRect for a rectangle represented as an array of four f32 values.
-pub type VMNLRect           = [f32; 4];
+/// * Defines a VMNLRect struct representing an axis-aligned rectangle
+///   with a `position` (top-left) and a `size` (width, height).
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default)]
+pub struct VMNLRect {
+    /// Top-left position: [x, y]
+    pub position: VMNLVector2f,
+    /// Size: [width, height]
+    pub size:     VMNLVector2f,
+}
 
 /**
  * * Defines the VMNLVertex struct, which represents a vertex with a position and color.
