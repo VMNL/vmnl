@@ -15,6 +15,7 @@ use super::{
 use crate::window::PushConstants;
 use std::sync::Arc;
 use vulkano::{VulkanError, Validated};
+use crate::{VMNLError, VMNLErrorKind};
 use vulkano::device::{Queue, Device};
 use vulkano::render_pass::Framebuffer;
 use vulkano::sync::future::FenceSignalFuture;
@@ -65,7 +66,7 @@ impl Window
                     .queue_family_index(),
                 CommandBufferUsage::OneTimeSubmit,
             )
-            .expect("[VMNL Error] Failed to create command buffer builder");
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanCommandBufferCreationFailed).report());
 
         unsafe {
             builder
@@ -79,9 +80,9 @@ impl Window
                         ..Default::default()
                     },
                 )
-                .expect("[VMNL Error] Failed to begin render pass")
+                .expect(&VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed).report())
                 .bind_pipeline_graphics(self.window_handle.graphics_pipeline.clone())
-                .expect("[VMNL Error] Failed to bind graphics pipeline");
+                .expect(&VMNLError::new(VMNLErrorKind::VulkanPipelineCreationFailed).report());
                 for graphics in graphics_list {
                     let push_constants: PushConstants = PushConstants {
                         window_size: [extent[0] as f32, extent[1] as f32],
@@ -92,27 +93,27 @@ impl Window
                         0,
                         push_constants,
                     )
-                    .expect("[VMNL Error] Failed to push constants")
-                    .bind_vertex_buffers(0, graphics.vertex_buffer.clone())
-                    .expect("[VMNL Error] Failed to bind vertex buffer");
+                        .expect(&VMNLError::new(VMNLErrorKind::VulkanValidationFailed).report())
+                        .bind_vertex_buffers(0, graphics.vertex_buffer.clone())
+                        .expect(&VMNLError::new(VMNLErrorKind::VulkanBufferCreationFailed).report());
                     if let Some(index_buffer) = &graphics.index_buffer {
                         builder
                             .bind_index_buffer(index_buffer.clone())
-                            .expect("[VMNL Error] Failed to bind index buffer")
+                            .expect(&VMNLError::new(VMNLErrorKind::VulkanBufferCreationFailed).report())
                             .draw_indexed(graphics.index_count, 1, 0, 0, 0)
-                            .expect("[VMNL Error] Failed to record indexed draw command");
+                            .expect(&VMNLError::new(VMNLErrorKind::VulkanValidationFailed).report());
                     } else {
                         builder
                             .draw(graphics.vertex_count, 1, 0, 0)
-                            .expect("[VMNL Error] Failed to record draw command");
+                            .expect(&VMNLError::new(VMNLErrorKind::VulkanValidationFailed).report());
                     }
             }
             builder
                 .end_render_pass(SubpassEndInfo::default())
-                .expect("[VMNL Error] Failed to end render pass");
+                    .expect(&VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed).report());
         }
-        builder.build()
-            .expect("[VMNL Error] Failed to build command buffer")
+                builder.build()
+                    .expect(&VMNLError::new(VMNLErrorKind::VulkanCommandBufferCreationFailed).report())
     }
 
     /**
@@ -152,11 +153,11 @@ impl Window
     {
         return match swapchain::acquire_next_image(swapchain.clone(), timeout) {
             Ok(result) => result,
-            Err(Validated::Error(VulkanError::OutOfDate)) => {
-                panic!("[VMNL Error] Swapchain out of date");
+                Err(Validated::Error(VulkanError::OutOfDate)) => {
+                panic!("{}", VMNLError::new(VMNLErrorKind::VulkanSurfaceLost).report());
             }
             Err(error) => {
-                panic!("[VMNL Error] Failed to acquire next image: {error:?}");
+                panic!("{}: {error:?}", VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed).report());
             }
         };
     }
@@ -192,10 +193,10 @@ impl Window
     {
         return previous_frame_end
             .take()
-            .expect("[VMNL Error] previous_frame_end was None")
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnknownError).report())
             .join(acquire_future)
             .then_execute(graphics_queue.clone(), command_buffer)
-            .expect("[VMNL Error] Failed to execute command buffer")
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnknownError).report())
             .then_swapchain_present(
                 graphics_queue.clone(),
                 SwapchainPresentInfo::swapchain_image_index(
@@ -233,11 +234,11 @@ impl Window
                 future.boxed()
             }
             Err(Validated::Error(VulkanError::OutOfDate)) => {
-                eprintln!("[VMNL Warning]: Present returned OutOfDate: resize handling not implemented yet.");
+                eprintln!("{}", VMNLError::new(VMNLErrorKind::VulkanSurfaceLost).report());
                 sync::now(device.clone()).boxed()
             }
             Err(error) => {
-                eprintln!("[VMNL Error] Failed to flush future: {error:?}");
+                eprintln!("{}: {error:?}", VMNLError::new(VMNLErrorKind::VulkanUnknownError).report());
                 sync::now(device.clone()).boxed()
             }
         }
@@ -260,7 +261,7 @@ impl Window
         (u32, bool, SwapchainAcquireFuture) =
             Self::acquire_next_image_from_swapchain(&self.window_handle.swapchain, None);
         if suboptimal {
-            eprintln!("[VMNL Warning]: Swapchain is suboptimal: resize handling not implemented yet.");
+            eprintln!("{}", VMNLError::new(VMNLErrorKind::VulkanSurfaceLost).report());
         }
         let command_buffer: Arc<PrimaryAutoCommandBuffer> =
             self.build_command_buffer(image_index, graphics_list);

@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 extern crate vulkano;
-use crate::{VMNLResult, VMNLError};
+use crate::{VMNLResult, VMNLError, VMNLErrorKind};
 use std::sync::{Arc};
 use vulkano::{VulkanLibrary};
 use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo, InstanceExtensions};
@@ -192,7 +192,7 @@ impl VMNLInstance
             .enumerate()
             .find(|(_, q)| q.queue_flags.contains(QueueFlags::GRAPHICS))
             .map(|(index, _)| index as u32)
-            .expect("[VMNL Error] No graphics queue family found");
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature).report());
     }
 
     /**
@@ -215,7 +215,7 @@ impl VMNLInstance
     {
         return instance
             .enumerate_physical_devices()
-            .expect("[VMNL Error] Could not enumerate physical devices")
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanInitFailed).report())
             .filter(|physical_device| physical_device.supported_extensions().contains(required_extensions))
             .filter(|physical_device| {
                 physical_device.queue_family_properties()
@@ -231,7 +231,7 @@ impl VMNLInstance
                     _ => 0,
                 }
             })
-            .expect("[VMNL Error] No suitable physical device found");
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature).report());
     }
 
     /**
@@ -265,11 +265,11 @@ impl VMNLInstance
                 ..Default::default()
             },
         )
-        .expect("[VMNL Error] Failed to create device");
+        .expect(&VMNLError::new(VMNLErrorKind::VulkanUnknownError).report());
         let graphics_queue: Arc<Queue> =
             queues
             .next()
-            .expect("[VMNL Error] Device created without any queue");
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnknownError).report());
 
         return (device, graphics_queue);
     }
@@ -288,17 +288,17 @@ impl VMNLInstance
     {
         let glfw: glfw::Glfw =
             glfw::init(glfw::fail_on_errors)
-            .map_err(|_| VMNLError::VMNLInitFailed)?;
+            .map_err(|_| VMNLError::new(VMNLErrorKind::GlfwInitFailed))?;
         let required_instance_extensions: InstanceExtensions =
             glfw
             .get_required_instance_extensions()
-            .expect("[VMNL Error] Vulkan instance extensions unavailable")
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanExtensionNotPresent).report())
             .iter()
             .map(String::as_str)
             .collect();
         let library: Arc<VulkanLibrary> =
             VulkanLibrary::new()
-            .expect("[VMNL Error] No local Vulkan library/DLL");
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanInitFailed).report());
         let instance: Arc<Instance> =
             Instance::new(
                 library,
@@ -308,7 +308,7 @@ impl VMNLInstance
                     ..Default::default()
                 },
             )
-            .expect("[VMNL Error] Failed to create instance");
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanInitFailed).report());
         let device_extensions: DeviceExtensions =
             DeviceExtensions {
                 khr_swapchain: true,
@@ -341,6 +341,6 @@ impl Drop for VMNLInstance
 {
     fn drop(&mut self)
     {
-        println!("[VMNL Log] Instance destroyed.");
+        println!("{}", crate::vmnl_log("Dropping instance."));
     }
 }

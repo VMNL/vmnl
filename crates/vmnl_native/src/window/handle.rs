@@ -65,7 +65,7 @@ impl Window
      */
     pub fn close(&mut self) -> ()
     {
-        println!("[VMNL Log] Window named \"{}\" is closing.", self.window_config.title);
+        println!("{}", crate::vmnl_log(&format!("Window named \"{}\" is closing.", self.window_config.title)));
         self.window_handle.context.set_should_close(true);
     }
 

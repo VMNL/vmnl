@@ -5,4 +5,4 @@ mod exception;
 pub use graphics::{Graphics, VMNLVertex, VMNLVector2f, VMNLrbg, VMNLRect, VMNLVector2i, VMNLrgba};
 pub use window::{Window, Input, Key, MouseButton, Event};
 pub use vmnl_instance::{Context};
-pub use exception::{VMNLResult, VMNLError};
+pub use exception::{VMNLResult, VMNLError, VMNLErrorKind, vmnl_log};
