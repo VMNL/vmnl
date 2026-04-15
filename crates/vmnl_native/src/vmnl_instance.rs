@@ -12,6 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 extern crate vulkano;
+extern crate vulkano_shaders;
 use crate::{VMNLResult, VMNLError, VMNLErrorKind};
 use std::sync::{Arc};
 use vulkano::{VulkanLibrary};
