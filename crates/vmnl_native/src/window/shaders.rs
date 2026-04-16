@@ -2,28 +2,18 @@
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// * Shader module definitions for the VMNL library,
-///   including vertex and fragment shaders implemented in GLSL and compiled to
-///   SPIR-V using the `vulkano_shaders::shader!` macro.
+/// Shader module definitions for the VMNL library, including vertex and fragment
+/// shaders implemented in GLSL and compiled to SPIR-V using the `vulkano_shaders::shader!` macro.
 ////////////////////////////////////////////////////////////////////////////////
 
-/**
- * * Vertex shader module definition using `vulkano_shaders::shader!`.
- *
- * This macro compiles the embedded GLSL source into SPIR-V at build time
- * and generates strongly-typed Rust bindings to interface with the shader
- * (entry points, descriptor layouts, etc.).
- *
- * ? Generated API (by macro):
- * - `vs::load(device)` → loads the compiled shader module.
- * - `vs::entry_point("main")` → retrieves the shader entry point.
- *
- * ? Sources:
- * - Vulkan Spec (Shader Interfaces):
- *   https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap14.html
- * - Vulkano shader macro:
- *   https://docs.rs/vulkano-shaders/latest/vulkano_shaders/
- */
+/// Vertex shader module definition using `vulkano_shaders::shader!`.
+///
+/// The macro compiles the embedded GLSL source into SPIR-V at build time and
+/// generates strongly-typed Rust bindings (entry points, descriptor layouts, etc.).
+///
+/// Generated API (by macro):
+/// - `vs::load(device)` → loads the compiled shader module.
+/// - `vs::entry_point("main")` → retrieves the shader entry point.
 pub mod vs {
     vulkano_shaders::shader! {
         ty: "vertex",
@@ -52,23 +42,13 @@ pub mod vs {
     }
 }
 
-/**
- * * Fragment shader module definition using `vulkano_shaders::shader!`.
- *
- * This macro compiles the embedded GLSL source into SPIR-V at build time
- * and generates Rust bindings to interface with the shader (entry points,
- * descriptor layouts, etc.).
- *
- * ? Generated API (by macro):
- * - `fs::load(device)` → loads the compiled shader module.
- * - `fs::entry_point("main")` → retrieves the shader entry point.
- *
- * ? Sources:
- * - Vulkan Spec (Fragment Shader Stage):
- *   https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap14.html
- * - Vulkano shader macro:
- *   https://docs.rs/vulkano-shaders/latest/vulkano_shaders/
- */
+/// Fragment shader module definition using `vulkano_shaders::shader!`.
+///
+/// The macro compiles the GLSL source into SPIR-V and generates Rust bindings.
+///
+/// Generated API (by macro):
+/// - `fs::load(device)` → loads the compiled shader module.
+/// - `fs::entry_point("main")` → retrieves the shader entry point.
 pub mod fs {
     vulkano_shaders::shader! {
         ty: "fragment",
