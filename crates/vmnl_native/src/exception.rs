@@ -11,164 +11,155 @@ use std::{
     panic::Location,
 };
 
-/**
- * * Represents the location in the source code where a VMNL error occurred.
- */
+/// Represents the location in the source code where a VMNL error occurred.
 #[derive(Debug, Clone, Copy)]
 pub struct VMNLErrorLocation
 {
-    /// * The file in which the error occurred.
+    /// The file in which the error occurred.
     file:   &'static str,
-    /// * The line number at which the error occurred.
+    /// The line number at which the error occurred.
     line:   u32,
-    /// * The column number at which the error occurred.
+    /// The column number at which the error occurred.
     column: u32,
 }
 
 impl VMNLErrorLocation
 {
-    /**
-     * * Creates a new VMNLErrorLocation instance with the specified file, line, and column information.
-     *
-     * ! Returns:
-     * - A new instance of VMNLErrorLocation containing the provided file, line, and column information.
-     */
-    pub fn file(&self) -> &'static str { self.file }
+    /// Returns the file in which the error occurred.
+    #[inline]
+    pub fn file(&self) -> &'static str
+    {
+        self.file
+    }
 
-    /**
-     * * Retrieves the line number where the error occurred.
-     *
-     * ! Returns:
-     * - The line number associated with the error location.
-     */
-    pub fn line(&self) -> u32 { self.line }
+    /// Returns the line number where the error occurred.
+    #[inline]
+    pub fn line(&self) -> u32
+    {
+        self.line
+    }
 
-    /**
-     * * Retrieves the column number where the error occurred.
-     *
-     * ! Returns:
-     * - The column number associated with the error location.
-     */
-    pub fn column(&self) -> u32 { self.column }
+    /// Returns the column number where the error occurred.
+    #[inline]
+    pub fn column(&self) -> u32
+    {
+        self.column
+    }
 }
 
-/**
- * * Enum representing various kinds of errors that can occur within the VMNL library.
- */
+/// Enum representing various kinds of errors that can occur within the VMNL library.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum VMNLErrorKind
 {
-    /// * Vulkan-related errors, covering a wide range of potential issues that can arise during Vulkan initialization, resource creation, and operation.
+    /// Vulkan initialization failed.
     VulkanInitFailed,
-    /// * Vulkan surface creation failed, indicating an issue with creating a rendering surface for Vulkan.
+    /// Vulkan surface creation failed.
     VulkanSurfaceCreationFailed,
-    /// * Vulkan swapchain creation failed, indicating an issue with creating the swapchain for presenting rendered images.
+    /// Vulkan swapchain creation failed.
     VulkanSwapchainCreationFailed,
-    /// * Vulkan shader module creation failed, indicating an issue with creating shader modules for rendering.
+    /// Vulkan shader module creation failed.
     VulkanShaderModuleCreationFailed,
-    /// * Vulkan pipeline creation failed, indicating an issue with creating rendering pipelines.
+    /// Vulkan pipeline creation failed.
     VulkanPipelineCreationFailed,
-    /// * Vulkan buffer creation failed, indicating an issue with creating GPU buffers.
-    VulkanBufferCreationFailed,
-    /// * Vulkan memory allocation failed, indicating an issue with allocating GPU memory.
+    /// Vulkan vertex buffer creation failed.
+    VulkanVertexBufferCreationFailed,
+    /// Vulkan index buffer creation failed.
+    VulkanIndexBufferCreationFailed,
+    /// Vulkan memory allocation failed.
     VulkanMemoryAllocationFailed,
-    /// * Vulkan command buffer creation failed, indicating an issue with creating command buffers for GPU execution.
+    /// Vulkan command buffer creation failed.
     VulkanCommandBufferCreationFailed,
-    /// * Vulkan descriptor set creation failed, indicating an issue with creating descriptor sets for binding resources.
+    /// Vulkan descriptor set creation failed.
     VulkanDescriptorSetCreationFailed,
-    /// * Vulkan semaphore creation failed, indicating an issue with creating semaphores for synchronization.
+    /// Vulkan semaphore creation failed.
     VulkanSemaphoreCreationFailed,
-    /// * Vulkan fence creation failed, indicating an issue with creating fences for synchronization.
+    /// Vulkan fence creation failed.
     VulkanFenceCreationFailed,
-    /// * Vulkan framebuffer creation failed, indicating an issue with creating framebuffers for rendering.
+    /// Vulkan framebuffer creation failed.
     VulkanFramebufferCreationFailed,
-    /// * Vulkan render pass creation failed, indicating an issue with creating render passes for rendering.
+    /// Vulkan render pass creation failed.
     VulkanRenderPassCreationFailed,
-    /// * Vulkan image creation failed, indicating an issue with creating images for rendering.
+    /// Vulkan image creation failed.
     VulkanImageCreationFailed,
-    /// * Vulkan image view creation failed, indicating an issue with creating image views for sampling.
+    /// Vulkan image view creation failed.
     VulkanImageViewCreationFailed,
-    /// * Vulkan sampler creation failed, indicating an issue with creating samplers for texture sampling.
+    /// Vulkan sampler creation failed.
     VulkanSamplerCreationFailed,
-    /// * Vulkan descriptor pool creation failed, indicating an issue with creating descriptor pools for managing descriptor sets.
+    /// Vulkan descriptor pool creation failed.
     VulkanDescriptorPoolCreationFailed,
-    /// * Vulkan descriptor set layout creation failed, indicating an issue with creating descriptor set layouts for defining resource bindings.
+    /// Vulkan descriptor set layout creation failed.
     VulkanDescriptorSetLayoutCreationFailed,
-    /// * Vulkan pipeline layout creation failed, indicating an issue with creating pipeline layouts for defining pipeline resource interfaces.
+    /// Vulkan pipeline layout creation failed.
     VulkanPipelineLayoutCreationFailed,
-    /// * Vulkan shader compilation failed, indicating an issue with compiling shaders for rendering.
+    /// Vulkan shader compilation failed.
     VulkanShaderCompilationFailed,
-    /// * Vulkan validation failed, indicating an issue with validating Vulkan API usage.
+    /// Vulkan validation failed.
     VulkanValidationFailed,
-    /// * Vulkan unsupported feature, indicating an issue with using a Vulkan feature that is not supported by the current environment.
+    /// Vulkan unsupported feature encountered.
     VulkanUnsupportedFeature,
-    /// * Vulkan out of memory, indicating an issue with allocating GPU memory.
+    /// Vulkan out of memory.
     VulkanOutOfMemory,
-    /// * Vulkan device lost, indicating an issue with the Vulkan device being lost.
+    /// Vulkan device lost.
     VulkanDeviceLost,
-    /// * Vulkan surface lost, indicating an issue with the Vulkan surface being lost.
+    /// Vulkan surface lost.
     VulkanSurfaceLost,
-    /// * Vulkan extension not present, indicating an issue with a required Vulkan extension not being present.
+    /// Required Vulkan extension not present.
     VulkanExtensionNotPresent,
-    /// * Vulkan layer not present, indicating an issue with a required Vulkan layer not being present.
+    /// Required Vulkan layer not present.
     VulkanLayerNotPresent,
-    /// * Vulkan incompatible driver, indicating an issue with the Vulkan driver being incompatible.
+    /// Vulkan driver is incompatible.
     VulkanIncompatibleDriver,
-    /// * Vulkan too many objects, indicating an issue with creating too many Vulkan objects.
+    /// Too many Vulkan objects created.
     VulkanTooManyObjects,
-    /// * Vulkan format not supported, indicating an issue with a requested Vulkan format not being supported.
+    /// Requested Vulkan format not supported.
     VulkanFormatNotSupported,
-    /// * Vulkan fragmentation, indicating an issue with GPU memory fragmentation.
+    /// GPU memory fragmentation.
     VulkanFragmentation,
-    /// * Vulkan unknown error, indicating an unspecified Vulkan error.
+    /// Unknown Vulkan error.
     VulkanUnknownError,
-    /// * GLFW initialization failed, indicating an issue with initializing the GLFW library.
+    /// GLFW initialization failed.
     GlfwInitFailed,
-    /// * GLFW window creation failed, indicating an issue with creating a GLFW window.
+    /// GLFW window creation failed.
     GlfwWindowCreationFailed,
-    /// * GLFW context creation failed, indicating an issue with creating a GLFW context.
+    /// GLFW context creation failed.
     GlfwContextCreationFailed,
-    /// * GLFW unsupported platform, indicating an issue with running GLFW on the current platform.
+    /// GLFW unsupported platform.
     GlfwUnsupportedPlatform,
-    /// * GLFW version mismatch, indicating an issue with a mismatch between the expected and actual GLFW version.
+    /// GLFW version mismatch.
     GlfwVersionMismatch,
-    /// * GLFW platform error, indicating an issue with a platform-specific error in GLFW.
+    /// Platform-specific GLFW error.
     GlfwPlatformError,
-    /// * GLFW unknown error, indicating an unspecified GLFW error.
+    /// Unknown GLFW error.
     GlfwUnknownError,
-    /// * Invalid state error, indicating that the library is in an invalid state for the attempted operation.
+    /// Invalid state error with message.
     InvalidState(&'static str),
 }
 
-/**
- * * Represents an error that can occur within the VMNL library,
- *   encapsulating both the kind of error and the location in the source code where it occurred.
- */
+/// Represents an error that can occur within the VMNL library,
+/// encapsulating both the kind of error and the location in the source code where it occurred.
 #[derive(Debug)]
 pub struct VMNLError
 {
-    /// * The specific kind of error that occurred.
+    /// The specific kind of error that occurred.
     kind:   VMNLErrorKind,
-    /// * The location in the source code where the error occurred.
+    /// The location in the source code where the error occurred.
     caller: VMNLErrorLocation,
 }
 
 impl VMNLError
 {
-    /**
-     * * Creates a new VMNLError instance with the specified error kind and caller location.
-     *
-     * ! Parameters:
-     * - `kind`: The specific kind of error that occurred.
-     *
-     * ! Returns:
-     * - A new instance of VMNLError containing the provided error kind and caller location.
-     */
+    /// Create a new `VMNLError` with the specified error kind and caller location.
+    ///
+    /// # Parameters
+    /// - `kind`: The specific kind of error that occurred.
+    ///
+    /// # Returns
+    /// A new `VMNLError` containing the provided error kind and caller location.
     #[track_caller]
     pub fn new(kind: VMNLErrorKind) -> Self
     {
-        let caller = Location::caller();
+        let caller: &Location = Location::caller();
 
         Self {
             kind,
@@ -180,34 +171,25 @@ impl VMNLError
         }
     }
 
-    /**
-     * * Retrieves the kind of error that occurred.
-     *
-     * ! Returns:
-     * - A reference to the VMNLErrorKind associated with this error.
-     */
+    /// Returns the kind of error that occurred.
+    #[inline]
     pub fn kind(&self) -> &VMNLErrorKind
     {
         &self.kind
     }
 
-    /**
-    * * Retrieves the location in the source code where the error occurred.
-    *
-    * ! Returns:
-    * - A VMNLErrorLocation struct containing the file, line, and column information of the error location.
-    */
+    /// Returns the location in the source code where the error occurred.
+    #[inline]
     pub fn location(&self) -> VMNLErrorLocation
     {
         self.caller
     }
 
-        /**
-    * * Formats the error message along with the location information for reporting.
-    *
-    * ! Returns:
-    * - A formatted string containing the error message and its location in the source code.
-    */
+    /// Format the error message along with location information for reporting.
+    ///
+    /// # Returns
+    /// A formatted string containing the error message and its location in the source code.
+    #[inline]
     pub fn report(&self) -> String
     {
         format!(
@@ -222,6 +204,7 @@ impl VMNLError
 
 impl fmt::Display for VMNLError
 {
+    /// Format the error message based on the specific kind of error, providing a human-readable description.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
     {
         match &self.kind {
@@ -235,8 +218,10 @@ impl fmt::Display for VMNLError
                 f.write_str("vulkan shader module creation failed"),
             VMNLErrorKind::VulkanPipelineCreationFailed =>
                 f.write_str("vulkan pipeline creation failed"),
-            VMNLErrorKind::VulkanBufferCreationFailed =>
-                f.write_str("vulkan buffer creation failed"),
+            VMNLErrorKind::VulkanVertexBufferCreationFailed =>
+                f.write_str("vulkan vertex buffer creation failed"),
+            VMNLErrorKind::VulkanIndexBufferCreationFailed =>
+                f.write_str("vulkan index buffer creation failed"),
             VMNLErrorKind::VulkanMemoryAllocationFailed =>
                 f.write_str("vulkan memory allocation failed"),
             VMNLErrorKind::VulkanCommandBufferCreationFailed =>
@@ -311,16 +296,15 @@ impl fmt::Display for VMNLError
 
 impl Error for VMNLError {}
 
-/**
- * * Utility function for logging messages within the VMNL library, prefixing them with a consistent tag for easier identification in logs.
- *
- * ! Parameters:
- * - `message`: The message to be logged, which can be any type that implements `AsRef<str>`,
- *   allowing for flexible string inputs (e.g., `String`, `&str`).
- *
- * ! Returns:
- * - A formatted string containing the log message prefixed with "[VMNL Log]" for consistent logging throughout the library.
- */
+/// Utility function for logging messages within the VMNL library,
+/// prefixing them with a consistent tag for easier identification in logs.
+///
+/// # Arguments
+/// - `message`: The message to be logged, any type implementing `AsRef<str>`.
+///
+/// # Returns
+/// A formatted string containing the log message prefixed with "[VMNL Log]".
+#[inline]
 pub fn vmnl_log<S: AsRef<str>>(
     message: S
 ) -> String
@@ -328,5 +312,5 @@ pub fn vmnl_log<S: AsRef<str>>(
     format!("[VMNL Log] {}", message.as_ref())
 }
 
-/// * A type alias for results returned by functions in the VMNL library, using the custom `VMNLError` type for error handling.
+/// Type alias for results returned by functions in the VMNL library using `VMNLError`.
 pub type VMNLResult<T> = Result<T, VMNLError>;

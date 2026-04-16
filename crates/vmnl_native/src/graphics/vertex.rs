@@ -2,24 +2,27 @@
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// * Vertex utilities for the VMNL graphics module.
+/// Vertex utilities for the VMNL graphics module.
 ////////////////////////////////////////////////////////////////////////////////
 
-use crate::{Graphics, VMNLVertex, VMNLrbg, Context};
-use crate::graphics::GraphicsKind::RawVertices;
+use crate::{
+    Graphics,
+    VMNLVertex,
+    VMNLrbg,
+    Context,
+    graphics::GraphicsKind::RawVertices
+};
 
 impl Graphics
 {
-    /**
-     * * Creates a Graphics instance by transforming the input vertices and creating a vertex buffer.
-     *
-     * ! Parameters:
-     * - `vmnl_context`: A reference to the VMNL context, which provides access to the memory allocator.
-     * - `vertex1`, `vertex2`, `vertex3`: The three vertices that define the geometry to be rendered, each containing a position and color.
-     *
-     * ! Returns:
-     * - A new instance of the Graphics struct, containing the created vertex buffer ready for rendering.
-     */
+    /// Create a `Graphics` instance by transforming the input vertices into a vertex buffer.
+    ///
+    /// # Arguments
+    /// - `vmnl_context`: Reference to the VMNL context providing the memory allocator.
+    /// - `vertex1`, `vertex2`, `vertex3`: The three vertices defining the geometry.
+    ///
+    /// # Returns
+    /// A `Graphics` instance with a created vertex buffer ready for rendering.
     pub fn create_triangle(
         vmnl_context: &Context,
         vertex1:       VMNLVertex,
@@ -57,7 +60,7 @@ impl Graphics
             kind:          RawVertices,
             vertex_count:  vertices.len() as u32,
             index_count:   0,
-            vertex_buffer: Self::create_vertex_buffer(&vertices, &vmnl_context.inner.memory_allocator),
+            vertex_buffer: Self::create_vertex_buffer(&vertices.as_slice(), &vmnl_context.inner.memory_allocator),
             index_buffer:  None,
         }
     }

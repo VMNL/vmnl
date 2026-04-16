@@ -12,208 +12,173 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 extern crate vulkano;
-use crate::{VMNLResult, VMNLError, VMNLErrorKind};
-use std::sync::{Arc};
-use vulkano::{VulkanLibrary};
-use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo, InstanceExtensions};
-use vulkano::device::physical::{PhysicalDevice, PhysicalDeviceType};
-use vulkano::device::{Device, DeviceCreateInfo, QueueCreateInfo, QueueFlags, Queue, DeviceExtensions};
-use vulkano::memory::allocator::{StandardMemoryAllocator};
-use vulkano::command_buffer::allocator::{
-    StandardCommandBufferAllocator, StandardCommandBufferAllocatorCreateInfo
+use crate::{
+    VMNLResult,
+    VMNLError,
+    VMNLErrorKind
+};
+use std::sync::Arc;
+use vulkano::{
+    VulkanLibrary,
+    instance::{
+        Instance,
+        InstanceCreateFlags,
+        InstanceCreateInfo,
+        InstanceExtensions
+    },
+    device::{
+        Device,
+        DeviceCreateInfo,
+        DeviceExtensions,
+        Queue,
+        QueueCreateInfo,
+        QueueFlags,
+        physical::{
+            PhysicalDevice,
+            PhysicalDeviceType
+        }
+    },
+    memory::allocator::StandardMemoryAllocator,
+    command_buffer::allocator::{
+        StandardCommandBufferAllocator,
+        StandardCommandBufferAllocatorCreateInfo
+    }
 };
 
-/**
- * * VMNLContext is the main struct of the VMNL library, representing the core Vulkan context.
- *   It is responsible for initializing and managing the Vulkan resources required for rendering operations.
- *   It provides a high-level interface for the graphical part of the library.
- */
+/// `Context` is the main struct of the VMNL library, representing the core Vulkan context.
+///
+/// It is responsible for initializing and managing the Vulkan resources required for rendering operations
+/// and provides a high-level interface for the graphical part of the library.
 #[derive(Clone)]
 pub struct Context
 {
-    /**
-     * * Inner VMNLInstance containing the Vulkan context and resources.
-     *   This field is wrapped in an `Arc` to allow for shared ownership and thread-safe reference.
-     *   The `VMNLInstance` struct encapsulates the VMNLInstance, witch is hidden from the public API.
-     */
+    /// Inner `VMNLInstance` containing the Vulkan context and resources.
+    /// Wrapped in an `Arc` for shared ownership and thread-safe referencing.
     pub(crate) inner: Arc<VMNLInstance>,
 }
 
 impl Context
 {
-    /**
-     * * Initializes the VMNLContext witch is mandatory for using the graphical part of the library.
-     *
-     * ! Returns:
-     * - `VMNLResult<Self>`: A result containing the initialized `Context` on success, or a `VMNLError` on failure.
-     */
+    /// Initialize a new `Context` required for using the graphical part of the library.
+    ///
+    /// # Returns
+    /// A `VMNLResult<Self>` containing the initialized `Context` on success.
     pub fn new() -> VMNLResult<Self>
     {
-        let inner: Arc<VMNLInstance> = Arc::new(VMNLInstance::new()?);
-
         Ok(Self {
-            inner
+             inner: Arc::new(VMNLInstance::new()?)
         })
     }
 }
 
-/**
- * * Represents the core Vulkan context used by the graphical part.
- *   It encapsulates the Vulkan instance, physical device, logical device, graphics queue,
- *   memory allocator, and command buffer allocator. This struct is responsible for
- *   initializing and managing the Vulkan resources required for rendering operations.
- */
+/// Represents the core Vulkan context used by the graphical part of the library.
+///
+/// Encapsulates the Vulkan instance, physical device, logical device, graphics queue,
+/// memory allocator, and command buffer allocator. Responsible for initializing and
+/// managing Vulkan resources required for rendering operations.
 #[derive(Debug)]
 pub(crate) struct VMNLInstance
 {
-    /**
-     * * Vulkan instance.
-     *   Represents the connection between the application and the Vulkan library.
-     *   It is the first thing to create when using Vulkan and is used to query
-     *   available physical devices and their properties.
-     */
+    /// Vulkan instance representing the connection to the Vulkan library.
     pub(crate) instance:                    Arc<Instance>,
 
-    /**
-     * * Selected physical device.
-     *   Represents a physical GPU available on the system.
-     *   Need to selects one physical device to create a logical device.
-     */
+    /// Selected physical device (GPU).
     pub(crate) physical_device:             Arc<PhysicalDevice>,
 
-    /**
-     * * Logical device.
-     *   Represents the application's interface to the selected GPU.
-     *   It enables specific device features and provides access to
-     *   command submission through queues.
-     */
+    /// Logical device representing the application's interface to the GPU.
     pub(crate) device:                      Arc<Device>,
 
-    /**
-     * * Device queue used for submitting GPU work.
-     *   Queues are retrieved from queue families supported by the
-     *   physical device. They are used to submit command buffers
-     *   for execution on the GPU.
-     */
+    /// Device queue used for submitting GPU work.
     pub(crate) graphics_queue:              Arc<Queue>,
 
-    /**
-     * * Index of the graphics queue family.
-     *   Identifies which queue family supports graphics operations.
-     *   This index is used when creating the logical device and retrieving the graphics queue.
-     */
+    /// Index of the graphics queue family supporting graphics operations.
     pub(crate) graphics_queue_family_index: u32,
 
-    /**
-     * * Memory allocator used to manage GPU memory.
-     *   `StandardMemoryAllocator` from Vulkano simplifies Vulkan's
-     *   explicit memory management by handling allocation and reuse
-     *   of device memory for buffers and images.
-     */
+    /// Memory allocator used to manage GPU memory (Vulkano `StandardMemoryAllocator`).
     pub(crate) memory_allocator:            Arc<StandardMemoryAllocator>,
 
-    /**
-     * * Command buffer allocator used to manage command buffers.
-     *   `StandardCommandBufferAllocator` from Vulkano manages the
-     *   allocation and reuse of command buffers, which are used to
-     *   record commands that will be submitted to the GPU for execution.
-     */
+    /// Command buffer allocator used to allocate and reuse command buffers.
     pub(crate) command_buffer_allocator:    Arc<StandardCommandBufferAllocator>
 }
 
-/**
- * * Helper functions for VMNLInstance initialization, including:
- * - create_command_buffer_allocator: Initializes the command buffer allocator.
- * - create_memory_allocator: Initializes the memory allocator.
- * - select_graphics_queue_family_index: Selects the index of a queue family that supports graphics operations.
- * - select_physical_device: Selects a suitable physical device based on required extensions and graphics support.
- * - create_device: Creates a logical device and retrieves the graphics queue.
- * - new: Initializes the VMNLInstance by creating the Vulkan instance, selecting a physical device,
- *   creating a logical device, and setting up the memory and command buffer allocators.
- */
+/// Helper functions for `VMNLInstance` initialization and resource setup.
 impl VMNLInstance
 {
-    /**
-     * * Initializes the command buffer allocator for the Vulkan device.
-     *
-     * ! Parameters:
-     * - `device`: A reference-counted pointer to the Vulkan logical device for which the command buffer allocator will be created.
-     *
-     * ? Source:
-     * - https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-buffer
-     */
+    /// Initialize the command buffer allocator for the Vulkan device.
+    ///
+    /// # Arguments
+    /// - `device`: Reference-counted pointer to the Vulkan logical device.
+    ///
+    /// # Source
+    /// https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-buffer
     #[inline]
     fn create_command_buffer_allocator(
         device: &Arc<Device>
     ) -> Arc<StandardCommandBufferAllocator>
     {
-        return StandardCommandBufferAllocator::new(
+        StandardCommandBufferAllocator::new(
             device.clone(),
             StandardCommandBufferAllocatorCreateInfo::default(),
-        ).into();
+        ).into()
     }
 
-    /**
-     * * Initializes the memory allocator for the Vulkan device.
-     *
-     * ! Parameters:
-     * - `device`: A reference-counted pointer to the Vulkan logical device for which the memory allocator will be created.
-     *
-     * ? Source:
-     * - https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-memory-allocator
-     */
+    /// Initialize the memory allocator for the Vulkan device.
+    ///
+    /// # Arguments
+    /// - `device`: Reference-counted pointer to the Vulkan logical device.
+    ///
+    /// # Source
+    /// https://vulkano.rs/03-buffer-creation/01-buffer-creation.html#creating-a-memory-allocator
     #[inline]
     fn create_memory_allocator(
         device: &Arc<Device>
     ) -> Arc<StandardMemoryAllocator>
     {
-        return Arc::new(StandardMemoryAllocator::new_default(device.clone()));
+        Arc::new(StandardMemoryAllocator::new_default(device.clone()))
     }
 
-    /**
-     * * Selects the index of a queue family that supports graphics operations.
-     *
-     * ! Parameters:
-     * - `physical_device`: A reference-counted pointer to the physical device for which to select a queue family.
-     *
-     * ! Returns:
-     * - `u32`: The index of the queue family that supports graphics operations.
-     *
-     * ? Source:
-     * - https://vulkano.rs/02-initialization/01-initialization.html#selecting-a-queue-family
-     */
+    /// Select the index of a queue family that supports graphics operations.
+    ///
+    /// # Arguments
+    /// - `physical_device`: Reference-counted pointer to the physical device.
+    ///
+    /// # Returns
+    /// The index (`u32`) of the queue family that supports graphics operations.
+    ///
+    /// # Source
+    /// https://vulkano.rs/02-initialization/01-initialization.html#selecting-a-queue-family
+    #[inline]
     fn select_graphics_queue_family_index(
         physical_device: &Arc<PhysicalDevice>,
     ) -> u32
     {
-        return physical_device
+        physical_device
             .queue_family_properties()
             .iter()
             .enumerate()
             .find(|(_, q)| q.queue_flags.contains(QueueFlags::GRAPHICS))
             .map(|(index, _)| index as u32)
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature).report());
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature).report())
     }
 
-    /**
-     * * Selects a suitable physical device based on required extensions and graphics support.
-     *
-     * ! Parameters:
-     * - `instance`: A reference-counted pointer to the Vulkan instance used to enumerate physical devices.
-     * - `required_extensions`: A set of device extensions that the selected physical device must support
-     *
-     * ! Returns:
-     * - `Arc<PhysicalDevice>`: A reference-counted pointer to the selected physical device that meets the specified criteria.
-     *
-     * ? Source:
-     * - https://vulkano.rs/02-initialization/01-initialization.html#enumerating-physical-devices
-     */
+    /// Select a suitable physical device based on required extensions and graphics support.
+    ///
+    /// # Arguments
+    /// - `instance`: Reference to the Vulkan instance used to enumerate physical devices.
+    /// - `required_extensions`: Device extensions that the selected physical device must support.
+    ///
+    /// # Returns
+    /// An `Arc<PhysicalDevice>` pointing to the selected physical device.
+    ///
+    /// # Source
+    /// https://vulkano.rs/02-initialization/01-initialization.html#enumerating-physical-devices
+    #[inline]
     fn select_physical_device(
         instance: &Arc<Instance>,
         required_extensions: &DeviceExtensions,
     ) -> Arc<PhysicalDevice>
     {
-        return instance
+        instance
             .enumerate_physical_devices()
             .expect(&VMNLError::new(VMNLErrorKind::VulkanInitFailed).report())
             .filter(|physical_device| physical_device.supported_extensions().contains(required_extensions))
@@ -231,23 +196,22 @@ impl VMNLInstance
                     _ => 0,
                 }
             })
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature).report());
+            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature).report())
     }
 
-    /**
-     * * Creates a Vulkan logical device and a graphics queue for it.
-     *
-     * ! Parameters:
-     * - `physical_device`: A reference-counted pointer to the physical device for which to create a logical device.
-     * - `queue_family_index`: The index of the queue family for which to create a queue.
-     * - `device_extensions`: A set of device extensions to enable for the logical device.
-     *
-     * ! Returns:
-     * - `(Arc<Device>, Arc<Queue>)`: A tuple containing the created logical device and its graphics queue.
-     *
-     * ? Source:
-     * - https://vulkano.rs/02-initialization/02-device-creation.html#device-creation
-     */
+    /// Create a Vulkan logical device and a graphics queue for it.
+    ///
+    /// # Arguments
+    /// - `physical_device`: The physical device to create a logical device for.
+    /// - `queue_family_index`: Index of the queue family for which to create a queue.
+    /// - `device_extensions`: Device extensions to enable for the logical device.
+    ///
+    /// # Returns
+    /// A tuple `(Arc<Device>, Arc<Queue>)` containing the created logical device and its graphics queue.
+    ///
+    /// # Source
+    /// https://vulkano.rs/02-initialization/02-device-creation.html#device-creation
+    #[inline]
     fn create_device(
         physical_device: &Arc<PhysicalDevice>,
         queue_family_index: u32,
@@ -271,19 +235,17 @@ impl VMNLInstance
             .next()
             .expect(&VMNLError::new(VMNLErrorKind::VulkanUnknownError).report());
 
-        return (device, graphics_queue);
+        (device, graphics_queue)
     }
 
-    /**
-     * * Initializes the VMNLInstance by creating the Vulkan instance, selecting a physical device,
-     * * creating a logical device, and setting up the memory and command buffer allocators.
-     *
-     * ! Returns:
-     * - `VMNLResult<Self>`: A result containing the initialized `VMNLInstance` on success, or a `VMNLError` on failure.
-     *
-     * ? Source:
-     * - https://vulkano.rs/02-initialization/01-initialization.html#creating-an-instance
-     */
+    /// Initialize the `VMNLInstance` by creating the Vulkan instance, selecting a physical device,
+    /// creating a logical device, and setting up memory and command buffer allocators.
+    ///
+    /// # Returns
+    /// A `VMNLResult<Self>` containing the initialized `VMNLInstance` on success.
+    ///
+    /// # Source
+    /// https://vulkano.rs/02-initialization/01-initialization.html#creating-an-instance
     pub fn new() -> VMNLResult<Self>
     {
         let glfw: glfw::Glfw =

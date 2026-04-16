@@ -2,25 +2,30 @@
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// Brief
+/// Rectangle shape utilities for the VMNL graphics module,
+/// providing functions to create axis-aligned rectangles defined by position, size, and color.
 ////////////////////////////////////////////////////////////////////////////////
 
-use crate::{Graphics, VMNLVertex, Context, VMNLRect, VMNLrbg};
-use crate::graphics::GraphicsKind::Rectangle;
+use crate::{
+    Graphics,
+    VMNLVertex,
+    Context,
+    VMNLRect,
+    VMNLrbg,
+    graphics::GraphicsKind::Rectangle
+};
 
 impl Graphics
 {
-    /**
-     * * Create an axis-aligned rectangle shape described by `VMNLRect` and a single `color`.
-     *
-     * ! Parameters:
-     * - `vmnl_context`: A reference to the VMNL context, which provides access to the memory allocator.
-     * - `rect`: A `VMNLRect` struct that defines the position and size of the rectangle to be created.
-     * - `color`: A `VMNLrbg` array representing the RGB color of the rectangle.
-     *
-     * ! Returns:
-     * - A new instance of the `Graphics` struct, containing the created vertex and index
-     */
+    /// Create an axis-aligned rectangle described by `VMNLRect` and a single `color`.
+    ///
+    /// # Arguments
+    /// - `vmnl_context`: Reference to the VMNL context providing the memory allocator.
+    /// - `rect`: `VMNLRect` defining position and size.
+    /// - `color`: `VMNLrbg` array representing the RGB color.
+    ///
+    /// # Returns
+    /// A `Graphics` instance containing the created vertex and index buffers.
     pub fn create_rectangle(
         vmnl_context: &Context,
         rect:          VMNLRect,
@@ -35,22 +40,22 @@ impl Graphics
             VMNLVertex {
                 position: [x0, y0],
                 color
-            }, // * top-left
+            }, // top-left
             VMNLVertex {
                 position: [x1, y0],
                 color
-            }, // * top-right
+            }, // top-right
             VMNLVertex {
                 position: [x1, y1],
                 color
-            }, // * bottom-right
+            }, // bottom-right
             VMNLVertex {
                 position: [x0, y1],
                 color
-            }, // * bottom-left
+            }, // bottom-left
         ];
         let indices: [u32; 6] = [0, 1, 2, 2, 3, 0];
-        let mut graphics: Graphics = Self::create_indexed_shape(vmnl_context, &vertices, &indices);
+        let mut graphics: Graphics = Self::create_indexed_shape(vmnl_context, &vertices.as_slice(), &indices.as_slice());
 
         graphics.kind = Rectangle;
         println!("{}", crate::vmnl_log(&format!("Creating rectangle at position [{}, {}] with size [{}, {}] and color [{}, {}, {}].",

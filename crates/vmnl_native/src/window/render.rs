@@ -2,9 +2,10 @@
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// * Draw submodule for handling rendering operations in the VMNL application.
-///   This module provides functionality to build command buffers, manage frame synchronization,
-///   and execute draw calls using Vulkan through the Vulkano library.
+/// Draw submodule for handling rendering operations in the VMNL application.
+///
+/// This module provides functionality to build command buffers, manage frame synchronization,
+/// and execute draw calls using Vulkan through the Vulkano library.
 ////////////////////////////////////////////////////////////////////////////////
 
 extern crate glfw;
@@ -12,38 +13,55 @@ use super::{
     Window,
     Graphics
 };
+use crate::{
+    VMNLError,
+    VMNLErrorKind
+};
 use crate::window::PushConstants;
 use std::sync::Arc;
-use vulkano::{VulkanError, Validated};
-use crate::{VMNLError, VMNLErrorKind};
-use vulkano::device::{Queue, Device};
-use vulkano::render_pass::Framebuffer;
-use vulkano::sync::future::FenceSignalFuture;
-use vulkano::command_buffer::{
-    AutoCommandBufferBuilder,
-    CommandBufferUsage,
-    PrimaryAutoCommandBuffer,
-    RenderPassBeginInfo,
-    SubpassBeginInfo,
-    SubpassContents,
-    SubpassEndInfo,
+use vulkano::{
+    VulkanError,
+    Validated,
+    device::{
+        Queue,
+        Device
+    },
+    render_pass::Framebuffer,
+    sync::future::FenceSignalFuture,
+    command_buffer::{
+        AutoCommandBufferBuilder,
+        CommandBufferUsage,
+        PrimaryAutoCommandBuffer,
+        RenderPassBeginInfo,
+        SubpassBeginInfo,
+        SubpassContents,
+        SubpassEndInfo,
+    },
+    pipeline::Pipeline,
+    sync::{
+        self,
+        GpuFuture
+    },
+    swapchain::{
+        self,
+        SwapchainPresentInfo,
+        SwapchainAcquireFuture,
+        Swapchain
+    }
 };
-use vulkano::pipeline::Pipeline;
-use vulkano::sync::{self, GpuFuture};
-use vulkano::swapchain::{self, SwapchainPresentInfo, SwapchainAcquireFuture, Swapchain};
 
 impl Window
 {
-    /**
-     * * Builds a Vulkan command buffer for rendering the provided graphics objects to the specified swapchain image.
-     *
-     * ! Parameters:
-     * - `image_index`: The index of the swapchain image to render to.
-     * - `graphics_list`: A slice of references to `Graphics` objects containing the vertex data and other necessary information for rendering.
-     *
-     * ! Returns:
-     * - `Arc<PrimaryAutoCommandBuffer>`: An Arc containing the built command buffer ready for execution.
-     */
+    /// Builds a Vulkan command buffer for rendering the provided graphics objects to the specified swapchain image.
+    ///
+    /// # Arguments
+    ///
+    /// - `image_index`: Index of the swapchain image to render to.
+    /// - `graphics_list`: Slice of references to `Graphics` objects to render.
+    ///
+    /// # Returns
+    ///
+    /// An `Arc<PrimaryAutoCommandBuffer>` containing the built command buffer ready for execution.
     fn build_command_buffer(
         &self,
         image_index:   u32,
@@ -95,11 +113,11 @@ impl Window
                     )
                         .expect(&VMNLError::new(VMNLErrorKind::VulkanValidationFailed).report())
                         .bind_vertex_buffers(0, graphics.vertex_buffer.clone())
-                        .expect(&VMNLError::new(VMNLErrorKind::VulkanBufferCreationFailed).report());
+                        .expect(&VMNLError::new(VMNLErrorKind::VulkanVertexBufferCreationFailed).report());
                     if let Some(index_buffer) = &graphics.index_buffer {
                         builder
                             .bind_index_buffer(index_buffer.clone())
-                            .expect(&VMNLError::new(VMNLErrorKind::VulkanBufferCreationFailed).report())
+                            .expect(&VMNLError::new(VMNLErrorKind::VulkanIndexBufferCreationFailed).report())
                             .draw_indexed(graphics.index_count, 1, 0, 0, 0)
                             .expect(&VMNLError::new(VMNLErrorKind::VulkanValidationFailed).report());
                     } else {
@@ -116,72 +134,62 @@ impl Window
                     .expect(&VMNLError::new(VMNLErrorKind::VulkanCommandBufferCreationFailed).report())
     }
 
-    /**
-     * * Prepares the GPU for rendering a new frame by ensuring that any previous frame's operations have completed.
-     *
-     * ! Parameters:
-     * - `previous_frame_end`: Mutable reference to an optional future representing the completion of the previous frame's operations.
-     *   If this future is `Some`, it will be cleaned up to ensure that the GPU is ready for the next frame.
-     *   If it is `None`, it means there are no previous operations to wait for, and the function will simply return.
-     */
+    /// Prepares the GPU for rendering a new frame by ensuring previous frame operations have completed.
+    ///
+    /// # Arguments
+    ///
+    /// - `previous_frame_end`: Mutable reference to an optional future representing the completion of the previous frame's operations.
     fn begin_frame(
         previous_frame_end: &mut Option<Box<dyn GpuFuture>>
-    ) -> ()
+    )
     {
         if let Some(previous_frame_end) = previous_frame_end.as_mut() {
             previous_frame_end.cleanup_finished();
         }
     }
 
-    /**
-     * * Acquires the next available image from the swapchain for rendering.
-     *
-     * ! Parameters:
-     * - `swapchain`: Reference to the Vulkan swapchain from which to acquire the image.
-     * - `timeout`: Optional duration to wait for an image to become available. If `None`, it will wait indefinitely.
-     *
-     *  ! Returns:
-     * - `(u32, bool, SwapchainAcquireFuture)`:
-     *   A tuple containing the index of the acquired image,
-     *   a boolean indicating if the swapchain is suboptimal,
-     *   and a future representing the acquisition operation.
-     */
+    /// Acquires the next available image from the swapchain for rendering.
+    ///
+    /// # Arguments
+    ///
+    /// - `swapchain`: Reference to the Vulkan swapchain.
+    /// - `timeout`: Optional duration to wait for an image.
+    ///
+    /// # Returns
+    ///
+    /// A tuple `(image_index, suboptimal, acquire_future)` containing the image index,
+    /// a boolean indicating if the swapchain is suboptimal, and the acquisition future.
     fn acquire_next_image_from_swapchain(
-        swapchain:     &Arc<Swapchain>,
-        timeout:       Option<std::time::Duration>
+        swapchain: &Arc<Swapchain>,
+        timeout:   Option<std::time::Duration>,
     ) -> (u32, bool, SwapchainAcquireFuture)
     {
-        return match swapchain::acquire_next_image(swapchain.clone(), timeout) {
+        match swapchain::acquire_next_image(swapchain.clone(), timeout) {
             Ok(result) => result,
-                Err(Validated::Error(VulkanError::OutOfDate)) => {
-                panic!("{}", VMNLError::new(VMNLErrorKind::VulkanSurfaceLost).report());
-            }
-            Err(error) => {
-                panic!("{}: {error:?}", VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed).report());
-            }
-        };
+            Err(Validated::Error(VulkanError::OutOfDate)) =>
+                panic!("{}", VMNLError::new(VMNLErrorKind::VulkanSurfaceLost).report()),
+            Err(error) =>
+                panic!(
+                    "{}: {error:?}",
+                    VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed).report()
+                ),
+        }
     }
 
-    /**
-     * * Synchronizes the rendering of the current frame with the presentation of the acquired swapchain image.
-     *   This function takes care of chaining the necessary GPU futures to ensure that the command buffer execution
-     *   is properly synchronized with the image acquisition and presentation steps.
-     *
-     * ! Parameters:
-     * - `previous_frame_end`: Mutable reference to the future representing the completion of the previous
-     *   frame. This future will be joined with the new acquire future and updated to represent the new frame's completion.
-     * - `acquire_future`: Future representing the acquisition of the next swapchain image.
-     * - `command_buffer`: Command buffer containing the rendering commands for the current frame.
-     * - `image_index`: Index of the acquired swapchain image to present.
-     * - `graphics_queue`: Vulkan queue on which to execute the command buffer and present the
-     *    swapchain image.
-     *  - `swapchain`: Reference to the Vulkan swapchain used for presentation.
-     *
-     * ! Returns:
-     * - `Result<FenceSignalFuture<PresentFuture<CommandBufferExecFuture<JoinFuture<Box<dyn GpuFuture>, SwapchainAcquireFuture>>>>, Validated<VulkanError>>`:
-     *    A result containing the future representing the completion of the frame rendering and presentation,
-     *    or an error if synchronization fails (e.g., if the swapchain is out of date).
-     */
+    /// Synchronizes rendering with presentation by chaining GPU futures for the current frame.
+    ///
+    /// # Arguments
+    ///
+    /// - `previous_frame_end`: Mutable reference to the previous frame future.
+    /// - `acquire_future`: Future for image acquisition.
+    /// - `command_buffer`: Command buffer for current frame.
+    /// - `image_index`: Index of the acquired image.
+    /// - `graphics_queue`: Queue to execute command buffer.
+    /// - `swapchain`: Swapchain used for presentation.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a boxed future representing completion of rendering and presentation.
     fn frame_sync(
         previous_frame_end: &mut Option<Box<dyn GpuFuture>>,
         acquire_future:          SwapchainAcquireFuture,
@@ -191,7 +199,7 @@ impl Window
         swapchain:               Arc<Swapchain>
     ) -> Result<Box<dyn GpuFuture>, Validated<VulkanError>>
     {
-        return previous_frame_end
+        previous_frame_end
             .take()
             .expect(&VMNLError::new(VMNLErrorKind::VulkanUnknownError).report())
             .join(acquire_future)
@@ -205,25 +213,12 @@ impl Window
                 ),
             )
             .then_signal_fence_and_flush()
-            .map(|future: FenceSignalFuture<_>| future.boxed());
+            .map(|future: FenceSignalFuture<_>| future.boxed())
     }
 
-    /**
-     * * Updates the `previous_frame_end` future based on the result of the frame synchronization operation.
-     *   If the synchronization was successful, it returns the new future representing the completion of the current frame.
-     *   If the synchronization failed due to the swapchain being out of date,
-     *   it logs an error and returns a future that is immediately ready (using `sync::now`) to allow the application to continue running without crashing.
-     *
-     * ! Parameters:
-     * - `future`: Result containing the future representing the completion of the frame rendering and presentation
-     *  or an error if synchronization fails.
-     * - `device`: Arc to the Vulkan device, used to create a ready future in case of an error.
-     *
-     * ! Returns:
-     * - `Option<Box<dyn GpuFuture>>`: An option containing the new future representing the completion of the current frame,
-     *    or `None` if the future was successfully updated.
-     *    In case of an error, it returns a future that is immediately ready to allow the application to continue running without crashing.
-     */
+    /// Updates `previous_frame_end` based on the result of frame synchronization.
+    ///
+    /// Returns a ready future on error to keep the application running.
     fn update_previous_frame_end(
         future: Result<Box<dyn GpuFuture>, Validated<VulkanError>>,
         device: Arc<Device>
@@ -244,17 +239,15 @@ impl Window
         }
     }
 
-    /**
-     * * Executes the draw call for the given graphics object by preparing the command buffer and synchronizing the frame rendering and presentation.
-     *  This function encapsulates the entire process of rendering a frame,
-     *  including acquiring the next swapchain image,
-     *  building the command buffer with the provided graphics data,
-     *  and managing the synchronization of GPU operations to ensure smooth rendering.
-     *
-     * ! Parameters:
-     * - `graphics_list`: Reference to the slice of `Graphics` objects containing the vertex data and other necessary information for rendering.
-     */
-    pub fn render(&mut self, graphics_list: &[&Graphics])
+    /// Executes the draw call for the provided graphics objects by preparing the command buffer and synchronizing frame presentation.
+    ///
+    /// # Arguments
+    ///
+    /// - `graphics_list`: Slice of graphics objects to render.
+    pub fn render(
+        &mut self,
+        graphics_list: &[&Graphics]
+    )
     {
         Self::begin_frame(&mut self.window_handle.previous_frame_end);
         let (image_index, suboptimal, acquire_future):
