@@ -23,6 +23,24 @@ impl Graphics
     ///
     /// # Returns
     /// A `Graphics` instance with a created vertex buffer ready for rendering.
+    ///
+    /// # Example
+    /// ```
+    /// let vertex1 = VMNLVertex {
+    ///     position: [100.0, 150.0],
+    ///     color: [255.0, 0.0, 0.0] // Red color
+    /// };
+    /// let vertex2 = VMNLVertex {
+    ///     position: [300.0, 150.0],
+    ///     color: [0.0, 255.0, 0.0] // Green color
+    /// };
+    /// let vertex3 = VMNLVertex {
+    ///     position: [200.0, 300.0],
+    ///     color: [0.0, 0.0, 255.0] // Blue color
+    /// };
+    /// let triangle = Graphics::create_triangle(&vmnl_context, vertex1, vertex2, vertex3);
+    /// // Now `triangle` can be rendered using the appropriate rendering method.
+    /// ```
     pub fn create_triangle(
         vmnl_context: &Context,
         vertex1:       VMNLVertex,

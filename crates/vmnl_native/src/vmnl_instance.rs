@@ -2,7 +2,7 @@
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// * VMNLInstance module of the VMNL library, encapsulating Vulkan context initialization and management.
+///   VMNLInstance module of the VMNL library, encapsulating Vulkan context initialization and management.
 ///   This module defines the `VMNLInstance` struct, which represents the core Vulkan context used by the graphical part of the library.
 ///   It is responsible for initializing and managing Vulkan resources such as the Vulkan instance,
 ///   physical device, logical device, graphics queue, memory allocator, and command buffer allocator.
@@ -63,6 +63,31 @@ impl Context
     ///
     /// # Returns
     /// A `VMNLResult<Self>` containing the initialized `Context` on success.
+    ///
+    /// # Errors
+    /// Returns a `VMNLResult::Err` if any step of the Vulkan initialization process
+    /// fails, such as instance creation, physical device selection, or logical device creation.
+    ///
+    /// # Example
+    /// ```
+    /// use vmnl::Context;
+    ///
+    /// let context = Context::new().expect("Failed to create VMNL context");
+    /// let window = Window::new(&context, 800, 600, "My Window").expect("Failed to create window");
+    /// let triangle = Graphics::create_triangle(
+    ///     &context,
+    ///     VMNLVertex { position: [0.0, 0.0], color: [255.0, 0.0, 0.0] },  // Vertex 1: Red
+    ///     VMNLVertex { position: [1.0, 0.0], color: [0.0, 255.0, 0.0] },  // Vertex 2: Green
+    ///     VMNLVertex { position: [0.0, 1.0], color: [0.0, 0.0, 255.0] },  // Vertex 3: Blue
+    /// ).expect("Failed to create triangle graphics");
+    ///
+    /// while window.is_open() {
+    ///     for event in window.poll_events() {
+    ///         // Handle events (e.g., input, window close)
+    ///     }
+    ///     window.render(&[&triangle].as_slice());
+    /// }
+    /// ```
     pub fn new() -> VMNLResult<Self>
     {
         Ok(Self {
@@ -81,22 +106,16 @@ pub(crate) struct VMNLInstance
 {
     /// Vulkan instance representing the connection to the Vulkan library.
     pub(crate) instance:                    Arc<Instance>,
-
     /// Selected physical device (GPU).
     pub(crate) physical_device:             Arc<PhysicalDevice>,
-
     /// Logical device representing the application's interface to the GPU.
     pub(crate) device:                      Arc<Device>,
-
     /// Device queue used for submitting GPU work.
     pub(crate) graphics_queue:              Arc<Queue>,
-
     /// Index of the graphics queue family supporting graphics operations.
     pub(crate) graphics_queue_family_index: u32,
-
     /// Memory allocator used to manage GPU memory (Vulkano `StandardMemoryAllocator`).
     pub(crate) memory_allocator:            Arc<StandardMemoryAllocator>,
-
     /// Command buffer allocator used to allocate and reuse command buffers.
     pub(crate) command_buffer_allocator:    Arc<StandardCommandBufferAllocator>
 }
@@ -172,7 +191,6 @@ impl VMNLInstance
     ///
     /// # Source
     /// https://vulkano.rs/02-initialization/01-initialization.html#enumerating-physical-devices
-    #[inline]
     fn select_physical_device(
         instance: &Arc<Instance>,
         required_extensions: &DeviceExtensions,
@@ -211,7 +229,6 @@ impl VMNLInstance
     ///
     /// # Source
     /// https://vulkano.rs/02-initialization/02-device-creation.html#device-creation
-    #[inline]
     fn create_device(
         physical_device: &Arc<PhysicalDevice>,
         queue_family_index: u32,

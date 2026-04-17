@@ -26,6 +26,17 @@ impl Graphics
     ///
     /// # Returns
     /// A `Graphics` instance containing the created vertex and index buffers.
+    ///
+    /// # Example
+    /// ```
+    /// let rect = VMNLRect {
+    ///     position: [100.0, 150.0],
+    ///     size: [200.0, 100.0]
+    /// };
+    /// let color = [255.0, 0.0, 0.0]; // Red color
+    /// let rectangle = Graphics::create_rectangle(&vmnl_context, rect, color);
+    /// // Now `rectangle` can be rendered using the appropriate rendering method.
+    /// ```
     pub fn create_rectangle(
         vmnl_context: &Context,
         rect:          VMNLRect,

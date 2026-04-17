@@ -35,7 +35,7 @@ pub enum Key
 /// An array containing all the keys defined in the `Key` enum.
 ///
 /// Used to iterate over all keys when updating their states.
-pub const ALL_KEYS: &[Key] = &[
+pub(crate) const ALL_KEYS: &[Key] = &[
     Key::A, Key::B, Key::C, Key::D, Key::E, Key::F, Key::G,
     Key::H, Key::I, Key::J, Key::K, Key::L, Key::M, Key::N,
     Key::O, Key::P, Key::Q, Key::R, Key::S, Key::T, Key::U,
@@ -51,7 +51,7 @@ pub const ALL_KEYS: &[Key] = &[
 /// The total number of keys supported.
 ///
 /// Calculated from the highest `Key` variant; used to size state arrays.
-pub const KEY_COUNT: usize = Key::F12 as usize + 1;
+pub(crate) const KEY_COUNT: usize = Key::F12 as usize + 1;
 
 /// Represents the state of keyboard input, tracking which keys are currently pressed
 /// and which were pressed in the previous frame.
@@ -70,11 +70,9 @@ impl KeyboardState
     /// Converts a GLFW key code to the corresponding `Key` variant.
     ///
     /// # Arguments
-    ///
     /// - `key`: The GLFW key code to convert.
     ///
     /// # Returns
-    ///
     /// `Some(Key)` if conversion is successful, otherwise `None`.
     pub(crate) fn from_glfw(
         key: GlfwKey
@@ -103,11 +101,9 @@ impl KeyboardState
     /// Converts a `Key` variant to the corresponding GLFW key code.
     ///
     /// # Arguments
-    ///
     /// - `key`: The `Key` variant to convert.
     ///
     /// # Returns
-    ///
     /// `Some(GlfwKey)` if a mapping exists, otherwise `None`.
     pub(crate) fn to_glfw(
         key: Key
@@ -140,7 +136,6 @@ impl KeyboardState
     /// Returns the index corresponding to a `Key` variant for state array access.
     ///
     /// # Arguments
-    ///
     /// - `key`: The `Key` variant for which to calculate the index.
     #[inline]
     fn index(
@@ -153,7 +148,6 @@ impl KeyboardState
     /// Updates the current and previous key states from the given GLFW window.
     ///
     /// # Arguments
-    ///
     /// - `window`: A reference to the GLFW window from which to read the current key states.
     pub(crate) fn update(
         &mut self,
@@ -172,8 +166,13 @@ impl KeyboardState
     /// Returns `true` if the specified key is currently pressed.
     ///
     /// # Arguments
-    ///
     /// - `key`: The `Key` variant to check.
+    ///
+    /// # Example
+    /// ```
+    /// if win.input().keyboard().is_down(Key::A) {
+    ///     println!("Key A is currently down!");
+    /// }
     pub fn is_down(
         &self,
         key: Key
@@ -185,8 +184,13 @@ impl KeyboardState
     /// Returns `true` if the specified key was pressed in the current frame.
     ///
     /// # Arguments
-    ///
     /// - `key`: The `Key` variant to check.
+    ///
+    /// # Example
+    /// ```
+    /// if win.input().keyboard().is_pressed(Key::A) {
+    ///     println!("Key A was pressed!");
+    /// }
     pub fn is_pressed(
         &self,
         key: Key
@@ -198,8 +202,13 @@ impl KeyboardState
     /// Returns `true` if the specified key was released in the current frame.
     ///
     /// # Arguments
-    ///
     /// - `key`: The `Key` variant to check.
+    ///
+    /// # Example
+    /// ```
+    /// if win.input().keyboard().is_released(Key::A) {
+    ///     println!("Key A was released!");
+    /// }
     pub fn is_released(
         &self,
         key: Key
@@ -211,8 +220,13 @@ impl KeyboardState
     /// Returns `true` if any of the specified keys were pressed in the current frame.
     ///
     /// # Arguments
-    ///
     /// - `keys`: A slice of `Key` variants to check.
+    ///
+    /// # Example
+    /// ```
+    /// if win.input().keyboard().is_any_pressed(&[Key::A, Key::B, Key::C]) {
+    ///     println!("A, B, or C was pressed!");
+    /// }
     pub fn is_any_pressed(
         &self,
         keys: &[Key]
@@ -229,8 +243,13 @@ impl KeyboardState
     /// Returns `true` if any of the specified keys were released in the current frame.
     ///
     /// # Arguments
-    ///
     /// - `keys`: A slice of `Key` variants to check.
+    ///
+    /// # Example
+    /// ```
+    /// if win.input().keyboard().is_any_released(&[Key::A, Key::B, Key::C]) {
+    ///     println!("A, B, or C was released!");
+    /// }
     pub fn is_any_released(
         &self,
         keys: &[Key]
@@ -247,8 +266,13 @@ impl KeyboardState
     /// Returns `true` if any of the specified keys are currently down.
     ///
     /// # Arguments
-    ///
     /// - `keys`: A slice of `Key` variants to check.
+    ///
+    /// # Example
+    /// ```
+    /// if win.input().keyboard().is_any_down(&[Key::A, Key::B, Key::C]) {
+    ///     println!("A, B, or C is currently down!");
+    /// }
     pub fn is_any_down(
         &self,
         keys: &[Key]
@@ -265,8 +289,14 @@ impl KeyboardState
     /// Returns `true` if any of the specified keys were used (pressed, released, or down) in the current frame.
     ///
     /// # Arguments
-    ///
     /// - `keys`: A slice of `Key` variants to check.
+    ///
+    /// # Example
+    /// ```
+    /// if win.input().keyboard().is_any_used(&[Key::A, Key::B, Key::C]) {
+    ///     println!("A, B, or C was used!");
+    /// }
+    /// ```
     pub fn is_any_used(
         &self,
         keys: &[Key]
@@ -281,6 +311,13 @@ impl KeyboardState
     }
 
     /// Returns `true` if any key was pressed in the current frame.
+    ///
+    /// # Example
+    /// ```
+    /// if win.input().keyboard().is_one_pressed() {
+    ///     println!("A key was pressed!");
+    /// }
+    /// ```
     pub fn is_one_pressed(&self) -> bool
     {
         for &key in ALL_KEYS {
@@ -292,6 +329,13 @@ impl KeyboardState
     }
 
     /// Returns `true` if any key was released in the current frame.
+    ///
+    /// # Example
+    /// ```
+    /// if win.input().keyboard().is_one_released() {
+    ///     println!("A key was released!");
+    /// }
+    /// ```
     pub fn is_one_released(&self) -> bool
     {
         for &key in ALL_KEYS {
@@ -303,6 +347,13 @@ impl KeyboardState
     }
 
     /// Returns `true` if any key is currently down.
+    ///
+    /// # Example
+    /// ```
+    /// if win.input().keyboard().is_one_down() {
+    ///     println!("A key is currently down!");
+    /// }
+    /// ```
     pub fn is_one_down(&self) -> bool
     {
         for &key in ALL_KEYS {
@@ -314,6 +365,13 @@ impl KeyboardState
     }
 
     /// Returns `true` if any key was used (pressed, released, or down) in the current frame.
+    ///
+    /// # Example
+    /// ```
+    /// if win.input().keyboard().is_one_used() {
+    ///     println!("A key was used!");
+    /// }
+    /// ```
     pub fn is_one_used(&self) -> bool
     {
         for &key in ALL_KEYS {
@@ -324,6 +382,10 @@ impl KeyboardState
         false
     }
 
+    /// Resets the keyboard state, clearing all current and previous key states.
+    /// This is useful for situations where you want to ignore all previous input,
+    /// such as when the window gains focus or when you want to start fresh after a certain event.
+    /// This can be used to clear the state when the window is focused or when you want to ignore all previous input.
     pub fn reset(&mut self)
     {
         self.current = [false; KEY_COUNT];

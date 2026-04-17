@@ -134,6 +134,7 @@ fn main() -> VMNLResult<()>
         [255.0, 200.0, 0.0]
     );
 
+    println!("Monitors: {}", win.monitor().names().iter().map(|name| name.clone().unwrap_or("Unknown".to_string())).collect::<Vec<String>>().join(", "));
     while win.is_open() {
         for event in win.poll_events() {
             handle_event_test(&event);

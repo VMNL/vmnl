@@ -55,12 +55,10 @@ impl Window
     /// Builds a Vulkan command buffer for rendering the provided graphics objects to the specified swapchain image.
     ///
     /// # Arguments
-    ///
     /// - `image_index`: Index of the swapchain image to render to.
     /// - `graphics_list`: Slice of references to `Graphics` objects to render.
     ///
     /// # Returns
-    ///
     /// An `Arc<PrimaryAutoCommandBuffer>` containing the built command buffer ready for execution.
     fn build_command_buffer(
         &self,
@@ -137,7 +135,6 @@ impl Window
     /// Prepares the GPU for rendering a new frame by ensuring previous frame operations have completed.
     ///
     /// # Arguments
-    ///
     /// - `previous_frame_end`: Mutable reference to an optional future representing the completion of the previous frame's operations.
     fn begin_frame(
         previous_frame_end: &mut Option<Box<dyn GpuFuture>>
@@ -151,12 +148,10 @@ impl Window
     /// Acquires the next available image from the swapchain for rendering.
     ///
     /// # Arguments
-    ///
     /// - `swapchain`: Reference to the Vulkan swapchain.
     /// - `timeout`: Optional duration to wait for an image.
     ///
     /// # Returns
-    ///
     /// A tuple `(image_index, suboptimal, acquire_future)` containing the image index,
     /// a boolean indicating if the swapchain is suboptimal, and the acquisition future.
     fn acquire_next_image_from_swapchain(
@@ -179,7 +174,6 @@ impl Window
     /// Synchronizes rendering with presentation by chaining GPU futures for the current frame.
     ///
     /// # Arguments
-    ///
     /// - `previous_frame_end`: Mutable reference to the previous frame future.
     /// - `acquire_future`: Future for image acquisition.
     /// - `command_buffer`: Command buffer for current frame.
@@ -188,7 +182,6 @@ impl Window
     /// - `swapchain`: Swapchain used for presentation.
     ///
     /// # Returns
-    ///
     /// A `Result` containing a boxed future representing completion of rendering and presentation.
     fn frame_sync(
         previous_frame_end: &mut Option<Box<dyn GpuFuture>>,
@@ -242,8 +235,32 @@ impl Window
     /// Executes the draw call for the provided graphics objects by preparing the command buffer and synchronizing frame presentation.
     ///
     /// # Arguments
-    ///
     /// - `graphics_list`: Slice of graphics objects to render.
+    ///
+    /// # Example
+    /// ```rust
+    /// let rect1 = VMNLRect {
+    ///     position: [100.0, 150.0],
+    ///     size: [200.0, 100.0]
+    /// };
+    /// let color1 = [255.0, 0.0, 0.0]; // Red color
+    /// let vertices2 = [
+    ///     VMNLVertex {
+    ///         position: [100.0, 150.0],
+    ///        color: [0.0, 255.0, 0.0] // Green color
+    ///     },
+    ///     VMNLVertex {
+    ///         position: [300.0, 150.0],
+    ///         color: [0.0, 255.0, 0.0] // Green color
+    ///     },
+    /// ];
+    /// while win.is_open() {
+    ///     // Poll events and other logic here
+    ///     let graphics1 = Graphics::create_rectangle(&vmnl_context, rect1, color1);
+    ///     let graphics2 = Graphics::create_triangle(&vmnl_context, vertices2[0], vertices2[1], vertices2[2]);
+    ///     win.render(&[&graphics1, &graphics2]);
+    /// }
+    /// ```
     pub fn render(
         &mut self,
         graphics_list: &[&Graphics]

@@ -24,6 +24,27 @@ impl Graphics
     ///
     /// # Returns
     /// A `Graphics` instance containing created vertex and index buffers ready for rendering.
+    ///
+    /// # Example
+    /// ```
+    /// let vertices = [
+    ///     VMNLVertex {
+    ///         position: [100.0, 150.0],
+    ///         color: [255.0, 0.0, 0.0] // Red color
+    ///     },
+    ///     VMNLVertex {
+    ///         position: [300.0, 150.0],
+    ///         color: [0.0, 255.0, 0.0] // Green color
+    ///     },
+    ///     VMNLVertex {
+    ///         position: [200.0, 300.0],
+    ///         color: [0.0, 0.0, 255.0] // Blue color
+    ///     }
+    /// ];
+    /// let indices = [0, 1, 2]; // Triangle defined by the three vertices
+    /// let indexed_shape = Graphics::create_indexed_shape(&vmnl_context, &vertices, &indices);
+    /// // Now `indexed_shape` can be rendered using the appropriate rendering method.
+    /// ```
     pub fn create_indexed_shape(
         vmnl_context: &Context,
         vertices:     &[VMNLVertex],
