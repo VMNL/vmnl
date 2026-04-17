@@ -24,6 +24,7 @@ pub mod input;
 pub mod render;
 pub mod shaders;
 pub mod event;
+pub mod monitors;
 use std::sync::Arc;
 pub use event::{
     EventQueue,
@@ -40,6 +41,7 @@ pub use shaders::{
     vs,
     fs
 };
+pub use monitors::Monitors;
 use config::WindowConfig;
 use handle::WindowHandle;
 use state::WindowState;
@@ -449,6 +451,36 @@ impl Window
     ///
     /// # Notes
     /// The first call may also initialize the underlying VMNL instance.
+    ///
+    /// # Errors
+    /// - `GlfwInitFailed`: Failed to initialize GLFW.
+    /// - `GlfwWindowCreationFailed`: Failed to create the GLFW window.
+    /// - `VulkanSurfaceCreationFailed`: Failed to create Vulkan surface for the window.
+    /// - `VulkanUnsupportedFeature`: The physical device does not support presenting to the surface.
+    /// - `VulkanSwapchainCreationFailed`: Failed to create the Vulkan swapchain.
+    /// - `VulkanRenderPassCreationFailed`: Failed to create the Vulkan render pass.
+    /// - `VulkanFramebufferCreationFailed`: Failed to create framebuffers for the swapchain images.
+    /// - `VulkanShaderModuleCreationFailed`: Failed to create shader modules for the graphics pipeline.
+    /// - `VulkanShaderCompilationFailed`: Failed to compile shaders for the graphics pipeline.
+    /// - `VulkanPipelineLayoutCreationFailed`: Failed to create the pipeline layout for the graphics pipeline.
+    /// - `VulkanPipelineCreationFailed`: Failed to create the graphics pipeline.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_native::window::Window;
+    /// use vmnl_native::context::Context;
+    ///
+    /// let context = Context::new();
+    /// let window = Window::new(&context, 800, 600, "My Window");
+    ///
+    /// while window.is_open() {
+    ///     for event in window.poll_events() {
+    ///         // Handle events
+    ///     }
+    ///     // Update and render
+    ///     window.render(&[&...].as_slice(), ...);
+    /// }
+    /// ```
     pub fn new(
         vmnl_context:  &Context,
         width:         u32,
@@ -495,6 +527,7 @@ impl Window
         let previous_frame_end: Option<Box<dyn GpuFuture>> =
             Some(sync::now(vmnl_instance.device.clone()).boxed());
         let input: Input = Input::new();
+        let monitor: Monitors = Monitors::new(&mut instance);
 
         window.set_char_polling(true);
         window.set_mouse_button_polling(true);
@@ -524,10 +557,10 @@ impl Window
                 is_open:  false
             },
             window_config: WindowConfig {
-                is_close_with_escape: true,
-                title:                title.to_string(),
+                title:   title.to_string(),
                 width,
-                height
+                height,
+                monitor: monitor
             }
         })
     }

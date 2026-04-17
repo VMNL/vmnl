@@ -45,11 +45,26 @@ pub type VMNLrbg            = [f32; 3];
 /// RGBA color represented as `[r, g, b, a]` (f32).
 pub type VMNLrgba           = [f32; 4];
 /// 2D vector of `f32` values.
+///
+/// # Example
+/// ```
+/// let position: VMNLVector2f = [100.0, 150.0];
+/// let size: VMNLVector2f = [200.0, 100.0];
+/// // Now `position` and `size` can be used to define shapes or vertex positions.
+/// ```
 pub type VMNLVector2f       = [f32; 2];
 /// 2D vector of `i32` values.
 pub type VMNLVector2i       = [i32; 2];
 
 /// Axis-aligned rectangle with a `position` (top-left) and a `size` (width, height).
+///
+/// # Example
+/// ```
+/// let rect = VMNLRect {
+///     position: [100.0, 150.0],
+///     size: [200.0, 100.0]
+/// };
+/// ```
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct VMNLRect
@@ -62,7 +77,7 @@ pub struct VMNLRect
 
 /// Types of graphics data that can be rendered in VMNL.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum GraphicsKind
+pub(crate) enum GraphicsKind
 {
     /// Raw vertex data without indices.
     RawVertices,
@@ -70,13 +85,19 @@ pub enum GraphicsKind
     IndexedGeometry,
     /// Axis-aligned rectangle shape.
     Rectangle,
-    /// Circle shape.
-    Circle,
-    /// Texture data.
-    Texture,
+    // Circle,
+    // Texture
 }
 
 /// Vertex with a 2D position and RGB color.
+///
+/// # Example
+/// ```
+/// let vertex = VMNLVertex {
+///     position: [100.0, 150.0],
+///     color: [255.0, 0.0, 0.0] // Red color
+/// };
+/// ```
 #[repr(C)]
 #[derive(Vertex, Pod, Zeroable, Clone, Copy, Default, Debug)]
 pub struct VMNLVertex
@@ -97,18 +118,38 @@ pub struct VMNLVertex
 // }
 
 /// Graphics resource container holding vertex/index buffers and counts.
+/// This struct represents a renderable graphics object in VMNL, encapsulating the necessary data for rendering.
+///
+/// # Example
+/// ```
+/// // Create a simple triangle graphics object
+/// let vertex1 = VMNLVertex {
+///     position: [100.0, 150.0],
+///     color: [255.0, 0.0, 0.0] // Red color
+/// };
+/// let vertex2 = VMNLVertex {
+///     position: [300.0, 150.0],
+///     color: [0.0, 255.0, 0.0] // Green color
+/// };
+/// let vertex3 = VMNLVertex {
+///     position: [200.0, 300.0],
+///     color: [0.0, 0.0, 255.0] // Blue color
+/// };
+/// let triangle = Graphics::create_triangle(&vmnl_context, vertex1, vertex2, vertex3);
+/// // Now `triangle` can be rendered using the appropriate rendering method.
+/// ```
 pub struct Graphics
 {
     /// Type of graphics data.
-    pub kind:          GraphicsKind,
+    pub(crate) kind:          GraphicsKind,
     /// Vertex buffer for rendering.
-    pub vertex_buffer: VMNLVertexBuffer,
+    pub(crate) vertex_buffer: VMNLVertexBuffer,
     /// Optional index buffer for indexed rendering.
-    pub index_buffer:  Option<VMNLIndexBuffer>,
+    pub(crate) index_buffer:  Option<VMNLIndexBuffer>,
     /// Number of vertices.
-    pub vertex_count:  u32,
+    pub(crate) vertex_count:  u32,
     /// Number of indices.
-    pub index_count:   u32,
+    pub(crate) index_count:   u32,
     // pub frame_ubo_buffer: FrameUboBuffer
 }
 

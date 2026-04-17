@@ -13,7 +13,6 @@ use crate::Window;
 /// Stores transient flags that describe the current lifecycle and availability of the window.
 ///
 /// # Invariants
-///
 /// - `is_ready == true` implies required resources (context, surface, swapchain, etc.) are initialized.
 /// - `is_open == false` implies no further rendering or event polling should be performed.
 pub(crate) struct WindowState
@@ -29,9 +28,17 @@ impl Window
     /// Updates and returns the current open state of the window.
     ///
     /// # Returns
-    ///
     /// - `true` if the window should remain open.
     /// - `false` if a close event has been triggered.
+    ///
+    /// # Example
+    /// ```
+    /// // Main application loop
+    /// while win.is_open() {
+    ///     // Poll events and rendering code here
+    /// }
+    /// println!("Window has been closed.");
+    /// ```
     #[inline]
     pub fn is_open(&mut self) -> bool
     {
@@ -42,8 +49,17 @@ impl Window
     /// Returns whether the window is fully initialized and ready for use.
     ///
     /// # Returns
-    ///
     /// `true` if the window is ready for rendering and event processing.
+    ///
+    /// # Example
+    /// ```rust
+    /// // Check if the window is ready before starting the main loop
+    /// if win.is_ready() {
+    ///     println!("Window is ready for use!");
+    /// } else {
+    ///     println!("Window is not ready yet.");
+    /// }
+    /// ```
     #[inline]
     pub fn is_ready(&self) -> bool
     {

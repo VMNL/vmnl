@@ -39,7 +39,7 @@ pub enum MouseButton
 /// An array containing all the mouse buttons defined in the `MouseButton` enum.
 ///
 /// Used to iterate over all mouse buttons when updating their states.
-pub const ALL_MOUSE_BUTTONS: &[MouseButton] = &[
+pub(crate) const ALL_MOUSE_BUTTONS: &[MouseButton] = &[
     MouseButton::Left,
     MouseButton::Right,
     MouseButton::Middle,
@@ -53,7 +53,7 @@ pub const ALL_MOUSE_BUTTONS: &[MouseButton] = &[
 /// The total number of mouse buttons supported.
 ///
 /// Calculated from the highest `MouseButton` variant; used to size state arrays.
-pub const MOUSE_BUTTON_COUNT: usize = MouseButton::Button8 as usize + 1;
+pub(crate) const MOUSE_BUTTON_COUNT: usize = MouseButton::Button8 as usize + 1;
 
 /// Represents the state of mouse input, tracking which mouse buttons are currently pressed
 /// and which were pressed in the previous frame.
@@ -72,11 +72,9 @@ impl MouseState
     /// Converts a GLFW mouse button into the corresponding `MouseButton` variant.
     ///
     /// # Arguments
-    ///
     /// - `button`: The GLFW mouse button to convert.
     ///
     /// # Returns
-    ///
     /// `Some(MouseButton)` if the conversion is successful, otherwise `None`.
     pub(crate) fn from_glfw(
         button: GlfwMouseButton
@@ -97,11 +95,9 @@ impl MouseState
     /// Converts a `MouseButton` variant to the corresponding GLFW mouse button.
     ///
     /// # Arguments
-    ///
     /// - `button`: The `MouseButton` to convert.
     ///
     /// # Returns
-    ///
     /// `Some(glfw::MouseButton)` on success, otherwise `None`.
     pub(crate) fn to_glfw(
         button: MouseButton
@@ -122,7 +118,6 @@ impl MouseState
     /// Returns the index corresponding to a `MouseButton` variant for state array access.
     ///
     /// # Arguments
-    ///
     /// - `button`: The `MouseButton` for which to calculate the index.
     #[inline]
     fn index(
@@ -135,7 +130,6 @@ impl MouseState
     /// Updates the current and previous mouse button states from the given GLFW window.
     ///
     /// # Arguments
-    ///
     /// - `window`: A reference to the GLFW window from which to read the current mouse button states.
     pub(crate) fn update(
         &mut self,
@@ -155,8 +149,15 @@ impl MouseState
     /// Returns `true` if the specified mouse button is currently pressed.
     ///
     /// # Arguments
-    ///
     /// - `button`: The `MouseButton` to check.
+    ///
+    /// # Example
+    /// ```
+    /// // Check if the left mouse button is currently pressed
+    /// if win.input().mouse().is_down(MouseButton::Left) {
+    ///     println!("The left mouse button is currently pressed!");
+    /// }
+    /// ```
     pub fn is_down(
         &self,
         button: MouseButton
@@ -168,8 +169,15 @@ impl MouseState
     /// Returns `true` if the specified mouse button was pressed in the current frame.
     ///
     /// # Arguments
-    ///
     /// - `button`: The `MouseButton` to check.
+    ///
+    /// # Example
+    /// ```
+    /// // Check if the left mouse button was pressed in the current frame
+    /// if win.input().mouse().is_pressed(MouseButton::Left) {
+    ///     println!("The left mouse button was pressed!");
+    /// }
+    /// ```
     pub fn is_pressed(
         &self,
         button: MouseButton
@@ -181,8 +189,15 @@ impl MouseState
     /// Returns `true` if the specified mouse button was released in the current frame.
     ///
     /// # Arguments
-    ///
     /// - `button`: The `MouseButton` to check.
+    ///
+    /// # Example
+    /// ```
+    /// // Check if the left mouse button was released in the current frame
+    /// if win.input().mouse().is_released(MouseButton::Left) {
+    ///     println!("The left mouse button was released!");
+    /// }
+    /// ```
     pub fn is_released(
         &self,
         button: MouseButton
@@ -194,8 +209,15 @@ impl MouseState
     /// Returns `true` if any of the specified mouse buttons are currently pressed.
     ///
     /// # Arguments
-    ///
     /// - `buttons`: A slice of `MouseButton` variants to check.
+    ///
+    /// # Example
+    /// ```
+    /// // Check if any of the left or right mouse buttons are currently pressed
+    /// if win.input().mouse().is_any_down(&[MouseButton::Left, MouseButton::Right]) {
+    ///     println!("The left or right mouse button is currently pressed!");
+    /// }
+    /// ```
     pub fn is_any_down(
         &self,
         buttons: &[MouseButton]
@@ -212,8 +234,15 @@ impl MouseState
     /// Returns `true` if any of the specified mouse buttons were pressed in the current frame.
     ///
     /// # Arguments
-    ///
     /// - `buttons`: A slice of `MouseButton` variants to check.
+    ///
+    /// # Example
+    /// ```
+    /// // Check if any of the left or right mouse buttons were pressed in the current frame
+    /// if win.input().mouse().is_any_pressed(&[MouseButton::Left, MouseButton::Right]) {
+    ///     println!("The left or right mouse button was pressed!");
+    /// }
+    /// ```
     pub fn is_any_pressed(
         &self,
         buttons: &[MouseButton]
@@ -230,8 +259,14 @@ impl MouseState
     /// Returns `true` if any of the specified mouse buttons were released in the current frame.
     ///
     /// # Arguments
-    ///
     /// - `buttons`: A slice of `MouseButton` variants to check.
+    ///
+    /// # Example
+    /// ```
+    /// // Check if any of the left or right mouse buttons were released in the current frame
+    /// if win.input().mouse().is_any_released(&[MouseButton::Left, MouseButton::Right]) {
+    ///     println!("The left or right mouse button was released!");
+    /// }
     pub fn is_any_released(
         &self,
         buttons: &[MouseButton]
@@ -248,8 +283,14 @@ impl MouseState
     /// Returns `true` if any of the specified mouse buttons were used (pressed, released, or down) in the current frame.
     ///
     /// # Arguments
-    ///
     /// - `buttons`: A slice of `MouseButton` variants to check.
+    ///
+    /// # Example
+    /// ```
+    /// // Check if any of the left or right mouse buttons were used in the current frame
+    /// if win.input().mouse().is_any_used(&[MouseButton::Left, MouseButton::Right]) {
+    ///     println!("The left or right mouse button was used!");
+    /// }
     pub fn is_any_used(
         &self,
         buttons: &[MouseButton]
@@ -264,6 +305,14 @@ impl MouseState
     }
 
     /// Returns `true` if any mouse button is currently pressed.
+    ///
+    /// # Example
+    /// ```
+    /// // Check if any mouse button is currently pressed
+    /// if win.input().mouse().is_one_down() {
+    ///     println!("A mouse button is currently pressed!");
+    /// }
+    /// ```
     pub fn is_one_down(&self) -> bool
     {
         for &button in ALL_MOUSE_BUTTONS {
@@ -275,6 +324,14 @@ impl MouseState
     }
 
     /// Returns `true` if any mouse button was pressed in the current frame.
+    ///
+    /// # Example
+    /// ```
+    /// // Check if any mouse button was pressed in the current frame
+    /// if win.input().mouse().is_one_pressed() {
+    ///     println!("A mouse button was pressed!");
+    /// }
+    /// ```
     pub fn is_one_pressed(&self) -> bool
     {
         for &button in ALL_MOUSE_BUTTONS {
@@ -286,6 +343,14 @@ impl MouseState
     }
 
     /// Returns `true` if any mouse button was released in the current frame.
+    ///
+    /// # Example
+    /// ```
+    /// // Check if any mouse button was released in the current frame
+    /// if win.input().mouse().is_one_released() {
+    ///     println!("A mouse button was released!");
+    /// }
+    /// ```
     pub fn is_one_released(&self) -> bool
     {
         for &button in ALL_MOUSE_BUTTONS {
@@ -297,6 +362,14 @@ impl MouseState
     }
 
     /// Returns `true` if any mouse button was used (pressed, released, or down) in the current frame.
+    ///
+    /// # Example
+    /// ```
+    /// // Check if any mouse button was used in the current frame
+    /// if win.input().mouse().is_one_used() {
+    ///     println!("A mouse button was used!");
+    /// }
+    /// ```
     pub fn is_one_used(&self) -> bool
     {
         for &button in ALL_MOUSE_BUTTONS {
@@ -308,6 +381,8 @@ impl MouseState
     }
 
     /// Resets all mouse button states to not pressed.
+    /// This can be useful when the application needs to clear input states,
+    /// such as when pausing the game or resetting the input system.
     pub fn reset(&mut self)
     {
         self.current = [false; MOUSE_BUTTON_COUNT];

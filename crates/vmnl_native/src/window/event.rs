@@ -99,7 +99,6 @@ impl EventQueue
     /// Translates a GLFW `WindowEvent` into a VMNL `Event` variant.
     ///
     /// # Arguments
-    ///
     /// - `event`: The GLFW `WindowEvent` to translate.
     fn translate_event(
         event: glfw::WindowEvent
@@ -158,9 +157,8 @@ impl EventQueue
     /// Polls and translates GLFW events into VMNL `Event` variants.
     ///
     /// # Returns
-    ///
     /// A vector of translated `Event` variants.
-    pub fn poll_events(&mut self) -> Vec<Event>
+    pub(crate) fn poll_events(&mut self) -> Vec<Event>
     {
         let mut polled_events = Vec::new();
 
@@ -175,9 +173,8 @@ impl EventQueue
     /// Creates a new `EventQueue` with the given GLFW event receiver.
     ///
     /// # Arguments
-    ///
     /// - `events`: The GLFW event receiver to use.
-    pub fn new(
+    pub(crate) fn new(
         events: glfw::GlfwReceiver<(
             f64,
             glfw::WindowEvent
