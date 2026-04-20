@@ -6,7 +6,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 extern crate glfw;
-use crate::Window;
+use crate::window::inner::VMNLWindow;
 
 /// Runtime state of a window.
 ///
@@ -23,45 +23,19 @@ pub(crate) struct WindowState
     pub(crate) is_open:              bool
 }
 
-impl Window
+impl VMNLWindow
 {
-    /// Updates and returns the current open state of the window.
-    ///
-    /// # Returns
-    /// - `true` if the window should remain open.
-    /// - `false` if a close event has been triggered.
-    ///
-    /// # Example
-    /// ```
-    /// // Main application loop
-    /// while win.is_open() {
-    ///     // Poll events and rendering code here
-    /// }
-    /// println!("Window has been closed.");
-    /// ```
+    /// Internal implementation backing `Window::is_open`.
     #[inline]
-    pub fn is_open(&mut self) -> bool
+    pub(crate) fn is_open(&mut self) -> bool
     {
         self.window_state.is_open = !self.window_handle.context.should_close();
         self.window_state.is_open
     }
 
-    /// Returns whether the window is fully initialized and ready for use.
-    ///
-    /// # Returns
-    /// `true` if the window is ready for rendering and event processing.
-    ///
-    /// # Example
-    /// ```rust
-    /// // Check if the window is ready before starting the main loop
-    /// if win.is_ready() {
-    ///     println!("Window is ready for use!");
-    /// } else {
-    ///     println!("Window is not ready yet.");
-    /// }
-    /// ```
+    /// Internal implementation backing `Window::is_ready`.
     #[inline]
-    pub fn is_ready(&self) -> bool
+    pub(crate) fn is_ready(&self) -> bool
     {
         self.window_state.is_ready
     }

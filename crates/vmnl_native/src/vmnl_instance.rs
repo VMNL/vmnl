@@ -117,7 +117,9 @@ pub(crate) struct VMNLInstance
     /// Memory allocator used to manage GPU memory (Vulkano `StandardMemoryAllocator`).
     pub(crate) memory_allocator:            Arc<StandardMemoryAllocator>,
     /// Command buffer allocator used to allocate and reuse command buffers.
-    pub(crate) command_buffer_allocator:    Arc<StandardCommandBufferAllocator>
+    pub(crate) command_buffer_allocator:    Arc<StandardCommandBufferAllocator>,
+    /// GLFW context used for window management and input handling.
+    pub(crate) glfw:                        glfw::Glfw
 }
 
 /// Helper functions for `VMNLInstance` initialization and resource setup.
@@ -283,7 +285,10 @@ impl VMNLInstance
                 library,
                 InstanceCreateInfo {
                     enabled_extensions: required_instance_extensions,
-                    flags: InstanceCreateFlags::ENUMERATE_PORTABILITY,
+                    flags:              InstanceCreateFlags::ENUMERATE_PORTABILITY,
+                    application_name:   Some("VMNL Application".into()),
+                    engine_name:        Some("VMNL Engine".into()),
+                    max_api_version:    Some(vulkano::Version::HEADER_VERSION),
                     ..Default::default()
                 },
             )
@@ -312,6 +317,7 @@ impl VMNLInstance
             graphics_queue_family_index,
             memory_allocator,
             command_buffer_allocator,
+            glfw
         })
     }
 }

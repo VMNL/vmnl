@@ -132,6 +132,8 @@ pub enum VMNLErrorKind
     GlfwPlatformError,
     /// Unknown GLFW error.
     GlfwUnknownError,
+    /// Invalid window size specified.
+    InvalidWindowSize,
     /// Invalid state error with message.
     InvalidState(&'static str),
 }
@@ -288,6 +290,8 @@ impl fmt::Display for VMNLError
                 f.write_str("glfw platform error"),
             VMNLErrorKind::GlfwUnknownError =>
                 f.write_str("glfw unknown error"),
+            VMNLErrorKind::InvalidWindowSize =>
+                f.write_str("invalid window size specified"),
             VMNLErrorKind::InvalidState(msg) =>
                 write!(f, "invalid state: {msg}"),
         }
