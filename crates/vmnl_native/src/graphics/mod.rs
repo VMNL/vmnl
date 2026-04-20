@@ -141,15 +141,15 @@ pub struct VMNLVertex
 pub struct Graphics
 {
     /// Type of graphics data.
-    pub(crate) kind:          GraphicsKind,
+    pub(crate) kind:           GraphicsKind,
     /// Vertex buffer for rendering.
-    pub(crate) vertex_buffer: VMNLVertexBuffer,
+    pub(crate) vertex_buffer:  VMNLVertexBuffer,
     /// Optional index buffer for indexed rendering.
-    pub(crate) index_buffer:  Option<VMNLIndexBuffer>,
+    pub(crate) index_buffer:   Option<VMNLIndexBuffer>,
     /// Number of vertices.
-    pub(crate) vertex_count:  u32,
+    pub(crate) vertex_count:   u32,
     /// Number of indices.
-    pub(crate) index_count:   u32,
+    pub(crate) index_count:    u32,
     // pub frame_ubo_buffer: FrameUboBuffer
 }
 

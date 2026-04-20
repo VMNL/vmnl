@@ -125,7 +125,7 @@ fn create_quad_indexed(
 fn main() -> VMNLResult<()>
 {
     let ctx:           Context      = Context::new()?;
-    let mut win:       Window       = Window::new(&ctx, 1920, 1080, "Window")?;
+    let mut win:       Window       = Window::builder().size(1920, 1080).build(&ctx)?;
     let quad_manual:  [Graphics; 2] = create_quad_manual(&ctx);
     let _quad_indexed: Graphics     = create_quad_indexed(&ctx);
     let rectangle:     Graphics     = Graphics::create_rectangle(
@@ -134,6 +134,7 @@ fn main() -> VMNLResult<()>
         [255.0, 200.0, 0.0]
     );
 
+    win.configure_window_polling();
     println!("Monitors: {}", win.monitor().names().iter().map(|name| name.clone().unwrap_or("Unknown".to_string())).collect::<Vec<String>>().join(", "));
     while win.is_open() {
         for event in win.poll_events() {

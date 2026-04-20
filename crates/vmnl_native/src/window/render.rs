@@ -10,10 +10,10 @@
 
 extern crate glfw;
 use super::{
-    Window,
     Graphics
 };
 use crate::{
+    window::inner::VMNLWindow,
     VMNLError,
     VMNLErrorKind
 };
@@ -50,7 +50,7 @@ use vulkano::{
     }
 };
 
-impl Window
+impl VMNLWindow
 {
     /// Builds a Vulkan command buffer for rendering the provided graphics objects to the specified swapchain image.
     ///
@@ -232,36 +232,8 @@ impl Window
         }
     }
 
-    /// Executes the draw call for the provided graphics objects by preparing the command buffer and synchronizing frame presentation.
-    ///
-    /// # Arguments
-    /// - `graphics_list`: Slice of graphics objects to render.
-    ///
-    /// # Example
-    /// ```rust
-    /// let rect1 = VMNLRect {
-    ///     position: [100.0, 150.0],
-    ///     size: [200.0, 100.0]
-    /// };
-    /// let color1 = [255.0, 0.0, 0.0]; // Red color
-    /// let vertices2 = [
-    ///     VMNLVertex {
-    ///         position: [100.0, 150.0],
-    ///        color: [0.0, 255.0, 0.0] // Green color
-    ///     },
-    ///     VMNLVertex {
-    ///         position: [300.0, 150.0],
-    ///         color: [0.0, 255.0, 0.0] // Green color
-    ///     },
-    /// ];
-    /// while win.is_open() {
-    ///     // Poll events and other logic here
-    ///     let graphics1 = Graphics::create_rectangle(&vmnl_context, rect1, color1);
-    ///     let graphics2 = Graphics::create_triangle(&vmnl_context, vertices2[0], vertices2[1], vertices2[2]);
-    ///     win.render(&[&graphics1, &graphics2]);
-    /// }
-    /// ```
-    pub fn render(
+    /// Internal implementation backing `Window::render`.
+    pub(crate) fn render(
         &mut self,
         graphics_list: &[&Graphics]
     )
