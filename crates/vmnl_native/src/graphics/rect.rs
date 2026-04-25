@@ -9,6 +9,7 @@
 use crate::{
     Graphics,
     VMNLVertex,
+    VMNLResult,
     Context,
     VMNLRect,
     VMNLrbg,
@@ -41,7 +42,7 @@ impl Graphics
         vmnl_context: &Context,
         rect:          VMNLRect,
         color:         VMNLrbg,
-    ) -> Self
+    ) -> VMNLResult<Self>
     {
         let x0: f32 = rect.position[0];
         let y0: f32 = rect.position[1];
@@ -66,7 +67,7 @@ impl Graphics
             }, // bottom-left
         ];
         let indices: [u32; 6] = [0, 1, 2, 2, 3, 0];
-        let mut graphics: Graphics = Self::create_indexed_shape(vmnl_context, &vertices.as_slice(), &indices.as_slice());
+        let mut graphics: Graphics = Self::create_indexed_shape(vmnl_context, &vertices.as_slice(), &indices.as_slice())?;
 
         graphics.kind = Rectangle;
         println!("{}", crate::vmnl_log(&format!("Creating rectangle at position [{}, {}] with size [{}, {}] and color [{}, {}, {}].",
@@ -74,6 +75,6 @@ impl Graphics
             rect.size[0], rect.size[1],
             color[0], color[1], color[2]
         )));
-        return graphics;
+        Ok(graphics)
     }
 }

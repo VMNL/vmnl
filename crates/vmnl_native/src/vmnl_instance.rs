@@ -85,7 +85,7 @@ impl Context
     ///     for event in window.poll_events() {
     ///         // Handle events (e.g., input, window close)
     ///     }
-    ///     window.render(&[&triangle].as_slice());
+    ///     window.render(&[&triangle].as_slice()).expect("Failed to render frame");
     /// }
     /// ```
     pub fn new() -> VMNLResult<Self>
@@ -125,6 +125,50 @@ pub(crate) struct VMNLInstance
 /// Helper functions for `VMNLInstance` initialization and resource setup.
 impl VMNLInstance
 {
+    /// Assigns a priority value to a physical device type for selection purposes.
+    /// Discrete GPUs are given the highest priority, followed by integrated GPUs, virtual GPUs, and CPUs.
+    ///
+    /// # Arguments
+    /// - `device_type`: The type of the physical device (e.g., DiscreteGpu, IntegratedGpu, etc.).
+    ///
+    /// # Returns
+    /// A `u32` priority value, where higher values indicate a more preferred device type.
+    #[inline]
+    fn physical_device_priority(device_type: PhysicalDeviceType) -> u32
+    {
+        match device_type {
+            PhysicalDeviceType::DiscreteGpu => 1000,
+            PhysicalDeviceType::IntegratedGpu => 100,
+            PhysicalDeviceType::VirtualGpu => 50,
+            PhysicalDeviceType::Cpu => 10,
+            _ => 0,
+        }
+    }
+
+    /// Selects the index of a queue family that supports graphics operations from a list of queue flags.
+    /// Iterates through the provided queue flags and returns the index of the first queue family that contains the `GRAPHICS` flag.
+    /// If no such queue family is found, returns an error indicating that the required feature is not supported.
+    ///
+    /// # Arguments
+    /// - `queue_flags`: An iterable collection of `QueueFlags` representing the capabilities of each queue family.
+    ///
+    /// # Returns
+    /// A `VMNLResult<u32>` containing the index of the graphics-supporting queue family on success, or an error if no suitable queue family is found.
+    #[inline]
+    fn select_graphics_queue_family_index_from_flags<I>(
+        queue_flags: I,
+    ) -> VMNLResult<u32>
+    where
+        I: IntoIterator<Item = QueueFlags>,
+    {
+        queue_flags
+            .into_iter()
+            .enumerate()
+            .find(|(_, flags)| flags.contains(QueueFlags::GRAPHICS))
+            .map(|(index, _)| index as u32)
+            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))
+    }
+
     /// Initialize the command buffer allocator for the Vulkan device.
     ///
     /// # Arguments
@@ -171,15 +215,14 @@ impl VMNLInstance
     #[inline]
     fn select_graphics_queue_family_index(
         physical_device: &Arc<PhysicalDevice>,
-    ) -> u32
+    ) -> VMNLResult<u32>
     {
-        physical_device
-            .queue_family_properties()
-            .iter()
-            .enumerate()
-            .find(|(_, q)| q.queue_flags.contains(QueueFlags::GRAPHICS))
-            .map(|(index, _)| index as u32)
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature).report())
+        Self::select_graphics_queue_family_index_from_flags(
+            physical_device
+                .queue_family_properties()
+                .iter()
+                .map(|q| q.queue_flags),
+        )
     }
 
     /// Select a suitable physical device based on required extensions and graphics support.
@@ -196,11 +239,11 @@ impl VMNLInstance
     fn select_physical_device(
         instance: &Arc<Instance>,
         required_extensions: &DeviceExtensions,
-    ) -> Arc<PhysicalDevice>
+    ) -> VMNLResult<Arc<PhysicalDevice>>
     {
         instance
             .enumerate_physical_devices()
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanInitFailed).report())
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanInitFailed))?
             .filter(|physical_device| physical_device.supported_extensions().contains(required_extensions))
             .filter(|physical_device| {
                 physical_device.queue_family_properties()
@@ -208,15 +251,9 @@ impl VMNLInstance
                     .any(|queue| queue.queue_flags.contains(QueueFlags::GRAPHICS))
             })
             .max_by_key(|physical_device| {
-                match physical_device.properties().device_type {
-                    PhysicalDeviceType::DiscreteGpu => 1000,
-                    PhysicalDeviceType::IntegratedGpu => 100,
-                    PhysicalDeviceType::VirtualGpu => 50,
-                    PhysicalDeviceType::Cpu => 10,
-                    _ => 0,
-                }
+                Self::physical_device_priority(physical_device.properties().device_type)
             })
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature).report())
+            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))
     }
 
     /// Create a Vulkan logical device and a graphics queue for it.
@@ -235,7 +272,7 @@ impl VMNLInstance
         physical_device: &Arc<PhysicalDevice>,
         queue_family_index: u32,
         device_extensions: DeviceExtensions
-    ) -> (Arc<Device>, Arc<Queue>)
+    ) -> VMNLResult<(Arc<Device>, Arc<Queue>)>
     {
         let (device, mut queues) = Device::new(
             physical_device.clone(),
@@ -248,13 +285,42 @@ impl VMNLInstance
                 ..Default::default()
             },
         )
-        .expect(&VMNLError::new(VMNLErrorKind::VulkanUnknownError).report());
+        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanUnknownError))?;
         let graphics_queue: Arc<Queue> =
             queues
             .next()
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnknownError).report());
+            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnknownError))?;
 
-        (device, graphics_queue)
+        Ok((device, graphics_queue))
+    }
+
+    fn create_instance(glfw: glfw::Glfw) -> VMNLResult<Arc<Instance>>
+    {
+        let library: Arc<VulkanLibrary> =
+            VulkanLibrary::new()
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanInitFailed))?;
+        let required_instance_extensions: InstanceExtensions =
+            glfw
+            .get_required_instance_extensions()
+            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanExtensionNotPresent))?
+            .iter()
+            .map(String::as_str)
+            .collect();
+        let instance: Arc<Instance> =
+            Instance::new(
+                library,
+                InstanceCreateInfo {
+                    enabled_extensions: required_instance_extensions,
+                    flags:              InstanceCreateFlags::ENUMERATE_PORTABILITY,
+                    application_name:   Some("VMNL Application".into()),
+                    engine_name:        Some("VMNL Engine".into()),
+                    max_api_version:    Some(vulkano::Version::HEADER_VERSION),
+                    ..Default::default()
+                },
+            )
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanInitFailed))?;
+
+        Ok(instance)
     }
 
     /// Initialize the `VMNLInstance` by creating the Vulkan instance, selecting a physical device,
@@ -270,40 +336,18 @@ impl VMNLInstance
         let glfw: glfw::Glfw =
             glfw::init(glfw::fail_on_errors)
             .map_err(|_| VMNLError::new(VMNLErrorKind::GlfwInitFailed))?;
-        let required_instance_extensions: InstanceExtensions =
-            glfw
-            .get_required_instance_extensions()
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanExtensionNotPresent).report())
-            .iter()
-            .map(String::as_str)
-            .collect();
-        let library: Arc<VulkanLibrary> =
-            VulkanLibrary::new()
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanInitFailed).report());
-        let instance: Arc<Instance> =
-            Instance::new(
-                library,
-                InstanceCreateInfo {
-                    enabled_extensions: required_instance_extensions,
-                    flags:              InstanceCreateFlags::ENUMERATE_PORTABILITY,
-                    application_name:   Some("VMNL Application".into()),
-                    engine_name:        Some("VMNL Engine".into()),
-                    max_api_version:    Some(vulkano::Version::HEADER_VERSION),
-                    ..Default::default()
-                },
-            )
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanInitFailed).report());
+        let instance: Arc<Instance> = Self::create_instance(glfw.clone())?;
         let device_extensions: DeviceExtensions =
             DeviceExtensions {
                 khr_swapchain: true,
                 ..DeviceExtensions::empty()
             };
         let physical_device: Arc<PhysicalDevice> =
-            Self::select_physical_device(&instance, &device_extensions);
+            Self::select_physical_device(&instance, &device_extensions)?;
         let graphics_queue_family_index: u32 =
-            Self::select_graphics_queue_family_index(&physical_device);
+            Self::select_graphics_queue_family_index(&physical_device)?;
         let (device, graphics_queue): (Arc<Device>, Arc<Queue>) =
-            Self::create_device(&physical_device, graphics_queue_family_index, device_extensions);
+            Self::create_device(&physical_device, graphics_queue_family_index, device_extensions)?;
         let memory_allocator =
             Self::create_memory_allocator(&device);
         let command_buffer_allocator =
@@ -327,5 +371,117 @@ impl Drop for VMNLInstance
     fn drop(&mut self)
     {
         println!("{}", crate::vmnl_log("Dropping instance."));
+    }
+}
+
+#[cfg(test)]
+mod tests
+{
+    use super::*;
+    use std::sync::{Mutex, OnceLock};
+
+    static GPU_TEST_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
+    fn gpu_test_guard() -> std::sync::MutexGuard<'static, ()> {
+        GPU_TEST_LOCK
+            .get_or_init(|| Mutex::new(()))
+            .lock()
+            .expect("gpu test lock poisoned")
+    }
+
+    #[test]
+    fn queue_family_index_returns_first_graphics_family()
+    {
+        let index = VMNLInstance::select_graphics_queue_family_index_from_flags([
+            QueueFlags::empty(),
+            QueueFlags::GRAPHICS,
+            QueueFlags::GRAPHICS,
+        ])
+        .expect("expected a graphics queue family");
+
+        assert_eq!(index, 1);
+    }
+
+    #[test]
+    fn queue_family_index_returns_unsupported_feature_when_no_graphics_family()
+    {
+        let err = VMNLInstance::select_graphics_queue_family_index_from_flags([
+            QueueFlags::empty(),
+            QueueFlags::empty(),
+        ])
+        .expect_err("expected VulkanUnsupportedFeature");
+
+        assert!(matches!(err.kind(), VMNLErrorKind::VulkanUnsupportedFeature));
+    }
+
+    #[test]
+    fn physical_device_priority_order_is_correct()
+    {
+        assert!(
+            VMNLInstance::physical_device_priority(PhysicalDeviceType::DiscreteGpu)
+                > VMNLInstance::physical_device_priority(PhysicalDeviceType::IntegratedGpu)
+        );
+        assert!(
+            VMNLInstance::physical_device_priority(PhysicalDeviceType::IntegratedGpu)
+                > VMNLInstance::physical_device_priority(PhysicalDeviceType::VirtualGpu)
+        );
+        assert!(
+            VMNLInstance::physical_device_priority(PhysicalDeviceType::VirtualGpu)
+                > VMNLInstance::physical_device_priority(PhysicalDeviceType::Cpu)
+        );
+    }
+
+    #[test]
+    fn queue_family_index_returns_zero_when_first_is_graphics()
+    {
+        let index = VMNLInstance::select_graphics_queue_family_index_from_flags([
+            QueueFlags::GRAPHICS,
+            QueueFlags::empty(),
+        ])
+        .expect("expected graphics queue at index 0");
+
+        assert_eq!(index, 0);
+    }
+
+    #[test]
+    fn queue_family_index_returns_first_match_when_multiple_graphics_families()
+    {
+        let index = VMNLInstance::select_graphics_queue_family_index_from_flags([
+            QueueFlags::empty(),
+            QueueFlags::GRAPHICS,
+            QueueFlags::GRAPHICS,
+            QueueFlags::empty(),
+        ])
+        .expect("expected first graphics queue index");
+
+        assert_eq!(index, 1);
+    }
+
+    #[test]
+    fn queue_family_index_returns_error_for_empty_iterator()
+    {
+        let err = VMNLInstance::select_graphics_queue_family_index_from_flags(
+            std::iter::empty::<QueueFlags>()
+        )
+        .expect_err("expected error for empty queue family list");
+
+        assert!(matches!(err.kind(), VMNLErrorKind::VulkanUnsupportedFeature));
+    }
+
+    #[test]
+    fn physical_device_priority_values_are_stable()
+    {
+        assert_eq!(VMNLInstance::physical_device_priority(PhysicalDeviceType::DiscreteGpu), 1000);
+        assert_eq!(VMNLInstance::physical_device_priority(PhysicalDeviceType::IntegratedGpu), 100);
+        assert_eq!(VMNLInstance::physical_device_priority(PhysicalDeviceType::VirtualGpu), 50);
+        assert_eq!(VMNLInstance::physical_device_priority(PhysicalDeviceType::Cpu), 10);
+    }
+
+    #[test]
+    // #[ignore = "This test requires a Vulkan-compatible GPU and may fail on CI environments without proper GPU support. Run locally to verify context initialization."]
+    fn smoke_context_initialization()
+    {
+        let _guard = gpu_test_guard();
+        assert!(Context::new().is_ok());
     }
 }

@@ -8,42 +8,50 @@ DO_CLEAN=0
 DO_RUN=1
 DO_BUILD=0
 DO_VERBOSE=0
+DO_TESTS=0
 
 usage()
 {
     cat >&2 <<'EOF'
-Usage: ./run.sh [-c] [-r] [-b] [-v]
+Usage: ./run.sh [-c | --clean] [-r | --run] [-b | --build] [-v | --verbose] [-t | --tests]
 
 Options:
-  -c    cargo clean only
-  -r    cargo clean + cargo run
-  -b    cargo build
-  -v    verbose cargo output (-vv)
+  -c | --clean    cargo clean only
+  -r | --run      cargo clean + cargo run
+  -b | --build    cargo build
+  -v | --verbose  verbose cargo output (-vv)
+  -t | --tests    run tests instead of examples
 
 Default:
   cargo run
 EOF
 }
 
-while getopts ":crbv" opt; do
+while getopts ":crbvt--clean--run--build--verbose--tests" opt; do
     case "${opt}" in
-        c)
+        c|--clean)
             DO_CLEAN=1
             DO_RUN=0
             DO_BUILD=0
             ;;
-        r)
+        r|--run)
             DO_CLEAN=1
             DO_RUN=1
             DO_BUILD=0
             ;;
-        b)
+        b|--build)
             DO_CLEAN=0
             DO_RUN=0
             DO_BUILD=1
             ;;
-        v)
+        v|--verbose)
             DO_VERBOSE=1
+            ;;
+        t|--tests)
+            DO_TESTS=1
+            DO_CLEAN=0
+            DO_RUN=0
+            DO_BUILD=0
             ;;
         \?)
             usage
@@ -144,6 +152,7 @@ print_runtime_config()
     kv "run"     "${DO_RUN}"
     kv "build"   "${DO_BUILD}"
     kv "verbose" "${DO_VERBOSE}"
+    kv "tests"   "${DO_TESTS}"
 }
 
 diagnostic_shaderc()
@@ -427,7 +436,11 @@ main()
     if lib_dir="$(find_shaderc_lib_dir)"; then
         ok "shaderc library directory resolved"
         kv "[Info] resolved lib dir" "${lib_dir}"
-        run_cargo "${lib_dir}"
+        if [[ "${DO_TESTS}" -eq 1 ]]; then
+            exec cargo test -p vmnl_native --lib
+        else
+            run_cargo "${lib_dir}"
+        fi
     fi
 
     warn "shaderc not found, installation required"
@@ -443,7 +456,11 @@ main()
         warn "forcing clean after fresh shaderc install"
         DO_CLEAN=1
     fi
-    run_cargo "${lib_dir}"
+    if [[ "${DO_TESTS}" -eq 1 ]]; then
+        cargo test -p vmnl_native --lib
+    else
+        run_cargo "${lib_dir}"
+    fi
 }
 
 main "$@"

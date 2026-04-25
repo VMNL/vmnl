@@ -10,6 +10,7 @@ use crate::{
     Event,
     Graphics,
     Input,
+    VMNLResult,
     VMNLErrorKind,
 };
 use super::Window;
@@ -159,8 +160,13 @@ impl Window
     /// Passing `None` for a dimension removes the corresponding limit.
     ///
     /// # Arguments
-    /// - `min`: A tuple containing the minimum allowed width and height.
-    /// - `max`: A tuple containing the maximum allowed width and height.
+    /// - `min_width`: The minimum allowed width of the window.
+    /// - `min_height`: The minimum allowed height of the window.
+    /// - `max_width`: The maximum allowed width of the window.
+    /// - `max_height`: The maximum allowed height of the window.
+    ///
+    /// # Returns
+    /// A `VMNLResult<()>` indicating whether the provided size limits are valid.
     ///
     /// # Notes
     /// - The minimum and maximum size limits are enforced by the operating system's window manager,
@@ -174,18 +180,20 @@ impl Window
     /// # Example
     /// ```
     /// // Set the minimum size to 400x300 pixels and maximum size to 1920x1080 pixels
-    /// window.set_size_limits((Some(400), Some(300)), (Some(1920), Some(1080)));
+    /// window.set_size_limits(Some(400), Some(300), Some(1920), Some(1080))?;
     /// // Remove the maximum size limit
-    /// window.set_size_limits((Some(400), Some(300)), (None, None));
+    /// window.set_size_limits(Some(400), Some(300), None, None)?;
     /// ```
     #[inline]
     pub fn set_size_limits(
         &mut self,
-        min: (Option<u32>, Option<u32>),
-        max: (Option<u32>, Option<u32>)
-    )
+        min_width: Option<u32>,
+        min_height: Option<u32>,
+        max_width: Option<u32>,
+        max_height: Option<u32>
+    ) -> VMNLResult<()>
     {
-        self.inner.set_size_limits(min, max);
+        self.inner.set_size_limits(min_width, min_height, max_width, max_height)
     }
 
     /// Sets the aspect ratio of the window.
@@ -1241,16 +1249,20 @@ impl Window
     ///         color: [0.0, 255.0, 0.0] // Green color
     ///     },
     /// ];
+    /// let graphics1 = Graphics::create_rectangle(&vmnl_context, rect1, color1);
+    /// let graphics2 = Graphics::create_triangle(&vmnl_context, vertices2[0], vertices2[1], vertices2[2]);
     /// while win.is_open() {
     ///     // Poll events and other logic here
-    ///     let graphics1 = Graphics::create_rectangle(&vmnl_context, rect1, color1);
-    ///     let graphics2 = Graphics::create_triangle(&vmnl_context, vertices2[0], vertices2[1], vertices2[2]);
-    ///     win.render(&[&graphics1, &graphics2]);
+    ///     win.render([&graphics1, &graphics2]);
     /// }
     /// ```
-    pub fn render(&mut self, graphics: &[&Graphics])
+    #[inline]
+    pub fn render<const N: usize>(
+        &mut self,
+        graphics: [&Graphics; N]
+    ) -> VMNLResult<()>
     {
-        self.inner.render(graphics);
+        Ok(self.inner.render(&graphics)?)
     }
 
     /// Updates and returns the current open state of the window.
@@ -1268,6 +1280,7 @@ impl Window
     /// }
     /// println!("Window has been closed.");
     /// ```
+    #[inline]
     pub fn is_open(&mut self) -> bool
     {
         self.inner.is_open()
@@ -1287,6 +1300,7 @@ impl Window
     ///     println!("Window is not ready yet.");
     /// }
     /// ```
+    #[inline]
     pub fn is_ready(&self) -> bool
     {
         self.inner.is_ready()
@@ -1303,6 +1317,7 @@ impl Window
     ///     win.close();
     /// }
     /// ```
+    #[inline]
     pub fn close(&mut self)
     {
         self.inner.close();
@@ -1321,6 +1336,7 @@ impl Window
     ///     println!("The left mouse button was released!");
     /// }
     /// ```
+    #[inline]
     pub fn input(&self) -> &Input
     {
         self.inner.input()

@@ -8,6 +8,7 @@
 use crate::{
     Graphics,
     VMNLVertex,
+    VMNLResult,
     VMNLrbg,
     Context,
     graphics::GraphicsKind::RawVertices
@@ -46,7 +47,7 @@ impl Graphics
         vertex1:       VMNLVertex,
         vertex2:       VMNLVertex,
         vertex3:       VMNLVertex
-    ) -> Self
+    ) -> VMNLResult<Self>
     {
         let vertex1_color: VMNLrbg    = Self::color_transform(vertex1.color);
         let vertex2_color: VMNLrbg    = Self::color_transform(vertex2.color);
@@ -74,12 +75,14 @@ impl Graphics
             vertex2.color[0], vertex2.color[1], vertex2.color[2],
             vertex3.color[0], vertex3.color[1], vertex3.color[2]
         )));
-        Self {
-            kind:          RawVertices,
-            vertex_count:  vertices.len() as u32,
-            index_count:   0,
-            vertex_buffer: Self::create_vertex_buffer(&vertices.as_slice(), &vmnl_context.inner.memory_allocator),
-            index_buffer:  None,
-        }
+        Ok(
+            Self {
+                kind:          RawVertices,
+                vertex_count:  vertices.len() as u32,
+                index_count:   0,
+                vertex_buffer: Self::create_vertex_buffer(&vertices.as_slice(), &vmnl_context.inner.memory_allocator)?,
+                index_buffer:  None,
+            }
+        )
     }
 }

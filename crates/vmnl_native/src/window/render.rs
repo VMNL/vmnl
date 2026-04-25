@@ -4,6 +4,12 @@
 ///
 /// Draw submodule for handling rendering operations in the VMNL application.
 ///
+////////////////////////////////////////////////////////////////////////////////
+/// SPDX-FileCopyrightText: 2026 Hugo Duda
+/// SPDX-License-Identifier: MIT
+///
+/// Draw submodule for handling rendering operations in the VMNL application.
+///
 /// This module provides functionality to build command buffers, manage frame synchronization,
 /// and execute draw calls using Vulkan through the Vulkano library.
 ////////////////////////////////////////////////////////////////////////////////
@@ -15,6 +21,7 @@ use super::{
 use crate::{
     window::inner::VMNLWindow,
     VMNLError,
+    VMNLResult,
     VMNLErrorKind
 };
 use crate::window::PushConstants;
@@ -27,7 +34,6 @@ use vulkano::{
         Device
     },
     render_pass::Framebuffer,
-    sync::future::FenceSignalFuture,
     command_buffer::{
         AutoCommandBufferBuilder,
         CommandBufferUsage,
@@ -60,11 +66,11 @@ impl VMNLWindow
     ///
     /// # Returns
     /// An `Arc<PrimaryAutoCommandBuffer>` containing the built command buffer ready for execution.
-    fn build_command_buffer(
+    fn build_command_buffer<const N: usize>(
         &self,
         image_index:   u32,
-        graphics_list: &[&Graphics]
-    ) -> Arc<PrimaryAutoCommandBuffer>
+        graphics_list: &[&Graphics; N]
+    ) -> VMNLResult<Arc<PrimaryAutoCommandBuffer>>
     {
         let extent: [u32; 2] =
             self.window_handle.swapchain.image_extent();
@@ -82,7 +88,7 @@ impl VMNLWindow
                     .queue_family_index(),
                 CommandBufferUsage::OneTimeSubmit,
             )
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanCommandBufferCreationFailed).report());
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanCommandBufferCreationFailed))?;
 
         unsafe {
             builder
@@ -96,9 +102,9 @@ impl VMNLWindow
                         ..Default::default()
                     },
                 )
-                .expect(&VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed).report())
+                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed))?
                 .bind_pipeline_graphics(self.window_handle.graphics_pipeline.clone())
-                .expect(&VMNLError::new(VMNLErrorKind::VulkanPipelineCreationFailed).report());
+                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanPipelineCreationFailed))?;
                 for graphics in graphics_list {
                     let push_constants: PushConstants = PushConstants {
                         window_size: [extent[0] as f32, extent[1] as f32],
@@ -109,27 +115,27 @@ impl VMNLWindow
                         0,
                         push_constants,
                     )
-                        .expect(&VMNLError::new(VMNLErrorKind::VulkanValidationFailed).report())
+                        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?
                         .bind_vertex_buffers(0, graphics.vertex_buffer.clone())
-                        .expect(&VMNLError::new(VMNLErrorKind::VulkanVertexBufferCreationFailed).report());
+                        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanVertexBufferCreationFailed))?;
                     if let Some(index_buffer) = &graphics.index_buffer {
                         builder
                             .bind_index_buffer(index_buffer.clone())
-                            .expect(&VMNLError::new(VMNLErrorKind::VulkanIndexBufferCreationFailed).report())
+                            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanIndexBufferCreationFailed))?
                             .draw_indexed(graphics.index_count, 1, 0, 0, 0)
-                            .expect(&VMNLError::new(VMNLErrorKind::VulkanValidationFailed).report());
+                            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
                     } else {
                         builder
                             .draw(graphics.vertex_count, 1, 0, 0)
-                            .expect(&VMNLError::new(VMNLErrorKind::VulkanValidationFailed).report());
+                            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
                     }
             }
             builder
                 .end_render_pass(SubpassEndInfo::default())
-                    .expect(&VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed).report());
+                    .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed))?;
         }
-                builder.build()
-                    .expect(&VMNLError::new(VMNLErrorKind::VulkanCommandBufferCreationFailed).report())
+        builder.build()
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanCommandBufferCreationFailed))
     }
 
     /// Prepares the GPU for rendering a new frame by ensuring previous frame operations have completed.
@@ -157,17 +163,14 @@ impl VMNLWindow
     fn acquire_next_image_from_swapchain(
         swapchain: &Arc<Swapchain>,
         timeout:   Option<std::time::Duration>,
-    ) -> (u32, bool, SwapchainAcquireFuture)
+    ) ->  VMNLResult<(u32, bool, SwapchainAcquireFuture)>
     {
         match swapchain::acquire_next_image(swapchain.clone(), timeout) {
-            Ok(result) => result,
+            Ok(result) => Ok(result),
             Err(Validated::Error(VulkanError::OutOfDate)) =>
-                panic!("{}", VMNLError::new(VMNLErrorKind::VulkanSurfaceLost).report()),
+                Err(VMNLError::new(VMNLErrorKind::VulkanSurfaceLost)),
             Err(error) =>
-                panic!(
-                    "{}: {error:?}",
-                    VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed).report()
-                ),
+                Err(VMNLError::new(VMNLErrorKind::InvalidState(format!("{error:?}")))),
         }
     }
 
@@ -190,23 +193,27 @@ impl VMNLWindow
         image_index:             u32,
         graphics_queue:          Arc<Queue>,
         swapchain:               Arc<Swapchain>
-    ) -> Result<Box<dyn GpuFuture>, Validated<VulkanError>>
+    ) -> VMNLResult<Result<Box<dyn GpuFuture>, Validated<VulkanError>>>
     {
-        previous_frame_end
+        let previous = previous_frame_end
             .take()
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnknownError).report())
+            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnknownError))?;
+        let after_exec = previous
             .join(acquire_future)
             .then_execute(graphics_queue.clone(), command_buffer)
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanUnknownError).report())
-            .then_swapchain_present(
-                graphics_queue.clone(),
-                SwapchainPresentInfo::swapchain_image_index(
-                    swapchain.clone(),
-                    image_index,
-                ),
-            )
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+        let after_present = after_exec.then_swapchain_present(
+            graphics_queue.clone(),
+            SwapchainPresentInfo::swapchain_image_index(
+                swapchain.clone(),
+                image_index,
+            ),
+        );
+        let flushed = after_present
             .then_signal_fence_and_flush()
-            .map(|future: FenceSignalFuture<_>| future.boxed())
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+
+        Ok(Ok(flushed.boxed()))
     }
 
     /// Updates `previous_frame_end` based on the result of frame synchronization.
@@ -222,7 +229,7 @@ impl VMNLWindow
                 future.boxed()
             }
             Err(Validated::Error(VulkanError::OutOfDate)) => {
-                eprintln!("{}", VMNLError::new(VMNLErrorKind::VulkanSurfaceLost).report());
+                eprintln!("{}", VMNLError::new(VMNLErrorKind::VulkanOutOfDate).report());
                 sync::now(device.clone()).boxed()
             }
             Err(error) => {
@@ -233,20 +240,20 @@ impl VMNLWindow
     }
 
     /// Internal implementation backing `Window::render`.
-    pub(crate) fn render(
+    pub(crate) fn render<const N: usize>(
         &mut self,
-        graphics_list: &[&Graphics]
-    )
+        graphics_list: &[&Graphics; N]
+    ) -> VMNLResult<()>
     {
         Self::begin_frame(&mut self.window_handle.previous_frame_end);
         let (image_index, suboptimal, acquire_future):
         (u32, bool, SwapchainAcquireFuture) =
-            Self::acquire_next_image_from_swapchain(&self.window_handle.swapchain, None);
+            Self::acquire_next_image_from_swapchain(&self.window_handle.swapchain, None)?;
         if suboptimal {
             eprintln!("{}", VMNLError::new(VMNLErrorKind::VulkanSurfaceLost).report());
         }
         let command_buffer: Arc<PrimaryAutoCommandBuffer> =
-            self.build_command_buffer(image_index, graphics_list);
+            self.build_command_buffer(image_index, graphics_list)?;
         let future: Result<Box<dyn GpuFuture>, Validated<VulkanError>> =
             Self::frame_sync(
                 &mut self.window_handle.previous_frame_end,
@@ -255,8 +262,9 @@ impl VMNLWindow
                 image_index,
                 self.window_handle.vmnl_instance.graphics_queue.clone(),
                 self.window_handle.swapchain.clone()
-            );
+            )?;
         self.window_handle.previous_frame_end =
             Some(Self::update_previous_frame_end(future, self.window_handle.vmnl_instance.device.clone()));
+        Ok(())
     }
 }

@@ -13,7 +13,7 @@ use crate::{
     window::inner::VMNLWindow,
     Input,
     window::EventQueue,
-    vmnl_instance::VMNLInstance
+    vmnl_instance::VMNLInstance,
 };
 use std::sync::Arc;
 use vulkano::{
