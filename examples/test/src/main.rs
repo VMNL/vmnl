@@ -86,27 +86,27 @@ fn handle_mousebind_test(win: &mut Window)
 
 fn create_quad_manual(
     ctx: &Context
-) -> [Graphics; 2]
+) -> VMNLResult<[Graphics; 2]>
 {
     let triangle: Graphics = Graphics::create_triangle(
         &ctx,
         VMNLVertex { position: [1020.0, 800.0], color: [0.0,   255.0, 0.0]   },
         VMNLVertex { position: [400.0,  800.0], color: [255.0, 0.0,   0.0]   },
         VMNLVertex { position: [1020.0, 400.0], color: [0.0,   0.0,   255.0] }
-    );
+    )?;
     let triangle2: Graphics = Graphics::create_triangle(
         &ctx,
         VMNLVertex { position: [400.0,  400.0], color: [255.0, 255.0, 0.0]   },
         VMNLVertex { position: [400.0,  800.0], color: [255.0, 0.0,   0.0]   },
         VMNLVertex { position: [1020.0, 400.0], color: [0.0,   0.0,   255.0] }
-    );
+    )?;
 
-    [triangle, triangle2]
+    Ok([triangle, triangle2])
 }
 
 fn create_quad_indexed(
     ctx: &Context
-) -> Graphics
+) -> VMNLResult<Graphics>
 {
     const VERTICES: [VMNLVertex; 4] = [
         VMNLVertex { position: [400.0,  400.0], color: [255.0, 255.0, 0.0]   }, // ! top-left
@@ -125,16 +125,28 @@ fn create_quad_indexed(
 fn main() -> VMNLResult<()>
 {
     let ctx:           Context      = Context::new()?;
-    let mut win:       Window       = Window::builder().size(1920, 1080).build(&ctx)?;
-    let quad_manual:  [Graphics; 2] = create_quad_manual(&ctx);
-    let _quad_indexed: Graphics     = create_quad_indexed(&ctx);
+    let mut win:       Window       = Window::builder()
+        .size(1920, 1080)
+        .size_limit(Some(600), Some(600), Some(2000), Some(1500))?
+        .fs_from_string("
+            #version 460
+
+            layout(location = 0) in vec3 in_color;
+            layout(location = 0) out vec4 f_color;
+
+            void main() {
+                f_color = vec4(in_color, 1.0);
+            }
+        ")
+        .build(&ctx)?;
+    let quad_manual:  [Graphics; 2] = create_quad_manual(&ctx)?;
+    let _quad_indexed: Graphics     = create_quad_indexed(&ctx)?;
     let rectangle:     Graphics     = Graphics::create_rectangle(
         &ctx,
         VMNLRect { position: [200.0, 200.0], size: [620.0, 400.0] },
         [255.0, 200.0, 0.0]
-    );
+    )?;
 
-    win.configure_window_polling();
     println!("Monitors: {}", win.monitor().names().iter().map(|name| name.clone().unwrap_or("Unknown".to_string())).collect::<Vec<String>>().join(", "));
     while win.is_open() {
         for event in win.poll_events() {
@@ -142,7 +154,7 @@ fn main() -> VMNLResult<()>
         }
         handle_keybind_test(&mut win);
         handle_mousebind_test(&mut win);
-        win.render(&[&rectangle, &quad_manual[0], &quad_manual[1]].as_slice());
+        win.render([&rectangle, &quad_manual[0], &quad_manual[1]])?;
     }
     Ok(())
 }

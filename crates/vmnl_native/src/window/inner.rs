@@ -17,8 +17,12 @@ use crate::window::state::WindowState;
 use crate::window::monitors::Monitors;
 use crate::window::event::EventQueue;
 use crate::window::input::Input;
-use crate::window::shaders::vs;
-use crate::window::shaders::fs;
+use crate::window::{
+    shaders::fs,
+    shaders::vs,
+    shaders::WindowShaders,
+    shaders::ShaderInput
+};
 use crate::window::config::WindowConfig;
 use crate::exception::{
     VMNLError,
@@ -101,13 +105,47 @@ pub struct VMNLWindow
 
 impl VMNLWindow
 {
+    fn load_shader_from_src(
+        device:          &Arc<Device>,
+        source:          &str,
+        kind:            shaderc::ShaderKind,
+        input_file_name: &str,
+    ) -> VMNLResult<Arc<ShaderModule>> {
+        let compiler = shaderc::Compiler::new()
+            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed))?;
+
+        let artifact = compiler
+            .compile_into_spirv(source, kind, input_file_name, "main", None)
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed))?;
+
+        unsafe {
+            ShaderModule::new(
+                device.clone(),
+                vulkano::shader::ShaderModuleCreateInfo::new(artifact.as_binary()),
+            )
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderModuleCreationFailed))
+        }
+    }
+
+    fn load_shader_from_path(
+        device: &Arc<Device>,
+        path:   &std::path::Path,
+        kind:   shaderc::ShaderKind,
+    ) -> VMNLResult<Arc<ShaderModule>> {
+        let source = std::fs::read_to_string(path)
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed))?;
+
+        let input_file_name = path.display().to_string();
+        Self::load_shader_from_src(device, &source, kind, &input_file_name)
+    }
+
     /// Internal constructor used by `Window::from_options`.
     pub(crate) fn create(
         context: &Context,
         options: WindowOptions
     ) -> VMNLResult<Self>
     {
-        Self::new(context, options.width, options.height, &options.title)
+        Self::new(context, options.width, options.height, &options.title, options.shaders)
     }
     /// Create an image view for each swapchain image.
     ///
@@ -121,7 +159,7 @@ impl VMNLWindow
     /// https://docs.rs/vulkano/latest/vulkano/image/view/index.html
     fn create_image_views(
         images: &[Arc<Image>]
-    ) -> Vec<Arc<ImageView>>
+    ) -> VMNLResult<Vec<Arc<ImageView>>>
     {
         images
             .iter()
@@ -135,7 +173,7 @@ impl VMNLWindow
                         ..Default::default()
                     },
                 )
-                .expect(&VMNLError::new(VMNLErrorKind::VulkanImageViewCreationFailed).report())
+                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanImageViewCreationFailed))
             })
             .collect()
     }
@@ -153,12 +191,12 @@ impl VMNLWindow
     /// https://docs.rs/vulkano/latest/vulkano/swapchain/struct.Surface.html
     fn create_surface(
         instance: &Arc<Instance>,
-        window  : &glfw::PWindow
-    ) -> Arc<Surface>
+        window:   &glfw::PWindow
+    ) -> VMNLResult<Arc<Surface>>
     {
         unsafe {
             Surface::from_window_ref(instance.clone(), window)
-                .expect(&VMNLError::new(VMNLErrorKind::VulkanSurfaceCreationFailed).report())
+                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSurfaceCreationFailed))
         }
     }
 
@@ -178,18 +216,18 @@ impl VMNLWindow
         device:        &Arc<Device>,
         surface:       &Arc<Surface>,
         window_extent: [u32; 2]
-    ) -> (Arc<Swapchain>, Vec<Arc<Image>>)
+    ) -> VMNLResult<(Arc<Swapchain>, Vec<Arc<Image>>)>
     {
         let surface_capabilities: SurfaceCapabilities =
             device
             .physical_device()
             .surface_capabilities(&surface, Default::default())
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanSurfaceCreationFailed).report());
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSurfaceCreationFailed))?;
         let (image_format, image_color_space): (Format, ColorSpace) =
             device
             .physical_device()
             .surface_formats(&surface, Default::default())
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanSurfaceCreationFailed).report())[0];
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSurfaceCreationFailed))?[0];
         let mut min_image_count: u32 =
             surface_capabilities.min_image_count.max(2);
         if let Some(max_image_count) = surface_capabilities.max_image_count {
@@ -211,7 +249,7 @@ impl VMNLWindow
                 ]
             };
 
-        Swapchain::new(
+        Ok(Swapchain::new(
             device.clone(),
             surface.clone(),
             SwapchainCreateInfo {
@@ -224,13 +262,13 @@ impl VMNLWindow
                     .supported_composite_alpha
                     .into_iter()
                     .next()
-                    .expect(&VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature).report()),
+                    .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))?,
                 pre_transform: surface_capabilities.current_transform,
                 present_mode: PresentMode::Fifo,
                 ..Default::default()
             }
         )
-        .expect(&VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed).report())
+        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed))?)
     }
 
     /// Create a render pass that describes the overall process of drawing a frame.
@@ -253,9 +291,9 @@ impl VMNLWindow
     fn create_render_pass(
         device:        &Arc<Device>,
         swapchain:     &Arc<Swapchain>
-    ) -> Arc<RenderPass>
+    ) -> VMNLResult<Arc<RenderPass>>
     {
-        vulkano::single_pass_renderpass!(
+        Ok(vulkano::single_pass_renderpass!(
             device.clone(),
             attachments: {
                 color: {
@@ -270,7 +308,7 @@ impl VMNLWindow
                 depth_stencil: {},
             },
         )
-        .expect(&VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed).report())
+        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed))?)
     }
 
     /// Create one framebuffer for each swapchain image.
@@ -288,9 +326,9 @@ impl VMNLWindow
     fn create_framebuffers(
         image_views: &Vec<Arc<ImageView>>,
         render_pass: &Arc<RenderPass>,
-    ) -> Vec<Arc<Framebuffer>>
+    ) -> VMNLResult<Vec<Arc<Framebuffer>>>
     {
-        image_views
+        let framebuffers = image_views
             .iter()
             .map(|image_view| {
                 Framebuffer::new(
@@ -300,9 +338,11 @@ impl VMNLWindow
                         ..Default::default()
                     },
                 )
-                .expect(&VMNLError::new(VMNLErrorKind::VulkanFramebufferCreationFailed).report())
+                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanFramebufferCreationFailed))
             })
-            .collect()
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(framebuffers)
     }
 
     /// Create and configure a Vulkan graphics pipeline.
@@ -321,23 +361,39 @@ impl VMNLWindow
     fn create_graphics_pipeline(
         device:        &Arc<Device>,
         swapchain:     &Arc<Swapchain>,
-        render_pass:   &Arc<RenderPass>
-    ) -> Arc<GraphicsPipeline>
+        render_pass:   &Arc<RenderPass>,
+        shaders:       &WindowShaders
+    ) -> VMNLResult<Arc<GraphicsPipeline>>
     {
-        let vs: Arc<ShaderModule> =
-            vs::load(device.clone())
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanShaderModuleCreationFailed).report());
-        let fs: Arc<ShaderModule> =
-            fs::load(device.clone())
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanShaderModuleCreationFailed).report());
+        let vs: Arc<ShaderModule> = match shaders.vertex.as_ref() {
+            Some(ShaderInput::Src(source)) => {
+                Self::load_shader_from_src(device, source, shaderc::ShaderKind::Vertex, "user.vert")?
+            }
+            Some(ShaderInput::Path(path)) => {
+                Self::load_shader_from_path(device, path.as_path(), shaderc::ShaderKind::Vertex)?
+            }
+            _ => vs::load(device.clone())
+                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderModuleCreationFailed))?
+        };
+
+        let fs: Arc<ShaderModule> = match shaders.fragment.as_ref() {
+            Some(ShaderInput::Src(source)) => {
+                Self::load_shader_from_src(device, source, shaderc::ShaderKind::Fragment, "user.frag")?
+            }
+            Some(ShaderInput::Path(path)) => {
+                Self::load_shader_from_path(device, path.as_path(), shaderc::ShaderKind::Fragment)?
+            }
+            _ => fs::load(device.clone())
+                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderModuleCreationFailed))?,
+        };
         let vs: EntryPoint =
             vs
             .entry_point("main")
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed).report());
+            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed))?;
         let fs: EntryPoint =
             fs
             .entry_point("main")
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed).report());
+            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed))?;
         let stages: [PipelineShaderStageCreateInfo; 2] = [
             PipelineShaderStageCreateInfo::new(vs.clone()),
             PipelineShaderStageCreateInfo::new(fs),
@@ -347,8 +403,8 @@ impl VMNLWindow
                 device.clone(),
                 PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
                 .into_pipeline_layout_create_info(device.clone())
-                .expect(&VMNLError::new(VMNLErrorKind::VulkanPipelineLayoutCreationFailed).report()),
-            ).expect(&VMNLError::new(VMNLErrorKind::VulkanPipelineLayoutCreationFailed).report());
+                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanPipelineLayoutCreationFailed))?,
+            ).map_err(|_| VMNLError::new(VMNLErrorKind::VulkanPipelineLayoutCreationFailed))?;
         let extent: [u32; 2] =
             swapchain
                 .image_extent();
@@ -360,13 +416,13 @@ impl VMNLWindow
             };
         let subpass: Subpass =
             Subpass::from(render_pass.clone(), 0)
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed).report());
+            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed))?;
         let vertex_input_state: VertexInputState =
             VMNLVertex::per_vertex()
             .definition(&vs)
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanValidationFailed).report());
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
 
-        GraphicsPipeline::new(
+        Ok(GraphicsPipeline::new(
             device.clone(),
             None,
             GraphicsPipelineCreateInfo {
@@ -387,19 +443,10 @@ impl VMNLWindow
                 ..GraphicsPipelineCreateInfo::layout(layout)
             },
         )
-        .expect(&VMNLError::new(VMNLErrorKind::VulkanPipelineCreationFailed).report())
+        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanPipelineCreationFailed))?)
     }
 
     /// Initialize a GLFW window along with its associated event receiver.
-    ///
-    /// # Arguments
-    /// - `instance`: Initialized GLFW context used to create the window.
-    /// - `width`: Width of the window in pixels.
-    /// - `height`: Height of the window in pixels.
-    /// - `title`: Title displayed in the window's title bar.
-    ///
-    /// # Returns
-    /// A tuple `(glfw::PWindow, glfw::GlfwReceiver<(f64, glfw::WindowEvent)>)` containing the created window and its event receiver.
     ///
     /// # Source
     /// https://www.glfw.org/docs/latest/window_guide.html
@@ -408,11 +455,11 @@ impl VMNLWindow
         width:        u32,
         height:       u32,
         title:        &str
-    ) -> (glfw::PWindow, glfw::GlfwReceiver<(f64, glfw::WindowEvent)>)
+    ) -> VMNLResult<(glfw::PWindow, glfw::GlfwReceiver<(f64, glfw::WindowEvent)>)>
     {
         instance
             .create_window(width, height, title, glfw::WindowMode::Windowed)
-            .expect(&VMNLError::new(VMNLErrorKind::GlfwWindowCreationFailed).report())
+            .ok_or_else(|| VMNLError::new(VMNLErrorKind::GlfwWindowCreationFailed))
     }
 
     /// Internal implementation backing `Window::new`.
@@ -420,7 +467,8 @@ impl VMNLWindow
         vmnl_context:  &Context,
         width:         u32,
         height:        u32,
-        title:         &str
+        title:         &str,
+        shaders:        WindowShaders
     ) -> VMNLResult<Self>
     {
         let vmnl_instance: Arc<VMNLInstance> =
@@ -430,15 +478,15 @@ impl VMNLWindow
         glfw.window_hint(glfw::WindowHint::ClientApi(glfw::ClientApiHint::NoApi));
         let (window, events_glfw):
         (glfw::PWindow, glfw::GlfwReceiver<(f64, glfw::WindowEvent)>) =
-            VMNLWindow::init_window(glfw.clone(), width, height, title);
+            VMNLWindow::init_window(glfw.clone(), width, height, title)?;
         let events: EventQueue =
             EventQueue::new(events_glfw);
         let surface: Arc<Surface> =
-            Self::create_surface(&vmnl_instance.instance, &window);
+            Self::create_surface(&vmnl_instance.instance, &window)?;
         let supports_present: bool =
             vmnl_instance.physical_device
             .surface_support(vmnl_instance.graphics_queue_family_index, &surface)
-            .expect(&VMNLError::new(VMNLErrorKind::VulkanSurfaceCreationFailed).report());
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSurfaceCreationFailed))?;
         if !supports_present {
             panic!("{}", VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature).report());
         }
@@ -449,15 +497,15 @@ impl VMNLWindow
                 &vmnl_instance.device,
                 &surface,
                 [frame_buffer_width as u32, frame_buffer_height as u32]
-            );
+            )?;
         let image_views: Vec<Arc<ImageView>> =
-            Self::create_image_views(&images);
+            Self::create_image_views(&images)?;
         let render_pass: Arc<RenderPass> =
-            Self::create_render_pass(&vmnl_instance.device, &swapchain);
+            Self::create_render_pass(&vmnl_instance.device, &swapchain)?;
         let framebuffers: Vec<Arc<Framebuffer>> =
-            Self::create_framebuffers(&image_views, &render_pass);
+            Self::create_framebuffers(&image_views, &render_pass)?;
         let graphics_pipeline: Arc<GraphicsPipeline> =
-            Self::create_graphics_pipeline(&vmnl_instance.device, &swapchain, &render_pass);
+            Self::create_graphics_pipeline(&vmnl_instance.device, &swapchain, &render_pass, &shaders)?;
         let previous_frame_end: Option<Box<dyn GpuFuture>> =
             Some(sync::now(vmnl_instance.device.clone()).boxed());
         let input: Input = Input::new();

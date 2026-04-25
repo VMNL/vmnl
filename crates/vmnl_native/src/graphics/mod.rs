@@ -10,7 +10,8 @@ mod indexed;
 mod rect;
 use crate::{
     VMNLError,
-    VMNLErrorKind
+    VMNLErrorKind,
+    VMNLResult
 };
 use std::sync::Arc;
 use vulkano::{
@@ -25,7 +26,8 @@ use vulkano::{
         AllocationCreateInfo,
         MemoryTypeFilter,
         StandardMemoryAllocator
-    }
+    },
+    buffer::BufferContents
 };
 use bytemuck::{
     Pod,
@@ -37,7 +39,8 @@ use bytemuck::{
 /// This module defines various types used in the VMNL graphics module. These types are
 /// essential for representing and managing graphical data within the VMNL library.
 pub type VMNLIndexBuffer    = Subbuffer<[u32]>;
-// pub type VMNLFrameUboBuffer = Subbuffer<VMNLFrameUbo>;
+/// Uniform buffer object for frame data, containing a color value.
+pub type VMNLFrameUboBuffer = Subbuffer<VMNLFrameUbo>;
 /// Alias for a vertex buffer containing `VMNLVertex` instances.
 pub type VMNLVertexBuffer   = Subbuffer<[VMNLVertex]>;
 /// RGB color represented as `[r, g, b]` (f32).
@@ -110,12 +113,19 @@ pub struct VMNLVertex
     pub color:    VMNLrbg
 }
 
-// #[repr(C)]
-// #[derive(BufferContents, Clone, Copy, Debug, Default)]
-// pub struct VMNLFrameUbo
-// {
-//     color: VMNLrgba
-// }
+/// Information about a connected monitor.
+#[repr(C)]
+#[derive(BufferContents, Clone, Copy, Debug, Default)]
+pub struct VMNLFrameUbo
+{
+    color: VMNLrgba
+}
+
+impl AsRef<Graphics> for Graphics {
+    fn as_ref(&self) -> &Graphics {
+        self
+    }
+}
 
 /// Graphics resource container holding vertex/index buffers and counts.
 /// This struct represents a renderable graphics object in VMNL, encapsulating the necessary data for rendering.
@@ -166,7 +176,7 @@ impl Graphics
     fn create_vertex_buffer(
         vertices:         &[VMNLVertex],
         memory_allocator: &Arc<StandardMemoryAllocator>
-    ) -> VMNLVertexBuffer
+    ) -> VMNLResult<VMNLVertexBuffer>
     {
         Buffer::from_iter
         (
@@ -182,7 +192,7 @@ impl Graphics
             },
             vertices.iter().cloned()
         )
-        .expect(&VMNLError::new(VMNLErrorKind::VulkanVertexBufferCreationFailed).report())
+        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanVertexBufferCreationFailed))
     }
 
     /// Create an index buffer from an array of `u32` indices.
@@ -196,7 +206,7 @@ impl Graphics
     fn create_index_buffer(
         indices:          &[u32],
         memory_allocator: &Arc<StandardMemoryAllocator>
-    ) -> VMNLIndexBuffer
+    ) -> VMNLResult<VMNLIndexBuffer>
     {
         Buffer::from_iter
         (
@@ -212,29 +222,38 @@ impl Graphics
             },
             indices.iter().cloned()
         )
-        .expect(&VMNLError::new(VMNLErrorKind::VulkanIndexBufferCreationFailed).report())
+        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanIndexBufferCreationFailed))
     }
 
-    // fn create_frame_ubo_buffer(
-    //     ubo: VMNLFrameUbo,
-    //     memory_allocator: &Arc<StandardMemoryAllocator>
-    // ) -> VMNLFrameUboBuffer
-    // {
-    //     return Buffer::from_data(
-    //         memory_allocator.clone(),
-    //         BufferCreateInfo {
-    //             usage: BufferUsage::UNIFORM_BUFFER,
-    //             ..Default::default()
-    //         },
-    //         AllocationCreateInfo {
-    //             memory_type_filter:
-    //                 MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-    //             ..Default::default()
-    //         },
-    //         ubo,
-    //     )
-    //     .expect("Failed to create frame ubo buffer.");
-    // }
+    /// Create a uniform buffer for frame data.
+    ///
+    /// # Arguments
+    /// - `ubo`: The `VMNLFrameUbo` data to be stored in the buffer.
+    /// - `memory_allocator`: Memory allocator used to allocate the buffer.
+    ///
+    /// # Returns
+    /// A `VMNLFrameUboBuffer` ready for use in rendering.
+    #[allow(dead_code)]
+    fn create_frame_ubo_buffer(
+        ubo: VMNLFrameUbo,
+        memory_allocator: &Arc<StandardMemoryAllocator>
+    ) -> VMNLResult<VMNLFrameUboBuffer>
+    {
+        Buffer::from_data(
+            memory_allocator.clone(),
+            BufferCreateInfo {
+                usage: BufferUsage::UNIFORM_BUFFER,
+                ..Default::default()
+            },
+            AllocationCreateInfo {
+                memory_type_filter:
+                    MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                ..Default::default()
+            },
+            ubo,
+        )
+        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanFrameUboBufferCreationFailed))
+    }
 
     /// Transform color values from `[0, 255]` to `[0.0, 1.0]` expected by Vulkan.
     ///
@@ -248,7 +267,7 @@ impl Graphics
     ) -> VMNLrbg
     {
         if color.iter().any(|&c| c > 255.0) {
-            eprintln!("{}", VMNLError::new(VMNLErrorKind::InvalidState("color value overflow detected")).report());
+            eprintln!("{}", VMNLError::new(VMNLErrorKind::InvalidState("color value overflow detected".to_string())).report());
         }
         [
             (color[0] / 255.0).clamp(0.0, 1.0),

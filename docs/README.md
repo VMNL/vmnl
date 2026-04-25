@@ -89,17 +89,13 @@ Constraint: **no hidden complexity, only structured complexity.**
 - Push constants
 - Command buffers
 - Frame synchronization
-- Planned:
-  - Independant clear function
-  - Subbuffer rendering (basic optimisation)
 
 ### Windowing / Input
 
-- GLFW integration
-- Planned:
-  - Event system
-  - Immediate input (polling)
-  - Unified input abstraction
+- Event polling
+- Monitor enumeration
+- Keyboard/mouse input
+- Cursor management
 
 ---
 
@@ -110,6 +106,8 @@ Constraint: **no hidden complexity, only structured complexity.**
   - memory
   - pipelines
   - synchronization
+  - shader compilation
+  - No hidden state or implicit behavior
 
 ### High-level (planned)
 
@@ -126,6 +124,7 @@ Constraint: **no hidden complexity, only structured complexity.**
   - generate_mipmaps/batch_renderer.draw()
   - create_camera_2d/create_camera_3d
   - draw_debug_bounds/draw_debug_line/draw_debug_grid
+
 ---
 
 ## 📦 Build
@@ -190,9 +189,9 @@ cargo run
 
 ## ✍️ Authors
 
-- [Hugo DUDA](https://github.com/hugoduda) - **Lead tech** Vulkan/GLFW & low-level/high-level **referent/developer**
-- [Maxence PIERRE](https://github.com/Anexoms) - **Product owner** & Low-level **developer**
-- [Nathan FLACHAT](https://github.com/NathanFlachat) - low-level/high-level **developer**
+- [Hugo Duda](https://github.com/hugoduda) - **Lead tech** Vulkan/GLFW & low-level/high-level **referent/developer**
+- [Maxence Pierre](https://github.com/Anexoms) - **Product owner** & Low-level **developer**
+- [Nathan Flachat](https://github.com/NathanFlachat) - low-level/high-level **developer**
 - [Naouel Bouhali](https://github.com/BouhaliNaouel) - high-level **developer**
 - [Julien Michel](https://github.com/JulienMICHELgithub) - Web **referent/developer**
-- [Laszlo SERDET](https://github.com/lszsrd) - Networking **referent/developer**
+- [Laszlo Serdet](https://github.com/lszsrd) - Networking **referent/developer**

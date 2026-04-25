@@ -66,6 +66,8 @@ pub enum VMNLErrorKind
     VulkanVertexBufferCreationFailed,
     /// Vulkan index buffer creation failed.
     VulkanIndexBufferCreationFailed,
+    /// Vulkan frame uniform buffer object (UBO) creation failed.
+    VulkanFrameUboBufferCreationFailed,
     /// Vulkan memory allocation failed.
     VulkanMemoryAllocationFailed,
     /// Vulkan command buffer creation failed.
@@ -100,6 +102,8 @@ pub enum VMNLErrorKind
     VulkanUnsupportedFeature,
     /// Vulkan out of memory.
     VulkanOutOfMemory,
+    /// Vulkan out of date (e.g., swapchain out of date).
+    VulkanOutOfDate,
     /// Vulkan device lost.
     VulkanDeviceLost,
     /// Vulkan surface lost.
@@ -135,7 +139,7 @@ pub enum VMNLErrorKind
     /// Invalid window size specified.
     InvalidWindowSize,
     /// Invalid state error with message.
-    InvalidState(&'static str),
+    InvalidState(String),
 }
 
 /// Represents an error that can occur within the VMNL library,
@@ -224,6 +228,8 @@ impl fmt::Display for VMNLError
                 f.write_str("vulkan vertex buffer creation failed"),
             VMNLErrorKind::VulkanIndexBufferCreationFailed =>
                 f.write_str("vulkan index buffer creation failed"),
+            VMNLErrorKind::VulkanFrameUboBufferCreationFailed =>
+                f.write_str("vulkan frame uniform buffer object (UBO) creation failed"),
             VMNLErrorKind::VulkanMemoryAllocationFailed =>
                 f.write_str("vulkan memory allocation failed"),
             VMNLErrorKind::VulkanCommandBufferCreationFailed =>
@@ -262,6 +268,8 @@ impl fmt::Display for VMNLError
                 f.write_str("vulkan device lost"),
             VMNLErrorKind::VulkanSurfaceLost =>
                 f.write_str("vulkan surface lost"),
+            VMNLErrorKind::VulkanOutOfDate =>
+                f.write_str("vulkan out of date"),
             VMNLErrorKind::VulkanExtensionNotPresent =>
                 f.write_str("vulkan extension not present"),
             VMNLErrorKind::VulkanLayerNotPresent =>

@@ -9,6 +9,7 @@
 use crate::{
     Graphics,
     VMNLVertex,
+    VMNLResult,
     Context,
     graphics::GraphicsKind::IndexedGeometry
 };
@@ -49,7 +50,7 @@ impl Graphics
         vmnl_context: &Context,
         vertices:     &[VMNLVertex],
         indices:      &[u32],
-    ) -> Self
+    ) -> VMNLResult<Self>
     {
         let vertices: Vec<VMNLVertex> = vertices
             .iter()
@@ -64,18 +65,20 @@ impl Graphics
             vertices.iter().map(|v| (v.color[0] * 255.0).to_string() + ", " + &(v.color[1] * 255.0).to_string() + ", " + &(v.color[2] * 255.0).to_string()).collect::<Vec<String>>().join("], ["),
             indices.iter().map(|index| index.to_string()).collect::<Vec<String>>().join(", ")
         )));
-        Self {
-            kind:          IndexedGeometry,
-            vertex_count:  vertices.len() as u32,
-            index_count:   indices.len() as u32,
-            vertex_buffer: Self::create_vertex_buffer(
-                &vertices,
-                &vmnl_context.inner.memory_allocator,
-            ),
-            index_buffer:  Some(Self::create_index_buffer(
-                indices,
-                &vmnl_context.inner.memory_allocator,
-            )),
-        }
+        Ok(
+            Self {
+                kind:          IndexedGeometry,
+                vertex_count:  vertices.len() as u32,
+                index_count:   indices.len() as u32,
+                vertex_buffer: Self::create_vertex_buffer(
+                    &vertices,
+                    &vmnl_context.inner.memory_allocator,
+                )?,
+                index_buffer:  Some(Self::create_index_buffer(
+                    indices,
+                    &vmnl_context.inner.memory_allocator,
+                )?),
+            }
+        )
     }
 }

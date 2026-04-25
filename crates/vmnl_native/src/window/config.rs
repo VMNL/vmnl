@@ -8,6 +8,7 @@
 
 extern crate glfw;
 use crate::{
+    VMNLResult,
     window::monitors::Monitors,
     window::inner::VMNLWindow
 };
@@ -95,11 +96,15 @@ impl VMNLWindow
     /// Internal implementation backing `Window::set_size_limits`.
     pub(crate) fn set_size_limits(
         &mut self,
-        min: (Option<u32>, Option<u32>),
-        max: (Option<u32>, Option<u32>),
-    )
+        min_width: Option<u32>,
+        min_height: Option<u32>,
+        max_width: Option<u32>,
+        max_height: Option<u32>
+    ) -> VMNLResult<()>
     {
-        self.window_handle.context.set_size_limits(min.0, min.1, max.0, max.1);
+        super::validate_size_limits(min_width, min_height, max_width, max_height)?;
+        self.window_handle.context.set_size_limits(min_width, min_height, max_width, max_height);
+        Ok(())
     }
 
     /// Internal implementation backing `Window::set_aspect_ratio`.
