@@ -10,6 +10,7 @@ use crate::{
     vmnl_instance::VMNLInstance, window::inner::VMNLWindow, window::EventQueue, Event, Input,
     VMNLErrorKind,
 };
+use std::rc::Rc;
 use std::sync::Arc;
 use vulkano::{
     pipeline::GraphicsPipeline, render_pass::Framebuffer, swapchain::Swapchain, sync::GpuFuture,
@@ -27,7 +28,7 @@ use vulkano::{
 /// - glfw-rs: <https://github.com/PistonDevelopers/glfw-rs>
 pub struct WindowHandle {
     /// Reference to the core Vulkan instance and context used for rendering.
-    pub(crate) vmnl_instance: Arc<VMNLInstance>,
+    pub(crate) vmnl_instance: Rc<VMNLInstance>,
     /// List of framebuffers associated with the swapchain images.
     pub(crate) framebuffers: Vec<Arc<Framebuffer>>,
     /// Preconfigured Vulkan graphics pipeline used to render into the framebuffer.

@@ -5,9 +5,7 @@ use super::Window;
 ///
 /// This module provides the public API for window management in the VMNL library.
 ////////////////////////////////////////////////////////////////////////////////
-use crate::{
-    window::monitors::Monitors, Event, Shape, Input, VMNLErrorKind, VMNLResult, VMNLrgba,
-};
+use crate::{window::monitors::Monitors, Event, Input, Shape, VMNLErrorKind, VMNLResult, VMNLrgba};
 
 pub struct RenderCall<'w, 'g, const N: usize> {
     window: &'w mut Window,

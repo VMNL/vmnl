@@ -15,12 +15,13 @@ use vulkano::{
     memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, StandardMemoryAllocator},
 };
 
-pub use shape::{Shape, VMNLRect, VMNLVertex};
 pub(crate) use shape::VMNLVertexBuffer;
+pub use shape::{Shape, VMNLRect, VMNLVertex};
 
 /// Index buffer alias shared by graphics resources using indexed draws.
 pub type VMNLIndexBuffer = Subbuffer<[u32]>;
 /// Uniform buffer object for frame data.
+#[allow(dead_code)]
 pub type VMNLFrameUboBuffer = Subbuffer<VMNLFrameUbo>;
 /// RGB color represented as `[r, g, b]` (f32).
 pub type VMNLrbg = [f32; 3];
@@ -34,6 +35,7 @@ pub type VMNLVector2i = [i32; 2];
 /// Information about a connected monitor.
 #[repr(C)]
 #[derive(BufferContents, Clone, Copy, Debug, Default)]
+#[allow(dead_code)]
 pub struct VMNLFrameUbo {
     /// Background color for the frame as `[r, g, b, a]`.
     color: VMNLrgba,
@@ -78,49 +80,82 @@ pub(crate) trait Drawable {
 
 /// Shared GPU buffer construction helpers for render resources.
 pub(crate) trait GraphicsResourceFactory {
+    fn create_buffer_from_iter<T, I>(
+        iter: I,
+        usage: BufferUsage,
+        memory_allocator: &Arc<StandardMemoryAllocator>,
+        error_kind: VMNLErrorKind,
+    ) -> VMNLResult<Subbuffer<[T]>>
+    where
+        T: BufferContents,
+        I: IntoIterator<Item = T>,
+        I::IntoIter: ExactSizeIterator,
+    {
+        Buffer::from_iter(
+            memory_allocator.clone(),
+            BufferCreateInfo {
+                usage,
+                ..Default::default()
+            },
+            AllocationCreateInfo {
+                memory_type_filter: MemoryTypeFilter::PREFER_HOST
+                    | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                ..Default::default()
+            },
+            iter,
+        )
+        .map_err(|_| VMNLError::new(error_kind))
+    }
+
     /// Create a vertex buffer from an array of `VMNLVertex` instances.
+    ///
+    /// # Arguments
+    /// - `vertices`: Slice of vertex data to upload to the GPU.
+    /// - `memory_allocator`: Reference to the memory allocator for buffer creation.
+    ///
+    /// # Returns
+    /// A `VMNLResult` containing the created vertex buffer or an error if creation fails.
     fn create_vertex_buffer(
         vertices: &[VMNLVertex],
         memory_allocator: &Arc<StandardMemoryAllocator>,
     ) -> VMNLResult<VMNLVertexBuffer> {
-        Buffer::from_iter(
-            memory_allocator.clone(),
-            BufferCreateInfo {
-                usage: BufferUsage::VERTEX_BUFFER,
-                ..Default::default()
-            },
-            AllocationCreateInfo {
-                memory_type_filter: MemoryTypeFilter::PREFER_HOST
-                    | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                ..Default::default()
-            },
+        Self::create_buffer_from_iter(
             vertices.iter().copied(),
+            BufferUsage::VERTEX_BUFFER,
+            memory_allocator,
+            VMNLErrorKind::VulkanVertexBufferCreationFailed,
         )
-        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanVertexBufferCreationFailed))
     }
 
     /// Create an index buffer from an array of `u32` indices.
+    ///
+    /// # Arguments
+    /// - `indices`: Slice of index data to upload to the GPU.
+    /// - `memory_allocator`: Reference to the memory allocator for buffer creation.
+    ///
+    /// # Returns
+    /// A `VMNLResult` containing the created index buffer or an error if creation fails.
     fn create_index_buffer(
         indices: &[u32],
         memory_allocator: &Arc<StandardMemoryAllocator>,
     ) -> VMNLResult<VMNLIndexBuffer> {
-        Buffer::from_iter(
-            memory_allocator.clone(),
-            BufferCreateInfo {
-                usage: BufferUsage::INDEX_BUFFER,
-                ..Default::default()
-            },
-            AllocationCreateInfo {
-                memory_type_filter: MemoryTypeFilter::PREFER_HOST
-                    | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                ..Default::default()
-            },
+        Self::create_buffer_from_iter(
             indices.iter().copied(),
+            BufferUsage::INDEX_BUFFER,
+            memory_allocator,
+            VMNLErrorKind::VulkanIndexBufferCreationFailed,
         )
-        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanIndexBufferCreationFailed))
     }
 
     /// Create a uniform buffer for frame data.
+    ///
+    /// # Arguments
+    /// - `ubo`: The frame uniform buffer object containing data to upload.
+    /// - `memory_allocator`: Reference to the memory allocator for buffer creation.
+    ///
+    /// # Returns
+    /// A `VMNLResult` containing the created frame UBO buffer or an error if creation fails.
+    #[allow(dead_code)]
     fn create_frame_ubo_buffer(
         ubo: VMNLFrameUbo,
         memory_allocator: &Arc<StandardMemoryAllocator>,

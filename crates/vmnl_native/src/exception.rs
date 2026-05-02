@@ -2,7 +2,7 @@
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// * Exception handling for the VMNL library, defining custom error types and result aliases.
+/// Exception handling for the VMNL library, defining custom error types and result aliases.
 ////////////////////////////////////////////////////////////////////////////////
 use std::{error::Error, fmt, panic::Location};
 

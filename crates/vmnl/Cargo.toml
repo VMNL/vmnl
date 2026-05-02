@@ -1,11 +1,14 @@
 [package]
 name    = "vmnl"
-version = "0.1.0"
-edition = "2021"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+readme = "../../README.md"
+description = "VMNL public API crate."
 
 [dependencies]
 libc = "0.2.182"
-vmnl_native = { path = "../vmnl_native" }
+vmnl_native = { path = "../vmnl_native", version = "0.1.0" }
 
 [lib]
 crate-type = ["rlib", "cdylib"]
