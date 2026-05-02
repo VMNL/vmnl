@@ -5,32 +5,29 @@
 /// Input handling for the VMNL library, defining the `Input` struct and related methods
 /// for managing keyboard and mouse input states.
 ////////////////////////////////////////////////////////////////////////////////
-
 extern crate glfw;
 pub mod keyboard;
 pub mod mouse;
-pub use keyboard::{
-    Key,
-    KeyboardState
-};
-pub use mouse::{
-    MouseButton,
-    MouseState
-};
+pub use keyboard::{Key, KeyboardState};
+pub use mouse::{MouseButton, MouseState};
 
 /// Represents the input state for the application, consisting of keyboard and mouse states.
 ///
 /// Used to manage keyboard and mouse input and to provide convenient accessors for each sub-state.
-pub struct Input
-{
+pub struct Input {
     /// The current state of the keyboard.
     pub keyboard: KeyboardState,
     /// The current state of the mouse.
     pub mouse: MouseState,
 }
 
-impl Input
-{
+impl Default for Input {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Input {
     /// Returns a reference to the current `KeyboardState`.
     ///
     /// # Example
@@ -41,13 +38,13 @@ impl Input
     /// if win.input().keyboard().is_any_down(&[Key::A, Key::B, Key::C]) {
     ///     println!("A, B, or C is currently down!");
     /// }
-     /// if win.input().keyboard().is_one_used() {
-     ///     println!("A key was pressed!");
-     /// }
-     /// ```
+    /// if win.input().keyboard().is_one_used() {
+    ///     println!("A key was pressed!");
+    /// }
+    /// ```
     #[inline]
-    pub fn keyboard(&self) -> &KeyboardState
-    {
+    #[must_use]
+    pub const fn keyboard(&self) -> &KeyboardState {
         &self.keyboard
     }
 
@@ -66,8 +63,8 @@ impl Input
     /// }
     /// ```
     #[inline]
-    pub fn mouse(&self) -> &MouseState
-    {
+    #[must_use]
+    pub const fn mouse(&self) -> &MouseState {
         &self.mouse
     }
 
@@ -75,22 +72,17 @@ impl Input
     ///
     /// # Arguments
     /// - `window`: The GLFW window to read input from. Call once per frame.
-    pub(crate) fn update(
-        &mut self,
-        window: &glfw::PWindow
-    )
-    {
+    pub(crate) fn update(&mut self, window: &glfw::PWindow) {
         self.keyboard.update(window);
         self.mouse.update(window);
     }
 
     /// Creates a new `Input` with fresh keyboard and mouse states.
-    pub fn new() -> Self
-    {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             keyboard: KeyboardState::new(),
             mouse: MouseState::new(),
         }
     }
 }
-

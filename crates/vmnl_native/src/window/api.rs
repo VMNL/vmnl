@@ -1,22 +1,133 @@
 ////////////////////////////////////////////////////////////////////////////////
+use super::Window;
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// Brief
+/// This module provides the public API for window management in the VMNL library.
 ////////////////////////////////////////////////////////////////////////////////
-
 use crate::{
-    window::monitors::Monitors,
-    Event,
-    Graphics,
-    Input,
-    VMNLResult,
-    VMNLErrorKind,
+    window::monitors::Monitors, Event, Shape, Input, VMNLErrorKind, VMNLResult, VMNLrgba,
 };
-use super::Window;
 
-impl Window
-{
+pub struct RenderCall<'w, 'g, const N: usize> {
+    window: &'w mut Window,
+    graphics: [&'g Shape; N],
+}
+
+impl<const N: usize> RenderCall<'_, '_, N> {
+    /// Executes the draw call for the provided graphics objects by preparing the command buffer and synchronizing frame presentation.
+    /// This method performs per-object rendering,
+    /// where each graphics object is rendered with its own draw call.
+    /// This can be less efficient than batched rendering,
+    /// but allows for more flexibility in rendering individual objects.
+    ///
+    /// # Example
+    /// ```rust
+    /// let rect1 = VMNLRect {
+    ///     position: [100.0, 150.0],
+    ///     size: [200.0, 100.0]
+    /// };
+    /// let color1 = [255.0, 0.0, 0.0]; // Red color
+    /// let vertices2 = [
+    ///     VMNLVertex {
+    ///         position: [100.0, 150.0],
+    ///         color: [0.0, 255.0, 0.0] // Green color
+    ///     },
+    ///     VMNLVertex {
+    ///         position: [300.0, 150.0],
+    ///         color: [0.0, 255.0, 0.0] // Green color
+    ///     },
+    /// ];
+    /// let graphics1 = Shape::create_rectangle(&vmnl_context, rect1, color1);
+    /// let graphics2 = Shape::create_triangle(&vmnl_context, vertices2[0], vertices2[1], vertices2[2]);
+    /// while win.is_open() {
+    ///     // Poll events and other logic here
+    ///     win.render([&graphics1, &graphics2]).per_object()?;
+    /// }
+    /// ```
+    #[inline]
+    pub fn per_object(self) -> VMNLResult<()> {
+        self.window.inner.render_per_object(&self.graphics)
+    }
+
+    /// Executes the draw call for the provided graphics objects by preparing the command buffer and synchronizing frame presentation.
+    /// This method performs batched rendering, where multiple graphics objects are rendered together in a single draw call.
+    /// Batched rendering can be more efficient than per-object rendering, especially when rendering a large number of objects,
+    /// but may require additional setup to group objects together and manage state changes.
+    ///
+    /// # Example
+    /// ```rust
+    /// let rect1 = VMNLRect {
+    ///     position: [100.0, 150.0],
+    ///     size: [200.0, 100.0]
+    /// };
+    /// let color1 = [255.0, 0.0, 0.0]; // Red color
+    /// let vertices2 = [
+    ///     VMNLVertex {
+    ///         position: [100.0, 150.0],
+    ///         color: [0.0, 255.0, 0.0] // Green color
+    ///     },
+    ///     VMNLVertex {
+    ///         position: [300.0, 150.0],
+    ///         color: [0.0, 255.0, 0.0] // Green color
+    ///     },
+    /// ];
+    /// let graphics1 = Shape::create_rectangle(&vmnl_context, rect1, color1);
+    /// let graphics2 = Shape::create_triangle(&vmnl_context, vertices2[0], vertices2[1], vertices2[2]);
+    /// while win.is_open() {
+    ///     // Poll events and other logic here
+    ///     win.render([&graphics1, &graphics2]).batched()?;
+    /// }
+    /// ```
+    #[inline]
+    pub fn batched(self) -> VMNLResult<()> {
+        self.window.inner.render_batched(&self.graphics)
+    }
+}
+
+impl Window {
+    /// Executes the draw call for the provided graphics objects by preparing the command buffer and synchronizing frame presentation.
+    ///
+    /// # Arguments
+    /// - `graphics`: Slice of graphics objects to render.
+    ///
+    /// # Example
+    /// ```rust
+    /// let rect1 = VMNLRect {
+    ///     position: [100.0, 150.0],
+    ///     size: [200.0, 100.0]
+    /// };
+    /// let color1 = [255.0, 0.0, 0.0]; // Red color
+    /// let vertices2 = [
+    ///     VMNLVertex {
+    ///         position: [100.0, 150.0],
+    ///        color: [0.0, 255.0, 0.0] // Green color
+    ///     },
+    ///     VMNLVertex {
+    ///         position: [300.0, 150.0],
+    ///         color: [0.0, 255.0, 0.0] // Green color
+    ///     },
+    /// ];
+    /// let graphics1 = Shape::create_rectangle(&vmnl_context, rect1, color1);
+    /// let graphics2 = Shape::create_triangle(&vmnl_context, vertices2[0], vertices2[1], vertices2[2]);
+    /// while win.is_open() {
+    ///     // Poll events and other logic here
+    ///     // Render the graphics objects, choosing between per-object or batched rendering:
+    ///     win.render([&graphics1, &graphics2]).per_object()?;
+    ///     win.render([&graphics1, &graphics2]).batched()?;
+    /// }
+    /// ```
+    #[inline]
+    pub const fn render<'w, 'g, const N: usize>(
+        &'w mut self,
+        graphics: [&'g Shape; N],
+    ) -> RenderCall<'w, 'g, N> {
+        RenderCall {
+            window: self,
+            graphics,
+        }
+    }
+
     /// Returns the current window title as a string slice.
     ///
     /// This method provides read-only access to the window's title.
@@ -31,8 +142,8 @@ impl Window
     /// println!("Current window title: {}", current_title);
     /// ```
     #[inline]
-    pub fn get_title(&self) -> &str
-    {
+    #[must_use]
+    pub fn get_title(&self) -> &str {
         self.inner.get_title()
     }
 
@@ -55,8 +166,7 @@ impl Window
     /// println!("Current window title: {}", current_title);
     /// ```
     #[inline]
-    pub fn set_title(&mut self, title: &str)
-    {
+    pub fn set_title(&mut self, title: &str) {
         self.inner.set_title(title);
     }
 
@@ -80,8 +190,7 @@ impl Window
     /// println!("Current window size: {}x{}", width, height);
     /// ```
     #[inline]
-    pub fn set_size(&mut self, width: u32, height: u32)
-    {
+    pub fn set_size(&mut self, width: u32, height: u32) {
         self.inner.set_size(width, height);
     }
 
@@ -100,8 +209,8 @@ impl Window
     /// println!("Current window size: {}x{}", width, height);
     /// ```
     #[inline]
-    pub fn get_size(&self) -> (u32, u32)
-    {
+    #[must_use]
+    pub const fn get_size(&self) -> (u32, u32) {
         self.inner.get_size()
     }
 
@@ -121,8 +230,8 @@ impl Window
     /// println!("Current framebuffer size: {}x{}", framebuffer_width, framebuffer_height);
     /// ```
     #[inline]
-    pub fn get_framebuffer_size(&self) -> (u32, u32)
-    {
+    #[must_use]
+    pub fn get_framebuffer_size(&self) -> (u32, u32) {
         self.inner.get_framebuffer_size()
     }
 
@@ -150,8 +259,8 @@ impl Window
     /// println!("Current content scale: x={}, y={}", x_scale, y_scale);
     /// ```
     #[inline]
-    pub fn get_content_scale(&self) -> (f32, f32)
-    {
+    #[must_use]
+    pub fn get_content_scale(&self) -> (f32, f32) {
         self.inner.get_content_scale()
     }
 
@@ -190,10 +299,10 @@ impl Window
         min_width: Option<u32>,
         min_height: Option<u32>,
         max_width: Option<u32>,
-        max_height: Option<u32>
-    ) -> VMNLResult<()>
-    {
-        self.inner.set_size_limits(min_width, min_height, max_width, max_height)
+        max_height: Option<u32>,
+    ) -> VMNLResult<()> {
+        self.inner
+            .set_size_limits(min_width, min_height, max_width, max_height)
     }
 
     /// Sets the aspect ratio of the window.
@@ -217,8 +326,7 @@ impl Window
     /// window.set_aspect_ratio(None);
     /// ```
     #[inline]
-    pub fn set_aspect_ratio(&mut self, aspect_ratio: Option<(u32, u32)>)
-    {
+    pub fn set_aspect_ratio(&mut self, aspect_ratio: Option<(u32, u32)>) {
         self.inner.set_aspect_ratio(aspect_ratio);
     }
 
@@ -242,8 +350,7 @@ impl Window
     /// println!("Current window position: ({}, {})", x, y);
     /// ```
     #[inline]
-    pub fn set_position(&mut self, x: i32, y: i32)
-    {
+    pub fn set_position(&mut self, x: i32, y: i32) {
         self.inner.set_position(x, y);
     }
 
@@ -263,8 +370,8 @@ impl Window
     /// println!("Current window position: ({}, {})", x, y);
     /// ```
     #[inline]
-    pub fn get_position(&self) -> (i32, i32)
-    {
+    #[must_use]
+    pub fn get_position(&self) -> (i32, i32) {
         self.inner.get_position()
     }
 
@@ -284,8 +391,7 @@ impl Window
     /// window.restore();
     /// ```
     #[inline]
-    pub fn iconify(&mut self)
-    {
+    pub fn iconify(&mut self) {
         self.inner.iconify();
     }
 
@@ -308,8 +414,8 @@ impl Window
     /// }
     /// ```
     #[inline]
-    pub fn is_iconified(&self) -> bool
-    {
+    #[must_use]
+    pub fn is_iconified(&self) -> bool {
         self.inner.is_iconified()
     }
 
@@ -328,8 +434,7 @@ impl Window
     /// window.restore();
     /// ```
     #[inline]
-    pub fn restore(&mut self)
-    {
+    pub fn restore(&mut self) {
         self.inner.restore();
     }
 
@@ -349,8 +454,7 @@ impl Window
     /// window.restore();
     /// ```
     #[inline]
-    pub fn maximize(&mut self)
-    {
+    pub fn maximize(&mut self) {
         self.inner.maximize();
     }
 
@@ -373,8 +477,8 @@ impl Window
     /// }
     /// ```
     #[inline]
-    pub fn is_maximized(&self) -> bool
-    {
+    #[must_use]
+    pub fn is_maximized(&self) -> bool {
         self.inner.is_maximized()
     }
 
@@ -395,8 +499,7 @@ impl Window
     /// window.hide();
     /// ```
     #[inline]
-    pub fn show(&mut self)
-    {
+    pub fn show(&mut self) {
         self.inner.show();
     }
 
@@ -417,8 +520,7 @@ impl Window
     /// window.show();
     /// ```
     #[inline]
-    pub fn hide(&mut self)
-    {
+    pub fn hide(&mut self) {
         self.inner.hide();
     }
 
@@ -441,8 +543,8 @@ impl Window
     /// }
     /// ```
     #[inline]
-    pub fn is_visible(&self) -> bool
-    {
+    #[must_use]
+    pub fn is_visible(&self) -> bool {
         self.inner.is_visible()
     }
 
@@ -464,8 +566,7 @@ impl Window
     /// window.focus();
     /// ```
     #[inline]
-    pub fn focus(&mut self)
-    {
+    pub fn focus(&mut self) {
         self.inner.focus();
     }
 
@@ -491,8 +592,8 @@ impl Window
     /// }
     /// ```
     #[inline]
-    pub fn is_focused(&self) -> bool
-    {
+    #[must_use]
+    pub fn is_focused(&self) -> bool {
         self.inner.is_focused()
     }
 
@@ -516,8 +617,7 @@ impl Window
     /// window.opacity(0.0);
     /// ```
     #[inline]
-    pub fn opacity(&mut self, opacity: f32)
-    {
+    pub fn opacity(&mut self, opacity: f32) {
         self.inner.opacity(opacity);
     }
 
@@ -543,8 +643,8 @@ impl Window
     /// println!("Current window opacity: {}", current_opacity);
     /// ```
     #[inline]
-    pub fn get_opacity(&self) -> f32
-    {
+    #[must_use]
+    pub fn get_opacity(&self) -> f32 {
         self.inner.get_opacity()
     }
 
@@ -563,8 +663,8 @@ impl Window
     /// println!("Window width: {}", window_width);
     /// ```
     #[inline]
-    pub fn width(&self) -> u32
-    {
+    #[must_use]
+    pub const fn width(&self) -> u32 {
         self.inner.width()
     }
 
@@ -583,8 +683,8 @@ impl Window
     /// println!("Window height: {}", window_height);
     /// ```
     #[inline]
-    pub fn height(&self) -> u32
-    {
+    #[must_use]
+    pub const fn height(&self) -> u32 {
         self.inner.height()
     }
 
@@ -599,8 +699,8 @@ impl Window
     /// let monitor_info = window.monitor();
     /// println!("Monitor names: {:?}", monitor_info.names());
     /// ```
-    pub fn monitor(&self) -> &Monitors
-    {
+    #[must_use]
+    pub const fn monitor(&self) -> &Monitors {
         self.inner.monitor()
     }
 
@@ -621,8 +721,7 @@ impl Window
     ///     }
     /// }
     /// ```
-    pub fn poll_events(&mut self) -> Vec<Event>
-    {
+    pub fn poll_events(&mut self) -> Vec<Event> {
         self.inner.poll_events()
     }
 
@@ -640,8 +739,7 @@ impl Window
     /// }
     /// ```
     #[inline]
-    pub fn wait_events(&mut self)
-    {
+    pub fn wait_events(&mut self) {
         self.inner.wait_events();
     }
 
@@ -657,8 +755,7 @@ impl Window
     /// window.wait_events_timeout(1.0);
     /// ```
     #[inline]
-    pub fn wait_events_timeout(&mut self, timeout: f64)
-    {
+    pub fn wait_events_timeout(&mut self, timeout: f64) {
         self.inner.wait_events_timeout(timeout);
     }
 
@@ -678,8 +775,7 @@ impl Window
     /// });
     /// ```
     #[inline]
-    pub fn post_empty_event(&mut self)
-    {
+    pub fn post_empty_event(&mut self) {
         self.inner.post_empty_event();
     }
 
@@ -697,8 +793,7 @@ impl Window
     /// println!("Elapsed time: {} seconds", elapsed_time);
     /// ```
     #[inline]
-    pub fn get_time(&mut self) -> f64
-    {
+    pub fn get_time(&mut self) -> f64 {
         self.inner.get_time()
     }
 
@@ -717,8 +812,7 @@ impl Window
     /// println!("Elapsed time: {} seconds", elapsed_time);
     /// ```
     #[inline]
-    pub fn set_time(&mut self, time: f64)
-    {
+    pub fn set_time(&mut self, time: f64) {
         self.inner.set_time(time);
     }
 
@@ -735,8 +829,8 @@ impl Window
     /// println!("Elapsed time: {} seconds", elapsed_time);
     /// ```
     #[inline]
-    pub fn get_timer_value(&self) -> u64
-    {
+    #[must_use]
+    pub fn get_timer_value(&self) -> u64 {
         self.inner.get_timer_value()
     }
 
@@ -753,8 +847,8 @@ impl Window
     /// println!("Elapsed time: {} seconds", elapsed_time);
     /// ```
     #[inline]
-    pub fn get_timer_frequency(&self) -> u64
-    {
+    #[must_use]
+    pub fn get_timer_frequency(&self) -> u64 {
         self.inner.get_timer_frequency()
     }
 
@@ -776,11 +870,7 @@ impl Window
     /// // Unset the custom error callback to restore default error handling
     /// window.unset_error_callback();
     /// ```
-    pub fn set_error_callback(
-        &mut self,
-        callback: impl FnMut(VMNLErrorKind, String) + 'static,
-    )
-    {
+    pub fn set_error_callback(&mut self, callback: impl FnMut(VMNLErrorKind, String) + 'static) {
         self.inner.set_error_callback(callback);
     }
 
@@ -794,8 +884,7 @@ impl Window
     /// window.unset_error_callback();
     /// ```
     #[inline]
-    pub fn unset_error_callback(&mut self)
-    {
+    pub fn unset_error_callback(&mut self) {
         self.inner.unset_error_callback();
     }
 
@@ -814,8 +903,7 @@ impl Window
     /// window.set_char_polling(false);
     /// ```
     #[inline]
-    pub fn set_char_polling(&mut self, enabled: bool)
-    {
+    pub fn set_char_polling(&mut self, enabled: bool) {
         self.inner.set_char_polling(enabled);
     }
 
@@ -832,8 +920,7 @@ impl Window
     /// window.set_mouse_button_polling(false);
     /// ```
     #[inline]
-    pub fn set_mouse_button_polling(&mut self, enabled: bool)
-    {
+    pub fn set_mouse_button_polling(&mut self, enabled: bool) {
         self.inner.set_mouse_button_polling(enabled);
     }
 
@@ -850,8 +937,7 @@ impl Window
     /// window.set_cursor_pos_polling(false);
     /// ```
     #[inline]
-    pub fn set_cursor_pos_polling(&mut self, enabled: bool)
-    {
+    pub fn set_cursor_pos_polling(&mut self, enabled: bool) {
         self.inner.set_cursor_pos_polling(enabled);
     }
 
@@ -868,8 +954,7 @@ impl Window
     /// window.set_cursor_enter_polling(false);
     /// ```
     #[inline]
-    pub fn set_cursor_enter_polling(&mut self, enabled: bool)
-    {
+    pub fn set_cursor_enter_polling(&mut self, enabled: bool) {
         self.inner.set_cursor_enter_polling(enabled);
     }
 
@@ -886,8 +971,7 @@ impl Window
     /// window.set_scroll_polling(false);
     /// ```
     #[inline]
-    pub fn set_scroll_polling(&mut self, enabled: bool)
-    {
+    pub fn set_scroll_polling(&mut self, enabled: bool) {
         self.inner.set_scroll_polling(enabled);
     }
 
@@ -904,8 +988,7 @@ impl Window
     /// window.set_size_polling(false);
     /// ```
     #[inline]
-    pub fn set_size_polling(&mut self, enabled: bool)
-    {
+    pub fn set_size_polling(&mut self, enabled: bool) {
         self.inner.set_size_polling(enabled);
     }
 
@@ -922,8 +1005,7 @@ impl Window
     /// window.set_framebuffer_size_polling(false);
     /// ```
     #[inline]
-    pub fn set_framebuffer_size_polling(&mut self, enabled: bool)
-    {
+    pub fn set_framebuffer_size_polling(&mut self, enabled: bool) {
         self.inner.set_framebuffer_size_polling(enabled);
     }
 
@@ -940,8 +1022,7 @@ impl Window
     /// window.set_focus_polling(false);
     /// ```
     #[inline]
-    pub fn set_focus_polling(&mut self, enabled: bool)
-    {
+    pub fn set_focus_polling(&mut self, enabled: bool) {
         self.inner.set_focus_polling(enabled);
     }
 
@@ -958,8 +1039,7 @@ impl Window
     /// window.set_close_polling(false);
     /// ```
     #[inline]
-    pub fn set_close_polling(&mut self, enabled: bool)
-    {
+    pub fn set_close_polling(&mut self, enabled: bool) {
         self.inner.set_close_polling(enabled);
     }
 
@@ -976,8 +1056,7 @@ impl Window
     /// window.set_key_polling(false);
     /// ```
     #[inline]
-    pub fn set_key_polling(&mut self, enabled: bool)
-    {
+    pub fn set_key_polling(&mut self, enabled: bool) {
         self.inner.set_key_polling(enabled);
     }
 
@@ -994,8 +1073,7 @@ impl Window
     /// window.set_char_mods_polling(false);
     /// ```
     #[inline]
-    pub fn set_char_mods_polling(&mut self, enabled: bool)
-    {
+    pub fn set_char_mods_polling(&mut self, enabled: bool) {
         self.inner.set_char_mods_polling(enabled);
     }
 
@@ -1012,8 +1090,7 @@ impl Window
     /// window.set_refresh_polling(false);
     /// ```
     #[inline]
-    pub fn set_refresh_polling(&mut self, enabled: bool)
-    {
+    pub fn set_refresh_polling(&mut self, enabled: bool) {
         self.inner.set_refresh_polling(enabled);
     }
 
@@ -1030,8 +1107,7 @@ impl Window
     /// window.set_iconify_polling(false);
     /// ```
     #[inline]
-    pub fn set_iconify_polling(&mut self, enabled: bool)
-    {
+    pub fn set_iconify_polling(&mut self, enabled: bool) {
         self.inner.set_iconify_polling(enabled);
     }
 
@@ -1048,8 +1124,7 @@ impl Window
     /// window.set_maximize_polling(false);
     /// ```
     #[inline]
-    pub fn set_maximize_polling(&mut self, enabled: bool)
-    {
+    pub fn set_maximize_polling(&mut self, enabled: bool) {
         self.inner.set_maximize_polling(enabled);
     }
 
@@ -1066,8 +1141,7 @@ impl Window
     /// window.set_drag_and_drop_polling(false);
     /// ```
     #[inline]
-    pub fn set_drag_and_drop_polling(&mut self, enabled: bool)
-    {
+    pub fn set_drag_and_drop_polling(&mut self, enabled: bool) {
         self.inner.set_drag_and_drop_polling(enabled);
     }
 
@@ -1084,8 +1158,7 @@ impl Window
     /// window.set_content_scale_polling(false);
     /// ```
     #[inline]
-    pub fn set_content_scale_polling(&mut self, enabled: bool)
-    {
+    pub fn set_content_scale_polling(&mut self, enabled: bool) {
         self.inner.set_content_scale_polling(enabled);
     }
 
@@ -1101,8 +1174,7 @@ impl Window
     /// window.disable_keyboard_polling();
     /// ```
     #[inline]
-    pub fn enable_keyboard_polling(&mut self)
-    {
+    pub fn enable_keyboard_polling(&mut self) {
         self.inner.enable_keyboard_polling();
     }
 
@@ -1116,8 +1188,7 @@ impl Window
     /// window.disable_keyboard_polling();
     /// ```
     #[inline]
-    pub fn disable_keyboard_polling(&mut self)
-    {
+    pub fn disable_keyboard_polling(&mut self) {
         self.inner.disable_keyboard_polling();
     }
 
@@ -1133,8 +1204,7 @@ impl Window
     /// window.disable_mouse_polling();
     /// ```
     #[inline]
-    pub fn enable_mouse_polling(&mut self)
-    {
+    pub fn enable_mouse_polling(&mut self) {
         self.inner.enable_mouse_polling();
     }
 
@@ -1148,8 +1218,7 @@ impl Window
     /// window.disable_mouse_polling();
     /// ```
     #[inline]
-    pub fn disable_mouse_polling(&mut self)
-    {
+    pub fn disable_mouse_polling(&mut self) {
         self.inner.disable_mouse_polling();
     }
 
@@ -1163,8 +1232,7 @@ impl Window
     /// window.disable_window_state_polling();
     /// ```
     #[inline]
-    pub fn enable_window_state_polling(&mut self)
-    {
+    pub fn enable_window_state_polling(&mut self) {
         self.inner.enable_window_state_polling();
     }
 
@@ -1178,8 +1246,7 @@ impl Window
     /// window.disable_window_state_polling();
     /// ```
     #[inline]
-    pub fn disable_window_state_polling(&mut self)
-    {
+    pub fn disable_window_state_polling(&mut self) {
         self.inner.disable_window_state_polling();
     }
 
@@ -1195,8 +1262,7 @@ impl Window
     /// window.unconfigure_window_polling();
     /// ```
     #[inline]
-    pub fn configure_window_polling(&mut self)
-    {
+    pub fn configure_window_polling(&mut self) {
         self.inner.configure_window_polling();
     }
 
@@ -1210,8 +1276,7 @@ impl Window
     /// window.unconfigure_window_polling();
     /// ```
     #[inline]
-    pub fn unconfigure_window_polling(&mut self)
-    {
+    pub fn unconfigure_window_polling(&mut self) {
         self.inner.unconfigure_window_polling();
     }
 
@@ -1222,47 +1287,8 @@ impl Window
     /// window.enable_all_polling();
     /// ```
     #[inline]
-    pub fn enable_all_polling(&mut self)
-    {
+    pub fn enable_all_polling(&mut self) {
         self.inner.enable_all_polling();
-    }
-
-    /// Executes the draw call for the provided graphics objects by preparing the command buffer and synchronizing frame presentation.
-    ///
-    /// # Arguments
-    /// - `graphics`: Slice of graphics objects to render.
-    ///
-    /// # Example
-    /// ```rust
-    /// let rect1 = VMNLRect {
-    ///     position: [100.0, 150.0],
-    ///     size: [200.0, 100.0]
-    /// };
-    /// let color1 = [255.0, 0.0, 0.0]; // Red color
-    /// let vertices2 = [
-    ///     VMNLVertex {
-    ///         position: [100.0, 150.0],
-    ///        color: [0.0, 255.0, 0.0] // Green color
-    ///     },
-    ///     VMNLVertex {
-    ///         position: [300.0, 150.0],
-    ///         color: [0.0, 255.0, 0.0] // Green color
-    ///     },
-    /// ];
-    /// let graphics1 = Graphics::create_rectangle(&vmnl_context, rect1, color1);
-    /// let graphics2 = Graphics::create_triangle(&vmnl_context, vertices2[0], vertices2[1], vertices2[2]);
-    /// while win.is_open() {
-    ///     // Poll events and other logic here
-    ///     win.render([&graphics1, &graphics2]);
-    /// }
-    /// ```
-    #[inline]
-    pub fn render<const N: usize>(
-        &mut self,
-        graphics: [&Graphics; N]
-    ) -> VMNLResult<()>
-    {
-        Ok(self.inner.render(&graphics)?)
     }
 
     /// Updates and returns the current open state of the window.
@@ -1281,8 +1307,7 @@ impl Window
     /// println!("Window has been closed.");
     /// ```
     #[inline]
-    pub fn is_open(&mut self) -> bool
-    {
+    pub fn is_open(&mut self) -> bool {
         self.inner.is_open()
     }
 
@@ -1301,8 +1326,8 @@ impl Window
     /// }
     /// ```
     #[inline]
-    pub fn is_ready(&self) -> bool
-    {
+    #[must_use]
+    pub const fn is_ready(&self) -> bool {
         self.inner.is_ready()
     }
 
@@ -1318,8 +1343,7 @@ impl Window
     /// }
     /// ```
     #[inline]
-    pub fn close(&mut self)
-    {
+    pub fn close(&mut self) {
         self.inner.close();
     }
 
@@ -1337,8 +1361,29 @@ impl Window
     /// }
     /// ```
     #[inline]
-    pub fn input(&self) -> &Input
-    {
+    #[must_use]
+    pub const fn input(&self) -> &Input {
         self.inner.input()
+    }
+
+    /// Sets the clear color for the window's framebuffer.
+    /// This color is used when clearing the framebuffer before rendering a new frame.
+    ///
+    /// # Arguments
+    /// - `color`: An array of four `f32` values representing the RGBA components of the clear color.
+    ///
+    /// # Example
+    /// ```
+    /// // Set the clear color to opaque red
+    /// window.set_clear_color([1.0, 0.0, 0.0, 1.0]);
+    /// // Set the clear color to semi-transparent blue
+    /// window.set_clear_color([0.0, 0.0, 1.0, 0.5]);
+    /// ```
+    #[inline]
+    pub fn set_clear_color(&mut self, color: VMNLrgba) {
+        let [r, g, b, a] = color;
+
+        self.inner
+            .set_clear_color([r / 255.0, g / 255.0, b / 255.0, a / 255.0]);
     }
 }

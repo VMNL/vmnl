@@ -9,25 +9,31 @@ DO_RUN=1
 DO_BUILD=0
 DO_VERBOSE=0
 DO_TESTS=0
+DO_LINT=0
+DO_WARNING=0
+DO_DOCTESTS=0
 
 usage()
 {
     cat >&2 <<'EOF'
-Usage: ./run.sh [-c | --clean] [-r | --run] [-b | --build] [-v | --verbose] [-t | --tests]
+Usage: ./run.sh [-c | --clean] [-r | --run] [-b | --build] [-v | --verbose] [-t | --tests] [-l | --lint] [-w | --warning] [-d | --doctests]
 
 Options:
-  -c | --clean    cargo clean only
-  -r | --run      cargo clean + cargo run
-  -b | --build    cargo build
-  -v | --verbose  verbose cargo output (-vv)
-  -t | --tests    run tests instead of examples
+  -c | --clean      cargo clean only
+  -r | --run        cargo clean + cargo run
+  -b | --build      cargo build
+  -v | --verbose    verbose cargo output (-vv)
+  -t | --tests      run tests instead of examples
+  -l | --lint       run clippy lints instead of building/running
+  -w | --warning    run clippy lints with warnings
+  -d | --doctests   run doctests
 
 Default:
   cargo run
 EOF
 }
 
-while getopts ":crbvt--clean--run--build--verbose--tests" opt; do
+while getopts ":crbvtlwd--clean--run--build--verbose--tests--lint--warning--doctests" opt; do
     case "${opt}" in
         c|--clean)
             DO_CLEAN=1
@@ -49,6 +55,24 @@ while getopts ":crbvt--clean--run--build--verbose--tests" opt; do
             ;;
         t|--tests)
             DO_TESTS=1
+            DO_CLEAN=0
+            DO_RUN=0
+            DO_BUILD=0
+            ;;
+        l|--lint)
+            DO_LINT=1
+            DO_CLEAN=0
+            DO_RUN=0
+            DO_BUILD=0
+            ;;
+        w|--warning)
+            DO_WARNING=1
+            DO_CLEAN=0
+            DO_RUN=0
+            DO_BUILD=0
+            ;;
+        d|--doctests)
+            DO_DOCTESTS=1
             DO_CLEAN=0
             DO_RUN=0
             DO_BUILD=0
@@ -144,15 +168,25 @@ load_os_release()
     . /etc/os-release
 }
 
+ask()
+{
+    printf '%b %s ' "${MAG}[?]${R}" "$*" >&2
+    read -r answer
+    printf '%s\n' "${answer}"
+}
+
 print_runtime_config()
 {
     section "Runtime configuration"
-    kv "package" "${PROJECT_PACKAGE}"
-    kv "clean"   "${DO_CLEAN}"
-    kv "run"     "${DO_RUN}"
-    kv "build"   "${DO_BUILD}"
-    kv "verbose" "${DO_VERBOSE}"
-    kv "tests"   "${DO_TESTS}"
+    kv "package"  "${PROJECT_PACKAGE}"
+    kv "clean"    "${DO_CLEAN}"
+    kv "run"      "${DO_RUN}"
+    kv "build"    "${DO_BUILD}"
+    kv "verbose"  "${DO_VERBOSE}"
+    kv "tests"    "${DO_TESTS}"
+    kv "lint"     "${DO_LINT}"
+    kv "warning"  "${DO_WARNING}"
+    kv "doctests" "${DO_DOCTESTS}"
 }
 
 diagnostic_shaderc()
@@ -442,7 +476,29 @@ main()
             run_cargo "${lib_dir}"
         fi
     fi
-
+    if [[ "${DO_LINT}" -eq 1 ]]; then
+        cargo fmt --all
+        cargo fix --workspace --all-targets --all-features --allow-dirty --allow-staged
+        cargo clippy --workspace --all-targets --all-features --fix --allow-dirty --allow-staged
+        cargo fmt --all
+        ok "linting completed"
+        if [[ "$(ask "Do you want to see the diff of the lint fixes and your commit(s)? (y/N)")" =~ ^[Yy]$ ]]; then
+            git --no-pager diff
+        fi
+        exit 0
+    fi
+    if [[ "${DO_WARNING}" -eq 1 ]]; then
+        cargo fmt --all -- --check
+        cargo clippy --workspace --all-targets --all-features
+        cargo check --workspace --all-targets --all-features
+        printf "${WHT}[Info] warning checks completed:${R} if any were found, every warning is treated as an error\n"
+        exit 0
+    fi
+    if [[ "${DO_DOCTESTS}" -eq 1 ]]; then
+        cargo test --workspace --all-features --doc
+        ok "doctests completed"
+        exit 0
+    fi
     warn "shaderc not found, installation required"
     install_packages
     diagnostic_shaderc
