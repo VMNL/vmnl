@@ -4,45 +4,35 @@
 ///
 /// * Exception handling for the VMNL library, defining custom error types and result aliases.
 ////////////////////////////////////////////////////////////////////////////////
-
-use std::{
-    error::Error,
-    fmt,
-    panic::Location,
-};
+use std::{error::Error, fmt, panic::Location};
 
 /// Represents the location in the source code where a VMNL error occurred.
 #[derive(Debug, Clone, Copy)]
-pub struct VMNLErrorLocation
-{
+pub struct VMNLErrorLocation {
     /// The file in which the error occurred.
-    file:   &'static str,
+    file: &'static str,
     /// The line number at which the error occurred.
-    line:   u32,
+    line: u32,
     /// The column number at which the error occurred.
     column: u32,
 }
 
-impl VMNLErrorLocation
-{
+impl VMNLErrorLocation {
     /// Returns the file in which the error occurred.
     #[inline]
-    pub fn file(&self) -> &'static str
-    {
+    pub const fn file(&self) -> &'static str {
         self.file
     }
 
     /// Returns the line number where the error occurred.
     #[inline]
-    pub fn line(&self) -> u32
-    {
+    pub const fn line(&self) -> u32 {
         self.line
     }
 
     /// Returns the column number where the error occurred.
     #[inline]
-    pub fn column(&self) -> u32
-    {
+    pub const fn column(&self) -> u32 {
         self.column
     }
 }
@@ -50,8 +40,7 @@ impl VMNLErrorLocation
 /// Enum representing various kinds of errors that can occur within the VMNL library.
 #[derive(Debug)]
 #[non_exhaustive]
-pub enum VMNLErrorKind
-{
+pub enum VMNLErrorKind {
     /// Vulkan initialization failed.
     VulkanInitFailed,
     /// Vulkan surface creation failed.
@@ -145,16 +134,14 @@ pub enum VMNLErrorKind
 /// Represents an error that can occur within the VMNL library,
 /// encapsulating both the kind of error and the location in the source code where it occurred.
 #[derive(Debug)]
-pub struct VMNLError
-{
+pub struct VMNLError {
     /// The specific kind of error that occurred.
-    kind:   VMNLErrorKind,
+    kind: VMNLErrorKind,
     /// The location in the source code where the error occurred.
     caller: VMNLErrorLocation,
 }
 
-impl VMNLError
-{
+impl VMNLError {
     /// Create a new `VMNLError` with the specified error kind and caller location.
     ///
     /// # Parameters
@@ -163,8 +150,8 @@ impl VMNLError
     /// # Returns
     /// A new `VMNLError` containing the provided error kind and caller location.
     #[track_caller]
-    pub fn new(kind: VMNLErrorKind) -> Self
-    {
+    #[must_use]
+    pub const fn new(kind: VMNLErrorKind) -> Self {
         let caller: &Location = Location::caller();
 
         Self {
@@ -179,15 +166,15 @@ impl VMNLError
 
     /// Returns the kind of error that occurred.
     #[inline]
-    pub fn kind(&self) -> &VMNLErrorKind
-    {
+    #[must_use]
+    pub const fn kind(&self) -> &VMNLErrorKind {
         &self.kind
     }
 
     /// Returns the location in the source code where the error occurred.
     #[inline]
-    pub fn location(&self) -> VMNLErrorLocation
-    {
+    #[must_use]
+    pub const fn location(&self) -> VMNLErrorLocation {
         self.caller
     }
 
@@ -196,112 +183,101 @@ impl VMNLError
     /// # Returns
     /// A formatted string containing the error message and its location in the source code.
     #[inline]
-    pub fn report(&self) -> String
-    {
+    #[must_use]
+    pub fn report(&self) -> String {
         format!(
             "{} (at {}:{}:{})",
-            self,
-            self.caller.file,
-            self.caller.line,
-            self.caller.column
+            self, self.caller.file, self.caller.line, self.caller.column
         )
     }
 }
 
-impl fmt::Display for VMNLError
-{
+impl fmt::Display for VMNLError {
     /// Format the error message based on the specific kind of error, providing a human-readable description.
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
-    {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
-            VMNLErrorKind::VulkanInitFailed =>
-                f.write_str("vulkan initialization failed"),
-            VMNLErrorKind::VulkanSurfaceCreationFailed =>
-                f.write_str("vulkan surface creation failed"),
-            VMNLErrorKind::VulkanSwapchainCreationFailed =>
-                f.write_str("vulkan swapchain creation failed"),
-            VMNLErrorKind::VulkanShaderModuleCreationFailed =>
-                f.write_str("vulkan shader module creation failed"),
-            VMNLErrorKind::VulkanPipelineCreationFailed =>
-                f.write_str("vulkan pipeline creation failed"),
-            VMNLErrorKind::VulkanVertexBufferCreationFailed =>
-                f.write_str("vulkan vertex buffer creation failed"),
-            VMNLErrorKind::VulkanIndexBufferCreationFailed =>
-                f.write_str("vulkan index buffer creation failed"),
-            VMNLErrorKind::VulkanFrameUboBufferCreationFailed =>
-                f.write_str("vulkan frame uniform buffer object (UBO) creation failed"),
-            VMNLErrorKind::VulkanMemoryAllocationFailed =>
-                f.write_str("vulkan memory allocation failed"),
-            VMNLErrorKind::VulkanCommandBufferCreationFailed =>
-                f.write_str("vulkan command buffer creation failed"),
-            VMNLErrorKind::VulkanDescriptorSetCreationFailed =>
-                f.write_str("vulkan descriptor set creation failed"),
-            VMNLErrorKind::VulkanSemaphoreCreationFailed =>
-                f.write_str("vulkan semaphore creation failed"),
-            VMNLErrorKind::VulkanFenceCreationFailed =>
-                f.write_str("vulkan fence creation failed"),
-            VMNLErrorKind::VulkanFramebufferCreationFailed =>
-                f.write_str("vulkan framebuffer creation failed"),
-            VMNLErrorKind::VulkanRenderPassCreationFailed =>
-                f.write_str("vulkan render pass creation failed"),
-            VMNLErrorKind::VulkanImageCreationFailed =>
-                f.write_str("vulkan image creation failed"),
-            VMNLErrorKind::VulkanImageViewCreationFailed =>
-                f.write_str("vulkan image view creation failed"),
-            VMNLErrorKind::VulkanSamplerCreationFailed =>
-                f.write_str("vulkan sampler creation failed"),
-            VMNLErrorKind::VulkanDescriptorPoolCreationFailed =>
-                f.write_str("vulkan descriptor pool creation failed"),
-            VMNLErrorKind::VulkanDescriptorSetLayoutCreationFailed =>
-                f.write_str("vulkan descriptor set layout creation failed"),
-            VMNLErrorKind::VulkanPipelineLayoutCreationFailed =>
-                f.write_str("vulkan pipeline layout creation failed"),
-            VMNLErrorKind::VulkanShaderCompilationFailed =>
-                f.write_str("vulkan shader compilation failed"),
-            VMNLErrorKind::VulkanValidationFailed =>
-                f.write_str("vulkan validation failed"),
-            VMNLErrorKind::VulkanUnsupportedFeature =>
-                f.write_str("vulkan unsupported feature"),
-            VMNLErrorKind::VulkanOutOfMemory =>
-                f.write_str("vulkan out of memory"),
-            VMNLErrorKind::VulkanDeviceLost =>
-                f.write_str("vulkan device lost"),
-            VMNLErrorKind::VulkanSurfaceLost =>
-                f.write_str("vulkan surface lost"),
-            VMNLErrorKind::VulkanOutOfDate =>
-                f.write_str("vulkan out of date"),
-            VMNLErrorKind::VulkanExtensionNotPresent =>
-                f.write_str("vulkan extension not present"),
-            VMNLErrorKind::VulkanLayerNotPresent =>
-                f.write_str("vulkan layer not present"),
-            VMNLErrorKind::VulkanIncompatibleDriver =>
-                f.write_str("vulkan incompatible driver"),
-            VMNLErrorKind::VulkanTooManyObjects =>
-                f.write_str("vulkan too many objects"),
-            VMNLErrorKind::VulkanFormatNotSupported =>
-                f.write_str("vulkan format not supported"),
-            VMNLErrorKind::VulkanFragmentation =>
-                f.write_str("vulkan fragmentation"),
-            VMNLErrorKind::VulkanUnknownError =>
-                f.write_str("vulkan unknown error"),
-            VMNLErrorKind::GlfwInitFailed =>
-                f.write_str("glfw initialization failed"),
-            VMNLErrorKind::GlfwWindowCreationFailed =>
-                f.write_str("glfw window creation failed"),
-            VMNLErrorKind::GlfwContextCreationFailed =>
-                f.write_str("glfw context creation failed"),
-            VMNLErrorKind::GlfwUnsupportedPlatform =>
-                f.write_str("glfw unsupported platform"),
-            VMNLErrorKind::GlfwVersionMismatch =>
-                f.write_str("glfw version mismatch"),
-            VMNLErrorKind::GlfwPlatformError =>
-                f.write_str("glfw platform error"),
-            VMNLErrorKind::GlfwUnknownError =>
-                f.write_str("glfw unknown error"),
-            VMNLErrorKind::InvalidWindowSize =>
-                f.write_str("invalid window size specified"),
-            VMNLErrorKind::InvalidState(msg) =>
-                write!(f, "invalid state: {msg}"),
+            VMNLErrorKind::VulkanInitFailed => f.write_str("vulkan initialization failed"),
+            VMNLErrorKind::VulkanSurfaceCreationFailed => {
+                f.write_str("vulkan surface creation failed")
+            }
+            VMNLErrorKind::VulkanSwapchainCreationFailed => {
+                f.write_str("vulkan swapchain creation failed")
+            }
+            VMNLErrorKind::VulkanShaderModuleCreationFailed => {
+                f.write_str("vulkan shader module creation failed")
+            }
+            VMNLErrorKind::VulkanPipelineCreationFailed => {
+                f.write_str("vulkan pipeline creation failed")
+            }
+            VMNLErrorKind::VulkanVertexBufferCreationFailed => {
+                f.write_str("vulkan vertex buffer creation failed")
+            }
+            VMNLErrorKind::VulkanIndexBufferCreationFailed => {
+                f.write_str("vulkan index buffer creation failed")
+            }
+            VMNLErrorKind::VulkanFrameUboBufferCreationFailed => {
+                f.write_str("vulkan frame uniform buffer object (UBO) creation failed")
+            }
+            VMNLErrorKind::VulkanMemoryAllocationFailed => {
+                f.write_str("vulkan memory allocation failed")
+            }
+            VMNLErrorKind::VulkanCommandBufferCreationFailed => {
+                f.write_str("vulkan command buffer creation failed")
+            }
+            VMNLErrorKind::VulkanDescriptorSetCreationFailed => {
+                f.write_str("vulkan descriptor set creation failed")
+            }
+            VMNLErrorKind::VulkanSemaphoreCreationFailed => {
+                f.write_str("vulkan semaphore creation failed")
+            }
+            VMNLErrorKind::VulkanFenceCreationFailed => f.write_str("vulkan fence creation failed"),
+            VMNLErrorKind::VulkanFramebufferCreationFailed => {
+                f.write_str("vulkan framebuffer creation failed")
+            }
+            VMNLErrorKind::VulkanRenderPassCreationFailed => {
+                f.write_str("vulkan render pass creation failed")
+            }
+            VMNLErrorKind::VulkanImageCreationFailed => f.write_str("vulkan image creation failed"),
+            VMNLErrorKind::VulkanImageViewCreationFailed => {
+                f.write_str("vulkan image view creation failed")
+            }
+            VMNLErrorKind::VulkanSamplerCreationFailed => {
+                f.write_str("vulkan sampler creation failed")
+            }
+            VMNLErrorKind::VulkanDescriptorPoolCreationFailed => {
+                f.write_str("vulkan descriptor pool creation failed")
+            }
+            VMNLErrorKind::VulkanDescriptorSetLayoutCreationFailed => {
+                f.write_str("vulkan descriptor set layout creation failed")
+            }
+            VMNLErrorKind::VulkanPipelineLayoutCreationFailed => {
+                f.write_str("vulkan pipeline layout creation failed")
+            }
+            VMNLErrorKind::VulkanShaderCompilationFailed => {
+                f.write_str("vulkan shader compilation failed")
+            }
+            VMNLErrorKind::VulkanValidationFailed => f.write_str("vulkan validation failed"),
+            VMNLErrorKind::VulkanUnsupportedFeature => f.write_str("vulkan unsupported feature"),
+            VMNLErrorKind::VulkanOutOfMemory => f.write_str("vulkan out of memory"),
+            VMNLErrorKind::VulkanDeviceLost => f.write_str("vulkan device lost"),
+            VMNLErrorKind::VulkanSurfaceLost => f.write_str("vulkan surface lost"),
+            VMNLErrorKind::VulkanOutOfDate => f.write_str("vulkan out of date"),
+            VMNLErrorKind::VulkanExtensionNotPresent => f.write_str("vulkan extension not present"),
+            VMNLErrorKind::VulkanLayerNotPresent => f.write_str("vulkan layer not present"),
+            VMNLErrorKind::VulkanIncompatibleDriver => f.write_str("vulkan incompatible driver"),
+            VMNLErrorKind::VulkanTooManyObjects => f.write_str("vulkan too many objects"),
+            VMNLErrorKind::VulkanFormatNotSupported => f.write_str("vulkan format not supported"),
+            VMNLErrorKind::VulkanFragmentation => f.write_str("vulkan fragmentation"),
+            VMNLErrorKind::VulkanUnknownError => f.write_str("vulkan unknown error"),
+            VMNLErrorKind::GlfwInitFailed => f.write_str("glfw initialization failed"),
+            VMNLErrorKind::GlfwWindowCreationFailed => f.write_str("glfw window creation failed"),
+            VMNLErrorKind::GlfwContextCreationFailed => f.write_str("glfw context creation failed"),
+            VMNLErrorKind::GlfwUnsupportedPlatform => f.write_str("glfw unsupported platform"),
+            VMNLErrorKind::GlfwVersionMismatch => f.write_str("glfw version mismatch"),
+            VMNLErrorKind::GlfwPlatformError => f.write_str("glfw platform error"),
+            VMNLErrorKind::GlfwUnknownError => f.write_str("glfw unknown error"),
+            VMNLErrorKind::InvalidWindowSize => f.write_str("invalid window size specified"),
+            VMNLErrorKind::InvalidState(msg) => write!(f, "invalid state: {msg}"),
         }
     }
 }
@@ -317,10 +293,7 @@ impl Error for VMNLError {}
 /// # Returns
 /// A formatted string containing the log message prefixed with "[VMNL Log]".
 #[inline]
-pub fn vmnl_log<S: AsRef<str>>(
-    message: S
-) -> String
-{
+pub fn vmnl_log<S: AsRef<str>>(message: S) -> String {
     format!("[VMNL Log] {}", message.as_ref())
 }
 

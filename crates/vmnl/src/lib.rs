@@ -1,15 +1,4 @@
 pub use vmnl_native::{
-    Window,
-    Graphics,
-    Context,
-    VMNLVertex,
-    VMNLResult,
-    Key,
-    Event,
-    MouseButton,
-    VMNLVector2f,
-    VMNLrbg,
-    VMNLRect,
-    VMNLVector2i,
-    VMNLrgba
+    Context, Event, Shape, Key, MouseButton, VMNLRect, VMNLResult, VMNLVector2f, VMNLVector2i,
+    VMNLVertex, VMNLrbg, VMNLrgba, Window,
 };

@@ -1,17 +1,6 @@
-use vmnl::{
-    Window,
-    Graphics,
-    Context,
-    VMNLVertex,
-    VMNLResult,
-    Key,
-    MouseButton,
-    Event,
-    VMNLRect
-};
+use vmnl::{Context, Event, Shape, Key, MouseButton, VMNLRect, VMNLResult, VMNLVertex, Window};
 
-fn handle_event_test(event: &Event)
-{
+fn handle_event_test(event: &Event) {
     match event {
         Event::Closed => {
             println!("[Event] Closed");
@@ -22,19 +11,19 @@ fn handle_event_test(event: &Event)
         Event::FocusLost => {
             println!("[Event] Focus lost");
         }
-        Event::Resized {width, height} => {
+        Event::Resized { width, height } => {
             println!("[Event] Resized: {}x{}", width, height);
         }
-        Event::FramebufferResized {width, height} => {
+        Event::FramebufferResized { width, height } => {
             println!("[Event] Framebuffer resized: {}x{}", width, height);
         }
-        Event::KeyPressed {key, repeat} => {
+        Event::KeyPressed { key, repeat } => {
             println!("[Event] Key pressed: {:?} (repeat: {})", key, repeat);
         }
-        Event::KeyReleased {key} => {
+        Event::KeyReleased { key } => {
             println!("[Event] Key released: {:?}", key);
         }
-        Event::MouseMoved {x, y} => {
+        Event::MouseMoved { x, y } => {
             println!("[Event] Mouse moved: {} {}", x, y);
         }
         Event::MouseEntered => {
@@ -43,13 +32,13 @@ fn handle_event_test(event: &Event)
         Event::MouseLeft => {
             println!("[Event] Mouse left window");
         }
-        Event::MouseButtonPressed {button} => {
+        Event::MouseButtonPressed { button } => {
             println!("[Event] Mouse button pressed: {:?}", button);
         }
-        Event::MouseButtonReleased {button} => {
+        Event::MouseButtonReleased { button } => {
             println!("[Event] Mouse button released: {:?}", button);
         }
-        Event::MouseScrolled {dx, dy} => {
+        Event::MouseScrolled { dx, dy } => {
             println!("[Event] Mouse scrolled: {} {}", dx, dy);
         }
         Event::Text(c) => {
@@ -58,8 +47,7 @@ fn handle_event_test(event: &Event)
     }
 }
 
-fn handle_keybind_test(win: &mut Window)
-{
+fn handle_keybind_test(win: &mut Window) {
     if win.input().keyboard().is_pressed(Key::E) {
         println!("[Keybind] Key E is pressed");
     }
@@ -71,8 +59,7 @@ fn handle_keybind_test(win: &mut Window)
     }
 }
 
-fn handle_mousebind_test(win: &mut Window)
-{
+fn handle_mousebind_test(win: &mut Window) {
     if win.input().mouse().is_pressed(MouseButton::Left) {
         println!("[Mousebind] Mouse button left is pressed");
     }
@@ -84,51 +71,75 @@ fn handle_mousebind_test(win: &mut Window)
     }
 }
 
-fn create_quad_manual(
-    ctx: &Context
-) -> VMNLResult<[Graphics; 2]>
-{
-    let triangle: Graphics = Graphics::create_triangle(
-        &ctx,
-        VMNLVertex { position: [1020.0, 800.0], color: [0.0,   255.0, 0.0]   },
-        VMNLVertex { position: [400.0,  800.0], color: [255.0, 0.0,   0.0]   },
-        VMNLVertex { position: [1020.0, 400.0], color: [0.0,   0.0,   255.0] }
+fn create_quad_manual(ctx: &Context) -> VMNLResult<[Shape; 2]> {
+    let triangle: Shape = Shape::create_triangle(
+        ctx,
+        VMNLVertex {
+            position: [1020.0, 800.0],
+            color: [0.0, 255.0, 0.0],
+        },
+        VMNLVertex {
+            position: [400.0, 800.0],
+            color: [255.0, 0.0, 0.0],
+        },
+        VMNLVertex {
+            position: [1020.0, 400.0],
+            color: [0.0, 0.0, 255.0],
+        },
     )?;
-    let triangle2: Graphics = Graphics::create_triangle(
-        &ctx,
-        VMNLVertex { position: [400.0,  400.0], color: [255.0, 255.0, 0.0]   },
-        VMNLVertex { position: [400.0,  800.0], color: [255.0, 0.0,   0.0]   },
-        VMNLVertex { position: [1020.0, 400.0], color: [0.0,   0.0,   255.0] }
+    let triangle2: Shape = Shape::create_triangle(
+        ctx,
+        VMNLVertex {
+            position: [400.0, 400.0],
+            color: [255.0, 255.0, 0.0],
+        },
+        VMNLVertex {
+            position: [400.0, 800.0],
+            color: [255.0, 0.0, 0.0],
+        },
+        VMNLVertex {
+            position: [1020.0, 400.0],
+            color: [0.0, 0.0, 255.0],
+        },
     )?;
 
     Ok([triangle, triangle2])
 }
 
-fn create_quad_indexed(
-    ctx: &Context
-) -> VMNLResult<Graphics>
-{
+fn create_quad_indexed(ctx: &Context) -> VMNLResult<Shape> {
     const VERTICES: [VMNLVertex; 4] = [
-        VMNLVertex { position: [400.0,  400.0], color: [255.0, 255.0, 0.0]   }, // ! top-left
-        VMNLVertex { position: [1020.0, 400.0], color: [0.0,   255.0, 0.0]   }, // ! top-right
-        VMNLVertex { position: [1020.0, 800.0], color: [0.0,   0.0,   255.0] }, // ! bottom-right
-        VMNLVertex { position: [400.0,  800.0], color: [255.0, 0.0,   0.0]   }, // ! bottom-left
+        VMNLVertex {
+            position: [400.0, 400.0],
+            color: [255.0, 255.0, 0.0],
+        }, // ! top-left
+        VMNLVertex {
+            position: [1020.0, 400.0],
+            color: [0.0, 255.0, 0.0],
+        }, // ! top-right
+        VMNLVertex {
+            position: [1020.0, 800.0],
+            color: [0.0, 0.0, 255.0],
+        }, // ! bottom-right
+        VMNLVertex {
+            position: [400.0, 800.0],
+            color: [255.0, 0.0, 0.0],
+        }, // ! bottom-left
     ];
     const INDICES: [u32; 6] = [
         0, 1, 2, // ! first triangle (top-left, top-right, bottom-right)
         2, 3, 0, // ! second triangle (bottom-right, bottom-left, top-left)
     ];
 
-    Graphics::create_indexed_shape(&ctx, &VERTICES.as_slice(), &INDICES.as_slice())
+    Shape::create_indexed_shape(ctx, VERTICES.as_slice(), INDICES.as_slice())
 }
 
-fn main() -> VMNLResult<()>
-{
-    let ctx:           Context      = Context::new()?;
-    let mut win:       Window       = Window::builder()
+fn main() -> VMNLResult<()> {
+    let ctx: Context = Context::new()?;
+    let mut win: Window = Window::builder()
         .size(1920, 1080)
         .size_limit(Some(600), Some(600), Some(2000), Some(1500))?
-        .fs_from_string("
+        .fs_from_string(
+            "
             #version 460
 
             layout(location = 0) in vec3 in_color;
@@ -137,24 +148,38 @@ fn main() -> VMNLResult<()>
             void main() {
                 f_color = vec4(in_color, 1.0);
             }
-        ")
+        ",
+        )
+        .set_clear_color([0.0, 0.0, 0.0, 255.0])
         .build(&ctx)?;
-    let quad_manual:  [Graphics; 2] = create_quad_manual(&ctx)?;
-    let _quad_indexed: Graphics     = create_quad_indexed(&ctx)?;
-    let rectangle:     Graphics     = Graphics::create_rectangle(
+    let quad_manual: [Shape; 2] = create_quad_manual(&ctx)?;
+    let _quad_indexed: Shape = create_quad_indexed(&ctx)?;
+    let rectangle: Shape = Shape::create_rectangle(
         &ctx,
-        VMNLRect { position: [200.0, 200.0], size: [620.0, 400.0] },
-        [255.0, 200.0, 0.0]
+        VMNLRect {
+            position: [200.0, 200.0],
+            size: [620.0, 400.0],
+        },
+        [255.0, 200.0, 0.0],
     )?;
 
-    println!("Monitors: {}", win.monitor().names().iter().map(|name| name.clone().unwrap_or("Unknown".to_string())).collect::<Vec<String>>().join(", "));
+    println!(
+        "Monitors: {}",
+        win.monitor()
+            .names()
+            .iter()
+            .map(|name| name.clone().unwrap_or("Unknown".to_string()))
+            .collect::<Vec<String>>()
+            .join(", ")
+    );
     while win.is_open() {
         for event in win.poll_events() {
             handle_event_test(&event);
         }
         handle_keybind_test(&mut win);
         handle_mousebind_test(&mut win);
-        win.render([&rectangle, &quad_manual[0], &quad_manual[1]])?;
+        win.render([&rectangle, &quad_manual[0], &quad_manual[1]])
+            .per_object()?;
     }
     Ok(())
 }

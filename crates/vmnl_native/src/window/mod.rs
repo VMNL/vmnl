@@ -9,108 +9,88 @@
 /// and integrating with the graphics context for rendering operations. The module also includes
 /// related submodules for handling window configuration, state management, input processing, and rendering.
 ////////////////////////////////////////////////////////////////////////////////
-
 extern crate glfw;
 use crate::{
-    Graphics,
-    Context,
-    VMNLError,
-    VMNLResult,
-    VMNLErrorKind,
-    window::inner::VMNLWindow,
-    window::shaders::WindowShaders,
-    window::shaders::ShaderInput
+    window::inner::VMNLWindow, window::shaders::ShaderInput, window::shaders::WindowShaders,
+    Context, Shape, VMNLError, VMNLErrorKind, VMNLResult, VMNLrgba,
 };
 pub mod api;
-mod inner;
-pub mod handle;
 pub mod config;
-pub mod state;
+pub mod event;
+pub mod handle;
+mod inner;
 pub mod input;
+pub mod monitors;
 pub mod render;
 pub mod shaders;
-pub mod event;
-pub mod monitors;
-pub use event::{
-    EventQueue,
-    Event
-};
-pub use input::{
-    Input,
-    Key,
-    MouseButton,
-    KeyboardState,
-    MouseState
-};
+pub mod state;
+pub use event::{Event, EventQueue};
+pub use input::{Input, Key, KeyboardState, MouseButton, MouseState};
 
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct PushConstants
-{
+struct PushConstants {
     /// Current size of the window used for scaling and coordinate transformations in shaders.
     window_size: [f32; 2],
 }
 
 /// Builder pattern for constructing a `Window` instance with customizable options.
-pub struct WindowBuilder
-{
+pub struct WindowBuilder {
     /// The configuration options for the window being built.
     options: WindowOptions,
 }
 
 /// Configuration options for creating a `Window` instance.
 #[derive(Clone, Debug)]
-pub struct WindowOptions
-{
+pub struct WindowOptions {
     /// The title of the window.
-    title:                    String,
+    title: String,
     /// The width of the window in pixels (minimum 64).
-    width:                    u32,
+    width: u32,
     /// The height of the window in pixels (minimum 64).
-    height:                   u32,
+    height: u32,
     /// Whether to automatically poll events after rendering.
     configure_window_polling: bool,
     /// The minimum width limits for the window in pixels.
-    min_width:                Option<u32>,
+    min_width: Option<u32>,
     /// The minimum height limits for the window in pixels.
-    min_height:               Option<u32>,
+    min_height: Option<u32>,
     /// The maximum width limits for the window in pixels.
-    max_width:                Option<u32>,
+    max_width: Option<u32>,
     /// The maximum height limits for the window in pixels.
-    max_height:               Option<u32>,
+    max_height: Option<u32>,
     /// The shaders to use for rendering in the window.
-    shaders:                  WindowShaders
+    shaders: WindowShaders,
+    /// The clear color used for rendering, represented as RGBA (red, green, blue, alpha) values.
+    clear_color: [f32; 4],
 }
 
-impl Default for WindowOptions
-{
+impl Default for WindowOptions {
     /// Provides default values for `WindowOptions`
-    fn default() -> Self
-    {
+    fn default() -> Self {
         Self {
-            title:                    "VMNL Window".into(),
-            width:                    800,
-            height:                   600,
+            title: "VMNL Window".into(),
+            width: 800,
+            height: 600,
             configure_window_polling: true,
-            min_width:                None,
-            min_height:               None,
-            max_width:                None,
-            max_height:               None,
-            shaders:                  WindowShaders {
+            min_width: None,
+            min_height: None,
+            max_width: None,
+            max_height: None,
+            shaders: WindowShaders {
                 vertex: None,
-                fragment: None
-            }
+                fragment: None,
+            },
+            clear_color: [0.0, 0.0, 0.0, 1.0],
         }
     }
 }
 
-impl Default for WindowBuilder
-{
+impl Default for WindowBuilder {
     /// Provides default values for `WindowBuilder`, which in turn uses the default `WindowOptions`.
-    fn default() -> Self
-    {
+    fn default() -> Self {
         Self {
-            options: WindowOptions::default()
+            options: WindowOptions::default(),
         }
     }
 }
@@ -126,23 +106,22 @@ impl Default for WindowBuilder
 ///
 /// # Returns
 /// A `VMNLResult<()>` indicating success if the size limits are valid, or an error if any invalid configurations are found.
-pub(crate) fn validate_size_limits(
-    min_width:  Option<u32>,
+pub const fn validate_size_limits(
+    min_width: Option<u32>,
     min_height: Option<u32>,
-    max_width:  Option<u32>,
-    max_height: Option<u32>
-) -> VMNLResult<()>
-{
+    max_width: Option<u32>,
+    max_height: Option<u32>,
+) -> VMNLResult<()> {
     if matches!((min_width, max_width), (Some(min_width), Some(max_width)) if min_width > max_width)
-        || matches!((min_height, max_height), (Some(min_height), Some(max_height)) if min_height > max_height) {
+        || matches!((min_height, max_height), (Some(min_height), Some(max_height)) if min_height > max_height)
+    {
         return Err(VMNLError::new(VMNLErrorKind::InvalidWindowSize));
     }
 
     Ok(())
 }
 
-impl WindowBuilder
-{
+impl WindowBuilder {
     /// Sets the title of the window.
     ///
     /// # Arguments
@@ -154,11 +133,7 @@ impl WindowBuilder
     ///     .title("Custom Window")
     ///     .build(&context)?;
     /// ```
-    pub fn title(
-        mut self,
-        title: &str
-    ) -> Self
-    {
+    pub fn title(mut self, title: &str) -> Self {
         self.options.title = title.to_string();
         self
     }
@@ -175,13 +150,8 @@ impl WindowBuilder
     ///     .size(1920, 1080)
     ///     .build(&context)?;
     /// ```
-    pub fn size(
-        mut self,
-        width:  u32,
-        height: u32
-    ) -> Self
-    {
-        self.options.width  = width;
+    pub const fn size(mut self, width: u32, height: u32) -> Self {
+        self.options.width = width;
         self.options.height = height;
         self
     }
@@ -198,8 +168,7 @@ impl WindowBuilder
     ///     .unset_configure_window_polling()
     ///     .build(&context)?;
     /// ```
-    pub fn unset_configure_window_polling(mut self) -> Self
-    {
+    pub const fn unset_configure_window_polling(mut self) -> Self {
         self.options.configure_window_polling = false;
         self
     }
@@ -235,13 +204,11 @@ impl WindowBuilder
     /// ```
     pub fn size_limit(
         mut self,
-        min_width:  Option<u32>,
+        min_width: Option<u32>,
         min_height: Option<u32>,
-        max_width:  Option<u32>,
-        max_height: Option<u32>
-
-    ) -> VMNLResult<Self>
-    {
+        max_width: Option<u32>,
+        max_height: Option<u32>,
+    ) -> VMNLResult<Self> {
         validate_size_limits(min_width, min_height, max_width, max_height)?;
         self.options.min_width = min_width;
         self.options.min_height = min_height;
@@ -261,11 +228,7 @@ impl WindowBuilder
     ///     .vs_from_file("assets/shaders/quad.vert.spv")
     ///     .build(&context)?;
     /// ```
-    pub fn vs_from_file(
-        mut self,
-        path: impl AsRef<std::path::Path>
-    ) -> Self
-    {
+    pub fn vs_from_file(mut self, path: impl AsRef<std::path::Path>) -> Self {
         self.options.shaders.vertex = Some(ShaderInput::Path(path.as_ref().into()));
         self
     }
@@ -281,11 +244,7 @@ impl WindowBuilder
     ///     .fs_from_file("assets/shaders/quad.frag.spv")
     ///     .build(&context)?;
     /// ```
-    pub fn fs_from_file(
-        mut self,
-        path: impl AsRef<std::path::Path>
-    ) -> Self
-    {
+    pub fn fs_from_file(mut self, path: impl AsRef<std::path::Path>) -> Self {
         self.options.shaders.fragment = Some(ShaderInput::Path(path.as_ref().into()));
         self
     }
@@ -314,11 +273,7 @@ impl WindowBuilder
     ///     ")
     ///     .build(&context)?;
     /// ```
-    pub fn vs_from_string(
-        mut self,
-        source: impl Into<String>
-    ) -> Self
-    {
+    pub fn vs_from_string(mut self, source: impl Into<String>) -> Self {
         self.options.shaders.vertex = Some(ShaderInput::Src(source.into()));
         self
     }
@@ -344,35 +299,44 @@ impl WindowBuilder
     ///     ")
     ///     .build(&context)?;
     /// ```
-    pub fn fs_from_string(
-        mut self,
-        source: impl Into<String>
-    ) -> Self
-    {
+    pub fn fs_from_string(mut self, source: impl Into<String>) -> Self {
         self.options.shaders.fragment = Some(ShaderInput::Src(source.into()));
         self
     }
 
+    /// Sets the clear color for the window, which is used to clear the screen before rendering each frame.
+    ///
+    /// # Arguments
+    /// - `clear_color`: An array of four `f32` values representing the red, green, blue, and alpha components of the clear color.
+    ///
+    /// # Example
+    /// ```rust
+    /// let window = Window::builder()
+    ///     .set_clear_color([0.0, 0.0, 0.0, 1.0]) // Opaque black clear color
+    ///     .build(&context)?;
+    /// ```
+    pub fn set_clear_color(mut self, clear_color: VMNLrgba) -> Self {
+        let [r, g, b, a] = clear_color;
+
+        self.options.clear_color = [r / 255.0, g / 255.0, b / 255.0, a / 255.0];
+        self
+    }
+
     /// Builds the `Window` instance using the specified options and the provided `Context`.
-    pub fn build(
-        self,
-        context: &Context
-    ) -> VMNLResult<Window>
-    {
+    pub fn build(self, context: &Context) -> VMNLResult<Window> {
         Window::from_options(context, self.options)
     }
 }
 
 /// The `Window` struct represents an application window in the VMNL library, providing methods for managing window properties, handling events, and coordinating rendering.
+///
 /// It serves as the primary interface for interacting with the windowing system and encapsulates the underlying implementation details.
-pub struct Window
-{
+pub struct Window {
     /// The internal implementation of the window, which manages the actual GLFW window and related state.
-    inner: VMNLWindow
+    inner: VMNLWindow,
 }
 
-impl Window
-{
+impl Window {
     /// Creates a new `Window` instance with default configuration options.
     ///
     /// # Arguments
@@ -380,10 +344,7 @@ impl Window
     ///
     /// # Returns
     /// A `VMNLResult` containing the newly created `Window` instance or an error if the window creation fails.
-    pub fn new(
-        context: &Context
-    ) -> VMNLResult<Self>
-    {
+    pub fn new(context: &Context) -> VMNLResult<Self> {
         Self::builder().build(context)
     }
 
@@ -414,8 +375,8 @@ impl Window
     /// ")
     ///.builder(&context)?;
     /// ```
-    pub fn builder() -> WindowBuilder
-    {
+    #[must_use]
+    pub fn builder() -> WindowBuilder {
         WindowBuilder::default()
     }
 
@@ -428,13 +389,13 @@ impl Window
     ///
     /// # Returns
     /// A `VMNLResult` containing the newly created `Window` instance or an error if the options are invalid or window creation fails.
-    fn from_options(
-        context: &Context,
-        options: WindowOptions
-    ) -> VMNLResult<Self>
-    {
-        validate_size_limits(options.min_width, options.min_height, options.max_width, options.max_height)?;
-
+    fn from_options(context: &Context, options: WindowOptions) -> VMNLResult<Self> {
+        validate_size_limits(
+            options.min_width,
+            options.min_height,
+            options.max_width,
+            options.max_height,
+        )?;
         let mut inner_window = VMNLWindow::create(context, options.clone())?;
 
         if options.configure_window_polling {
@@ -444,12 +405,11 @@ impl Window
             options.min_width,
             options.min_height,
             options.max_width,
-            options.max_height
+            options.max_height,
         )?;
-        Ok(
-            Self {
-                inner: inner_window
-            }
-        )
+        inner_window.set_clear_color(options.clear_color);
+        Ok(Self {
+            inner: inner_window,
+        })
     }
 }
