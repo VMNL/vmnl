@@ -1,13 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////
-// SPDX-FileCopyrightText: 2026 Hugo Duda
-// SPDX-License-Identifier: MIT
-//
-// Shader module definitions for the VMNL library, including vertex and fragment
-// shaders implemented in GLSL and compiled to SPIR-V using the `vulkano_shaders::shader!` macro.
+/// SPDX-FileCopyrightText: 2026 Hugo Duda
+/// SPDX-License-Identifier: MIT
+///
+/// Shader module definitions for the VMNL library, including vertex and fragment
+/// shaders implemented in GLSL and compiled to SPIR-V using the `vulkano_shaders::shader!` macro.
 ////////////////////////////////////////////////////////////////////////////////
 
-/// Enum to represent shader input, either as a raw GLSL source string or a file path to a SPIR-V binary.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+/// Enum to represent shader input, either as a raw GLSL source string or a file path to a SPIR-V binary.
 pub enum ShaderInput {
     /// Raw GLSL source code as a string.
     Src(String),

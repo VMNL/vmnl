@@ -1,4 +1,4 @@
-use vmnl::{Context, Event, Shape, Key, MouseButton, VMNLRect, VMNLResult, VMNLVertex, Window};
+use vmnl::{Context, Event, Key, MouseButton, Shape, VMNLRect, VMNLResult, VMNLVertex, Window};
 
 fn handle_event_test(event: &Event) {
     match event {

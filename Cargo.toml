@@ -1,6 +1,12 @@
 [workspace]
 members = ["crates/vmnl_native", "crates/vmnl", "examples/test"]
+default-members = ["crates/vmnl_native", "crates/vmnl"]
 resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
 
 [profile.dev]
 opt-level = 3

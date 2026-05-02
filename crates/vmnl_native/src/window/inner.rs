@@ -19,6 +19,7 @@ use crate::window::{shaders::fs, shaders::vs, shaders::ShaderInput, shaders::Win
 use crate::Context;
 use crate::VMNLResult;
 use crate::VMNLVertex;
+use std::rc::Rc;
 use std::sync::Arc;
 use vulkano::{
     device::Device,
@@ -445,7 +446,7 @@ impl VMNLWindow {
         shaders: WindowShaders,
         clear_color: [f32; 4],
     ) -> VMNLResult<Self> {
-        let vmnl_instance: Arc<VMNLInstance> = vmnl_context.inner.clone();
+        let vmnl_instance: Rc<VMNLInstance> = vmnl_context.inner.clone();
         let mut glfw: glfw::Glfw = vmnl_instance.glfw.clone();
         glfw.window_hint(glfw::WindowHint::ClientApi(glfw::ClientApiHint::NoApi));
         glfw.window_hint(glfw::WindowHint::TransparentFramebuffer(true));
