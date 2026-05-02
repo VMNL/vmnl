@@ -1,9 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Shader module definitions for the VMNL library, including vertex and fragment
-/// shaders implemented in GLSL and compiled to SPIR-V using the `vulkano_shaders::shader!` macro.
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+//
+// Shader module definitions for the VMNL library, including vertex and fragment
+// shaders implemented in GLSL and compiled to SPIR-V using the `vulkano_shaders::shader!` macro.
 ////////////////////////////////////////////////////////////////////////////////
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
