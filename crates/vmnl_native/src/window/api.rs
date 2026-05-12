@@ -5,7 +5,7 @@ use super::Window;
 ///
 /// This module provides the public API for window management in the VMNL library.
 ////////////////////////////////////////////////////////////////////////////////
-use crate::{window::monitors::Monitors, Event, Input, Shape, VMNLErrorKind, VMNLResult, VMNLrgba};
+use crate::{window::monitors::Monitors, Event, Input, Rgba, Shape, VMNLErrorKind, VMNLResult};
 
 pub struct RenderCall<'w, 'g, const N: usize> {
     window: &'w mut Window,
@@ -21,23 +21,23 @@ impl<const N: usize> RenderCall<'_, '_, N> {
     ///
     /// # Example
     /// ```rust
-    /// let rect1 = VMNLRect {
+    /// let rect1 = Rect {
     ///     position: [100.0, 150.0],
     ///     size: [200.0, 100.0]
     /// };
     /// let color1 = [255.0, 0.0, 0.0]; // Red color
     /// let vertices2 = [
-    ///     VMNLVertex {
+    ///     Vertex {
     ///         position: [100.0, 150.0],
     ///         color: [0.0, 255.0, 0.0] // Green color
     ///     },
-    ///     VMNLVertex {
+    ///     Vertex {
     ///         position: [300.0, 150.0],
     ///         color: [0.0, 255.0, 0.0] // Green color
     ///     },
     /// ];
-    /// let graphics1 = Shape::create_rectangle(&vmnl_context, rect1, color1);
-    /// let graphics2 = Shape::create_triangle(&vmnl_context, vertices2[0], vertices2[1], vertices2[2]);
+    /// let graphics1 = Shape::rect(rect1.size).position(rect1.position.x, rect1.position.y).color(color1).build(&vmnl_context)?;
+    /// let graphics2 = Shape::triangle([vertices2[0], vertices2[1], vertices2[2]]).build(&vmnl_context)?;
     /// while win.is_open() {
     ///     // Poll events and other logic here
     ///     win.render([&graphics1, &graphics2]).per_object()?;
@@ -55,23 +55,23 @@ impl<const N: usize> RenderCall<'_, '_, N> {
     ///
     /// # Example
     /// ```rust
-    /// let rect1 = VMNLRect {
+    /// let rect1 = Rect {
     ///     position: [100.0, 150.0],
     ///     size: [200.0, 100.0]
     /// };
     /// let color1 = [255.0, 0.0, 0.0]; // Red color
     /// let vertices2 = [
-    ///     VMNLVertex {
+    ///     Vertex {
     ///         position: [100.0, 150.0],
     ///         color: [0.0, 255.0, 0.0] // Green color
     ///     },
-    ///     VMNLVertex {
+    ///     Vertex {
     ///         position: [300.0, 150.0],
     ///         color: [0.0, 255.0, 0.0] // Green color
     ///     },
     /// ];
-    /// let graphics1 = Shape::create_rectangle(&vmnl_context, rect1, color1);
-    /// let graphics2 = Shape::create_triangle(&vmnl_context, vertices2[0], vertices2[1], vertices2[2]);
+    /// let graphics1 = Shape::rect(rect1.size).position(rect1.position.x, rect1.position.y).color(color1).build(&vmnl_context)?;
+    /// let graphics2 = Shape::triangle([vertices2[0], vertices2[1], vertices2[2]]).build(&vmnl_context)?;
     /// while win.is_open() {
     ///     // Poll events and other logic here
     ///     win.render([&graphics1, &graphics2]).batched()?;
@@ -91,23 +91,23 @@ impl Window {
     ///
     /// # Example
     /// ```rust
-    /// let rect1 = VMNLRect {
+    /// let rect1 = Rect {
     ///     position: [100.0, 150.0],
     ///     size: [200.0, 100.0]
     /// };
     /// let color1 = [255.0, 0.0, 0.0]; // Red color
     /// let vertices2 = [
-    ///     VMNLVertex {
+    ///     Vertex {
     ///         position: [100.0, 150.0],
     ///        color: [0.0, 255.0, 0.0] // Green color
     ///     },
-    ///     VMNLVertex {
+    ///     Vertex {
     ///         position: [300.0, 150.0],
     ///         color: [0.0, 255.0, 0.0] // Green color
     ///     },
     /// ];
-    /// let graphics1 = Shape::create_rectangle(&vmnl_context, rect1, color1);
-    /// let graphics2 = Shape::create_triangle(&vmnl_context, vertices2[0], vertices2[1], vertices2[2]);
+    /// let graphics1 = Shape::rect(rect1.size).position(rect1.position.x, rect1.position.y).color(color1).build(&vmnl_context)?;
+    /// let graphics2 = Shape::triangle([vertices2[0], vertices2[1], vertices2[2]]).build(&vmnl_context)?;
     /// while win.is_open() {
     ///     // Poll events and other logic here
     ///     // Render the graphics objects, choosing between per-object or batched rendering:
@@ -1378,7 +1378,7 @@ impl Window {
     /// window.set_clear_color([0.0, 0.0, 1.0, 0.5]);
     /// ```
     #[inline]
-    pub fn set_clear_color(&mut self, color: VMNLrgba) {
+    pub fn set_clear_color(&mut self, color: Rgba) {
         let [r, g, b, a] = color;
 
         self.inner

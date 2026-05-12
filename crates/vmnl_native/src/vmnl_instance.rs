@@ -55,12 +55,9 @@ impl Context {
     ///
     /// let context = Context::new().expect("Failed to create VMNL context");
     /// let window = Window::new(&context, 800, 600, "My Window").expect("Failed to create window");
-    /// let triangle = Shape::create_triangle(
-    ///     &context,
-    ///     VMNLVertex { position: [0.0, 0.0], color: [255.0, 0.0, 0.0] },  // Vertex 1: Red
-    ///     VMNLVertex { position: [1.0, 0.0], color: [0.0, 255.0, 0.0] },  // Vertex 2: Green
-    ///     VMNLVertex { position: [0.0, 1.0], color: [0.0, 0.0, 255.0] },  // Vertex 3: Blue
-    /// ).expect("Failed to create triangle graphics");
+    /// let triangle = Shape::triangle([vertex1, vertex2, vertex3])
+    ///     .build(&context)
+    ///     .expect("Failed to create triangle graphics");
     ///
     /// while window.is_open() {
     ///     for event in window.poll_events() {

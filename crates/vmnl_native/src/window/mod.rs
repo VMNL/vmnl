@@ -12,7 +12,7 @@
 extern crate glfw;
 use crate::{
     window::inner::VMNLWindow, window::shaders::ShaderInput, window::shaders::WindowShaders,
-    Context, Shape, VMNLError, VMNLErrorKind, VMNLResult, VMNLrgba,
+    Context, Rgba, Shape, VMNLError, VMNLErrorKind, VMNLResult,
 };
 pub mod api;
 pub mod config;
@@ -315,7 +315,7 @@ impl WindowBuilder {
     ///     .set_clear_color([0.0, 0.0, 0.0, 1.0]) // Opaque black clear color
     ///     .build(&context)?;
     /// ```
-    pub fn set_clear_color(mut self, clear_color: VMNLrgba) -> Self {
+    pub fn set_clear_color(mut self, clear_color: Rgba) -> Self {
         let [r, g, b, a] = clear_color;
 
         self.options.clear_color = [r / 255.0, g / 255.0, b / 255.0, a / 255.0];
