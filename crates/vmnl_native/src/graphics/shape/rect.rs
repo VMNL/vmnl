@@ -54,10 +54,15 @@ impl RectBuilder {
     /// # Returns
     /// The updated `RectBuilder` instance with the specified position.
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Shape};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
-    ///     .position(50.0, 50.0) // Position the rectangle at (50, 50)
-    ///     .build(&vmnl_context);
+    ///     .position(50.0, 50.0)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn position(mut self, x: f32, y: f32) -> Self {
         self.options.position = Vector2f { x, y };
@@ -75,8 +80,10 @@ impl RectBuilder {
     ///
     /// # Example
     /// ```rust
+    /// use vmnl_native::Shape;
+    ///
     /// let rect = Shape::rect(100.0, 100.0)
-    ///     .color([255.0, 0.0, 0.0, 255.0]) // Red color
+    ///     .color([255.0, 0.0, 0.0, 255.0]);
     /// ```
     pub fn color(mut self, color: Rgba) -> Self {
         self.options.color = color;
@@ -91,9 +98,14 @@ impl RectBuilder {
     /// # Returns
     /// A `Shape` instance representing the rectangle, ready for rendering.
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Shape};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
-    ///     .build(&vmnl_context);
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn build(self, vmnl_context: &Context) -> VMNLResult<Shape> {
         Self::rect(

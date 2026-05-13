@@ -27,21 +27,26 @@ impl TriangleBuilder {
     /// A `Shape` instance representing the triangle, ready for rendering.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Shape, Vector2f, Vertex};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let vertex1 = Vertex {
     ///     position: Vector2f { x: 100.0, y: 150.0 },
-    ///     color: [255.0, 0.0, 0.0, 255.0] // Red color
+    ///     color: [255.0, 0.0, 0.0, 255.0],
     /// };
     /// let vertex2 = Vertex {
     ///     position: Vector2f { x: 300.0, y: 150.0 },
-    ///     color: [0.0, 255.0, 0.0, 255.0] // Green color
+    ///     color: [0.0, 255.0, 0.0, 255.0],
     /// };
     /// let vertex3 = Vertex {
     ///     position: Vector2f { x: 200.0, y: 300.0 },
-    ///     color: [0.0, 0.0, 255.0, 255.0] // Blue color
+    ///     color: [0.0, 0.0, 255.0, 255.0],
     /// };
     /// let triangle = Shape::triangle([vertex1, vertex2, vertex3])
-    ///     .build(&vmnl_context);
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn build(self, vmnl_context: &Context) -> VMNLResult<Shape> {
         let [a, b, c] = self.vertices;

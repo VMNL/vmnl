@@ -20,27 +20,17 @@ impl<const N: usize> RenderCall<'_, '_, N> {
     /// but allows for more flexibility in rendering individual objects.
     ///
     /// # Example
-    /// ```rust
-    /// let rect1 = Rect {
-    ///     position: [100.0, 150.0],
-    ///     size: [200.0, 100.0]
-    /// };
-    /// let color1 = [255.0, 0.0, 0.0]; // Red color
-    /// let vertices2 = [
-    ///     Vertex {
-    ///         position: [100.0, 150.0],
-    ///         color: [0.0, 255.0, 0.0] // Green color
-    ///     },
-    ///     Vertex {
-    ///         position: [300.0, 150.0],
-    ///         color: [0.0, 255.0, 0.0] // Green color
-    ///     },
-    /// ];
-    /// let graphics1 = Shape::rect(rect1.size).position(rect1.position.x, rect1.position.y).color(color1).build(&vmnl_context)?;
-    /// let graphics2 = Shape::triangle([vertices2[0], vertices2[1], vertices2[2]]).build(&vmnl_context)?;
-    /// while win.is_open() {
-    ///     // Poll events and other logic here
-    ///     win.render([&graphics1, &graphics2]).per_object()?;
+    /// ```rust,ignore
+    /// let background = Shape::rect(200.0, 100.0)
+    ///     .position(100.0, 150.0)
+    ///     .color([255.0, 0.0, 0.0, 255.0])
+    ///     .build(&context)?;
+    ///
+    /// while window.is_open() {
+    ///     for event in window.poll_events() {
+    ///         println!("{event:?}");
+    ///     }
+    ///     window.render([&background]).per_object()?;
     /// }
     /// ```
     #[inline]
@@ -54,27 +44,17 @@ impl<const N: usize> RenderCall<'_, '_, N> {
     /// but may require additional setup to group objects together and manage state changes.
     ///
     /// # Example
-    /// ```rust
-    /// let rect1 = Rect {
-    ///     position: [100.0, 150.0],
-    ///     size: [200.0, 100.0]
-    /// };
-    /// let color1 = [255.0, 0.0, 0.0]; // Red color
-    /// let vertices2 = [
-    ///     Vertex {
-    ///         position: [100.0, 150.0],
-    ///         color: [0.0, 255.0, 0.0] // Green color
-    ///     },
-    ///     Vertex {
-    ///         position: [300.0, 150.0],
-    ///         color: [0.0, 255.0, 0.0] // Green color
-    ///     },
-    /// ];
-    /// let graphics1 = Shape::rect(rect1.size).position(rect1.position.x, rect1.position.y).color(color1).build(&vmnl_context)?;
-    /// let graphics2 = Shape::triangle([vertices2[0], vertices2[1], vertices2[2]]).build(&vmnl_context)?;
-    /// while win.is_open() {
-    ///     // Poll events and other logic here
-    ///     win.render([&graphics1, &graphics2]).batched()?;
+    /// ```rust,ignore
+    /// let background = Shape::rect(200.0, 100.0)
+    ///     .position(100.0, 150.0)
+    ///     .color([255.0, 0.0, 0.0, 255.0])
+    ///     .build(&context)?;
+    ///
+    /// while window.is_open() {
+    ///     for event in window.poll_events() {
+    ///         println!("{event:?}");
+    ///     }
+    ///     window.render([&background]).batched()?;
     /// }
     /// ```
     #[inline]
@@ -90,29 +70,15 @@ impl Window {
     /// - `graphics`: Slice of graphics objects to render.
     ///
     /// # Example
-    /// ```rust
-    /// let rect1 = Rect {
-    ///     position: [100.0, 150.0],
-    ///     size: [200.0, 100.0]
-    /// };
-    /// let color1 = [255.0, 0.0, 0.0]; // Red color
-    /// let vertices2 = [
-    ///     Vertex {
-    ///         position: [100.0, 150.0],
-    ///        color: [0.0, 255.0, 0.0] // Green color
-    ///     },
-    ///     Vertex {
-    ///         position: [300.0, 150.0],
-    ///         color: [0.0, 255.0, 0.0] // Green color
-    ///     },
-    /// ];
-    /// let graphics1 = Shape::rect(rect1.size).position(rect1.position.x, rect1.position.y).color(color1).build(&vmnl_context)?;
-    /// let graphics2 = Shape::triangle([vertices2[0], vertices2[1], vertices2[2]]).build(&vmnl_context)?;
-    /// while win.is_open() {
-    ///     // Poll events and other logic here
-    ///     // Render the graphics objects, choosing between per-object or batched rendering:
-    ///     win.render([&graphics1, &graphics2]).per_object()?;
-    ///     win.render([&graphics1, &graphics2]).batched()?;
+    /// ```rust,ignore
+    /// let background = Shape::rect(200.0, 100.0)
+    ///     .position(100.0, 150.0)
+    ///     .color([255.0, 0.0, 0.0, 255.0])
+    ///     .build(&context)?;
+    ///
+    /// while window.is_open() {
+    ///     window.poll_events();
+    ///     window.render([&background]).per_object()?;
     /// }
     /// ```
     #[inline]
@@ -135,7 +101,7 @@ impl Window {
     /// The current title of the window.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// let current_title = window.get_title();
     /// println!("Current window title: {}", current_title);
     /// ```
@@ -156,7 +122,7 @@ impl Window {
     /// it concise for better display on the window title bar.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Set the window title to "My Application"
     /// window.set_title("My Application");
     /// // Get the current window title
@@ -180,7 +146,7 @@ impl Window {
     /// it's recommended to keep them within reasonable limits for better performance.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Set the window size to 800x600 pixels
     /// window.set_size(800, 600);
     /// // Get the current window size
@@ -201,7 +167,7 @@ impl Window {
     /// A tuple of `(width, height)` containing the current window dimensions in pixels.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Get the current window size
     /// let (width, height) = window.get_size();
     /// println!("Current window size: {}x{}", width, height);
@@ -222,7 +188,7 @@ impl Window {
     /// - The framebuffer size is the actual size of the rendering area in pixels, which may be larger than the window size on high-DPI displays to maintain visual fidelity.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Get the current framebuffer size
     /// let (framebuffer_width, framebuffer_height) = window.get_framebuffer_size();
     /// println!("Current framebuffer size: {}x{}", framebuffer_width, framebuffer_height);
@@ -251,7 +217,7 @@ impl Window {
     ///   to ensure that the application renders correctly on displays with different pixel densities.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Get the current content scale of the window
     /// let (x_scale, y_scale) = window.get_content_scale();
     /// println!("Current content scale: x={}, y={}", x_scale, y_scale);
@@ -285,7 +251,7 @@ impl Window {
     ///   allowing the window to be resized freely in that direction.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Set the minimum size to 400x300 pixels and maximum size to 1920x1080 pixels
     /// window.set_size_limits(Some(400), Some(300), Some(1920), Some(1080))?;
     /// // Remove the maximum size limit
@@ -317,7 +283,7 @@ impl Window {
     /// - Setting an aspect ratio can be useful for applications that require a specific display format, such as games or video players.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Set the aspect ratio to 16:9
     /// window.set_aspect_ratio(Some((16, 9)));
     /// // Remove the aspect ratio constraint
@@ -340,7 +306,7 @@ impl Window {
     /// - Setting the position can be useful for multi-window applications or when you want to control the initial placement of the window on the screen.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Set the window position to (100, 100) pixels from the top-left corner of the primary monitor
     /// window.set_position(100, 100);
     /// // Get the current window position
@@ -362,7 +328,7 @@ impl Window {
     /// A tuple of `(x, y)` containing the current position of the window in pixels.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Get the current window position
     /// let (x, y) = window.get_position();
     /// println!("Current window position: ({}, {})", x, y);
@@ -382,7 +348,7 @@ impl Window {
     /// - The behavior of iconification may vary depending on the operating system and window manager.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Iconify the window
     /// window.iconify();
     /// // Restore the window to its normal size and position
@@ -403,7 +369,7 @@ impl Window {
     /// - The behavior of iconification may vary depending on the operating system and window manager.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Check if the window is currently iconified
     /// if window.is_iconified() {
     ///    println!("The window is currently iconified (minimized).");
@@ -425,7 +391,7 @@ impl Window {
     /// - The behavior of restoration may vary depending on the operating system and window manager.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Iconify the window
     /// window.iconify();
     /// // Restore the window to its normal size and position
@@ -445,7 +411,7 @@ impl Window {
     /// - The behavior of maximization may vary depending on the operating system and window manager.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Maximize the window
     /// window.maximize();
     /// // Restore the window to its previous size
@@ -466,7 +432,7 @@ impl Window {
     /// - The behavior of maximization may vary depending on the operating system and window manager.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Check if the window is currently maximized
     /// if window.is_maximized() {
     ///     println!("The window is currently maximized.");
@@ -490,7 +456,7 @@ impl Window {
     /// - The behavior of showing and hiding may vary depending on the operating system and window manager.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Show the window
     /// window.show();
     /// // Hide the window
@@ -511,7 +477,7 @@ impl Window {
     /// - The behavior of showing and hiding may vary depending on the operating system and window manager.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Hide the window
     /// window.hide();
     /// // Show the window again
@@ -532,7 +498,7 @@ impl Window {
     /// - The behavior of showing and hiding may vary depending on the operating system and window manager.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Check if the window is currently visible
     /// if window.is_visible() {
     ///     println!("The window is currently visible.");
@@ -559,7 +525,7 @@ impl Window {
     /// - The window can be unfocused by the user through the operating system's window management interface or by focusing another window.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Focus the window
     /// window.focus();
     /// ```
@@ -581,7 +547,7 @@ impl Window {
     /// - The window can be unfocused by the user through the operating system's window management interface or by focusing another window.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Check if the window is currently focused
     /// if window.is_focused() {
     ///     println!("The window is currently focused.");
@@ -606,7 +572,7 @@ impl Window {
     ///   which can be used for overlay applications, visual effects, or to create a more visually appealing user interface.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Set the window to be semi-transparent
     /// window.opacity(0.5);
     /// // Set the window to be fully opaque
@@ -633,7 +599,7 @@ impl Window {
     ///   which can be used for visual effects or to create a more visually appealing user interface.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Set the window to be semi-transparent
     /// window.opacity(0.5);
     /// // Get the current opacity of the window
@@ -655,7 +621,7 @@ impl Window {
     /// The window width in pixels.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Get the current window width
     /// let window_width = window.width();
     /// println!("Window width: {}", window_width);
@@ -675,7 +641,7 @@ impl Window {
     /// The window height in pixels.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Get the current window height
     /// let window_height = window.height();
     /// println!("Window height: {}", window_height);
@@ -692,7 +658,7 @@ impl Window {
     /// A reference to the `Monitor` information associated with the window instance.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Get the monitor information associated with the window
     /// let monitor_info = window.monitor();
     /// println!("Monitor names: {:?}", monitor_info.names());
@@ -708,7 +674,7 @@ impl Window {
     /// A vector of `Event` instances representing events that occurred since the last poll.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Poll events and handle them
     /// for event in window.poll_events() {
     ///     match event {
@@ -728,7 +694,7 @@ impl Window {
     /// This is useful for reducing CPU usage when the application is idle or waiting for user input.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Wait for events before polling them
     /// window.wait_events();
     /// let events = window.poll_events();
@@ -748,7 +714,7 @@ impl Window {
     /// - `timeout`: The maximum time to wait for an event, in seconds (e.g., 0.5 for 500 milliseconds).
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Wait for events with a timeout of 1 second
     /// window.wait_events_timeout(1.0);
     /// ```
@@ -762,15 +728,9 @@ impl Window {
     /// This can be used to wake up the event loop from another thread or to trigger a re-check of the window state.
     ///
     /// # Example
-    /// ```
-    /// // In a separate thread, signal the main event loop to wake up
-    /// std::thread::spawn({
-    ///     let mut window = ...; // Obtain a reference to the Window instance
-    ///     move || {
-    ///         // Perform some work, then wake up the event loop
-    ///         window.post_empty_event();
-    ///     }
-    /// });
+    /// ```rust,ignore
+    /// // Wake an event loop blocked in `wait_events`.
+    /// window.post_empty_event();
     /// ```
     #[inline]
     pub fn post_empty_event(&mut self) {
@@ -784,7 +744,7 @@ impl Window {
     /// The current time in seconds since GLFW was initialized.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// let start_time = window.get_time();
     /// // ... perform some operations ...
     /// let elapsed_time = window.get_time() - start_time;
@@ -802,7 +762,7 @@ impl Window {
     /// - `time`: The new time in seconds to set in the GLFW context.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Reset the timer to zero at the start of an animation sequence
     /// window.set_time(0.0);
     /// // Later, retrieve elapsed time for animation timing
@@ -820,7 +780,7 @@ impl Window {
     /// The current timer value in ticks, which can be converted to seconds using the timer frequency.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// let timer_value = window.get_timer_value();
     /// let timer_frequency = window.get_timer_frequency();
     /// let elapsed_time = timer_value as f64 / timer_frequency as f64;
@@ -838,7 +798,7 @@ impl Window {
     /// The frequency of the timer in ticks per second.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// let timer_value = window.get_timer_value();
     /// let timer_frequency = window.get_timer_frequency();
     /// let elapsed_time = timer_value as f64 / timer_frequency as f64;
@@ -858,14 +818,12 @@ impl Window {
     ///   which will be called when a GLFW error occurs.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Set a custom error callback to handle GLFW errors
     /// window.set_error_callback(|kind, description| {
     ///     eprintln!("GLFW Error ({kind:?}): {description}");
     /// });
-    /// // Trigger an error to see the callback in action
-    /// window.set_size_limits((Some(0), Some(0)), (Some(0), Some(0))); // Invalid size limits to trigger an error
-    /// // Unset the custom error callback to restore default error handling
+    /// let _ = window.set_size_limits(Some(800), Some(600), Some(640), Some(480));
     /// window.unset_error_callback();
     /// ```
     pub fn set_error_callback(&mut self, callback: impl FnMut(VMNLErrorKind, String) + 'static) {
@@ -877,7 +835,7 @@ impl Window {
     /// After calling this method, GLFW errors will be handled by the default error callback, which typically prints errors to standard error.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Unset the custom error callback to restore default error handling
     /// window.unset_error_callback();
     /// ```
@@ -894,7 +852,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Enable text input events
     /// window.set_char_polling(true);
     /// // Disable them later
@@ -911,7 +869,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Track mouse button presses/releases
     /// window.set_mouse_button_polling(true);
     /// // Disable mouse button polling when it's no longer needed
@@ -928,7 +886,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive Event::MouseMoved events
     /// window.set_cursor_pos_polling(true);
     /// // Disable cursor position polling when it's no longer needed
@@ -945,7 +903,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive Event::MouseEntered / Event::MouseLeft
     /// window.set_cursor_enter_polling(true);
     /// // Disable cursor enter/leave polling when it's no longer needed
@@ -962,7 +920,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive Event::MouseScrolled events
     /// window.set_scroll_polling(true);
     /// // Disable scroll polling when it's no longer needed
@@ -979,7 +937,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive Event::Resized events
     /// window.set_size_polling(true);
     /// // Disable size polling when it's no longer needed
@@ -996,7 +954,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive Event::FramebufferResized events
     /// window.set_framebuffer_size_polling(true);
     /// // Disable framebuffer size polling when it's no longer needed
@@ -1013,7 +971,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive Event::FocusGained / Event::FocusLost
     /// window.set_focus_polling(true);
     /// // Disable focus polling when it's no longer needed
@@ -1030,7 +988,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive Event::Closed
     /// window.set_close_polling(true);
     /// // Disable close polling when it's no longer needed
@@ -1047,7 +1005,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive Event::KeyPressed / Event::KeyReleased
     /// window.set_key_polling(true);
     /// // Disable key polling when it's no longer needed
@@ -1064,7 +1022,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive text events with modifier metadata
     /// window.set_char_mods_polling(true);
     /// // Disable char-with-modifier polling when it's no longer needed
@@ -1081,7 +1039,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive window refresh requests
     /// window.set_refresh_polling(true);
     /// // Disable refresh polling when it's no longer needed
@@ -1098,7 +1056,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive iconify/minimize state events
     /// window.set_iconify_polling(true);
     /// // Disable iconify polling when it's no longer needed
@@ -1115,7 +1073,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive maximize state events
     /// window.set_maximize_polling(true);
     /// // Disable maximize polling when it's no longer needed
@@ -1132,7 +1090,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive file drop events
     /// window.set_drag_and_drop_polling(true);
     /// // disable drag-and-drop polling when it's no longer needed
@@ -1149,7 +1107,7 @@ impl Window {
     /// - `enabled`: `true` to enable polling, `false` to disable it.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Receive scale changes on DPI transitions
     /// window.set_content_scale_polling(true);
     /// // Disable content scale polling when it's no longer needed
@@ -1165,7 +1123,7 @@ impl Window {
     /// This enables key, char and char-with-modifier polling in one call.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Enable keyboard-related event polling for typical applications
     /// window.enable_keyboard_polling();
     /// // Disable keyboard-related event polling when it's no longer needed
@@ -1179,7 +1137,7 @@ impl Window {
     /// Disables keyboard-related event polling as a convenience helper.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Enable keyboard-related event polling for typical applications
     /// window.enable_keyboard_polling();
     /// // Disable keyboard-related event polling when it's no longer needed
@@ -1195,7 +1153,7 @@ impl Window {
     /// This enables button, cursor position, cursor enter and scroll polling.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Enable mouse-related event polling for typical applications
     /// window.enable_mouse_polling();
     /// // Disable mouse-related event polling when it's no longer needed
@@ -1209,7 +1167,7 @@ impl Window {
     /// Disables mouse-related event polling as a convenience helper.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Enable mouse-related event polling for typical applications
     /// window.enable_mouse_polling();
     /// // Disable mouse-related event polling when it's no longer needed
@@ -1223,7 +1181,7 @@ impl Window {
     /// Enables window-state-related event polling as a convenience helper.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Enable window-state-related event polling for typical applications
     /// window.enable_window_state_polling();
     /// // Disable window-state-related event polling when it's no longer needed
@@ -1237,7 +1195,7 @@ impl Window {
     /// Disables window-state-related event polling as a convenience helper.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Enable window-state-related event polling for typical applications
     /// window.enable_window_state_polling();
     /// // Disable window-state-related event polling when it's no longer needed
@@ -1253,10 +1211,10 @@ impl Window {
     /// This is equivalent to enabling keyboard, mouse and window-state polling.
     ///
     /// # Example
-    /// ```
-    /// /// Enable the default polling configuration for typical applications
+    /// ```rust,ignore
+    /// // Enable the default polling configuration for typical applications
     /// window.configure_window_polling();
-    /// /// Disable the default polling configuration when it's no longer needed
+    /// // Disable the default polling configuration when it's no longer needed
     /// window.unconfigure_window_polling();
     /// ```
     #[inline]
@@ -1267,10 +1225,10 @@ impl Window {
     /// Disables the default polling configuration enabled by `configure_window_polling`.
     ///
     /// # Example
-    /// ```
-    /// /// Enable the default polling configuration for typical applications
+    /// ```rust,ignore
+    /// // Enable the default polling configuration for typical applications
     /// window.configure_window_polling();
-    /// /// Disable the default polling configuration when it's no longer needed
+    /// // Disable the default polling configuration when it's no longer needed
     /// window.unconfigure_window_polling();
     /// ```
     #[inline]
@@ -1281,7 +1239,7 @@ impl Window {
     /// Enables all polling flags exposed by GLFW for this window.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// window.enable_all_polling();
     /// ```
     #[inline]
@@ -1296,11 +1254,11 @@ impl Window {
     /// - `false` if a close event has been triggered.
     ///
     /// # Example
-    /// ```
-    /// let win = ...; // Obtain a reference to the Window instance
-    /// // Main application loop
-    /// while win.is_open() {
-    ///     // Poll events and rendering code here
+    /// ```rust,ignore
+    /// while window.is_open() {
+    ///     for event in window.poll_events() {
+    ///         println!("{event:?}");
+    ///     }
     /// }
     /// println!("Window has been closed.");
     /// ```
@@ -1315,9 +1273,9 @@ impl Window {
     /// `true` if the window is ready for rendering and event processing.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,ignore
     /// // Check if the window is ready before starting the main loop
-    /// if win.is_ready() {
+    /// if window.is_ready() {
     ///     println!("Window is ready for use!");
     /// } else {
     ///     println!("Window is not ready yet.");
@@ -1334,10 +1292,10 @@ impl Window {
     /// This triggers a close event that can be handled in the event loop.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Close the window when the user presses the Escape key
-    /// if win.input().keyboard().is_pressed(Key::Escape) {
-    ///     win.close();
+    /// if window.input().keyboard().is_pressed(Key::Escape) {
+    ///     window.close();
     /// }
     /// ```
     #[inline]
@@ -1348,13 +1306,13 @@ impl Window {
     /// Returns a reference to the input state manager.
     ///
     /// # Example
-    /// ```
+    /// ```rust,ignore
     /// // Check if the A key is currently pressed
-    /// if win.input().keyboard().is_down(Key::A) {
+    /// if window.input().keyboard().is_down(Key::A) {
     ///     println!("Key A is currently pressed!");
     /// }
     /// // Check if the left mouse button was released in the current frame
-    /// if win.input().mouse().is_released(MouseButton::Left) {
+    /// if window.input().mouse().is_released(MouseButton::Left) {
     ///     println!("The left mouse button was released!");
     /// }
     /// ```
@@ -1368,14 +1326,12 @@ impl Window {
     /// This color is used when clearing the framebuffer before rendering a new frame.
     ///
     /// # Arguments
-    /// - `color`: An array of four `f32` values representing the RGBA components of the clear color.
+    /// - `color`: RGBA components in the range `[0, 255]`.
     ///
     /// # Example
-    /// ```
-    /// // Set the clear color to opaque red
-    /// window.set_clear_color([1.0, 0.0, 0.0, 1.0]);
-    /// // Set the clear color to semi-transparent blue
-    /// window.set_clear_color([0.0, 0.0, 1.0, 0.5]);
+    /// ```rust,ignore
+    /// window.set_clear_color([255.0, 0.0, 0.0, 255.0]);
+    /// window.set_clear_color([0.0, 0.0, 255.0, 128.0]);
     /// ```
     #[inline]
     pub fn set_clear_color(&mut self, color: Rgba) {

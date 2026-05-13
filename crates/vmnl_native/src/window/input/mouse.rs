@@ -136,9 +136,11 @@ impl MouseState {
     /// - `button`: The `MouseButton` to check.
     ///
     /// # Example
-    /// ```
-    /// // Check if the left mouse button is currently pressed
-    /// if win.input().mouse().is_down(MouseButton::Left) {
+    /// ```rust
+    /// use vmnl_native::{Input, MouseButton};
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_down(MouseButton::Left) {
     ///     println!("The left mouse button is currently pressed!");
     /// }
     /// ```
@@ -152,9 +154,11 @@ impl MouseState {
     /// - `button`: The `MouseButton` to check.
     ///
     /// # Example
-    /// ```
-    /// // Check if the left mouse button was pressed in the current frame
-    /// if win.input().mouse().is_pressed(MouseButton::Left) {
+    /// ```rust
+    /// use vmnl_native::{Input, MouseButton};
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_pressed(MouseButton::Left) {
     ///     println!("The left mouse button was pressed!");
     /// }
     /// ```
@@ -168,9 +172,11 @@ impl MouseState {
     /// - `button`: The `MouseButton` to check.
     ///
     /// # Example
-    /// ```
-    /// // Check if the left mouse button was released in the current frame
-    /// if win.input().mouse().is_released(MouseButton::Left) {
+    /// ```rust
+    /// use vmnl_native::{Input, MouseButton};
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_released(MouseButton::Left) {
     ///     println!("The left mouse button was released!");
     /// }
     /// ```
@@ -184,9 +190,11 @@ impl MouseState {
     /// - `buttons`: A slice of `MouseButton` variants to check.
     ///
     /// # Example
-    /// ```
-    /// // Check if any of the left or right mouse buttons are currently pressed
-    /// if win.input().mouse().is_any_down(&[MouseButton::Left, MouseButton::Right]) {
+    /// ```rust
+    /// use vmnl_native::{Input, MouseButton};
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_any_down(&[MouseButton::Left, MouseButton::Right]) {
     ///     println!("The left or right mouse button is currently pressed!");
     /// }
     /// ```
@@ -205,9 +213,11 @@ impl MouseState {
     /// - `buttons`: A slice of `MouseButton` variants to check.
     ///
     /// # Example
-    /// ```
-    /// // Check if any of the left or right mouse buttons were pressed in the current frame
-    /// if win.input().mouse().is_any_pressed(&[MouseButton::Left, MouseButton::Right]) {
+    /// ```rust
+    /// use vmnl_native::{Input, MouseButton};
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_any_pressed(&[MouseButton::Left, MouseButton::Right]) {
     ///     println!("The left or right mouse button was pressed!");
     /// }
     /// ```
@@ -226,11 +236,14 @@ impl MouseState {
     /// - `buttons`: A slice of `MouseButton` variants to check.
     ///
     /// # Example
-    /// ```
-    /// // Check if any of the left or right mouse buttons were released in the current frame
-    /// if win.input().mouse().is_any_released(&[MouseButton::Left, MouseButton::Right]) {
+    /// ```rust
+    /// use vmnl_native::{Input, MouseButton};
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_any_released(&[MouseButton::Left, MouseButton::Right]) {
     ///     println!("The left or right mouse button was released!");
     /// }
+    /// ```
     pub fn is_any_released(&self, buttons: &[MouseButton]) -> bool {
         for &button in buttons {
             if self.is_released(button) {
@@ -246,11 +259,14 @@ impl MouseState {
     /// - `buttons`: A slice of `MouseButton` variants to check.
     ///
     /// # Example
-    /// ```
-    /// // Check if any of the left or right mouse buttons were used in the current frame
-    /// if win.input().mouse().is_any_used(&[MouseButton::Left, MouseButton::Right]) {
+    /// ```rust
+    /// use vmnl_native::{Input, MouseButton};
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_any_used(&[MouseButton::Left, MouseButton::Right]) {
     ///     println!("The left or right mouse button was used!");
     /// }
+    /// ```
     pub fn is_any_used(&self, buttons: &[MouseButton]) -> bool {
         for &button in buttons {
             if self.is_down(button) || self.is_pressed(button) || self.is_released(button) {
@@ -263,9 +279,11 @@ impl MouseState {
     /// Returns `true` if any mouse button is currently pressed.
     ///
     /// # Example
-    /// ```
-    /// // Check if any mouse button is currently pressed
-    /// if win.input().mouse().is_one_down() {
+    /// ```rust
+    /// use vmnl_native::Input;
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_one_down() {
     ///     println!("A mouse button is currently pressed!");
     /// }
     /// ```
@@ -281,9 +299,11 @@ impl MouseState {
     /// Returns `true` if any mouse button was pressed in the current frame.
     ///
     /// # Example
-    /// ```
-    /// // Check if any mouse button was pressed in the current frame
-    /// if win.input().mouse().is_one_pressed() {
+    /// ```rust
+    /// use vmnl_native::Input;
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_one_pressed() {
     ///     println!("A mouse button was pressed!");
     /// }
     /// ```
@@ -299,9 +319,11 @@ impl MouseState {
     /// Returns `true` if any mouse button was released in the current frame.
     ///
     /// # Example
-    /// ```
-    /// // Check if any mouse button was released in the current frame
-    /// if win.input().mouse().is_one_released() {
+    /// ```rust
+    /// use vmnl_native::Input;
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_one_released() {
     ///     println!("A mouse button was released!");
     /// }
     /// ```
@@ -317,9 +339,11 @@ impl MouseState {
     /// Returns `true` if any mouse button was used (pressed, released, or down) in the current frame.
     ///
     /// # Example
-    /// ```
-    /// // Check if any mouse button was used in the current frame
-    /// if win.input().mouse().is_one_used() {
+    /// ```rust
+    /// use vmnl_native::Input;
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_one_used() {
     ///     println!("A mouse button was used!");
     /// }
     /// ```

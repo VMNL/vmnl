@@ -43,10 +43,12 @@ pub enum ShapeKind {
 /// Vertex with a 2D position and Rgba color.
 ///
 /// # Example
-/// ```
+/// ```rust
+/// use vmnl_native::{Vector2f, Vertex};
+///
 /// let vertex = Vertex {
 ///     position: Vector2f { x: 100.0, y: 150.0 },
-///     color: [255, 0, 0, 225]
+///     color: [255.0, 0.0, 0.0, 255.0],
 /// };
 /// ```
 #[repr(C)]
@@ -105,11 +107,16 @@ impl Shape {
     /// `position` defaults to `(0, 0)` and `color` defaults to white.
     ///
     /// # Example
-    /// ```
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Shape};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let rectangle = Shape::rect(200.0, 100.0)
     ///     .position(100.0, 150.0)
     ///     .color([255.0, 0.0, 0.0, 255.0])
-    ///     .build(&vmnl_context);
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn rect(w: f32, h: f32) -> RectBuilder {
         RectBuilder::new(Vector2f { x: w, y: h })
@@ -120,9 +127,21 @@ impl Shape {
     /// `build` validates that indices describe triangles and stay within bounds.
     ///
     /// # Example
-    /// ```
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Shape, Vector2f, Vertex};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let vertices = [
+    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: [255.0, 0.0, 0.0, 255.0] },
+    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: [0.0, 255.0, 0.0, 255.0] },
+    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: [0.0, 0.0, 255.0, 255.0] },
+    /// ];
+    /// let indices = [0, 1, 2];
+    ///
     /// let indexed_shape = Shape::indexed(vertices, indices)
-    ///     .build(&vmnl_context);
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn indexed<V, I>(vertices: V, indices: I) -> IndexedShapeBuilder
     where
@@ -135,21 +154,26 @@ impl Shape {
     /// Create a triangle builder from exactly three required vertices.
     ///
     /// # Example
-    /// ```
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Shape, Vector2f, Vertex};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let vertex1 = Vertex {
     ///     position: Vector2f { x: 100.0, y: 150.0 },
-    ///     color: [255.0, 0.0, 0.0, 255.0] // Red color
+    ///     color: [255.0, 0.0, 0.0, 255.0],
     /// };
     /// let vertex2 = Vertex {
     ///     position: Vector2f { x: 300.0, y: 150.0 },
-    ///     color: [0.0, 255.0, 0.0, 255.0] // Green color
+    ///     color: [0.0, 255.0, 0.0, 255.0],
     /// };
     /// let vertex3 = Vertex {
     ///     position: Vector2f { x: 200.0, y: 300.0 },
-    ///     color: [0.0, 0.0, 255.0, 255.0] // Blue color
+    ///     color: [0.0, 0.0, 255.0, 255.0],
     /// };
     /// let triangle = Shape::triangle([vertex1, vertex2, vertex3])
-    ///     .build(&vmnl_context);
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn triangle(vertices: [Vertex; 3]) -> TriangleBuilder {
         TriangleBuilder::new(vertices)
@@ -160,12 +184,17 @@ impl Shape {
     /// `width` defaults to `1.0`, `cap` defaults to `Butt`, and `color` defaults to white.
     ///
     /// # Example
-    /// ```
-    /// let line = Shape::line(from, to)
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, LineCap, Shape, Vector2f};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
     ///     .width(5.0)
     ///     .cap(LineCap::Round)
     ///     .color([0.0, 0.0, 255.0, 255.0])
-    ///     .build(&vmnl_context);
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn line(from: Vector2f, to: Vector2f) -> LineBuilder {
         LineBuilder::new(from, to)

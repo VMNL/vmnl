@@ -71,11 +71,15 @@ impl LineBuilder {
     /// - `width`: The desired width of the line in pixels. Must be a positive value.
     ///
     /// # Example
-    /// ```rust
-    /// let line = Shape::line(from, to)
-    ///     // ...
-    ///     .width(5.0) // Here the line width is set to 5 pixels, which will render a thicker line
-    ///     .build(&vmnl_context);
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Shape, Vector2f};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
+    ///     .width(5.0)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn width(mut self, width: f32) -> Self {
         self.options.width = width;
@@ -88,11 +92,15 @@ impl LineBuilder {
     /// - `cap`: The desired line cap style, which can be `Butt`, `Round`, or `Square`.
     ///
     /// # Example
-    /// ```rust
-    /// let line = Shape::line(from, to)
-    ///     // ...
-    ///     .cap(LineCap::Round) // Here the line cap style is set to round, which will render rounded ends on the line
-    ///     .build(&vmnl_context);
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, LineCap, Shape, Vector2f};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
+    ///     .cap(LineCap::Round)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn cap(mut self, cap: LineCap) -> Self {
         self.options.cap = cap;
@@ -105,11 +113,15 @@ impl LineBuilder {
     /// - `color`: RGBA color of the line as an array of four `f32` values in the range `[0, 255]`, representing red, green, blue, and alpha components respectively.
     ///
     /// # Example
-    /// ```rust
-    /// let line = Shape::line(from, to)
-    ///     // ...
-    ///     .color([0.0, 0.0, 255.0, 255.0]) // Here the color is set to blue with full opacity
-    ///     .build(&vmnl_context);
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Shape, Vector2f};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
+    ///     .color([0.0, 0.0, 255.0, 255.0])
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn color(mut self, color: Rgba) -> Self {
         self.options.color = color;
@@ -130,12 +142,17 @@ impl LineBuilder {
     /// A `Shape` instance representing the line, ready for rendering.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, LineCap, Shape, Vector2f};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
     ///     .width(5.0)
     ///     .cap(LineCap::Round)
     ///     .color([0.0, 0.0, 255.0, 255.0])
-    ///     .build(&vmnl_context);
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn build(self, context: &Context) -> VMNLResult<Shape> {
         Self::line(

@@ -37,9 +37,21 @@ impl IndexedShapeBuilder {
     /// a vertex outside the provided vertex list.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Shape, Vector2f, Vertex};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let vertices = [
+    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: [255.0, 0.0, 0.0, 255.0] },
+    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: [0.0, 255.0, 0.0, 255.0] },
+    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: [0.0, 0.0, 255.0, 255.0] },
+    /// ];
+    /// let indices = [0, 1, 2];
+    ///
     /// let indexed_shape = Shape::indexed(vertices, indices)
-    ///     .build(&vmnl_context);
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn build(self, vmnl_context: &Context) -> VMNLResult<Shape> {
         Self::indexed_shape(vmnl_context, &self.options.vertices, &self.options.indices)
