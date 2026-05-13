@@ -121,19 +121,9 @@ impl RectBuilder {
         size: Vector2f,
         color: Rgba,
     ) -> VMNLResult<Shape> {
-        if size.x <= 0.0 || size.y <= 0.0 {
+        if size.x < 0.0 || size.y < 0.0 {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                 "rectangle size must be strictly positive".to_string(),
-            )));
-        }
-        if position.x.is_infinite() || position.y.is_infinite() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "rectangle position must be finite".to_string(),
-            )));
-        }
-        if position.x.is_nan() || position.y.is_nan() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "rectangle position must not be NaN".to_string(),
             )));
         }
         if size.x == 0.0 || size.y == 0.0 {
@@ -149,6 +139,16 @@ impl RectBuilder {
         if size.x.is_nan() || size.y.is_nan() {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                 "rectangle size must not be NaN".to_string(),
+            )));
+        }
+        if position.x.is_infinite() || position.y.is_infinite() {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "rectangle position must be finite".to_string(),
+            )));
+        }
+        if position.x.is_nan() || position.y.is_nan() {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "rectangle position must not be NaN".to_string(),
             )));
         }
 

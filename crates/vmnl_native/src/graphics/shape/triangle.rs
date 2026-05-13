@@ -42,6 +42,7 @@ impl TriangleBuilder {
     /// };
     /// let triangle = Shape::triangle([vertex1, vertex2, vertex3])
     ///     .build(&vmnl_context);
+    /// ```
     pub fn build(self, vmnl_context: &Context) -> VMNLResult<Shape> {
         let [a, b, c] = self.vertices;
         Self::triangle(vmnl_context, a, b, c)
