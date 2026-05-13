@@ -50,24 +50,31 @@ impl Context {
     /// fails, such as instance creation, physical device selection, or logical device creation.
     ///
     /// # Example
-    /// ```
-    /// use vmnl::Context;
+    /// ```rust,no_run
+    /// use vmnl_native::{Context, Shape, Vector2f, Vertex, Window};
     ///
-    /// let context = Context::new().expect("Failed to create VMNL context");
-    /// let window = Window::new(&context, 800, 600, "My Window").expect("Failed to create window");
-    /// let triangle = Shape::create_triangle(
-    ///     &context,
-    ///     VMNLVertex { position: [0.0, 0.0], color: [255.0, 0.0, 0.0] },  // Vertex 1: Red
-    ///     VMNLVertex { position: [1.0, 0.0], color: [0.0, 255.0, 0.0] },  // Vertex 2: Green
-    ///     VMNLVertex { position: [0.0, 1.0], color: [0.0, 0.0, 255.0] },  // Vertex 3: Blue
-    /// ).expect("Failed to create triangle graphics");
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// let context = Context::new()?;
+    /// let mut window = Window::builder()
+    ///     .title("VMNL")
+    ///     .size(800, 600)
+    ///     .build(&context)?;
+    ///
+    /// let triangle = Shape::triangle([
+    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: [255.0, 0.0, 0.0, 255.0] },
+    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: [0.0, 255.0, 0.0, 255.0] },
+    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: [0.0, 0.0, 255.0, 255.0] },
+    /// ])
+    /// .build(&context)?;
     ///
     /// while window.is_open() {
     ///     for event in window.poll_events() {
-    ///         // Handle events (e.g., input, window close)
+    ///         println!("{event:?}");
     ///     }
-    ///     window.render(&[&triangle].as_slice()).expect("Failed to render frame");
+    ///     window.render([&triangle]).per_object()?;
     /// }
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new() -> VMNLResult<Self> {
         Ok(Self {

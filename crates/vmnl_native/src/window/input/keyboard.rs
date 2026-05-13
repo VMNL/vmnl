@@ -385,10 +385,14 @@ impl KeyboardState {
     /// - `key`: The `Key` variant to check.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_down(Key::A) {
+    /// ```rust
+    /// use vmnl_native::{Input, Key};
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_down(Key::A) {
     ///     println!("Key A is currently down!");
     /// }
+    /// ```
     pub const fn is_down(&self, key: Key) -> bool {
         self.current[Self::index(key)]
     }
@@ -399,10 +403,14 @@ impl KeyboardState {
     /// - `key`: The `Key` variant to check.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_pressed(Key::A) {
+    /// ```rust
+    /// use vmnl_native::{Input, Key};
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_pressed(Key::A) {
     ///     println!("Key A was pressed!");
     /// }
+    /// ```
     pub const fn is_pressed(&self, key: Key) -> bool {
         self.current[Self::index(key)] && !self.previous[Self::index(key)]
     }
@@ -413,10 +421,14 @@ impl KeyboardState {
     /// - `key`: The `Key` variant to check.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_released(Key::A) {
+    /// ```rust
+    /// use vmnl_native::{Input, Key};
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_released(Key::A) {
     ///     println!("Key A was released!");
     /// }
+    /// ```
     pub const fn is_released(&self, key: Key) -> bool {
         !self.current[Self::index(key)] && self.previous[Self::index(key)]
     }
@@ -427,10 +439,14 @@ impl KeyboardState {
     /// - `keys`: A slice of `Key` variants to check.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_any_pressed(&[Key::A, Key::B, Key::C]) {
+    /// ```rust
+    /// use vmnl_native::{Input, Key};
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_any_pressed(&[Key::A, Key::B, Key::C]) {
     ///     println!("A, B, or C was pressed!");
     /// }
+    /// ```
     pub fn is_any_pressed(&self, keys: &[Key]) -> bool {
         for &key in keys {
             if self.is_pressed(key) {
@@ -446,10 +462,14 @@ impl KeyboardState {
     /// - `keys`: A slice of `Key` variants to check.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_any_released(&[Key::A, Key::B, Key::C]) {
+    /// ```rust
+    /// use vmnl_native::{Input, Key};
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_any_released(&[Key::A, Key::B, Key::C]) {
     ///     println!("A, B, or C was released!");
     /// }
+    /// ```
     pub fn is_any_released(&self, keys: &[Key]) -> bool {
         for &key in keys {
             if self.is_released(key) {
@@ -465,10 +485,14 @@ impl KeyboardState {
     /// - `keys`: A slice of `Key` variants to check.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_any_down(&[Key::A, Key::B, Key::C]) {
+    /// ```rust
+    /// use vmnl_native::{Input, Key};
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_any_down(&[Key::A, Key::B, Key::C]) {
     ///     println!("A, B, or C is currently down!");
     /// }
+    /// ```
     pub fn is_any_down(&self, keys: &[Key]) -> bool {
         for &key in keys {
             if self.is_down(key) {
@@ -484,8 +508,11 @@ impl KeyboardState {
     /// - `keys`: A slice of `Key` variants to check.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_any_used(&[Key::A, Key::B, Key::C]) {
+    /// ```rust
+    /// use vmnl_native::{Input, Key};
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_any_used(&[Key::A, Key::B, Key::C]) {
     ///     println!("A, B, or C was used!");
     /// }
     /// ```
@@ -501,8 +528,11 @@ impl KeyboardState {
     /// Returns `true` if any key was pressed in the current frame.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_one_pressed() {
+    /// ```rust
+    /// use vmnl_native::Input;
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_one_pressed() {
     ///     println!("A key was pressed!");
     /// }
     /// ```
@@ -518,8 +548,11 @@ impl KeyboardState {
     /// Returns `true` if any key was released in the current frame.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_one_released() {
+    /// ```rust
+    /// use vmnl_native::Input;
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_one_released() {
     ///     println!("A key was released!");
     /// }
     /// ```
@@ -535,8 +568,11 @@ impl KeyboardState {
     /// Returns `true` if any key is currently down.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_one_down() {
+    /// ```rust
+    /// use vmnl_native::Input;
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_one_down() {
     ///     println!("A key is currently down!");
     /// }
     /// ```
@@ -552,8 +588,11 @@ impl KeyboardState {
     /// Returns `true` if any key was used (pressed, released, or down) in the current frame.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_one_used() {
+    /// ```rust
+    /// use vmnl_native::Input;
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_one_used() {
     ///     println!("A key was used!");
     /// }
     /// ```

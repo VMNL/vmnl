@@ -105,8 +105,12 @@ impl Monitors {
 
     /// Returns a slice of `MonitorInfo` for all connected monitors.
     /// # Example
-    /// ```rust
-    /// for monitor in win.monitor().infos() {
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// # let window = Window::builder().build(&context)?;
+    /// for monitor in window.monitor().infos() {
     ///     println!("Monitor: {}", monitor.name.clone().unwrap_or("Unknown".to_string()));
     ///     println!("  Position: ({}, {})", monitor.position.0, monitor.position.1);
     ///     println!("  Physical Size: {}mm x {}mm", monitor.physical_size_mm.0, monitor.physical_size_mm.1);
@@ -118,6 +122,8 @@ impl Monitors {
     ///         println!("    - {}x{} @ {}Hz", mode.width, mode.height, mode.refresh_rate);
     ///     }
     /// }
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn infos(&self) -> &[MonitorInfo] {
         &self.info
@@ -126,9 +132,15 @@ impl Monitors {
     /// Returns a vector of monitor names for all connected monitors.
     ///
     /// # Example
-    /// ```rust
-    /// let monitor_names = win.monitor().names();
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// # let window = Window::builder().build(&context)?;
+    /// let monitor_names = window.monitor().names();
     /// println!("Connected monitors: {}", monitor_names.iter().map(|name| name.clone().unwrap_or("Unknown".to_string())).collect::<Vec<String>>().join(", "));
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn names(&self) -> Vec<Option<String>> {
         self.info.iter().map(|info| info.name.clone()).collect()
@@ -137,17 +149,23 @@ impl Monitors {
     /// Returns a reference to the primary monitor's information, if available.
     ///
     /// # Example
-    /// ```rust
-    /// if let Some(primary_monitor) = win.monitor().primary() {
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// # let window = Window::builder().build(&context)?;
+    /// if let Some(primary_monitor) = window.monitor().primary() {
     ///     println!("Primary Monitor: {}", primary_monitor.name.clone().unwrap_or("Unknown".to_string()));
     ///     println!("  Position: ({}, {})", primary_monitor.position.0, primary_monitor.position.1);
     ///     println!("  Physical Size: {}mm x {}mm", primary_monitor.physical_size_mm.0, primary_monitor.physical_size_mm.1);
     ///     println!("  Content Scale: ({}, {})", primary_monitor.content_scale.0, primary_monitor.content_scale.1);
     ///     println!("  Work Area: ({}x{} at ({}, {}))", primary_monitor.workarea.2, primary_monitor.workarea.3, primary_monitor.workarea.0, primary_monitor.workarea.1);
-    ///     println!("  Current Mode: {}x{} @ {}Hz ({} bits per channel)", primary_monitor.current_mode.as_ref().map_or(0, |mode| mode.width),
-    ///     primary_monitor.current_mode.as_ref().map_or(0, |mode| mode.height),
-    ///     primary_monitor.current_mode.as_ref().map_or(0, |mode| mode.refresh_rate),
-    ///     primary_monitor.current_mode.as_ref().map_or(0, |mode|) mode.red_bits + mode.green_bits + mode.blue_bits));
+    ///     if let Some(mode) = &primary_monitor.current_mode {
+    ///         println!(
+    ///             "  Current Mode: {}x{} @ {}Hz",
+    ///             mode.width, mode.height, mode.refresh_rate
+    ///         );
+    ///     }
     ///     println!("  Available Modes:");
     ///     for mode in &primary_monitor.available_modes {
     ///         println!("    - {}x{} @ {}Hz", mode.width, mode.height, mode.refresh_rate);
@@ -155,6 +173,8 @@ impl Monitors {
     /// } else {
     ///     println!("No primary monitor detected.");
     /// }
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn primary(&self) -> Option<&MonitorInfo> {
         self.info.iter().find(|info| info.is_primary)

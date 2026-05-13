@@ -18,7 +18,7 @@ use crate::window::state::WindowState;
 use crate::window::{shaders::fs, shaders::vs, shaders::ShaderInput, shaders::WindowShaders};
 use crate::Context;
 use crate::VMNLResult;
-use crate::VMNLVertex;
+use crate::Vertex;
 use std::rc::Rc;
 use std::sync::Arc;
 use vulkano::{
@@ -34,7 +34,7 @@ use vulkano::{
         graphics::input_assembly::InputAssemblyState,
         graphics::multisample::MultisampleState,
         graphics::rasterization::RasterizationState,
-        graphics::vertex_input::{Vertex, VertexDefinition, VertexInputState},
+        graphics::vertex_input::{Vertex as VulkanoVertex, VertexDefinition, VertexInputState},
         graphics::viewport::ViewportState,
         graphics::GraphicsPipelineCreateInfo,
         layout::PipelineDescriptorSetLayoutCreateInfo,
@@ -396,7 +396,7 @@ impl VMNLWindow {
         .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanPipelineLayoutCreationFailed))?;
         let subpass: Subpass = Subpass::from(render_pass.clone(), 0)
             .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed))?;
-        let vertex_input_state: VertexInputState = VMNLVertex::per_vertex()
+        let vertex_input_state: VertexInputState = Vertex::per_vertex()
             .definition(&vs)
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
 

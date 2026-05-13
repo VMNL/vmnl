@@ -6,8 +6,11 @@
 /// textures, and text.
 ////////////////////////////////////////////////////////////////////////////////
 pub mod shape;
-
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
+use bytemuck::{Pod, Zeroable};
+pub(crate) use shape::VertexBuffer;
+pub use shape::{LineCap, Shape, Vertex};
+use std::cmp::Ordering;
 use std::sync::Arc;
 use vulkano::{
     buffer::BufferContents,
@@ -15,30 +18,44 @@ use vulkano::{
     memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, StandardMemoryAllocator},
 };
 
-pub(crate) use shape::VMNLVertexBuffer;
-pub use shape::{Shape, VMNLRect, VMNLVertex};
-
 /// Index buffer alias shared by graphics resources using indexed draws.
 pub type VMNLIndexBuffer = Subbuffer<[u32]>;
 /// Uniform buffer object for frame data.
 #[allow(dead_code)]
 pub type VMNLFrameUboBuffer = Subbuffer<VMNLFrameUbo>;
-/// RGB color represented as `[r, g, b]` (f32).
-pub type VMNLrbg = [f32; 3];
 /// RGBA color represented as `[r, g, b, a]` (f32).
-pub type VMNLrgba = [f32; 4];
+pub type Rgba = [f32; 4];
 /// 2D vector of `f32` values.
-pub type VMNLVector2f = [f32; 2];
-/// 2D vector of `i32` values.
-pub type VMNLVector2i = [i32; 2];
+#[derive(Clone, Copy, Debug, Default, Pod, Zeroable, PartialEq)]
+#[repr(C)]
+pub struct Vector2f {
+    pub x: f32,
+    pub y: f32,
+}
+
+impl Eq for Vector2f {}
+
+impl Ord for Vector2f {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.x
+            .total_cmp(&other.x)
+            .then_with(|| self.y.total_cmp(&other.y))
+    }
+}
+
+impl PartialOrd for Vector2f {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
 /// Information about a connected monitor.
 #[repr(C)]
-#[derive(BufferContents, Clone, Copy, Debug, Default)]
+#[derive(BufferContents, Clone, Copy, Debug, Default, PartialEq)]
 #[allow(dead_code)]
 pub struct VMNLFrameUbo {
     /// Background color for the frame as `[r, g, b, a]`.
-    color: VMNLrgba,
+    color: Rgba,
 }
 
 /// Backend pipeline selector for 2D draw items.
@@ -63,7 +80,7 @@ pub(crate) struct RenderItem {
     /// Material family required to draw the item.
     pub(crate) material_key: MaterialKey,
     /// Vertex buffer consumed by the active pipeline.
-    pub(crate) vertex_buffer: VMNLVertexBuffer,
+    pub(crate) vertex_buffer: VertexBuffer,
     /// Optional index buffer for indexed geometry.
     pub(crate) index_buffer: Option<VMNLIndexBuffer>,
     /// Number of vertices to draw when no index buffer is present.
@@ -80,6 +97,17 @@ pub(crate) trait Drawable {
 
 /// Shared GPU buffer construction helpers for render resources.
 pub(crate) trait GraphicsResourceFactory {
+    /// Generic helper to create a GPU buffer from an iterator of data.
+    /// This abstracts the common pattern of buffer creation and error handling for different buffer types.
+    ///
+    /// # Arguments
+    /// - `iter`: An iterator yielding items of type `T` to be uploaded to the GPU.
+    /// - `usage`: Vulkan buffer usage flags indicating how the buffer will be used (e.g., vertex buffer, index buffer).
+    /// - `memory_allocator`: Reference to the memory allocator for buffer creation.
+    /// - `error_kind`: Specific error kind to return if buffer creation fails.
+    ///
+    /// # Returns
+    /// A `VMNLResult` containing the created buffer or an error if creation fails.
     fn create_buffer_from_iter<T, I>(
         iter: I,
         usage: BufferUsage,
@@ -107,7 +135,43 @@ pub(crate) trait GraphicsResourceFactory {
         .map_err(|_| VMNLError::new(error_kind))
     }
 
-    /// Create a vertex buffer from an array of `VMNLVertex` instances.
+    /// Generic helper to create a GPU buffer from a single data item.
+    /// This abstracts the common pattern of buffer creation and error handling for different buffer types.
+    ///
+    /// # Arguments
+    /// - `data`: The data to upload to the GPU.
+    /// - `usage`: Vulkan buffer usage flags indicating how the buffer will be used (e.g., vertex buffer, index buffer).
+    /// - `memory_allocator`: Reference to the memory allocator for buffer creation.
+    /// - `error_kind`: Specific error kind to return if buffer creation fails.
+    ///
+    /// # Returns
+    /// A `VMNLResult` containing the created buffer or an error if creation fails.
+    fn create_buffer_from_data<T>(
+        data: T,
+        usage: BufferUsage,
+        memory_allocator: &Arc<StandardMemoryAllocator>,
+        error_kind: VMNLErrorKind,
+    ) -> VMNLResult<Subbuffer<T>>
+    where
+        T: BufferContents,
+    {
+        Buffer::from_data(
+            memory_allocator.clone(),
+            BufferCreateInfo {
+                usage,
+                ..Default::default()
+            },
+            AllocationCreateInfo {
+                memory_type_filter: MemoryTypeFilter::PREFER_HOST
+                    | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                ..Default::default()
+            },
+            data,
+        )
+        .map_err(|_| VMNLError::new(error_kind))
+    }
+
+    /// Create a vertex buffer from an array of `Vertex` instances.
     ///
     /// # Arguments
     /// - `vertices`: Slice of vertex data to upload to the GPU.
@@ -116,9 +180,9 @@ pub(crate) trait GraphicsResourceFactory {
     /// # Returns
     /// A `VMNLResult` containing the created vertex buffer or an error if creation fails.
     fn create_vertex_buffer(
-        vertices: &[VMNLVertex],
+        vertices: &[Vertex],
         memory_allocator: &Arc<StandardMemoryAllocator>,
-    ) -> VMNLResult<VMNLVertexBuffer> {
+    ) -> VMNLResult<VertexBuffer> {
         Self::create_buffer_from_iter(
             vertices.iter().copied(),
             BufferUsage::VERTEX_BUFFER,
@@ -160,19 +224,11 @@ pub(crate) trait GraphicsResourceFactory {
         ubo: VMNLFrameUbo,
         memory_allocator: &Arc<StandardMemoryAllocator>,
     ) -> VMNLResult<VMNLFrameUboBuffer> {
-        Buffer::from_data(
-            memory_allocator.clone(),
-            BufferCreateInfo {
-                usage: BufferUsage::UNIFORM_BUFFER,
-                ..Default::default()
-            },
-            AllocationCreateInfo {
-                memory_type_filter: MemoryTypeFilter::PREFER_HOST
-                    | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                ..Default::default()
-            },
+        Self::create_buffer_from_data(
             ubo,
+            BufferUsage::UNIFORM_BUFFER,
+            memory_allocator,
+            VMNLErrorKind::VulkanFrameUboBufferCreationFailed,
         )
-        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanFrameUboBufferCreationFailed))
     }
 }

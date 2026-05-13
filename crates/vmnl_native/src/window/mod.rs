@@ -12,7 +12,7 @@
 extern crate glfw;
 use crate::{
     window::inner::VMNLWindow, window::shaders::ShaderInput, window::shaders::WindowShaders,
-    Context, Shape, VMNLError, VMNLErrorKind, VMNLResult, VMNLrgba,
+    Context, Rgba, Shape, VMNLError, VMNLErrorKind, VMNLResult,
 };
 pub mod api;
 pub mod config;
@@ -26,6 +26,7 @@ pub mod shaders;
 pub mod state;
 pub use event::{Event, EventQueue};
 pub use input::{Input, Key, KeyboardState, MouseButton, MouseState};
+pub use monitors::{MonitorInfo, Monitors, VideoMode};
 
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
@@ -128,10 +129,15 @@ impl WindowBuilder {
     /// - `title`: The desired title for the window.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .title("Custom Window")
     ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn title(mut self, title: &str) -> Self {
         self.options.title = title.to_string();
@@ -145,10 +151,15 @@ impl WindowBuilder {
     /// - `height`: The desired height of the window in pixels.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .size(1920, 1080)
     ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub const fn size(mut self, width: u32, height: u32) -> Self {
         self.options.width = width;
@@ -163,10 +174,15 @@ impl WindowBuilder {
     /// which can be useful in certain scenarios where event processing needs to be decoupled from rendering.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .unset_configure_window_polling()
     ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub const fn unset_configure_window_polling(mut self) -> Self {
         self.options.configure_window_polling = false;
@@ -196,11 +212,16 @@ impl WindowBuilder {
     ///   allowing the window to be resized freely in that direction.
     ///
     /// # Example
-    /// ```
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .size(1920, 1080)
     ///     .size_limit(Some(400), Some(300), Some(1920), Some(1080))?
     ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn size_limit(
         mut self,
@@ -223,10 +244,15 @@ impl WindowBuilder {
     /// - `path`: The file path to the compiled vertex shader in SPIR-V format.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .vs_from_file("assets/shaders/quad.vert.spv")
     ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn vs_from_file(mut self, path: impl AsRef<std::path::Path>) -> Self {
         self.options.shaders.vertex = Some(ShaderInput::Path(path.as_ref().into()));
@@ -239,10 +265,15 @@ impl WindowBuilder {
     /// - `path`: The file path to the compiled fragment shader in SPIR-V format.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .fs_from_file("assets/shaders/quad.frag.spv")
     ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn fs_from_file(mut self, path: impl AsRef<std::path::Path>) -> Self {
         self.options.shaders.fragment = Some(ShaderInput::Path(path.as_ref().into()));
@@ -256,7 +287,10 @@ impl WindowBuilder {
     /// - `source`: A string containing the GLSL source code for the vertex shader.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .vs_from_string("
     ///         #version 460
@@ -272,6 +306,8 @@ impl WindowBuilder {
     ///         }
     ///     ")
     ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn vs_from_string(mut self, source: impl Into<String>) -> Self {
         self.options.shaders.vertex = Some(ShaderInput::Src(source.into()));
@@ -285,7 +321,10 @@ impl WindowBuilder {
     /// - `source`: A string containing the GLSL source code for the fragment shader.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .fs_from_string("
     ///         #version 460
@@ -298,6 +337,8 @@ impl WindowBuilder {
     ///         }
     ///     ")
     ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn fs_from_string(mut self, source: impl Into<String>) -> Self {
         self.options.shaders.fragment = Some(ShaderInput::Src(source.into()));
@@ -310,12 +351,17 @@ impl WindowBuilder {
     /// - `clear_color`: An array of four `f32` values representing the red, green, blue, and alpha components of the clear color.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let window = Window::builder()
-    ///     .set_clear_color([0.0, 0.0, 0.0, 1.0]) // Opaque black clear color
+    ///     .set_clear_color([0.0, 0.0, 0.0, 255.0])
     ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
-    pub fn set_clear_color(mut self, clear_color: VMNLrgba) -> Self {
+    pub fn set_clear_color(mut self, clear_color: Rgba) -> Self {
         let [r, g, b, a] = clear_color;
 
         self.options.clear_color = [r / 255.0, g / 255.0, b / 255.0, a / 255.0];
@@ -351,29 +397,32 @@ impl Window {
     /// Provides a builder for constructing a `Window` instance with customizable options.
     ///
     /// # Example
-    /// ```rust
-    ///  let window = Window::builder()
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Window};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
     ///     .title("Custom Window")
     ///     .size(1920, 1080)
-    ///     .resizable(true)
-    ///     .visible(true)
     ///     .build(&context)?;
     ///
-    /// let window = Window::builder()
+    /// let window_with_shaders = Window::builder()
     ///     .title("Custom Window with Shaders")
     ///     .size(1920, 1080)
-    ///     .vs_from_file("../shaders/vs.txt")
+    ///     .vs_from_file("assets/shaders/quad.vert.spv")
     ///     .fs_from_string("
-    ///             #version 460
+    ///         #version 460
     ///
-    ///     layout(location = 0) in vec3 in_color;
-    ///     layout(location = 0) out vec4 f_color;
+    ///         layout(location = 0) in vec4 in_color;
+    ///         layout(location = 0) out vec4 f_color;
     ///
-    ///     void main() {
-    ///         f_color = vec4(in_color, 1.0);
-    ///     }
-    /// ")
-    ///.builder(&context)?;
+    ///         void main() {
+    ///             f_color = in_color;
+    ///         }
+    ///     ")
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     #[must_use]
     pub fn builder() -> WindowBuilder {

@@ -31,14 +31,17 @@ impl Input {
     /// Returns a reference to the current `KeyboardState`.
     ///
     /// # Example
-    /// ```
-    /// if win.input().keyboard().is_pressed(Key::A) {
+    /// ```rust
+    /// use vmnl_native::{Input, Key};
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_pressed(Key::A) {
     ///     println!("Key A was pressed!");
     /// }
-    /// if win.input().keyboard().is_any_down(&[Key::A, Key::B, Key::C]) {
+    /// if input.keyboard().is_any_down(&[Key::A, Key::B, Key::C]) {
     ///     println!("A, B, or C is currently down!");
     /// }
-    /// if win.input().keyboard().is_one_used() {
+    /// if input.keyboard().is_one_used() {
     ///     println!("A key was pressed!");
     /// }
     /// ```
@@ -51,14 +54,17 @@ impl Input {
     /// Returns a reference to the current `MouseState`.
     ///
     /// # Example
-    /// ```
-    /// if win.input().mouse().is_pressed(MouseButton::Left) {
+    /// ```rust
+    /// use vmnl_native::{Input, MouseButton};
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_pressed(MouseButton::Left) {
     ///     println!("Left mouse button was pressed!");
     /// }
-    /// if win.input().mouse().is_any_down(&[MouseButton::Left, MouseButton::Right]) {
+    /// if input.mouse().is_any_down(&[MouseButton::Left, MouseButton::Right]) {
     ///     println!("Left or right mouse button was down!");
     /// }
-    /// if win.input().mouse().is_one_used() {
+    /// if input.mouse().is_one_used() {
     ///     println!("A mouse button was used!");
     /// }
     /// ```
