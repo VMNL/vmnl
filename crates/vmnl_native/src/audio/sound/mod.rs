@@ -24,6 +24,7 @@ pub struct Sound
 {
     device: AudioDevice,
     path: PathBuf,
+    #[allow(dead_code)]
     decoded_audio: Arc<DecodedAudio>,
 }
 
@@ -31,6 +32,7 @@ pub struct Sound
 pub struct SoundHandle
 {
     state: Arc<Mutex<SoundState>>,
+    sound: Arc<Mutex<miniaudio::Sound<'static>>>,
 }
 
 impl Sound
@@ -46,16 +48,16 @@ impl Sound
 
     pub fn play(&self) -> Result<SoundHandle, AudioError>
     {
-        let state = SoundState {
-            volume: 1.0,
-            looping: false,
-            playing: true,
-        };
+        let backend = self.device.backend.lock().unwrap();
 
-        // TODO:
-        // Submit sound to Miniaudio backend
+        let mut sound = miniaudio::Sound::from_file(&backend.engine, self.path.to_str().unwrap(), miniaudio::SoundFlags::DECODE,)
+        .map_err(|e| { AudioError::DecoderFailed(e.to_string()) })?;
 
-        Ok(SoundHandle { state: Arc::new(Mutex::new(state)) })
+        sound.start().map_err(|e| { AudioError::InvalidState(e.to_string()) })?;
+
+        Ok(SoundHandle { sound: Arc::new(Mutex::new(sound)), })
+
+        // sound pools need
     }
 
     pub fn path(&self) -> &Path
@@ -69,36 +71,36 @@ impl SoundHandle
     pub fn stop(&self)
     {
         let mut state = self.state.lock().unwrap();
-        state.playing = false;
+        let _ = sound.stop();
     }
 
     pub fn pause(&self)
     {
         let mut state = self.state.lock().unwrap();
-        state.playing = false;
+        let _ = sound.stop();
     }
 
     pub fn resume(&self)
     {
         let mut state = self.state.lock().unwrap();
-        state.playing = true;
+        let _ = sound.start();
     }
 
     pub fn set_volume(&self, volume: f32)
     {
         let mut state = self.state.lock().unwrap();
-        state.volume = volume.clamp(0.0, 1.0);
+        sound.set_volume(volume.clamp(0.0, 1.0));
     }
 
     pub fn set_looping(&self, looping: bool)
     {
         let mut state = self.state.lock().unwrap();
-        state.looping = looping;
+        sound.set_looping(looping);
     }
 
     pub fn is_playing(&self) -> bool
     {
         let state = self.state.lock().unwrap();
-        state.playing
+        sound.is_playing();
     }
 }
