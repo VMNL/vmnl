@@ -27,10 +27,10 @@ impl Default for AudioConfig
     }
 }
 
-#[derive(Debug)]
 pub(crate) struct AudioBackend
 {
-    pub master_volume: f32
+    pub engine: miniaudio::Engine,
+    pub master_volume: f32,
 }
 
 #[derive(Clone)]
@@ -43,9 +43,14 @@ impl AudioDevice
 {
     pub fn new(config: AudioConfig) -> Result<Self, AudioError>
     {
+        let mut engine = miniaudio::Engine::new(&miniaudio::EngineConfig::default()).map_err(|e| {AudioError::BackendInitFailed(e.to_string())})?;
+        
         let backend = AudioBackend {
-            master_volume: config.master_volume
+            master_volume: config.master_volume,
+            engine
         };
+
+        engine.set_volume(config.master_volume);
 
         Ok(Self {backend: Arc::new(Mutex::new(backend))})
     }
@@ -68,6 +73,8 @@ impl AudioDevice
     {
         let mut backend = self.backend.lock().unwrap();
         backend.master_volume = volume.clamp(0.0, 1.0);
+        backend.master_volume = volume;
+        backend.engine.set_volume(volume);
     }
 
     pub fn master_volume(&self) -> f32
