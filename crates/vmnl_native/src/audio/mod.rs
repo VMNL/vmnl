@@ -4,12 +4,15 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
+pub mod bus;
 pub mod device;
 pub mod decoder;
 pub mod error;
+pub mod instance;
+pub mod mixer;
 pub mod music;
 pub mod sound;
-pub mod bus;
+pub mod voice;
 
 pub use bus::AudioBus;
 pub use device::{AudioConfig, AudioDevice};
