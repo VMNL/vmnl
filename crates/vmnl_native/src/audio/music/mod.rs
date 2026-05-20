@@ -6,6 +6,7 @@
 
 use crate::audio::device::AudioDevice;
 use crate::audio::error::AudioError;
+use crate::audio::music::stream::MusicStream;
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -29,6 +30,7 @@ pub struct Music
 pub struct MusicHandle
 {
     state: Arc<Mutex<MusicState>>,
+    stream: Arc<Mutex<MusicStream>>,
 }
 
 impl Music
@@ -55,11 +57,16 @@ impl Music
             playing: true,
         };
 
+        let stream = MusicStream::from_file(&self.path)?;
+
         // TODO:
         // Create streaming decoder
         // Feed Miniaudio rolling buffer
 
-        Ok(MusicHandle { state: Arc::new(Mutex::new(state)) })
+        Ok(MusicHandle {
+            state: Arc::new(Mutex::new(state)),
+            stream: Arc::new(Mutex::new(stream)),
+        })
     }
 
     pub fn path(&self) -> &Path
