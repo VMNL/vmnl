@@ -4,6 +4,7 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
+use crate::audio::bus::AudioBus;
 use crate::audio::decoder::DecodedAudio;
 use crate::audio::error::AudioError;
 use crate::audio::music::Music;
@@ -36,6 +37,9 @@ pub(crate) struct AudioBackend
     pub master_volume: f32,
     pub sound_cache: HashMap<PathBuf, Arc<DecodedAudio>>,
     pub active_sound_instances: Vec<Arc<Mutex<SoundInstance>>>,
+
+    pub music_bus: AudioBus,
+    pub sfx_bus: AudioBus,
 }
 
 #[derive(Clone)]
@@ -58,6 +62,9 @@ impl AudioDevice
             engine,
             sound_cache: HashMap::new(),
             active_sound_instances: Vec::new(),
+
+            music_bus: AudioBus::new(),
+            sfx_bus: AudioBus::new(),
         };
 
         Ok(Self {backend: Arc::new(Mutex::new(backend))})
@@ -132,5 +139,19 @@ impl AudioDevice
 
             instance.state != crate::audio::sound::instance::PlaybackState::Stopped
         });
+    }
+
+    pub fn music_bus(&self) -> AudioBus
+    {
+        let backend = self.backend.lock().unwrap();
+
+        backend.music_bus.clone()
+    }
+
+    pub fn sfx_bus(&self) -> AudioBus
+    {
+        let backend = self.backend.lock().unwrap();
+
+        backend.sfx_bus.clone()
     }
 }
