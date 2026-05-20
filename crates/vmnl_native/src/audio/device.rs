@@ -5,11 +5,23 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use crate::audio::bus::AudioBus;
-use crate::audio::decoder::DecodedAudio;
+use crate::audio::decoder::{AudioDecoder, DecodedAudio};
 use crate::audio::error::AudioError;
+use crate::audio::mixer::AudioMixer;
 use crate::audio::music::Music;
 use crate::audio::sound::instance::SoundInstance;
 use crate::audio::sound::Sound;
+use crate::audio::sound::voice::SoundVoice;
+
+use miniaudio::
+{
+    Context,
+    Device,
+    DeviceConfig,
+    DeviceType,
+    Format,
+    FramesMut,
+};
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -34,12 +46,15 @@ impl Default for AudioConfig
 pub(crate) struct AudioBackend
 {
     pub engine: miniaudio::Engine,
+    pub device: miniaudio::Device,
+
     pub master_volume: f32,
-    pub sound_cache: HashMap<PathBuf, Arc<DecodedAudio>>,
-    pub active_sound_instances: Vec<Arc<Mutex<SoundInstance>>>,
 
     pub music_bus: AudioBus,
     pub sfx_bus: AudioBus,
+
+    pub sound_cache: HashMap<PathBuf, Arc<DecodedAudio>>,
+    pub active_sound_voices: Vec<Arc<Mutex<SoundVoice>>>,
 }
 
 #[derive(Clone)]
@@ -52,22 +67,67 @@ impl AudioDevice
 {
     pub fn new(config: AudioConfig) -> Result<Self, AudioError>
     {
-        let mut engine = miniaudio::Engine::new(&miniaudio::EngineConfig::default())
-            .map_err(|e| {AudioError::BackendInitFailed(e.to_string())})?;
-        
+        let engine = miniaudio::Engine::new(
+            &miniaudio::EngineConfig::default()
+        )
+        .map_err(|e| AudioError::BackendInitFailed(e.to_string()))?;
+
         engine.set_volume(config.master_volume);
 
-        let backend = AudioBackend {
-            master_volume: config.master_volume,
+        let sound_cache = HashMap::new();
+        let active_sound_voices = Vec::new();
+
+        let backend = Arc::new(Mutex::new(AudioBackend
+        {
             engine,
-            sound_cache: HashMap::new(),
-            active_sound_instances: Vec::new(),
+            device: unsafe { std::mem::zeroed() },
+
+            master_volume: config.master_volume,
 
             music_bus: AudioBus::new(),
             sfx_bus: AudioBus::new(),
-        };
 
-        Ok(Self {backend: Arc::new(Mutex::new(backend))})
+            sound_cache,
+            active_sound_voices,
+        }));
+
+        let backend_clone = backend.clone();
+
+        let context = Context::new(&[], None)
+            .map_err(|e| AudioError::BackendInitFailed(e.to_string()))?;
+
+        let mut device_config = DeviceConfig::new(DeviceType::Playback);
+
+        device_config.playback_mut().format = Format::F32;
+        device_config.playback_mut().channels = 2;
+        device_config.sample_rate = 44100;
+
+        device_config.set_data_callback(
+            move |_device, output, _input|
+            {
+                let mut output = output.as_samples_mut::<f32>();
+
+                let backend = backend_clone.lock().unwrap();
+
+                AudioMixer::mix_sound_voices(
+                    &backend.active_sound_voices,
+                    &mut output,
+                );
+            }
+        );
+
+        let device = Device::new(Some(context), &device_config)
+            .map_err(|e| AudioError::BackendInitFailed(e.to_string()))?;
+
+        device.start()
+            .map_err(|e| AudioError::BackendInitFailed(e.to_string()))?;
+
+        {
+            let mut backend_guard = backend.lock().unwrap();
+            backend_guard.device = device;
+        }
+
+        Ok(Self { backend })
     }
 
     pub fn load_sound<P>(&self, path: P) -> Result<Sound, AudioError>
@@ -87,8 +147,9 @@ impl AudioDevice
 
     pub fn set_master_volume(&self, volume: f32)
     {
+        let volume = volume.clamp(0.0, 1.0);
+
         let mut backend = self.backend.lock().unwrap();
-        backend.master_volume = volume.clamp(0.0, 1.0);
         backend.master_volume = volume;
         backend.engine.set_volume(volume);
     }
@@ -153,5 +214,15 @@ impl AudioDevice
         let backend = self.backend.lock().unwrap();
 
         backend.sfx_bus.clone()
+    }
+
+    pub(crate) fn mix_audio(&self, output: &mut [f32])
+    {
+        let backend = self.backend.lock().unwrap();
+
+        AudioMixer::mix_sound_voices(
+            &backend.active_sound_voices,
+            output,
+        );
     }
 }
