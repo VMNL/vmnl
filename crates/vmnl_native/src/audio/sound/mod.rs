@@ -4,20 +4,15 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-use crate::audio::decoder::{AudioDecoder, DecodedAudio};
+use crate::audio::decoder::DecodedAudio;
 use crate::audio::device::AudioDevice;
 use crate::audio::error::AudioError;
+use crate::audio::sound::instance::{PlaybackState, SoundInstance,};
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-#[derive(Debug)]
-struct SoundState
-{
-    volume: f32,
-    looping: bool,
-    playing: bool,
-}
+pub mod instance;
 
 #[derive(Clone)]
 pub struct Sound
@@ -31,7 +26,7 @@ pub struct Sound
 #[derive(Clone)]
 pub struct SoundHandle
 {
-    state: Arc<Mutex<SoundState>>,
+    state: Arc<Mutex<SoundInstance>>,
     sound: Arc<Mutex<miniaudio::Sound<'static>>>,
 }
 
@@ -41,9 +36,10 @@ impl Sound
     where
         P: AsRef<Path>
     {
-        let decoded_audio = AudioDecoder::decode_file(&path)?;
+        let path = path.as_ref().to_path_buf();
+        let decoded_audio = device.get_or_decode_audio(&path)?;
 
-        Ok(Self {device, path: path.as_ref().to_path_buf(), decoded_audio: Arc::new(decoded_audio)})
+        Ok(Self {device, path, decoded_audio})
     }
 
     pub fn play(&self) -> Result<SoundHandle, AudioError>
@@ -51,13 +47,30 @@ impl Sound
         let backend = self.device.backend.lock().unwrap();
 
         let mut sound = miniaudio::Sound::from_file(&backend.engine, self.path.to_str().unwrap(), miniaudio::SoundFlags::DECODE,)
-        .map_err(|e| { AudioError::DecoderFailed(e.to_string()) })?;
+        .map_err(|e| {
+            AudioError::DecoderFailed(e.to_string())
+        })?;
 
-        sound.start().map_err(|e| { AudioError::InvalidState(e.to_string()) })?;
+        sound.start().map_err(|e| {
+            AudioError::InvalidState(e.to_string())
+        })?;
 
-        Ok(SoundHandle { sound: Arc::new(Mutex::new(sound)), })
+        drop(backend);
 
-        // sound pools need
+        let instance = SoundInstance {
+            cursor: 0,
+            volume: 1.0,
+            looping: false,
+            state: PlaybackState::Playing,
+        };
+
+        self.device
+            .register_sound_instance(instance.clone());
+
+        Ok(SoundHandle {
+            instance: Arc::new(Mutex::new(instance)),
+            sound: Arc::new(Mutex::new(sound)),
+        })
     }
 
     pub fn path(&self) -> &Path
@@ -70,37 +83,90 @@ impl SoundHandle
 {
     pub fn stop(&self)
     {
-        let mut state = self.state.lock().unwrap();
+        {
+            let mut instance = self.instance.lock().unwrap();
+
+            instance.state = PlaybackState::Stopped;
+            instance.cursor = 0;
+        }
+
+        let mut sound = self.sound.lock().unwrap();
+
         let _ = sound.stop();
     }
 
     pub fn pause(&self)
     {
-        let mut state = self.state.lock().unwrap();
+        {
+            let mut instance = self.instance.lock().unwrap();
+
+            instance.state = PlaybackState::Paused;
+        }
+
+        let mut sound = self.sound.lock().unwrap();
+
         let _ = sound.stop();
     }
 
     pub fn resume(&self)
     {
-        let mut state = self.state.lock().unwrap();
+        {
+            let mut instance = self.instance.lock().unwrap();
+
+            instance.state = PlaybackState::Playing;
+        }
+
+        let mut sound = self.sound.lock().unwrap();
+
         let _ = sound.start();
     }
 
     pub fn set_volume(&self, volume: f32)
     {
-        let mut state = self.state.lock().unwrap();
-        sound.set_volume(volume.clamp(0.0, 1.0));
+        let volume = volume.clamp(0.0, 1.0);
+
+        {
+            let mut instance = self.instance.lock().unwrap();
+
+            instance.volume = volume;
+        }
+
+        let mut sound = self.sound.lock().unwrap();
+
+        sound.set_volume(volume);
     }
 
     pub fn set_looping(&self, looping: bool)
     {
-        let mut state = self.state.lock().unwrap();
+        {
+            let mut instance = self.instance.lock().unwrap();
+
+            instance.looping = looping;
+        }
+
+        let mut sound = self.sound.lock().unwrap();
+
         sound.set_looping(looping);
     }
 
     pub fn is_playing(&self) -> bool
     {
-        let state = self.state.lock().unwrap();
-        sound.is_playing();
+        let instance = self.instance.lock().unwrap();
+
+        instance.state == PlaybackState::Playing;
+    }
+
+    pub fn is_paused(&self) -> bool
+    {
+        let instance = self.instance.lock().unwrap();
+
+        instance.state == PlaybackState::Paused
+    }
+
+    pub fn is_stopped(&self) -> bool
+    {
+        let instance = self.instance.lock().unwrap();
+
+        instance.state == PlaybackState::Stopped
     }
 }
