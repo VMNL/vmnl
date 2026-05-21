@@ -11,6 +11,7 @@
 ///   without exposing the underlying implementation details.
 ////////////////////////////////////////////////////////////////////////////////
 extern crate vulkano;
+extern crate vulkano_shaders;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::rc::Rc;
 use std::sync::Arc;
