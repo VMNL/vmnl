@@ -180,3 +180,68 @@ impl Monitors {
         self.info.iter().find(|info| info.is_primary)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn monitor(name: Option<&str>, is_primary: bool) -> MonitorInfo {
+        MonitorInfo {
+            name: name.map(str::to_string),
+            position: (0, 0),
+            physical_size_mm: (600, 340),
+            content_scale: (1.0, 1.0),
+            workarea: (0, 0, 1920, 1080),
+            current_mode: None,
+            available_modes: Vec::new(),
+            is_primary,
+        }
+    }
+
+    #[test]
+    fn video_mode_from_glfw_preserves_fields() {
+        let mode: glfw::VidMode = glfw::VidMode {
+            width: 1920,
+            height: 1080,
+            red_bits: 8,
+            green_bits: 8,
+            blue_bits: 8,
+            refresh_rate: 144,
+        };
+
+        assert_eq!(
+            VideoMode::from(mode),
+            VideoMode {
+                width: 1920,
+                height: 1080,
+                red_bits: 8,
+                green_bits: 8,
+                blue_bits: 8,
+                refresh_rate: 144,
+            }
+        );
+    }
+
+    #[test]
+    fn monitors_names_and_primary_are_derived_from_info() {
+        let monitors: Monitors = Monitors {
+            info: vec![monitor(Some("Primary"), true), monitor(None, false)],
+        };
+
+        assert_eq!(monitors.infos().len(), 2);
+        assert_eq!(monitors.names(), vec![Some("Primary".to_string()), None]);
+        assert_eq!(
+            monitors.primary().map(|monitor| monitor.name.as_deref()),
+            Some(Some("Primary"))
+        );
+    }
+
+    #[test]
+    fn primary_returns_none_when_no_monitor_is_marked_primary() {
+        let monitors: Monitors = Monitors {
+            info: vec![monitor(Some("Secondary"), false)],
+        };
+
+        assert!(monitors.primary().is_none());
+    }
+}

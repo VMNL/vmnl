@@ -1,6 +1,5 @@
 target
 .vscode
-.codex
 sandbox/
 .env
 *.log

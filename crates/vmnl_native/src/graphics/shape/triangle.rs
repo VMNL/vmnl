@@ -51,16 +51,9 @@ impl TriangleBuilder {
         Self::triangle(vmnl_context, [a, b, c])
     }
 
-    /// Create a `Shape` instance by transforming the input vertices into a vertex buffer.
-    ///
-    /// # Arguments
-    /// - `vmnl_context`: Reference to the VMNL context providing the memory allocator.
-    /// - `vertex1`, `vertex2`, `vertex3`: The three vertices defining the geometry.
-    ///
-    /// # Returns
-    /// A `Shape` instance with a created vertex buffer ready for rendering.
-    fn triangle(vmnl_context: &Context, vertex: [Vertex; 3]) -> VMNLResult<Shape> {
-        let [vertex1, vertex2, vertex3] = vertex;
+    fn validate_vertices(vertices: &[Vertex; 3]) -> VMNLResult<()> {
+        let [vertex1, vertex2, vertex3] = vertices;
+
         if vertex1.position == vertex2.position
             || vertex1.position == vertex3.position
             || vertex2.position == vertex3.position
@@ -70,6 +63,21 @@ impl TriangleBuilder {
             )));
         }
 
+        Ok(())
+    }
+
+    /// Create a `Shape` instance by transforming the input vertices into a vertex buffer.
+    ///
+    /// # Arguments
+    /// - `vmnl_context`: Reference to the VMNL context providing the memory allocator.
+    /// - `vertex1`, `vertex2`, `vertex3`: The three vertices defining the geometry.
+    ///
+    /// # Returns
+    /// A `Shape` instance with a created vertex buffer ready for rendering.
+    fn triangle(vmnl_context: &Context, vertex: [Vertex; 3]) -> VMNLResult<Shape> {
+        Self::validate_vertices(&vertex)?;
+
+        let [vertex1, vertex2, vertex3] = vertex;
         let vertices = [
             Vertex {
                 position: vertex1.position,
@@ -104,5 +112,42 @@ impl TriangleBuilder {
             )?,
             index_buffer: None,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Rgba, Vector2f};
+
+    fn vertex(x: f32, y: f32) -> Vertex {
+        Vertex {
+            position: Vector2f { x, y },
+            color: Rgba::new(255, 255, 255, 255),
+        }
+    }
+
+    #[test]
+    fn validate_vertices_accepts_unique_positions() {
+        assert!(TriangleBuilder::validate_vertices(&[
+            vertex(0.0, 0.0),
+            vertex(1.0, 0.0),
+            vertex(0.0, 1.0),
+        ])
+        .is_ok());
+    }
+
+    #[test]
+    fn validate_vertices_rejects_duplicate_positions() {
+        let result: VMNLResult<()> = TriangleBuilder::validate_vertices(&[
+            vertex(0.0, 0.0),
+            vertex(0.0, 0.0),
+            vertex(0.0, 1.0),
+        ]);
+
+        assert!(matches!(
+            result,
+            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "triangle vertices must have unique positions")
+        ));
     }
 }

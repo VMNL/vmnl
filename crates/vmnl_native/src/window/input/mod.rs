@@ -92,3 +92,24 @@ impl Input {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_input_starts_with_clear_keyboard_and_mouse_states() {
+        let input: Input = Input::new();
+
+        assert!(!input.keyboard().is_one_used());
+        assert!(!input.mouse().is_one_used());
+    }
+
+    #[test]
+    fn default_input_matches_new_input_state() {
+        let input: Input = Input::default();
+
+        assert!(!input.keyboard().is_one_down());
+        assert!(!input.mouse().is_one_down());
+    }
+}

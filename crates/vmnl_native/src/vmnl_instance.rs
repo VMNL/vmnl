@@ -378,7 +378,7 @@ mod tests {
 
     #[test]
     fn queue_family_index_returns_first_graphics_family() {
-        let index = VMNLInstance::select_graphics_queue_family_index_from_flags([
+        let index: u32 = VMNLInstance::select_graphics_queue_family_index_from_flags([
             QueueFlags::empty(),
             QueueFlags::GRAPHICS,
             QueueFlags::GRAPHICS,
@@ -390,7 +390,7 @@ mod tests {
 
     #[test]
     fn queue_family_index_returns_unsupported_feature_when_no_graphics_family() {
-        let err = VMNLInstance::select_graphics_queue_family_index_from_flags([
+        let err: VMNLError = VMNLInstance::select_graphics_queue_family_index_from_flags([
             QueueFlags::empty(),
             QueueFlags::empty(),
         ])
@@ -420,7 +420,7 @@ mod tests {
 
     #[test]
     fn queue_family_index_returns_zero_when_first_is_graphics() {
-        let index = VMNLInstance::select_graphics_queue_family_index_from_flags([
+        let index: u32 = VMNLInstance::select_graphics_queue_family_index_from_flags([
             QueueFlags::GRAPHICS,
             QueueFlags::empty(),
         ])
@@ -431,7 +431,7 @@ mod tests {
 
     #[test]
     fn queue_family_index_returns_first_match_when_multiple_graphics_families() {
-        let index = VMNLInstance::select_graphics_queue_family_index_from_flags([
+        let index: u32 = VMNLInstance::select_graphics_queue_family_index_from_flags([
             QueueFlags::empty(),
             QueueFlags::GRAPHICS,
             QueueFlags::GRAPHICS,
@@ -444,10 +444,11 @@ mod tests {
 
     #[test]
     fn queue_family_index_returns_error_for_empty_iterator() {
-        let err = VMNLInstance::select_graphics_queue_family_index_from_flags(std::iter::empty::<
-            QueueFlags,
-        >())
-        .expect_err("expected error for empty queue family list");
+        let err: VMNLError =
+            VMNLInstance::select_graphics_queue_family_index_from_flags(std::iter::empty::<
+                QueueFlags,
+            >())
+            .expect_err("expected error for empty queue family list");
 
         assert!(matches!(
             err.kind(),
@@ -476,9 +477,36 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Requires a working windowing environment (GLFW display) and a Vulkan-capable setup; run locally."]
+    fn queue_family_index_accepts_combined_graphics_flags() {
+        let index = VMNLInstance::select_graphics_queue_family_index_from_flags([
+            QueueFlags::COMPUTE,
+            QueueFlags::GRAPHICS | QueueFlags::COMPUTE,
+        ])
+        .expect("expected combined graphics queue flags");
+
+        assert_eq!(index, 1);
+    }
+
+    #[test]
+    fn physical_device_priority_other_is_lowest() {
+        assert_eq!(
+            VMNLInstance::physical_device_priority(PhysicalDeviceType::Other),
+            0
+        );
+    }
+
+    #[test]
+    #[ignore = "Requires Vulkan + GLFW display."]
     fn smoke_context_initialization() {
         let _guard = gpu_test_guard();
-        assert!(Context::new().is_ok());
+        let context = Context::new().expect("context should initialize");
+
+        assert!(
+            context
+                .inner
+                .physical_device
+                .supported_extensions()
+                .khr_swapchain
+        );
     }
 }

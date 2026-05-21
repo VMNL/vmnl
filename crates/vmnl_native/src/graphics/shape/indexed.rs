@@ -57,20 +57,7 @@ impl IndexedShapeBuilder {
         Self::indexed_shape(vmnl_context, &self.options.vertices, &self.options.indices)
     }
 
-    /// Create a `Shape` instance with indexed vertices.
-    ///
-    /// # Arguments
-    /// - `vmnl_context`: Reference to the VMNL context providing the memory allocator.
-    /// - `vertices`: Slice of `Vertex` instances.
-    /// - `indices`: Slice of `u32` indices for indexed rendering.
-    ///
-    /// # Returns
-    /// A `Shape` instance containing created vertex and index buffers ready for rendering.
-    fn indexed_shape(
-        vmnl_context: &Context,
-        vertices: &[Vertex],
-        indices: &[u32],
-    ) -> VMNLResult<Shape> {
+    fn validate_geometry(vertices: &[Vertex], indices: &[u32]) -> VMNLResult<()> {
         if vertices.len() < 3 {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                 "indexed shape requires at least 3 vertices".to_string(),
@@ -91,6 +78,25 @@ impl IndexedShapeBuilder {
                 vertices.len()
             ))));
         }
+
+        Ok(())
+    }
+
+    /// Create a `Shape` instance with indexed vertices.
+    ///
+    /// # Arguments
+    /// - `vmnl_context`: Reference to the VMNL context providing the memory allocator.
+    /// - `vertices`: Slice of `Vertex` instances.
+    /// - `indices`: Slice of `u32` indices for indexed rendering.
+    ///
+    /// # Returns
+    /// A `Shape` instance containing created vertex and index buffers ready for rendering.
+    fn indexed_shape(
+        vmnl_context: &Context,
+        vertices: &[Vertex],
+        indices: &[u32],
+    ) -> VMNLResult<Shape> {
+        Self::validate_geometry(vertices, indices)?;
 
         println!(
             "{}",
@@ -130,5 +136,66 @@ impl IndexedShapeBuilder {
                 &vmnl_context.inner.memory_allocator,
             )?),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Rgba, Vector2f};
+
+    fn vertex(x: f32, y: f32) -> Vertex {
+        Vertex {
+            position: Vector2f { x, y },
+            color: Rgba::new(255, 255, 255, 255),
+        }
+    }
+
+    fn vertices() -> [Vertex; 3] {
+        [vertex(0.0, 0.0), vertex(1.0, 0.0), vertex(0.0, 1.0)]
+    }
+
+    #[test]
+    fn validate_geometry_accepts_triangle_indices() {
+        assert!(IndexedShapeBuilder::validate_geometry(&vertices(), &[0, 1, 2]).is_ok());
+    }
+
+    #[test]
+    fn validate_geometry_rejects_too_few_vertices() {
+        let result: VMNLResult<()> =
+            IndexedShapeBuilder::validate_geometry(&vertices()[..2], &[0, 1, 2]);
+
+        assert!(matches!(
+            result,
+            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "indexed shape requires at least 3 vertices")
+        ));
+    }
+
+    #[test]
+    fn validate_geometry_rejects_non_triangle_index_count() {
+        let result: VMNLResult<()> = IndexedShapeBuilder::validate_geometry(&vertices(), &[]);
+
+        assert!(matches!(
+            result,
+            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "indexed shape requires a non-empty triangle index list")
+        ));
+        let result: VMNLResult<()> =
+            IndexedShapeBuilder::validate_geometry(&vertices(), &[0, 1, 2, 0]);
+
+        assert!(matches!(
+            result,
+            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "indexed shape requires a non-empty triangle index list")
+        ));
+    }
+
+    #[test]
+    fn validate_geometry_rejects_out_of_bounds_indices() {
+        let result: VMNLResult<()> =
+            IndexedShapeBuilder::validate_geometry(&vertices(), &[0, 1, 3]);
+
+        assert!(matches!(
+            result,
+            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "indexed shape index 3 is out of bounds for 3 vertices")
+        ));
     }
 }

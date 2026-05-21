@@ -378,3 +378,83 @@ impl Default for MouseState {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mouse_state(current: &[MouseButton], previous: &[MouseButton]) -> MouseState {
+        let mut state: MouseState = MouseState::new();
+
+        for &button in current {
+            state.current[MouseState::index(button)] = true;
+        }
+        for &button in previous {
+            state.previous[MouseState::index(button)] = true;
+        }
+        state
+    }
+
+    #[test]
+    fn all_tracked_mouse_buttons_round_trip_through_glfw() {
+        for &button in ALL_MOUSE_BUTTONS {
+            assert_eq!(
+                MouseState::to_glfw(button).and_then(MouseState::from_glfw),
+                Some(button)
+            );
+        }
+    }
+
+    #[test]
+    fn tracked_mouse_button_count_matches_all_buttons() {
+        assert_eq!(ALL_MOUSE_BUTTONS.len(), MOUSE_BUTTON_COUNT);
+    }
+
+    #[test]
+    fn new_mouse_state_has_no_used_buttons() {
+        let state: MouseState = MouseState::new();
+
+        assert!(!state.is_one_down());
+        assert!(!state.is_one_pressed());
+        assert!(!state.is_one_released());
+        assert!(!state.is_one_used());
+        assert!(!state.is_any_down(&[]));
+        assert!(!state.is_any_pressed(&[]));
+        assert!(!state.is_any_released(&[]));
+        assert!(!state.is_any_used(&[]));
+    }
+
+    #[test]
+    fn mouse_state_detects_pressed_held_and_released_buttons() {
+        let pressed: MouseState = mouse_state(&[MouseButton::Left], &[]);
+        let held: MouseState = mouse_state(&[MouseButton::Left], &[MouseButton::Left]);
+        let released: MouseState = mouse_state(&[], &[MouseButton::Left]);
+
+        assert!(pressed.is_down(MouseButton::Left));
+        assert!(pressed.is_pressed(MouseButton::Left));
+        assert!(!pressed.is_released(MouseButton::Left));
+        assert!(pressed.is_any_pressed(&[MouseButton::Right, MouseButton::Left,]));
+        assert!(pressed.is_one_pressed());
+        assert!(held.is_down(MouseButton::Left));
+        assert!(!held.is_pressed(MouseButton::Left));
+        assert!(!held.is_released(MouseButton::Left));
+        assert!(held.is_one_down());
+        assert!(held.is_one_used());
+        assert!(!released.is_down(MouseButton::Left));
+        assert!(!released.is_pressed(MouseButton::Left));
+        assert!(released.is_released(MouseButton::Left));
+        assert!(released.is_any_released(&[MouseButton::Right, MouseButton::Left,]));
+        assert!(released.is_one_released());
+    }
+
+    #[test]
+    fn reset_clears_mouse_current_and_previous_state() {
+        let mut state: MouseState = mouse_state(&[MouseButton::Left], &[MouseButton::Right]);
+
+        state.reset();
+        assert!(!state.is_one_down());
+        assert!(!state.is_one_pressed());
+        assert!(!state.is_one_released());
+        assert!(!state.is_one_used());
+    }
+}
