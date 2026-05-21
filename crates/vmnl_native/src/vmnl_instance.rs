@@ -37,7 +37,6 @@ pub struct Context {
     /// Inner `VMNLInstance` containing the Vulkan context and resources.
     /// Wrapped in an `Rc` for shared ownership within a single thread.
     pub(crate) inner: Rc<VMNLInstance>,
-    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
 }
 
 impl Context {
@@ -52,7 +51,7 @@ impl Context {
     ///
     /// # Example
     /// ```rust,no_run
-    /// use vmnl_native::{Context, Shape, Vector2f, Vertex, Window};
+    /// use vmnl_native::{Context, Rgba, Shape, Vector2f, Vertex, Window};
     ///
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// let context = Context::new()?;
@@ -62,9 +61,9 @@ impl Context {
     ///     .build(&context)?;
     ///
     /// let triangle = Shape::triangle([
-    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: [255.0, 0.0, 0.0, 255.0] },
-    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: [0.0, 255.0, 0.0, 255.0] },
-    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: [0.0, 0.0, 255.0, 255.0] },
+    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: Rgba::new(255, 0, 0, 255) },
+    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: Rgba::new(0, 255, 0, 255) },
+    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: Rgba::new(0, 0, 255, 255) },
     /// ])
     /// .build(&context)?;
     ///
@@ -80,7 +79,6 @@ impl Context {
     pub fn new() -> VMNLResult<Self> {
         Ok(Self {
             inner: Rc::new(VMNLInstance::new()?),
-            _not_send_sync: std::marker::PhantomData,
         })
     }
 }

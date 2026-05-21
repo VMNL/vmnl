@@ -622,3 +622,9 @@ impl KeyboardState {
         }
     }
 }
+
+impl Default for KeyboardState {
+    fn default() -> Self {
+        Self::new()
+    }
+}

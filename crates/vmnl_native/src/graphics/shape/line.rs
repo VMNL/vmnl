@@ -49,7 +49,12 @@ impl Default for LineOptions {
             to: Vector2f { x: 0.0, y: 0.0 },
             width: 1.0,
             cap: LineCap::Butt,
-            color: [255.0, 255.0, 255.0, 255.0],
+            color: Rgba {
+                r: 255,
+                g: 255,
+                b: 255,
+                a: 255,
+            },
         }
     }
 }
@@ -72,7 +77,7 @@ impl LineBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Shape, Vector2f};
+    /// # use vmnl_native::{Context, Rgba, Shape, Vector2f};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
@@ -93,7 +98,7 @@ impl LineBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, LineCap, Shape, Vector2f};
+    /// # use vmnl_native::{Context, LineCap, Rgba, Shape, Vector2f};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
@@ -114,11 +119,11 @@ impl LineBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Shape, Vector2f};
+    /// # use vmnl_native::{Context, Rgba, Shape, Vector2f};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
-    ///     .color([0.0, 0.0, 255.0, 255.0])
+    ///     .color(Rgba::new(0, 0, 255, 255))
     ///     .build(&context)?;
     /// # Ok(())
     /// # }
@@ -136,20 +141,20 @@ impl LineBuilder {
     /// - `to`: Ending point of the line as a `Vector2f`.
     /// - `width`: Optional width of the line (default is `1.0`).
     /// - `cap`: Optional line cap style (default is `LineCap::Butt`).
-    /// - `color`: Optional RGBA color of the line (default is white `[255.0, 255.0, 255.0, 255.0]`).
+    /// - `color`: Optional RGBA color of the line (default is white `Rgba::new(255, 255, 255, 255)`).
     ///
     /// # Returns
     /// A `Shape` instance representing the line, ready for rendering.
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, LineCap, Shape, Vector2f};
+    /// # use vmnl_native::{Context, LineCap, Rgba, Shape, Vector2f};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
     ///     .width(5.0)
     ///     .cap(LineCap::Round)
-    ///     .color([0.0, 0.0, 255.0, 255.0])
+    ///     .color(Rgba::new(0, 0, 255, 255))
     ///     .build(&context)?;
     /// # Ok(())
     /// # }
@@ -175,7 +180,7 @@ impl LineBuilder {
     /// - `to`: Ending point of the line as a `Vector2f`.
     /// - `width`: Optional width of the line (default is `1.0`).
     /// - `cap`: Optional line cap style (default is `LineCap::Butt`).
-    /// - `color`: Optional RGBA color of the line (default is white `[255.0, 255.0, 255.0, 255.0]`).
+    /// - `color`: Optional RGBA color of the line (default is white `Rgba::new(255, 255, 255, 255)`).
     ///
     /// # Returns
     /// A `Shape` instance representing the line, ready for rendering.

@@ -85,10 +85,10 @@ impl Input {
 
     /// Creates a new `Input` with fresh keyboard and mouse states.
     #[must_use]
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            keyboard: KeyboardState::new(),
-            mouse: MouseState::new(),
+            keyboard: KeyboardState::default(),
+            mouse: MouseState::default(),
         }
     }
 }
