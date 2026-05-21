@@ -8,6 +8,7 @@
 extern crate glfw;
 use super::WindowOptions;
 use crate::exception::{VMNLError, VMNLErrorKind};
+use crate::graphics::GpuVertex;
 use crate::vmnl_instance::VMNLInstance;
 use crate::window::config::WindowConfig;
 use crate::window::event::EventQueue;
@@ -18,7 +19,6 @@ use crate::window::state::WindowState;
 use crate::window::{shaders::fs, shaders::vs, shaders::ShaderInput, shaders::WindowShaders};
 use crate::Context;
 use crate::VMNLResult;
-use crate::Vertex;
 use std::rc::Rc;
 use std::sync::Arc;
 use vulkano::{
@@ -396,7 +396,7 @@ impl VMNLWindow {
         .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanPipelineLayoutCreationFailed))?;
         let subpass: Subpass = Subpass::from(render_pass.clone(), 0)
             .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed))?;
-        let vertex_input_state: VertexInputState = Vertex::per_vertex()
+        let vertex_input_state: VertexInputState = GpuVertex::per_vertex()
             .definition(&vs)
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
 

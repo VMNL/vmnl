@@ -14,7 +14,6 @@ use super::{
     Drawable, GraphicsResourceFactory, MaterialKey, PipelineKey, RenderItem, Rgba, VMNLIndexBuffer,
     Vector2f,
 };
-use crate::{VMNLError, VMNLErrorKind};
 use bytemuck::{Pod, Zeroable};
 use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
@@ -22,8 +21,8 @@ pub use rect::RectBuilder;
 pub use triangle::TriangleBuilder;
 use vulkano::{buffer::Subbuffer, pipeline::graphics::vertex_input::Vertex as VulkanoVertex};
 
-/// Alias for a vertex buffer containing `Vertex` instances.
-pub(crate) type VertexBuffer = Subbuffer<[Vertex]>;
+/// Alias for a vertex buffer containing GPU-ready vertices.
+pub(crate) type VertexBuffer = Subbuffer<[GpuVertex]>;
 
 /// Types of shape data that can be rendered in VMNL.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -40,26 +39,45 @@ pub enum ShapeKind {
     // Circle,
 }
 
-/// Vertex with a 2D position and Rgba color.
+/// Public vertex with a 2D position and 8-bit RGBA color.
 ///
 /// # Example
 /// ```rust
-/// use vmnl_native::{Vector2f, Vertex};
+/// use vmnl_native::{Rgba, Vector2f, Vertex};
 ///
 /// let vertex = Vertex {
 ///     position: Vector2f { x: 100.0, y: 150.0 },
-///     color: [255.0, 0.0, 0.0, 255.0],
+///     color: Rgba { r: 255, g: 0, b: 0, a: 255 },
 /// };
 /// ```
 #[repr(C)]
-#[derive(VulkanoVertex, Pod, Zeroable, Clone, Copy, Default, Debug, PartialEq)]
+#[derive(Pod, Zeroable, Clone, Copy, Default, Debug, PartialEq)]
 pub struct Vertex {
+    /// Position of the vertex as `[x, y]`.
+    pub position: Vector2f,
+    /// Color of the vertex as `[r, g, b, a]`.
+    pub color: Rgba,
+}
+
+/// GPU vertex format with position and normalized color, used for vertex buffers.
+#[repr(C)]
+#[derive(VulkanoVertex, Pod, Zeroable, Clone, Copy, Default, Debug, PartialEq)]
+pub(crate) struct GpuVertex {
     /// Position of the vertex as `[x, y]`.
     #[format(R32G32_SFLOAT)]
     pub position: Vector2f,
-    /// Color of the vertex as `[r, g, b, a]`.
+    /// Normalized color of the vertex as `[r, g, b, a]`, where each component is in the range `[0.0, 1.0]`.
     #[format(R32G32B32A32_SFLOAT)]
-    pub color: Rgba,
+    pub color: [f32; 4],
+}
+
+impl From<Vertex> for GpuVertex {
+    fn from(vertex: Vertex) -> Self {
+        Self {
+            position: vertex.position,
+            color: vertex.color.normalized(),
+        }
+    }
 }
 
 /// Shape resource container holding vertex/index buffers and counts.
@@ -108,12 +126,12 @@ impl Shape {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Shape};
+    /// # use vmnl_native::{Context, Rgba, Shape};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rectangle = Shape::rect(200.0, 100.0)
     ///     .position(100.0, 150.0)
-    ///     .color([255.0, 0.0, 0.0, 255.0])
+    ///     .color(Rgba::new(255, 0, 0, 255))
     ///     .build(&context)?;
     /// # Ok(())
     /// # }
@@ -128,13 +146,13 @@ impl Shape {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Shape, Vector2f, Vertex};
+    /// # use vmnl_native::{Context, Rgba, Shape, Vector2f, Vertex};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertices = [
-    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: [255.0, 0.0, 0.0, 255.0] },
-    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: [0.0, 255.0, 0.0, 255.0] },
-    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: [0.0, 0.0, 255.0, 255.0] },
+    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: Rgba::new(255, 0, 0, 255) },
+    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: Rgba::new(0, 255, 0, 255) },
+    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: Rgba::new(0, 0, 255, 255) },
     /// ];
     /// let indices = [0, 1, 2];
     ///
@@ -155,20 +173,20 @@ impl Shape {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Shape, Vector2f, Vertex};
+    /// # use vmnl_native::{Context, Rgba, Shape, Vector2f, Vertex};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertex1 = Vertex {
     ///     position: Vector2f { x: 100.0, y: 150.0 },
-    ///     color: [255.0, 0.0, 0.0, 255.0],
+    ///     color: Rgba::new(255, 0, 0, 255),
     /// };
     /// let vertex2 = Vertex {
     ///     position: Vector2f { x: 300.0, y: 150.0 },
-    ///     color: [0.0, 255.0, 0.0, 255.0],
+    ///     color: Rgba::new(0, 255, 0, 255),
     /// };
     /// let vertex3 = Vertex {
     ///     position: Vector2f { x: 200.0, y: 300.0 },
-    ///     color: [0.0, 0.0, 255.0, 255.0],
+    ///     color: Rgba::new(0, 0, 255, 255),
     /// };
     /// let triangle = Shape::triangle([vertex1, vertex2, vertex3])
     ///     .build(&context)?;
@@ -185,38 +203,19 @@ impl Shape {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, LineCap, Shape, Vector2f};
+    /// # use vmnl_native::{Context, LineCap, Rgba, Shape, Vector2f};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
     ///     .width(5.0)
     ///     .cap(LineCap::Round)
-    ///     .color([0.0, 0.0, 255.0, 255.0])
+    ///     .color(Rgba::new(0, 0, 255, 255))
     ///     .build(&context)?;
     /// # Ok(())
     /// # }
     /// ```
     pub fn line(from: Vector2f, to: Vector2f) -> LineBuilder {
         LineBuilder::new(from, to)
-    }
-
-    /// Transform color values from `[0, 255]` to `[0.0, 1.0]` expected by Vulkan.
-    fn color_transform(color: Rgba) -> Rgba {
-        if color.iter().any(|&c| c > 255.0) {
-            eprintln!(
-                "{}",
-                VMNLError::new(VMNLErrorKind::InvalidState(
-                    "color value overflow detected".to_string()
-                ))
-                .report()
-            );
-        }
-        [
-            (color[0] / 255.0).clamp(0.0, 1.0),
-            (color[1] / 255.0).clamp(0.0, 1.0),
-            (color[2] / 255.0).clamp(0.0, 1.0),
-            (color[3] / 255.0).clamp(0.0, 1.0),
-        ]
     }
 }
 

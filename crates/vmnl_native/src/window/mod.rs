@@ -130,7 +130,7 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
+    /// # use vmnl_native::{Context, Rgba, Window};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
@@ -152,7 +152,7 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
+    /// # use vmnl_native::{Context, Rgba, Window};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
@@ -175,7 +175,7 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
+    /// # use vmnl_native::{Context, Rgba, Window};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
@@ -213,7 +213,7 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
+    /// # use vmnl_native::{Context, Rgba, Window};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
@@ -245,7 +245,7 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
+    /// # use vmnl_native::{Context, Rgba, Window};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
@@ -266,7 +266,7 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
+    /// # use vmnl_native::{Context, Rgba, Window};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
@@ -288,7 +288,7 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
+    /// # use vmnl_native::{Context, Rgba, Window};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
@@ -322,7 +322,7 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
+    /// # use vmnl_native::{Context, Rgba, Window};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
@@ -352,19 +352,17 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
+    /// # use vmnl_native::{Context, Rgba, Window};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
-    ///     .set_clear_color([0.0, 0.0, 0.0, 255.0])
+    ///     .set_clear_color(Rgba::new(0, 0, 0, 255))
     ///     .build(&context)?;
     /// # Ok(())
     /// # }
     /// ```
     pub fn set_clear_color(mut self, clear_color: Rgba) -> Self {
-        let [r, g, b, a] = clear_color;
-
-        self.options.clear_color = [r / 255.0, g / 255.0, b / 255.0, a / 255.0];
+        self.options.clear_color = clear_color.normalized();
         self
     }
 
@@ -398,7 +396,7 @@ impl Window {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
+    /// # use vmnl_native::{Context, Rgba, Window};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
