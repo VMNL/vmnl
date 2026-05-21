@@ -8,7 +8,7 @@
 pub mod shape;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use bytemuck::{Pod, Zeroable};
-pub(crate) use shape::VertexBuffer;
+pub(crate) use shape::{GpuVertex, VertexBuffer};
 pub use shape::{LineCap, Shape, Vertex};
 use std::cmp::Ordering;
 use std::sync::Arc;
@@ -23,13 +23,61 @@ pub type VMNLIndexBuffer = Subbuffer<[u32]>;
 /// Uniform buffer object for frame data.
 #[allow(dead_code)]
 pub type VMNLFrameUboBuffer = Subbuffer<VMNLFrameUbo>;
-/// RGBA color represented as `[r, g, b, a]` (f32).
-pub type Rgba = [f32; 4];
+/// RGBA color represented as 8-bit components.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, Pod, Zeroable, PartialEq, Eq)]
+pub struct Rgba {
+    /// Red component of the color, in the range `[0, 255]`.
+    pub r: u8,
+    /// Green component of the color, in the range `[0, 255]`.
+    pub g: u8,
+    /// Blue component of the color, in the range `[0, 255]`.
+    pub b: u8,
+    /// Alpha component of the color, in the range `[0, 255]`, where `0` is fully transparent and `255` is fully opaque.
+    pub a: u8,
+}
+
+impl Rgba {
+    /// Create a new `Rgba` color from individual components.
+    ///
+    /// # Arguments
+    /// - `r`: Red component of the color, in the range `[0, 255]`.
+    /// - `g`: Green component of the color, in the range `[0, 255]`.
+    /// - `b`: Blue component of the color, in the range `[0, 255]`.
+    /// - `a`: Alpha component of the color, in the range `[0, 255]`, where `0` is fully transparent and `255` is fully opaque.
+    ///
+    /// # Returns
+    /// A new `Rgba` instance representing the specified color.
+    /// # Example
+    /// ```rust
+    /// use vmnl_native::Rgba;
+    /// let color = Rgba::new(255, 0, 0, 255); /// Creates a fully opaque red color.
+    /// ```
+    pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self { r, g, b, a }
+    }
+
+    /// Normalize the RGBA color components to the range `[0.0, 1.0]` for use in shader uniforms.
+    ///
+    /// # Returns
+    /// An array of four `f32` values representing the normalized RGBA color,
+    /// where each component is in the range `[0.0, 1.0]`.
+    pub(crate) fn normalized(self) -> [f32; 4] {
+        [
+            f32::from(self.r) / 255.0,
+            f32::from(self.g) / 255.0,
+            f32::from(self.b) / 255.0,
+            f32::from(self.a) / 255.0,
+        ]
+    }
+}
 /// 2D vector of `f32` values.
 #[derive(Clone, Copy, Debug, Default, Pod, Zeroable, PartialEq)]
 #[repr(C)]
 pub struct Vector2f {
+    /// X component of the vector.
     pub x: f32,
+    /// Y component of the vector.
     pub y: f32,
 }
 
@@ -49,7 +97,6 @@ impl PartialOrd for Vector2f {
     }
 }
 
-/// Information about a connected monitor.
 #[repr(C)]
 #[derive(BufferContents, Clone, Copy, Debug, Default, PartialEq)]
 #[allow(dead_code)]
@@ -184,7 +231,7 @@ pub(crate) trait GraphicsResourceFactory {
         memory_allocator: &Arc<StandardMemoryAllocator>,
     ) -> VMNLResult<VertexBuffer> {
         Self::create_buffer_from_iter(
-            vertices.iter().copied(),
+            vertices.iter().copied().map(GpuVertex::from),
             BufferUsage::VERTEX_BUFFER,
             memory_allocator,
             VMNLErrorKind::VulkanVertexBufferCreationFailed,

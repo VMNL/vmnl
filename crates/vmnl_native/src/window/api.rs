@@ -23,7 +23,7 @@ impl<const N: usize> RenderCall<'_, '_, N> {
     /// ```rust,ignore
     /// let background = Shape::rect(200.0, 100.0)
     ///     .position(100.0, 150.0)
-    ///     .color([255.0, 0.0, 0.0, 255.0])
+    ///     .color(Rgba::new(255, 0, 0, 255))
     ///     .build(&context)?;
     ///
     /// while window.is_open() {
@@ -47,7 +47,7 @@ impl<const N: usize> RenderCall<'_, '_, N> {
     /// ```rust,ignore
     /// let background = Shape::rect(200.0, 100.0)
     ///     .position(100.0, 150.0)
-    ///     .color([255.0, 0.0, 0.0, 255.0])
+    ///     .color(Rgba::new(255, 0, 0, 255))
     ///     .build(&context)?;
     ///
     /// while window.is_open() {
@@ -73,7 +73,7 @@ impl Window {
     /// ```rust,ignore
     /// let background = Shape::rect(200.0, 100.0)
     ///     .position(100.0, 150.0)
-    ///     .color([255.0, 0.0, 0.0, 255.0])
+    ///     .color(Rgba::new(255, 0, 0, 255))
     ///     .build(&context)?;
     ///
     /// while window.is_open() {
@@ -1330,14 +1330,11 @@ impl Window {
     ///
     /// # Example
     /// ```rust,ignore
-    /// window.set_clear_color([255.0, 0.0, 0.0, 255.0]);
-    /// window.set_clear_color([0.0, 0.0, 255.0, 128.0]);
+    /// window.set_clear_color(Rgba::new(255, 0, 0, 255));
+    /// window.set_clear_color(Rgba::new(0, 0, 255, 128));
     /// ```
     #[inline]
     pub fn set_clear_color(&mut self, color: Rgba) {
-        let [r, g, b, a] = color;
-
-        self.inner
-            .set_clear_color([r / 255.0, g / 255.0, b / 255.0, a / 255.0]);
+        self.inner.set_clear_color(color.normalized());
     }
 }

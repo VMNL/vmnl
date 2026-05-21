@@ -3,12 +3,14 @@ name    = "vmnl"
 version = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
+rust-version = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
 readme = "../../README.md"
 description = "VMNL public API crate."
+keywords = ["vulkan", "graphics", "windowing", "rendering"]
+categories = ["graphics", "rendering", "game-development"]
 
 [dependencies]
-libc = "0.2.182"
 vmnl_native = { path = "../vmnl_native", version = "0.1.0" }
-
-[lib]
-crate-type = ["rlib", "cdylib"]

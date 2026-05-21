@@ -38,13 +38,13 @@ impl IndexedShapeBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Shape, Vector2f, Vertex};
+    /// # use vmnl_native::{Context, Rgba, Shape, Vector2f, Vertex};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertices = [
-    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: [255.0, 0.0, 0.0, 255.0] },
-    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: [0.0, 255.0, 0.0, 255.0] },
-    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: [0.0, 0.0, 255.0, 255.0] },
+    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: Rgba::new(255, 0, 0, 255) },
+    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: Rgba::new(0, 255, 0, 255) },
+    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: Rgba::new(0, 0, 255, 255) },
     /// ];
     /// let indices = [0, 1, 2];
     ///
@@ -92,14 +92,6 @@ impl IndexedShapeBuilder {
             ))));
         }
 
-        let vertices: Vec<Vertex> = vertices
-            .iter()
-            .map(|vertex| Vertex {
-                position: vertex.position,
-                color: Shape::color_transform(vertex.color),
-            })
-            .collect();
-
         println!(
             "{}",
             crate::vmnl_log(format!(
@@ -111,11 +103,11 @@ impl IndexedShapeBuilder {
                     .join("], ["),
                 vertices
                     .iter()
-                    .map(|v| (v.color[0] * 255.0).to_string()
+                    .map(|v| v.color.r.to_string()
                         + ", "
-                        + &(v.color[1] * 255.0).to_string()
+                        + &v.color.g.to_string()
                         + ", "
-                        + &(v.color[2] * 255.0).to_string())
+                        + &v.color.b.to_string())
                     .collect::<Vec<String>>()
                     .join("], ["),
                 indices
@@ -130,7 +122,7 @@ impl IndexedShapeBuilder {
             vertex_count: vertices.len() as u32,
             index_count: indices.len() as u32,
             vertex_buffer: Shape::create_vertex_buffer(
-                &vertices,
+                vertices.iter().as_slice(),
                 &vmnl_context.inner.memory_allocator,
             )?,
             index_buffer: Some(Shape::create_index_buffer(

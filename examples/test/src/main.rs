@@ -1,4 +1,8 @@
-use vmnl::{Context, Event, Key, MouseButton, Shape, VMNLResult, Vector2f, Vertex, Window};
+use vmnl::{Context, Event, Key, MouseButton, Rgba, Shape, VMNLResult, Vector2f, Vertex, Window};
+
+const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Rgba {
+    Rgba { r, g, b, a }
+}
 
 fn handle_event_test(event: &Event) {
     match event {
@@ -76,32 +80,32 @@ fn create_pentagon_indexed(ctx: &Context) -> VMNLResult<Shape> {
         // Center
         Vertex {
             position: Vector2f { x: 700.0, y: 600.0 },
-            color: [255.0, 255.0, 255.0, 255.0],
+            color: rgba(255, 255, 255, 255),
         },
         // Top
         Vertex {
             position: Vector2f { x: 700.0, y: 350.0 },
-            color: [255.0, 0.0, 0.0, 255.0],
+            color: rgba(255, 0, 0, 255),
         },
         // Upper right
         Vertex {
             position: Vector2f { x: 938.0, y: 523.0 },
-            color: [255.0, 255.0, 0.0, 255.0],
+            color: rgba(255, 255, 0, 255),
         },
         // Lower right
         Vertex {
             position: Vector2f { x: 847.0, y: 802.0 },
-            color: [0.0, 255.0, 0.0, 255.0],
+            color: rgba(0, 255, 0, 255),
         },
         // Lower left
         Vertex {
             position: Vector2f { x: 553.0, y: 802.0 },
-            color: [0.0, 255.0, 255.0, 255.0],
+            color: rgba(0, 255, 255, 255),
         },
         // Upper left
         Vertex {
             position: Vector2f { x: 462.0, y: 523.0 },
-            color: [0.0, 0.0, 255.0, 255.0],
+            color: rgba(0, 0, 255, 255),
         },
     ];
     const INDICES: [u32; 15] = [
@@ -120,7 +124,7 @@ fn main() -> VMNLResult<()> {
     let mut win: Window = Window::builder()
         .size(1920, 1080)
         .size_limit(Some(600), Some(600), Some(2000), Some(1500))?
-        .set_clear_color([0.0, 0.0, 0.0, 255.0])
+        .set_clear_color(rgba(0, 0, 0, 255))
         .build(&ctx)?;
     let triangle: Shape = Shape::triangle([
         Vertex {
@@ -128,28 +132,28 @@ fn main() -> VMNLResult<()> {
                 x: 1200.0,
                 y: 300.0,
             },
-            color: [255.0, 0.0, 0.0, 255.0],
+            color: rgba(255, 0, 0, 255),
         },
         Vertex {
             position: Vector2f {
                 x: 1600.0,
                 y: 300.0,
             },
-            color: [0.0, 255.0, 0.0, 255.0],
+            color: rgba(0, 255, 0, 255),
         },
         Vertex {
             position: Vector2f {
                 x: 1200.0,
                 y: 500.0,
             },
-            color: [0.0, 0.0, 255.0, 255.0],
+            color: rgba(0, 0, 255, 255),
         },
     ])
     .build(&ctx)?;
     let pentagon_indexed: Shape = create_pentagon_indexed(&ctx)?;
     let rectangle: Shape = Shape::rect(800.0, 100.0)
         .position(100.0, 150.0)
-        .color([255.0, 0.0, 0.0, 255.0])
+        .color(rgba(255, 0, 0, 255))
         .build(&ctx)?;
 
     println!(

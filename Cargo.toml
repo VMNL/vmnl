@@ -7,6 +7,10 @@ resolver = "2"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+rust-version = "1.87"
+repository = "https://github.com/VMNL/vmnl"
+homepage = "https://github.com/VMNL/vmnl"
+documentation = "https://docs.rs/vmnl"
 
 [profile.dev]
 opt-level = 3

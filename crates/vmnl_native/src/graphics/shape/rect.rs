@@ -24,7 +24,12 @@ impl Default for RectOptions {
         Self {
             position: Vector2f { x: 0.0, y: 0.0 },
             size: Vector2f { x: 0.0, y: 0.0 },
-            color: [255.0, 255.0, 255.0, 255.0],
+            color: Rgba {
+                r: 255,
+                g: 255,
+                b: 255,
+                a: 255,
+            },
         }
     }
 }
@@ -55,7 +60,7 @@ impl RectBuilder {
     /// The updated `RectBuilder` instance with the specified position.
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Shape};
+    /// # use vmnl_native::{Context, Rgba, Shape};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
@@ -79,11 +84,15 @@ impl RectBuilder {
     /// The updated `RectBuilder` instance with the specified color.
     ///
     /// # Example
-    /// ```rust
-    /// use vmnl_native::Shape;
-    ///
+    /// ```rust,no_run
+    /// # use vmnl_native::{Context, Rgba, Shape};
+    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
-    ///     .color([255.0, 0.0, 0.0, 255.0]);
+    ///     .color(Rgba::new(255, 0, 0, 255))
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn color(mut self, color: Rgba) -> Self {
         self.options.color = color;
@@ -99,7 +108,7 @@ impl RectBuilder {
     /// A `Shape` instance representing the rectangle, ready for rendering.
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Shape};
+    /// # use vmnl_native::{Context, Rgba, Shape};
     /// # fn main() -> vmnl_native::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
@@ -168,6 +177,11 @@ impl RectBuilder {
         let y0: f32 = position.y;
         let x1: f32 = x0 + size.x;
         let y1: f32 = y0 + size.y;
+        if x1.is_infinite() || y1.is_infinite() {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "rectangle bounds must be finite".to_string(),
+            )));
+        }
         let vertices: [Vertex; 4] = [
             Vertex {
                 position: Vector2f { x: x0, y: y0 },
@@ -194,7 +208,7 @@ impl RectBuilder {
         println!("{}", crate::vmnl_log(format!("Creating rectangle at position [{}, {}] with size [{}, {}] and color [{}, {}, {}].",
             position.x, position.y,
             size.x, size.y,
-            color[0], color[1], color[2]
+            color.r, color.g, color.b
         )));
         Ok(graphics)
     }
