@@ -3,97 +3,186 @@
 /// SPDX-License-Identifier: MIT
 ///
 /// * Window configuration management for the VMNL library,
-///   defining the WindowConfig struct and related methods for managing window parameters and behavior.
+///   defining the `WindowConfig` struct and related methods for managing window parameters and behavior.
 ////////////////////////////////////////////////////////////////////////////////
-
 extern crate glfw;
-use crate::Window;
+use crate::{window::inner::VMNLWindow, window::monitors::Monitors, VMNLResult};
 
-/**
- * * Represents the parameter configuration of the window instance.
- *
- * This structure have all information that describe the window instance.
- *
- * ? Invariants:
- * - `is_close_with_espace` is set as true by default and can be
- *   set with the `should_close_with_escape_pressed(closed: bool)` function.
- * - `width` can't be set below 64 pixels.
- * - `height` can't be set below 64 pixels.
- */
-pub(crate) struct WindowConfig
-{
-    /// * Indicates whether the window can be closed by pressed the espace keyboard.
-    pub(crate) is_close_with_escape: bool,
-    /// * Actual window instance title.
-    pub(crate) title:                String,
-    /// * Actual window instance width (64 or above).
-    pub(crate) width:                u32,
-    /// * Actual window instance height (64 or above).
-    pub(crate) height:               u32
+/// Represents the parameter configuration of the window instance.
+///
+/// This structure contains all information that describes the window instance.
+///
+/// # Invariants
+/// - `width` cannot be set below 64 pixels.
+/// - `height` cannot be set below 64 pixels.
+pub struct WindowConfig {
+    /// The current title of the window instance.
+    pub(crate) title: String,
+    /// The current width of the window instance in pixels (minimum 64).
+    pub(crate) width: u32,
+    /// The current height of the window instance in pixels (minimum 64).
+    pub(crate) height: u32,
+    /// The monitor information associated with the window instance.
+    pub(crate) monitor: Monitors,
 }
 
-impl Window
-{
-    /**
-     * * Closes the window by setting the GLFW should_close flag to true.
-     */
-    pub fn title(&self) -> &str
-    {
-        return &self.window_config.title;
+impl VMNLWindow {
+    /// Internal implementation backing `Window::get_title`.
+    #[inline]
+    pub(crate) fn get_title(&self) -> &str {
+        &self.window_config.title
     }
 
-    /**
-     * * Enables or disables closing the window when the Escape key is pressed.
-     *
-     * ! Parameters:
-     * - `closed`:
-     *     - `true`  → pressing Escape will request window closure.
-     *     - `false` → Escape key will be ignored for closing behavior.
-     *
-     * ? Invariants:
-     * - It's set at true by default.
-     *
-     * ? Typical Usage:
-     * - Configure behavior at initialization:
-     *     `window.should_close_with_escape_pressed(false);`
-     */
-    pub fn should_close_with_escape_pressed(
+    /// Internal implementation backing `Window::set_title`.
+    pub(crate) fn set_title(&mut self, title: &str) {
+        self.window_handle.context.set_title(title);
+        self.window_config.title = title.to_string();
+    }
+
+    /// Internal implementation backing `Window::set_size`.
+    pub(crate) fn set_size(&mut self, width: u32, height: u32) {
+        self.window_handle
+            .context
+            .set_size(width as i32, height as i32);
+        self.window_config.width = width;
+        self.window_config.height = height;
+    }
+
+    /// Internal implementation backing `Window::get_size`.
+    #[inline]
+    pub(crate) const fn get_size(&self) -> (u32, u32) {
+        (self.window_config.width, self.window_config.height)
+    }
+
+    /// Internal implementation backing `Window::get_framebuffer_size`.
+    #[inline]
+    pub(crate) fn get_framebuffer_size(&self) -> (u32, u32) {
+        let (width, height) = self.window_handle.context.get_framebuffer_size();
+        (width as u32, height as u32)
+    }
+
+    /// Internal implementation backing `Window::get_content_scale`.
+    #[inline]
+    pub(crate) fn get_content_scale(&self) -> (f32, f32) {
+        self.window_handle.context.get_content_scale()
+    }
+
+    /// Internal implementation backing `Window::set_size_limits`.
+    pub(crate) fn set_size_limits(
         &mut self,
-        closed: bool
-    ) -> ()
-    {
-        self.window_config.is_close_with_escape = closed;
+        min_width: Option<u32>,
+        min_height: Option<u32>,
+        max_width: Option<u32>,
+        max_height: Option<u32>,
+    ) -> VMNLResult<()> {
+        super::validate_size_limits(min_width, min_height, max_width, max_height)?;
+        self.window_handle
+            .context
+            .set_size_limits(min_width, min_height, max_width, max_height);
+        Ok(())
     }
 
-    /**
-     * * Returns the current window width in pixels.
-     *
-     * ! Returns:
-     * - `u32`: Window width in pixels.
-     *
-     * ? Notes:
-     * - For rendering, prefer querying the framebuffer size if DPI scaling
-     *   is involved.
-     */
-    pub fn width(&self) -> u32
-    {
-        return self.window_config.width;
+    /// Internal implementation backing `Window::set_aspect_ratio`.
+    pub(crate) fn set_aspect_ratio(&mut self, aspect_ratio: Option<(u32, u32)>) {
+        if let Some((numerator, denominator)) = aspect_ratio {
+            self.window_handle
+                .context
+                .set_aspect_ratio(numerator, denominator);
+        } else {
+            self.window_handle.context.set_aspect_ratio(0, 0);
+        }
     }
 
-    /**
-     * * Returns the current window height in pixels.
-     *
-     * ! Returns:
-     * - `u32`: Window height in pixels.
-     *
-     * ? Notes:
-     * - For rendering, prefer querying the framebuffer size if DPI scaling
-     *   is involved.
-     */
-    pub fn height(&self) -> u32
-    {
-        return self.window_config.height;
+    /// Internal implementation backing `Window::set_position`.
+    pub(crate) fn set_position(&mut self, x: i32, y: i32) {
+        self.window_handle.context.set_pos(x, y);
     }
 
+    /// Internal implementation backing `Window::get_position`.
+    #[inline]
+    pub(crate) fn get_position(&self) -> (i32, i32) {
+        self.window_handle.context.get_pos()
+    }
 
+    /// Internal implementation backing `Window::iconify`.
+    pub(crate) fn iconify(&mut self) {
+        self.window_handle.context.iconify();
+    }
+
+    /// Internal implementation backing `Window::is_iconified`.
+    #[inline]
+    pub(crate) fn is_iconified(&self) -> bool {
+        self.window_handle.context.is_iconified()
+    }
+
+    /// Internal implementation backing `Window::restore`.
+    pub(crate) fn restore(&mut self) {
+        self.window_handle.context.restore();
+    }
+
+    /// Internal implementation backing `Window::maximize`.
+    pub(crate) fn maximize(&mut self) {
+        self.window_handle.context.maximize();
+    }
+
+    /// Internal implementation backing `Window::is_maximized`.
+    #[inline]
+    pub(crate) fn is_maximized(&self) -> bool {
+        self.window_handle.context.is_maximized()
+    }
+
+    /// Internal implementation backing `Window::show`.
+    pub(crate) fn show(&mut self) {
+        self.window_handle.context.show();
+    }
+
+    /// Internal implementation backing `Window::hide`.
+    pub(crate) fn hide(&mut self) {
+        self.window_handle.context.hide();
+    }
+
+    /// Internal implementation backing `Window::is_visible`.
+    #[inline]
+    pub(crate) fn is_visible(&self) -> bool {
+        self.window_handle.context.is_visible()
+    }
+
+    /// Internal implementation backing `Window::focus`.
+    pub(crate) fn focus(&mut self) {
+        self.window_handle.context.focus();
+    }
+
+    /// Internal implementation backing `Window::is_focused`.
+    #[inline]
+    pub(crate) fn is_focused(&self) -> bool {
+        self.window_handle.context.is_focused()
+    }
+
+    /// Internal implementation backing `Window::opacity`.
+    pub(crate) fn opacity(&mut self, opacity: f32) {
+        self.window_handle.context.set_opacity(opacity);
+    }
+
+    /// Internal implementation backing `Window::get_opacity`.
+    #[inline]
+    pub(crate) fn get_opacity(&self) -> f32 {
+        self.window_handle.context.get_opacity()
+    }
+
+    /// Internal implementation backing `Window::width`.
+    #[inline]
+    pub(crate) const fn width(&self) -> u32 {
+        self.window_config.width
+    }
+
+    /// Internal implementation backing `Window::height`.
+    #[inline]
+    pub(crate) const fn height(&self) -> u32 {
+        self.window_config.height
+    }
+
+    /// Internal implementation backing `Window::monitor`.
+    pub(crate) const fn monitor(&self) -> &Monitors {
+        &self.window_config.monitor
+    }
 }

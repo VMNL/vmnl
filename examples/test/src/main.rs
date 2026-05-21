@@ -1,9 +1,6 @@
-use vmnl::{Window, Graphics, Context, VMNLVertex, VMNLResult, Key, MouseButton, Event, VMNLRect};
+use vmnl::{Context, Event, Key, MouseButton, Shape, VMNLResult, Vector2f, Vertex, Window};
 
-fn handle_event_test(
-    event: &Event,
-) -> ()
-{
+fn handle_event_test(event: &Event) {
     match event {
         Event::Closed => {
             println!("[Event] Closed");
@@ -14,19 +11,19 @@ fn handle_event_test(
         Event::FocusLost => {
             println!("[Event] Focus lost");
         }
-        Event::Resized {width, height} => {
+        Event::Resized { width, height } => {
             println!("[Event] Resized: {}x{}", width, height);
         }
-        Event::FramebufferResized {width, height} => {
+        Event::FramebufferResized { width, height } => {
             println!("[Event] Framebuffer resized: {}x{}", width, height);
         }
-        Event::KeyPressed {key, repeat} => {
+        Event::KeyPressed { key, repeat } => {
             println!("[Event] Key pressed: {:?} (repeat: {})", key, repeat);
         }
-        Event::KeyReleased {key} => {
+        Event::KeyReleased { key } => {
             println!("[Event] Key released: {:?}", key);
         }
-        Event::MouseMoved {x, y} => {
+        Event::MouseMoved { x, y } => {
             println!("[Event] Mouse moved: {} {}", x, y);
         }
         Event::MouseEntered => {
@@ -35,13 +32,13 @@ fn handle_event_test(
         Event::MouseLeft => {
             println!("[Event] Mouse left window");
         }
-        Event::MouseButtonPressed {button} => {
+        Event::MouseButtonPressed { button } => {
             println!("[Event] Mouse button pressed: {:?}", button);
         }
-        Event::MouseButtonReleased {button} => {
+        Event::MouseButtonReleased { button } => {
             println!("[Event] Mouse button released: {:?}", button);
         }
-        Event::MouseScrolled {dx, dy} => {
+        Event::MouseScrolled { dx, dy } => {
             println!("[Event] Mouse scrolled: {} {}", dx, dy);
         }
         Event::Text(c) => {
@@ -50,10 +47,7 @@ fn handle_event_test(
     }
 }
 
-fn handle_keybind_test(
-    win: &mut Window
-) -> ()
-{
+fn handle_keybind_test(win: &mut Window) {
     if win.input().keyboard().is_pressed(Key::E) {
         println!("[Keybind] Key E is pressed");
     }
@@ -65,10 +59,7 @@ fn handle_keybind_test(
     }
 }
 
-fn handle_mousebind_test(
-    win: &mut Window
-) -> ()
-{
+fn handle_mousebind_test(win: &mut Window) {
     if win.input().mouse().is_pressed(MouseButton::Left) {
         println!("[Mousebind] Mouse button left is pressed");
     }
@@ -80,63 +71,104 @@ fn handle_mousebind_test(
     }
 }
 
-fn create_quad_manual(
-    ctx: &Context
-) -> [Graphics; 2]
-{
-    let vertex: Graphics = Graphics::create_triangle(
-        &ctx,
-        VMNLVertex { position: [1020.0, 800.0], color: [0.0,   255.0, 0.0]   },
-        VMNLVertex { position: [400.0,  800.0], color: [255.0, 0.0,   0.0]   },
-        VMNLVertex { position: [1020.0, 400.0], color: [0.0,   0.0,   255.0] }
-    );
-    let vertex2: Graphics = Graphics::create_triangle(
-        &ctx,
-        VMNLVertex { position: [400.0,  400.0], color: [255.0, 255.0, 0.0]   },
-        VMNLVertex { position: [400.0,  800.0], color: [255.0, 0.0,   0.0]   },
-        VMNLVertex { position: [1020.0, 400.0], color: [0.0,   0.0,   255.0] }
-    );
+fn create_pentagon_indexed(ctx: &Context) -> VMNLResult<Shape> {
+    const VERTICES: [Vertex; 6] = [
+        // Center
+        Vertex {
+            position: Vector2f { x: 700.0, y: 600.0 },
+            color: [255.0, 255.0, 255.0, 255.0],
+        },
+        // Top
+        Vertex {
+            position: Vector2f { x: 700.0, y: 350.0 },
+            color: [255.0, 0.0, 0.0, 255.0],
+        },
+        // Upper right
+        Vertex {
+            position: Vector2f { x: 938.0, y: 523.0 },
+            color: [255.0, 255.0, 0.0, 255.0],
+        },
+        // Lower right
+        Vertex {
+            position: Vector2f { x: 847.0, y: 802.0 },
+            color: [0.0, 255.0, 0.0, 255.0],
+        },
+        // Lower left
+        Vertex {
+            position: Vector2f { x: 553.0, y: 802.0 },
+            color: [0.0, 255.0, 255.0, 255.0],
+        },
+        // Upper left
+        Vertex {
+            position: Vector2f { x: 462.0, y: 523.0 },
+            color: [0.0, 0.0, 255.0, 255.0],
+        },
+    ];
+    const INDICES: [u32; 15] = [
+        0, 1, 2, // center -> top -> upper right
+        0, 2, 3, // center -> upper right -> lower right
+        0, 3, 4, // center -> lower right -> lower left
+        0, 4, 5, // center -> lower left -> upper left
+        0, 5, 1, // center -> upper left -> top
+    ];
 
-    return [vertex, vertex2];
+    Shape::indexed(VERTICES.to_vec(), INDICES.to_vec()).build(ctx)
 }
 
-fn create_quad_indexed(
-    ctx: &Context
-) -> Graphics
-{
-    let vertices: [VMNLVertex; 4] = [
-        VMNLVertex { position: [400.0,  400.0], color: [255.0, 255.0, 0.0]   }, // ! top-left
-        VMNLVertex { position: [1020.0, 400.0], color: [0.0,   255.0, 0.0]   }, // ! top-right
-        VMNLVertex { position: [1020.0, 800.0], color: [0.0,   0.0,   255.0] }, // ! bottom-right
-        VMNLVertex { position: [400.0,  800.0], color: [255.0, 0.0,   0.0]   }, // ! bottom-left
-    ];
-    let indices: [u32; 6] = [
-        0, 1, 2, // ! first triangle (top-left, top-right, bottom-right)
-        2, 3, 0, // ! second triangle (bottom-right, bottom-left, top-left)
-    ];
+fn main() -> VMNLResult<()> {
+    let ctx: Context = Context::new()?;
+    let mut win: Window = Window::builder()
+        .size(1920, 1080)
+        .size_limit(Some(600), Some(600), Some(2000), Some(1500))?
+        .set_clear_color([0.0, 0.0, 0.0, 255.0])
+        .build(&ctx)?;
+    let triangle: Shape = Shape::triangle([
+        Vertex {
+            position: Vector2f {
+                x: 1200.0,
+                y: 300.0,
+            },
+            color: [255.0, 0.0, 0.0, 255.0],
+        },
+        Vertex {
+            position: Vector2f {
+                x: 1600.0,
+                y: 300.0,
+            },
+            color: [0.0, 255.0, 0.0, 255.0],
+        },
+        Vertex {
+            position: Vector2f {
+                x: 1200.0,
+                y: 500.0,
+            },
+            color: [0.0, 0.0, 255.0, 255.0],
+        },
+    ])
+    .build(&ctx)?;
+    let pentagon_indexed: Shape = create_pentagon_indexed(&ctx)?;
+    let rectangle: Shape = Shape::rect(800.0, 100.0)
+        .position(100.0, 150.0)
+        .color([255.0, 0.0, 0.0, 255.0])
+        .build(&ctx)?;
 
-    return Graphics::create_indexed_shape(&ctx, &vertices, &indices);
-}
-
-fn main() -> VMNLResult<()>
-{
-    let ctx:          Context       = Context::new()?;
-    let mut win:      Window        = Window::new(&ctx, 1920, 1080, "Window")?;
-    let _quad_manual: [Graphics; 2] = create_quad_manual(&ctx);
-    let _quad_indexed: Graphics      = create_quad_indexed(&ctx);
-    let rectangle: Graphics         = Graphics::create_rectangle(
-        &ctx,
-        VMNLRect { position: [400.0, 400.0], size: [620.0, 400.0] },
-        [255.0, 200.0, 0.0]
+    println!(
+        "Monitors: {}",
+        win.monitor()
+            .names()
+            .iter()
+            .map(|name| name.clone().unwrap_or("Unknown".to_string()))
+            .collect::<Vec<String>>()
+            .join(", ")
     );
-
     while win.is_open() {
         for event in win.poll_events() {
             handle_event_test(&event);
         }
         handle_keybind_test(&mut win);
         handle_mousebind_test(&mut win);
-        win.render(&[&rectangle]);
+        win.render([&rectangle, &triangle, &pentagon_indexed])
+            .per_object()?;
     }
-    return Ok(());
+    Ok(())
 }

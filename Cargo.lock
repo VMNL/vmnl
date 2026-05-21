@@ -1374,6 +1374,8 @@ dependencies = [
  "bytemuck",
  "glfw",
  "log",
+ "shaderc",
+ "smallvec",
  "vulkano",
  "vulkano-shaders",
 ]

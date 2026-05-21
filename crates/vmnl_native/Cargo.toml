@@ -1,7 +1,13 @@
 [package]
 name = "vmnl_native"
-version = "0.1.0"
-edition = "2024"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+readme = "../../README.md"
+description = "VMNL native backend (Vulkan/GLFW)."
+
+[lib]
+doctest = false
 
 [dependencies]
 vulkano         = "0.35.2"
@@ -9,3 +15,5 @@ vulkano-shaders = { version = "0.35", features = ["shaderc-build-from-source"] }
 glfw            = "0.62.0"
 bytemuck        = "1.25.0"
 log             = "0.4"
+shaderc         = "0.8.3"
+smallvec        = "1.15.1"

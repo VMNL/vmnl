@@ -2,77 +2,90 @@
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// * Input handling for the VMNL library, defining the Input struct and related methods for managing keyboard and mouse input states.
+/// Input handling for the VMNL library, defining the `Input` struct and related methods
+/// for managing keyboard and mouse input states.
 ////////////////////////////////////////////////////////////////////////////////
-
 extern crate glfw;
 pub mod keyboard;
 pub mod mouse;
 pub use keyboard::{Key, KeyboardState};
 pub use mouse::{MouseButton, MouseState};
 
-/**
- * * Represents the state of keyboard input, tracking which keys are currently pressed and which were pressed in the previous frame.
- * This struct is used to manage keyboard input and detect key events such as presses and releases.
- */
-pub struct Input
-{
+/// Represents the input state for the application, consisting of keyboard and mouse states.
+///
+/// Used to manage keyboard and mouse input and to provide convenient accessors for each sub-state.
+pub struct Input {
+    /// The current state of the keyboard.
     pub keyboard: KeyboardState,
+    /// The current state of the mouse.
     pub mouse: MouseState,
 }
 
-impl Input
-{
-    /**
-     * * Handler for keyboard input, providing access to the current state of keys and events.
-     *
-     * ! Returns:
-     * - A reference to the current KeyboardState,
-     *   which contains information about which keys are currently pressed and which were pressed in the previous frame.
-     */
+impl Default for Input {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Input {
+    /// Returns a reference to the current `KeyboardState`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_native::{Input, Key};
+    ///
+    /// let input = Input::new();
+    /// if input.keyboard().is_pressed(Key::A) {
+    ///     println!("Key A was pressed!");
+    /// }
+    /// if input.keyboard().is_any_down(&[Key::A, Key::B, Key::C]) {
+    ///     println!("A, B, or C is currently down!");
+    /// }
+    /// if input.keyboard().is_one_used() {
+    ///     println!("A key was pressed!");
+    /// }
+    /// ```
     #[inline]
-    pub fn keyboard(&self) -> &KeyboardState
-    {
-        return &self.keyboard;
+    #[must_use]
+    pub const fn keyboard(&self) -> &KeyboardState {
+        &self.keyboard
     }
 
-    /**
-     * * Handler for mouse input, providing access to the current state of mouse buttons and events.
-     *
-     * ! Returns:
-     * - A reference to the current MouseState,
-     *   which contains information about which mouse buttons are currently pressed and which were pressed in the previous frame.
-     */
+    /// Returns a reference to the current `MouseState`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_native::{Input, MouseButton};
+    ///
+    /// let input = Input::new();
+    /// if input.mouse().is_pressed(MouseButton::Left) {
+    ///     println!("Left mouse button was pressed!");
+    /// }
+    /// if input.mouse().is_any_down(&[MouseButton::Left, MouseButton::Right]) {
+    ///     println!("Left or right mouse button was down!");
+    /// }
+    /// if input.mouse().is_one_used() {
+    ///     println!("A mouse button was used!");
+    /// }
+    /// ```
     #[inline]
-    pub fn mouse(&self) -> &MouseState
-    {
-        return &self.mouse;
+    #[must_use]
+    pub const fn mouse(&self) -> &MouseState {
+        &self.mouse
     }
 
-    /**
-     * * Updates the current and previous key states based on the input from the GLFW window.
-     *
-     * ! Parameters:
-     * - `window`: A reference to the GLFW window from which to read the current key states.
-     *
-     * ! This function should be called once per frame to ensure that the key states are updated correctly for input handling.
-     */
-    pub fn update(
-        &mut self,
-        window: &glfw::PWindow
-    )
-    {
+    /// Updates both keyboard and mouse states from the given GLFW window.
+    ///
+    /// # Arguments
+    /// - `window`: The GLFW window to read input from. Call once per frame.
+    pub(crate) fn update(&mut self, window: &glfw::PWindow) {
         self.keyboard.update(window);
         self.mouse.update(window);
     }
 
-    /**
-     * * Creates a new Input instance with all keys initialized to not pressed.
-     *
-     * ! Returns:
-     * - A new Input instance with the current and previous key states set to false for all keys.
-     */
-    pub fn new() -> Self {
+    /// Creates a new `Input` with fresh keyboard and mouse states.
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             keyboard: KeyboardState::new(),
             mouse: MouseState::new(),
