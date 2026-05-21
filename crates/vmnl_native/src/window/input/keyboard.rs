@@ -628,3 +628,90 @@ impl Default for KeyboardState {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn keyboard_state(current: &[Key], previous: &[Key]) -> KeyboardState {
+        let mut state: KeyboardState = KeyboardState::new();
+
+        for &key in current {
+            state.current[KeyboardState::index(key)] = true;
+        }
+        for &key in previous {
+            state.previous[KeyboardState::index(key)] = true;
+        }
+        state
+    }
+
+    #[test]
+    fn all_tracked_keys_round_trip_through_glfw() {
+        for &key in ALL_KEYS {
+            assert_eq!(
+                KeyboardState::to_glfw(key).and_then(KeyboardState::from_glfw),
+                Some(key)
+            );
+        }
+    }
+
+    #[test]
+    fn unknown_key_has_no_glfw_mapping() {
+        assert_eq!(KeyboardState::to_glfw(Key::Unknown), None);
+        assert_eq!(KeyboardState::from_glfw(GlfwKey::Unknown), None);
+    }
+
+    #[test]
+    fn tracked_key_count_excludes_unknown_key() {
+        assert_eq!(ALL_KEYS.len(), KEY_COUNT - 1);
+        assert!(!ALL_KEYS.contains(&Key::Unknown));
+    }
+
+    #[test]
+    fn new_keyboard_state_has_no_used_keys() {
+        let state: KeyboardState = KeyboardState::new();
+
+        assert!(!state.is_one_down());
+        assert!(!state.is_one_pressed());
+        assert!(!state.is_one_released());
+        assert!(!state.is_one_used());
+        assert!(!state.is_any_down(&[]));
+        assert!(!state.is_any_pressed(&[]));
+        assert!(!state.is_any_released(&[]));
+        assert!(!state.is_any_used(&[]));
+    }
+
+    #[test]
+    fn keyboard_state_detects_pressed_held_and_released_keys() {
+        let pressed: KeyboardState = keyboard_state(&[Key::A], &[]);
+        let held: KeyboardState = keyboard_state(&[Key::A], &[Key::A]);
+        let released: KeyboardState = keyboard_state(&[], &[Key::A]);
+
+        assert!(pressed.is_down(Key::A));
+        assert!(pressed.is_pressed(Key::A));
+        assert!(!pressed.is_released(Key::A));
+        assert!(pressed.is_any_pressed(&[Key::B, Key::A]));
+        assert!(pressed.is_one_pressed());
+        assert!(held.is_down(Key::A));
+        assert!(!held.is_pressed(Key::A));
+        assert!(!held.is_released(Key::A));
+        assert!(held.is_one_down());
+        assert!(held.is_one_used());
+        assert!(!released.is_down(Key::A));
+        assert!(!released.is_pressed(Key::A));
+        assert!(released.is_released(Key::A));
+        assert!(released.is_any_released(&[Key::B, Key::A]));
+        assert!(released.is_one_released());
+    }
+
+    #[test]
+    fn reset_clears_keyboard_current_and_previous_state() {
+        let mut state: KeyboardState = keyboard_state(&[Key::A], &[Key::B]);
+
+        state.reset();
+        assert!(!state.is_one_down());
+        assert!(!state.is_one_pressed());
+        assert!(!state.is_one_released());
+        assert!(!state.is_one_used());
+    }
+}

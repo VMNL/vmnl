@@ -170,6 +170,21 @@ impl LineBuilder {
         )
     }
 
+    fn validate_geometry(from: Vector2f, to: Vector2f, width: f32) -> VMNLResult<()> {
+        if from == to {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "line endpoints must be distinct".to_string(),
+            )));
+        }
+        if width <= 0.0 {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "line width must be strictly positive".to_string(),
+            )));
+        }
+
+        Ok(())
+    }
+
     /// Create a line shape defined by required `from` and `to` endpoints, optional `width`, optional `cap` style, and optional single `color`.
     ///
     /// `width` defaults to `1.0`, `cap` defaults to `Butt`, and `color` defaults to white.
@@ -194,16 +209,61 @@ impl LineBuilder {
     ) -> VMNLResult<Shape> {
         let _ = (context, cap, color);
 
-        if from == to {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "line endpoints must be distinct".to_string(),
-            )));
-        }
-        if width <= 0.0 {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "line width must be strictly positive".to_string(),
-            )));
-        }
+        Self::validate_geometry(from, to, width)?;
         todo!("line shape rendering is not implemented yet")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_invalid_state(result: VMNLResult<()>, expected: &str) {
+        assert!(matches!(
+            result,
+            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == expected)
+        ));
+    }
+
+    #[test]
+    fn validate_geometry_accepts_distinct_endpoints_and_positive_width() {
+        assert!(LineBuilder::validate_geometry(
+            Vector2f { x: 0.0, y: 0.0 },
+            Vector2f { x: 1.0, y: 1.0 },
+            1.0,
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn validate_geometry_rejects_equal_endpoints() {
+        assert_invalid_state(
+            LineBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f { x: 0.0, y: 0.0 },
+                1.0,
+            ),
+            "line endpoints must be distinct",
+        );
+    }
+
+    #[test]
+    fn validate_geometry_rejects_non_positive_width() {
+        assert_invalid_state(
+            LineBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f { x: 1.0, y: 1.0 },
+                0.0,
+            ),
+            "line width must be strictly positive",
+        );
+        assert_invalid_state(
+            LineBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f { x: 1.0, y: 1.0 },
+                -1.0,
+            ),
+            "line width must be strictly positive",
+        );
     }
 }

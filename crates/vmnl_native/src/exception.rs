@@ -277,7 +277,9 @@ impl fmt::Display for VMNLError {
             VMNLErrorKind::GlfwPlatformError => f.write_str("glfw platform error"),
             VMNLErrorKind::GlfwUnknownError => f.write_str("glfw unknown error"),
             VMNLErrorKind::InvalidWindowSize => f.write_str("invalid window size specified"),
-            VMNLErrorKind::InvalidState(msg) => write!(f, "invalid state: {msg}"),
+            VMNLErrorKind::InvalidState(msg) => {
+                write!(f, "invalid state: {msg}")
+            }
         }
     }
 }
@@ -299,3 +301,38 @@ pub fn vmnl_log<S: AsRef<str>>(message: S) -> String {
 
 /// Type alias for results returned by functions in the VMNL library using `VMNLError`.
 pub type VMNLResult<T> = Result<T, VMNLError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vmnl_log_prefixes_messages() {
+        assert_eq!(vmnl_log("hello"), "[VMNL Log] hello");
+    }
+
+    #[test]
+    fn error_display_formats_static_and_state_errors() {
+        assert_eq!(
+            VMNLError::new(VMNLErrorKind::InvalidWindowSize).to_string(),
+            "invalid window size specified"
+        );
+        assert_eq!(
+            VMNLError::new(VMNLErrorKind::InvalidState("bad state".to_string())).to_string(),
+            "invalid state: bad state"
+        );
+    }
+
+    #[test]
+    fn error_report_contains_message_and_location() {
+        let err = VMNLError::new(VMNLErrorKind::GlfwInitFailed);
+        let report = err.report();
+        let location = err.location();
+
+        assert!(report.starts_with("glfw initialization failed (at "));
+        assert!(report.contains("exception.rs"));
+        assert!(location.file().ends_with("exception.rs"));
+        assert!(location.line() > 0);
+        assert!(location.column() > 0);
+    }
+}

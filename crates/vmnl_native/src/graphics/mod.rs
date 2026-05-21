@@ -279,3 +279,62 @@ pub(crate) trait GraphicsResourceFactory {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rgba_new_stores_components() {
+        assert_eq!(
+            Rgba::new(1, 2, 3, 4),
+            Rgba {
+                r: 1,
+                g: 2,
+                b: 3,
+                a: 4
+            }
+        );
+    }
+
+    #[test]
+    fn rgba_normalized_maps_components_to_unit_range() {
+        assert_eq!(
+            Rgba::new(255, 128, 0, 64).normalized(),
+            [1.0, 128.0 / 255.0, 0.0, 64.0 / 255.0]
+        );
+    }
+
+    #[test]
+    fn vector2f_ordering_sorts_by_x_then_y() {
+        let mut values: [Vector2f; 3] = [
+            Vector2f { x: 2.0, y: 0.0 },
+            Vector2f { x: 1.0, y: 3.0 },
+            Vector2f { x: 1.0, y: 2.0 },
+        ];
+
+        values.sort();
+
+        assert_eq!(
+            values,
+            [
+                Vector2f { x: 1.0, y: 2.0 },
+                Vector2f { x: 1.0, y: 3.0 },
+                Vector2f { x: 2.0, y: 0.0 },
+            ]
+        );
+    }
+
+    #[test]
+    fn gpu_vertex_from_vertex_preserves_position_and_normalizes_color() {
+        let vertex: Vertex = Vertex {
+            position: Vector2f { x: 12.0, y: 34.0 },
+            color: Rgba::new(255, 127, 0, 255),
+        };
+
+        let gpu_vertex: GpuVertex = GpuVertex::from(vertex);
+
+        assert_eq!(gpu_vertex.position, vertex.position);
+        assert_eq!(gpu_vertex.color, vertex.color.normalized());
+    }
+}

@@ -460,3 +460,94 @@ impl Window {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    fn assert_invalid_window_size(result: VMNLResult<()>) {
+        assert!(matches!(
+            result,
+            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidWindowSize)
+        ));
+    }
+
+    #[test]
+    fn validate_size_limits_accepts_unbounded_and_equal_limits() {
+        assert!(validate_size_limits(None, None, None, None).is_ok());
+        assert!(validate_size_limits(Some(64), Some(64), Some(64), Some(64)).is_ok());
+        assert!(validate_size_limits(Some(64), None, Some(128), None).is_ok());
+    }
+
+    #[test]
+    fn validate_size_limits_rejects_min_greater_than_max() {
+        assert_invalid_window_size(validate_size_limits(Some(129), None, Some(128), None));
+        assert_invalid_window_size(validate_size_limits(None, Some(129), None, Some(128)));
+    }
+
+    #[test]
+    fn default_window_options_are_stable() {
+        let options: WindowOptions = WindowOptions::default();
+
+        assert_eq!(options.title, "VMNL Window");
+        assert_eq!(options.width, 800);
+        assert_eq!(options.height, 600);
+        assert!(options.configure_window_polling);
+        assert_eq!(options.min_width, None);
+        assert_eq!(options.min_height, None);
+        assert_eq!(options.max_width, None);
+        assert_eq!(options.max_height, None);
+        assert_eq!(options.shaders.vertex, None);
+        assert_eq!(options.shaders.fragment, None);
+        assert_eq!(options.clear_color, [0.0, 0.0, 0.0, 1.0]);
+    }
+
+    #[test]
+    fn window_builder_updates_options_without_building_window() {
+        let builder: VMNLResult<WindowBuilder> = Window::builder()
+            .title("Custom")
+            .size(1024, 768)
+            .unset_configure_window_polling()
+            .size_limit(Some(320), Some(240), Some(1920), Some(1080));
+
+        assert!(builder.is_ok());
+        if let Ok(builder) = builder {
+            let builder = builder
+                .vs_from_file("shader.vert")
+                .fs_from_string("fragment")
+                .set_clear_color(Rgba::new(255, 128, 0, 64));
+            assert_eq!(builder.options.title, "Custom");
+            assert_eq!(builder.options.width, 1024);
+            assert_eq!(builder.options.height, 768);
+            assert!(!builder.options.configure_window_polling);
+            assert_eq!(builder.options.min_width, Some(320));
+            assert_eq!(builder.options.min_height, Some(240));
+            assert_eq!(builder.options.max_width, Some(1920));
+            assert_eq!(builder.options.max_height, Some(1080));
+            assert_eq!(
+                builder.options.shaders.vertex,
+                Some(ShaderInput::Path(PathBuf::from("shader.vert")))
+            );
+            assert_eq!(
+                builder.options.shaders.fragment,
+                Some(ShaderInput::Src("fragment".to_string()))
+            );
+            assert_eq!(
+                builder.options.clear_color,
+                [1.0, 128.0 / 255.0, 0.0, 64.0 / 255.0]
+            );
+        };
+    }
+
+    #[test]
+    fn window_builder_rejects_invalid_size_limits_before_build() {
+        let result: VMNLResult<WindowBuilder> =
+            Window::builder().size_limit(Some(10), None, Some(1), None);
+
+        assert!(matches!(
+            result,
+            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidWindowSize)
+        ));
+    }
+}
