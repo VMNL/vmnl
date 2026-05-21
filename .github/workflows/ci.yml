@@ -19,6 +19,8 @@ jobs:
           sudo apt-get install -y libwayland-dev libxkbcommon-dev xorg-dev
       - name: fmt
         run: cargo fmt --all --check
+      - name: unit-tests
+        run: cargo test --workspace --lib
       - name: clippy
         run: cargo clippy --workspace --all-targets
       - name: test
