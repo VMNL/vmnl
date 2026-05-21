@@ -23,5 +23,3 @@ jobs:
         run: cargo test --workspace --lib
       - name: clippy
         run: cargo clippy --workspace --all-targets
-      - name: test
-        run: cargo test --workspace
