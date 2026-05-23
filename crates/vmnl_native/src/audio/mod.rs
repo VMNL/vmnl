@@ -5,17 +5,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 pub mod bus;
-pub mod device;
 pub mod decoder;
+pub mod device;
 pub mod error;
-pub mod instance;
 pub mod mixer;
 pub mod music;
+pub mod runtime;
 pub mod sound;
-pub mod voice;
 
-pub use bus::AudioBus;
+pub use bus::{AudioBus, BusKind};
 pub use device::{AudioConfig, AudioDevice};
 pub use error::AudioError;
-pub use music::{Music, MusicHandle};
-pub use sound::{Sound, SoundHandle};
+pub use mixer::AudioMixer;
+pub use music::{Music, MusicHandle, MusicStream};
+pub use runtime::{AudioCommand, AudioRuntime};
+pub use sound::{PlaybackState, Sound, SoundHandle, SoundVoice};
