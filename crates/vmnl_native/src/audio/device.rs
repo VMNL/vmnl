@@ -5,224 +5,140 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use crate::audio::bus::AudioBus;
-use crate::audio::decoder::{AudioDecoder, DecodedAudio};
+use crate::audio::decoder::DecodedAudio;
 use crate::audio::error::AudioError;
-use crate::audio::mixer::AudioMixer;
 use crate::audio::music::Music;
-use crate::audio::sound::instance::SoundInstance;
+use crate::audio::runtime::{AudioCommand, AudioRuntime};
 use crate::audio::sound::Sound;
-use crate::audio::sound::voice::SoundVoice;
 
-use miniaudio::
-{
-    Context,
-    Device,
-    DeviceConfig,
-    DeviceType,
-    Format,
-    FramesMut,
-};
-
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::path::Path;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub struct AudioConfig
-{
-    pub master_volume: f32
+pub struct AudioConfig {
+    pub master_volume: f32,
+    pub sample_rate: u32,
+    pub channels: u32,
 }
 
-impl Default for AudioConfig
-{
-    fn default() -> Self
-    {
+impl Default for AudioConfig {
+    fn default() -> Self {
         Self {
-            master_volume: 1.0
+            master_volume: 1.0,
+            sample_rate: 44_100,
+            channels: 2,
         }
     }
 }
 
-pub(crate) struct AudioBackend
-{
-    pub engine: miniaudio::Engine,
-    pub device: miniaudio::Device,
-
-    pub master_volume: f32,
-
-    pub music_bus: AudioBus,
-    pub sfx_bus: AudioBus,
-
-    pub sound_cache: HashMap<PathBuf, Arc<DecodedAudio>>,
-    pub active_sound_voices: Vec<Arc<Mutex<SoundVoice>>>,
-}
-
 #[derive(Clone)]
-pub struct AudioDevice
-{
-    backend: Arc<Mutex<AudioBackend>>
+pub struct AudioDevice {
+    runtime: Arc<AudioRuntime>,
+    sample_rate: u32,
+    channels: u32,
 }
 
-impl AudioDevice
-{
-    pub fn new(config: AudioConfig) -> Result<Self, AudioError>
-    {
-        let engine = miniaudio::Engine::new(
-            &miniaudio::EngineConfig::default()
-        )
-        .map_err(|e| AudioError::BackendInitFailed(e.to_string()))?;
-
-        engine.set_volume(config.master_volume);
-
-        let sound_cache = HashMap::new();
-        let active_sound_voices = Vec::new();
-
-        let backend = Arc::new(Mutex::new(AudioBackend
-        {
-            engine,
-            device: unsafe { std::mem::zeroed() },
-
-            master_volume: config.master_volume,
-
-            music_bus: AudioBus::new(),
-            sfx_bus: AudioBus::new(),
-
-            sound_cache,
-            active_sound_voices,
-        }));
-
-        let backend_clone = backend.clone();
-
-        let context = Context::new(&[], None)
-            .map_err(|e| AudioError::BackendInitFailed(e.to_string()))?;
-
-        let mut device_config = DeviceConfig::new(DeviceType::Playback);
-
-        device_config.playback_mut().format = Format::F32;
-        device_config.playback_mut().channels = 2;
-        device_config.sample_rate = 44100;
-
-        device_config.set_data_callback(
-            move |_device, output, _input|
-            {
-                let mut output = output.as_samples_mut::<f32>();
-
-                let backend = backend_clone.lock().unwrap();
-
-                AudioMixer::mix_sound_voices(
-                    &backend.active_sound_voices,
-                    &mut output,
-                );
-            }
-        );
-
-        let device = Device::new(Some(context), &device_config)
-            .map_err(|e| AudioError::BackendInitFailed(e.to_string()))?;
-
-        device.start()
-            .map_err(|e| AudioError::BackendInitFailed(e.to_string()))?;
-
-        {
-            let mut backend_guard = backend.lock().unwrap();
-            backend_guard.device = device;
+impl AudioDevice {
+    pub fn new(config: AudioConfig) -> Result<Self, AudioError> {
+        if config.channels == 0 {
+            return Err(AudioError::InvalidState(
+                "channels must be greater than zero".to_string(),
+            ));
+        }
+        if config.sample_rate == 0 {
+            return Err(AudioError::InvalidState(
+                "sample_rate must be greater than zero".to_string(),
+            ));
         }
 
-        Ok(Self { backend })
+        let runtime = Arc::new(AudioRuntime::new());
+        runtime.master_bus.set_volume(config.master_volume);
+
+        Ok(Self {
+            runtime,
+            sample_rate: config.sample_rate,
+            channels: config.channels,
+        })
+    }
+
+    pub fn runtime(&self) -> Arc<AudioRuntime> {
+        self.runtime.clone()
+    }
+
+    pub fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+
+    pub fn channels(&self) -> u32 {
+        self.channels
     }
 
     pub fn load_sound<P>(&self, path: P) -> Result<Sound, AudioError>
     where
-        P: AsRef<Path>
+        P: AsRef<Path>,
     {
         Sound::from_file(self.clone(), path)
-
     }
 
     pub fn load_music<P>(&self, path: P) -> Result<Music, AudioError>
     where
-        P: AsRef<Path>
+        P: AsRef<Path>,
     {
         Music::from_file(self.clone(), path)
     }
 
-    pub fn set_master_volume(&self, volume: f32)
-    {
-        let volume = volume.clamp(0.0, 1.0);
-
-        let mut backend = self.backend.lock().unwrap();
-        backend.master_volume = volume;
-        backend.engine.set_volume(volume);
+    pub fn set_master_volume(&self, volume: f32) {
+        self.runtime.enqueue(AudioCommand::SetMasterVolume(volume));
+        self.update();
     }
 
-    pub fn master_volume(&self) -> f32
-    {
-        let backend = self.backend.lock().unwrap();
-        backend.master_volume
+    pub fn master_volume(&self) -> f32 {
+        self.runtime.master_bus.volume()
     }
 
-    pub fn get_or_decode_audio<P>(&self, path: P) -> Result <Arc<DecodedAudio>, AudioError>
-    where 
-        P: AsRef<Path>
-    {
-        let path = path.as_ref().to_path_buf();
-        {
-            let backend = self.backend.lock().unwrap();
-
-            if let Some(decoded_audio) = backend.sound_cache.get(&path)
-            {
-                return Ok(decoded_audio.clone());
-            }
-        }
-        let decoded_audio = Arc::new(AudioDecoder::decode_file(&path)?);
-
-        let mut backend = self.backend.lock().unwrap();
-
-        backend
-            .sound_cache
-            .insert(path, decoded_audio.clone());
-
-        Ok(decoded_audio)
+    pub fn music_bus(&self) -> AudioBus {
+        self.runtime.music_bus.clone()
     }
 
-    pub(crate) fn register_sound_instance(&self, instance: Arc<Mutex<SoundInstance>>)
-    {
-        let mut backend = self.backend.lock().unwrap();
-
-        backend.active_sound_instances.push(instance);
+    pub fn sfx_bus(&self) -> AudioBus {
+        self.runtime.sfx_bus.clone()
     }
 
-    pub fn update(&self)
+    pub fn get_or_decode_audio<P>(&self, path: P) -> Result<Arc<DecodedAudio>, AudioError>
+    where
+        P: AsRef<Path>,
     {
-        let mut backend = self.backend.lock().unwrap();
-
-        backend.active_sound_instances.retain(|instance| {
-            let instance = instance.lock().unwrap();
-
-            instance.state != crate::audio::sound::instance::PlaybackState::Stopped
-        });
+        self.runtime.get_or_decode_audio(path)
     }
 
-    pub fn music_bus(&self) -> AudioBus
-    {
-        let backend = self.backend.lock().unwrap();
-
-        backend.music_bus.clone()
+    pub fn update(&self) {
+        self.runtime.apply_commands();
+        self.runtime.pump_music_streams();
+        self.runtime.cleanup();
     }
 
-    pub fn sfx_bus(&self) -> AudioBus
-    {
-        let backend = self.backend.lock().unwrap();
-
-        backend.sfx_bus.clone()
+    pub fn render_into(&self, output: &mut [f32]) {
+        self.update();
+        self.runtime.mix_into(output);
     }
 
-    pub(crate) fn mix_audio(&self, output: &mut [f32])
-    {
-        let backend = self.backend.lock().unwrap();
+    pub fn stop_all(&self) {
+        self.runtime.force_stop_all();
+        self.update();
+    }
 
-        AudioMixer::mix_sound_voices(
-            &backend.active_sound_voices,
-            output,
-        );
+    pub fn pause_all(&self) {
+        self.runtime.force_pause_all();
+        self.update();
+    }
+
+    pub fn resume_all(&self) {
+        self.runtime.force_resume_all();
+        self.update();
+    }
+
+    pub fn set_max_sound_voices(&self, max: usize) {
+        self.runtime.enqueue(AudioCommand::SetMaxVoices(max));
+        self.update();
     }
 }

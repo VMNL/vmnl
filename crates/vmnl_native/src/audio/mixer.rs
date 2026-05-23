@@ -4,78 +4,54 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-use crate::audio::sound::instance::PlaybackState;
-use crate::audio::sound::voice::SoundVoice;
+use crate::audio::{AudioRuntime, BusKind, MusicStream, PlaybackState, SoundVoice};
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 pub struct AudioMixer;
 
-impl AudioMixer
-{
-    pub fn mix_sound_voices(voices: &[Arc<Mutex<SoundVoice>>],output: &mut [f32],)
-    {
+impl AudioMixer {
+    pub fn mix(runtime: &AudioRuntime, output: &mut [f32]) {
         output.fill(0.0);
 
-        for voice in voices
-        {
-            let voice_guard = voice.lock().unwrap();
-            let mut instance = voice_guard.instance.lock().unwrap();
+        let master_gain = runtime.master_bus.gain();
+        if master_gain <= 0.0 {
+            return;
+        }
 
-            if instance.state != PlaybackState::Playing
-            {
-                continue;
-            }
+        let voices: Vec<Arc<SoundVoice>> = runtime
+            .active_sound_voices
+            .read()
+            .ok()
+            .map(|voices| voices.iter().cloned().collect())
+            .unwrap_or_default();
 
-            let decoded = &voice_guard.decoded_audio;
-            let channels = decoded.channels as usize;
-            if channels == 0
-            {
-                continue;
-            }
+        let streams: Vec<Arc<MusicStream>> = runtime
+            .active_music_streams
+            .read()
+            .ok()
+            .map(|streams| streams.iter().cloned().collect())
+            .unwrap_or_default();
 
-            let samples = &decoded.samples;
-            let total_samples = samples.len();
-
-            for frame in 0..(output.len() / 2)
-            {
-                let cursor_frame = instance.cursor;
-                let src_base = cursor_frame * channels;
-
-                if src_base + channels > total_samples
-                {
-                    if instance.looping
-                    {
-                        instance.cursor = 0;
-                        continue;
-                    }
-                    else
-                    {
-                        instance.state = PlaybackState::Stopped;
-                        break;
-                    }
+        let sfx_gain = runtime.bus_gain(BusKind::Sfx);
+        if sfx_gain > 0.0 {
+            for voice in voices {
+                if voice.state() == PlaybackState::Playing {
+                    voice.mix_into(output, master_gain * sfx_gain);
                 }
-
-                let left = samples[src_base];
-                let right = if channels > 1
-                {
-                    samples[src_base + 1]
-                }
-                else
-                {
-                    left
-                };
-
-                let out_index = frame * 2;
-                output[out_index] += left * instance.volume;
-                output[out_index + 1] += right * instance.volume;
-
-                instance.cursor += 1;
             }
         }
 
-        for sample in output.iter_mut()
-        {
+        let music_gain = runtime.bus_gain(BusKind::Music);
+        if music_gain > 0.0 {
+            for stream in streams {
+                if stream.state() == PlaybackState::Playing {
+                    stream.mix_into(output, master_gain * music_gain);
+                }
+            }
+        }
+
+        for sample in output.iter_mut() {
             *sample = sample.clamp(-1.0, 1.0);
         }
     }

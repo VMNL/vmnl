@@ -4,112 +4,61 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
+mod handle;
+mod stream;
+
+use crate::audio::bus::BusKind;
+use crate::audio::decoder::DecodedAudio;
 use crate::audio::device::AudioDevice;
 use crate::audio::error::AudioError;
-use crate::audio::music::stream::MusicStream;
+use crate::audio::runtime::AudioRuntime;
 
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
-#[derive(Debug)]
-struct MusicState
-{
-    volume: f32,
-    looping: bool,
-    playing: bool,
-}
+pub use handle::MusicHandle;
+pub use stream::MusicStream;
 
 #[derive(Clone)]
-pub struct Music
-{
-    device: AudioDevice,
+pub struct Music {
+    runtime: Arc<AudioRuntime>,
     path: PathBuf,
+    decoded_audio: Arc<DecodedAudio>,
 }
 
-#[derive(Clone)]
-pub struct MusicHandle
-{
-    state: Arc<Mutex<MusicState>>,
-    stream: Arc<Mutex<MusicStream>>,
-}
-
-impl Music
-{
+impl Music {
     pub(crate) fn from_file<P>(device: AudioDevice, path: P) -> Result<Self, AudioError>
     where
-        P: AsRef<Path>
+        P: AsRef<Path>,
     {
-        let path = path.as_ref();
+        let path = path.as_ref().to_path_buf();
+        let runtime = device.runtime();
+        let decoded_audio = runtime.get_or_decode_audio(&path)?;
 
-        if !path.exists()
-        {
-            return Err(AudioError::DecoderFailed(format!("Music file does not exist: {:}", path)));
-        }
-
-        Ok(Self { device, path: path.to_path_buf() })
-    }
-
-    pub fn play(&self) -> Result<MusicHandle, AudioError>
-    {
-        let state = MusicState {
-            volume: 1.0,
-            looping: false,
-            playing: true,
-        };
-
-        let stream = MusicStream::from_file(&self.path)?;
-
-        // TODO:
-        // Create streaming decoder
-        // Feed Miniaudio rolling buffer
-
-        Ok(MusicHandle {
-            state: Arc::new(Mutex::new(state)),
-            stream: Arc::new(Mutex::new(stream)),
+        Ok(Self {
+            runtime,
+            path,
+            decoded_audio,
         })
     }
 
-    pub fn path(&self) -> &Path
-    {
+    pub fn play(&self) -> Result<MusicHandle, AudioError> {
+        let id = self.runtime.next_stream_id();
+        let stream = Arc::new(MusicStream::new(
+            id,
+            self.path.clone(),
+            self.decoded_audio.clone(),
+            BusKind::Music,
+        ));
+        self.runtime.register_music_stream(stream.clone());
+        Ok(MusicHandle::new(stream))
+    }
+
+    pub fn path(&self) -> &Path {
         &self.path
     }
-}
 
-impl MusicHandle
-{
-    pub fn stop(&self)
-    {
-        let mut state = self.state.lock().unwrap();
-        state.playing = false;
-    }
-
-    pub fn pause(&self)
-    {
-        let mut state = self.state.lock().unwrap();
-        state.playing = false;
-    }
-
-    pub fn resume(&self)
-    {
-        let mut state = self.state.lock().unwrap();
-        state.playing = true;
-    }
-
-    pub fn set_volume(&self, volume: f32)
-    {
-        let mut state = self.state.lock().unwrap();
-        state.volume = volume.clamp(0.0, 1.0);
-    }
-
-    pub fn set_looping(&self, looping: bool)
-    {
-        let mut state = self.state.lock().unwrap();
-        state.looping = looping;
-    }
-
-    pub fn is_playing(&self) -> bool
-    {
-        let state = self.state.lock().unwrap();
-        state.playing
+    pub fn decoded_audio(&self) -> &DecodedAudio {
+        self.decoded_audio.as_ref()
     }
 }

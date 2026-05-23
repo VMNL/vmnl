@@ -4,88 +4,86 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-use std::sync::{Arc, Mutex};
+
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::Arc;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum BusKind {
+    Master,
+    Music,
+    Sfx,
+}
 
 #[derive(Debug)]
-pub struct AudioBusState
-{
-    pub volume: f32,
-    pub muted: bool,
-    pub paused: bool,
+struct AudioBusState {
+    volume_bits: AtomicU32,
+    muted: AtomicBool,
+    paused: AtomicBool,
 }
 
 #[derive(Clone, Debug)]
-pub struct AudioBus
-{
-    state: Arc<Mutex<AudioBusState>>,
+pub struct AudioBus {
+    kind: BusKind,
+    state: Arc<AudioBusState>,
 }
 
-impl AudioBus
-{
-    pub fn new() -> Self
-    {
+impl AudioBus {
+    pub fn new(kind: BusKind) -> Self {
         Self {
-            state: Arc::new(Mutex::new(AudioBusState {
-                volume: 1.0,
-                muted: false,
-                paused: false,
-            }))
+            kind,
+            state: Arc::new(AudioBusState {
+                volume_bits: AtomicU32::new(1.0f32.to_bits()),
+                muted: AtomicBool::new(false),
+                paused: AtomicBool::new(false),
+            }),
         }
     }
 
-    pub fn set_volume(&self, volume: f32)
-    {
-        let mut state = self.state.lock().unwrap();
-
-        state.volume = volume.clamp(0.0, 1.0);
+    pub fn kind(&self) -> BusKind {
+        self.kind
     }
 
-    pub fn volume(&self) -> f32
-    {
-        let state = self.state.lock().unwrap();
-
-        state.volume
+    pub fn set_volume(&self, volume: f32) {
+        self.state
+            .volume_bits
+            .store(volume.clamp(0.0, 1.0).to_bits(), Ordering::Relaxed);
     }
 
-    pub fn mute(&self)
-    {
-        let mut state = self.state.lock().unwrap();
-
-        state.muted = true;
+    pub fn volume(&self) -> f32 {
+        f32::from_bits(self.state.volume_bits.load(Ordering::Relaxed))
     }
 
-    pub fn unmute(&self)
-    {
-        let mut state = self.state.lock().unwrap();
-
-        state.muted = false;
+    pub fn mute(&self) {
+        self.state.muted.store(true, Ordering::Relaxed);
     }
 
-    pub fn is_muted(&self) -> bool
-    {
-        let state = self.state.lock().unwrap();
-
-        state.muted
+    pub fn unmute(&self) {
+        self.state.muted.store(false, Ordering::Relaxed);
     }
 
-    pub fn pause(&self)
-    {
-        let mut state = self.state.lock().unwrap();
-
-        state.paused = true;
+    pub fn is_muted(&self) -> bool {
+        self.state.muted.load(Ordering::Relaxed)
     }
 
-    pub fn resume(&self)
-    {
-        let mut state = self.state.lock().unwrap();
-
-        state.paused = false;
+    pub fn pause(&self) {
+        self.state.paused.store(true, Ordering::Relaxed);
     }
 
-    pub fn is_paused(&self) -> bool
-    {
-        let state = self.state.lock().unwrap();
+    pub fn resume(&self) {
+        self.state.paused.store(false, Ordering::Relaxed);
+    }
 
-        state.paused
+    pub fn is_paused(&self) -> bool {
+        self.state.paused.load(Ordering::Relaxed)
+    }
+
+    pub fn gain(&self) -> f32 {
+        if self.is_muted() || self.is_paused() {
+            0.0
+        } else {
+            self.volume()
+        }
     }
 }
