@@ -4,138 +4,60 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
+mod handle;
+mod voice;
+
+use crate::audio::bus::BusKind;
 use crate::audio::decoder::DecodedAudio;
 use crate::audio::device::AudioDevice;
 use crate::audio::error::AudioError;
-use crate::audio::sound::instance::{PlaybackState, SoundInstance,};
-use crate::audio::sound::voice::SoundVoice;
+use crate::audio::runtime::AudioRuntime;
 
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
-pub mod instance;
-pub mod voice;
+pub use handle::SoundHandle;
+pub use voice::{PlaybackState, SoundVoice};
 
 #[derive(Clone)]
-pub struct Sound
-{
-    device: AudioDevice,
+pub struct Sound {
+    runtime: Arc<AudioRuntime>,
     path: PathBuf,
-    #[allow(dead_code)]
     decoded_audio: Arc<DecodedAudio>,
 }
 
-#[derive(Clone)]
-pub struct SoundHandle
-{
-    voice: Arc<Mutex<SoundVoice>>,
-}
-
-impl Sound
-{
+impl Sound {
     pub(crate) fn from_file<P>(device: AudioDevice, path: P) -> Result<Self, AudioError>
     where
-        P: AsRef<Path>
+        P: AsRef<Path>,
     {
         let path = path.as_ref().to_path_buf();
-        let decoded_audio = device.get_or_decode_audio(&path)?;
+        let runtime = device.runtime();
+        let decoded_audio = runtime.get_or_decode_audio(&path)?;
 
-        Ok(Self {device, path, decoded_audio})
+        Ok(Self {
+            runtime,
+            path,
+            decoded_audio,
+        })
     }
 
-    pub fn play(&self) -> Result<SoundHandle, AudioError>
-    {
-        let instance = Arc::new(Mutex::new(SoundInstance
-        {
-            cursor: 0,
-            volume: 1.0,
-            looping: false,
-            state: PlaybackState::Playing,
-        }));
-
-        let voice = Arc::new(Mutex::new(SoundVoice::new(
+    pub fn play(&self) -> Result<SoundHandle, AudioError> {
+        let id = self.runtime.next_voice_id();
+        let voice = Arc::new(SoundVoice::new(
+            id,
             self.decoded_audio.clone(),
-            instance.clone(),
-        )));
-
-        self.device.register_sound_voice(voice.clone());
-
-        Ok(SoundHandle { voice })
+            BusKind::Sfx,
+        ));
+        self.runtime.register_sound_voice(voice.clone());
+        Ok(SoundHandle::new(voice))
     }
 
-    pub fn path(&self) -> &Path
-    {
+    pub fn path(&self) -> &Path {
         &self.path
     }
-}
 
-impl SoundHandle
-{
-    pub fn stop(&self)
-    {
-        let voice = self.voice.lock().unwrap();
-        let mut instance = voice.instance.lock().unwrap();
-
-        instance.state = PlaybackState::Stopped;
-        instance.cursor = 0;
-    }
-
-    pub fn pause(&self)
-    {
-        let voice = self.voice.lock().unwrap();
-        let mut instance = voice.instance.lock().unwrap();
-
-        instance.state = PlaybackState::Paused;
-    }
-
-    pub fn resume(&self)
-    {
-        let voice = self.voice.lock().unwrap();
-        let mut instance = voice.instance.lock().unwrap();
-
-        instance.state = PlaybackState::Playing;
-    }
-
-
-    pub fn set_volume(&self, volume: f32)
-    {
-        let volume = volume.clamp(0.0, 1.0);
-
-        let voice = self.voice.lock().unwrap();
-        let mut instance = voice.instance.lock().unwrap();
-
-        instance.volume = volume;
-    }
-
-    pub fn set_looping(&self, looping: bool)
-    {
-        let voice = self.voice.lock().unwrap();
-        let mut instance = voice.instance.lock().unwrap();
-
-        instance.looping = looping;
-    }
-
-    pub fn is_playing(&self) -> bool
-    {
-        let voice = self.voice.lock().unwrap();
-        let instance = voice.instance.lock().unwrap();
-
-        instance.state == PlaybackState::Playing
-    }
-
-    pub fn is_paused(&self) -> bool
-    {
-        let voice = self.voice.lock().unwrap();
-        let instance = voice.instance.lock().unwrap();
-
-        instance.state == PlaybackState::Paused
-    }
-
-    pub fn is_stopped(&self) -> bool
-    {
-        let voice = self.voice.lock().unwrap();
-        let instance = voice.instance.lock().unwrap();
-
-        instance.state == PlaybackState::Stopped
+    pub fn decoded_audio(&self) -> &DecodedAudio {
+        self.decoded_audio.as_ref()
     }
 }
