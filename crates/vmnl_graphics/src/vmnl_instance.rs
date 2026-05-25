@@ -11,7 +11,6 @@
 ///   without exposing the underlying implementation details.
 ////////////////////////////////////////////////////////////////////////////////
 extern crate vulkano;
-extern crate vulkano_shaders;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::rc::Rc;
 use std::sync::Arc;
@@ -51,9 +50,9 @@ impl Context {
     ///
     /// # Example
     /// ```rust,no_run
-    /// use vmnl_native::{Context, Rgba, Shape, Vector2f, Vertex, Window};
+    /// use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex, Window};
     ///
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// let context = Context::new()?;
     /// let mut window = Window::builder()
     ///     .title("VMNL")
@@ -89,7 +88,7 @@ impl Context {
 /// memory allocator, and command buffer allocator. Responsible for initializing and
 /// managing Vulkan resources required for rendering operations.
 #[derive(Debug)]
-pub struct VMNLInstance {
+pub(crate) struct VMNLInstance {
     /// Vulkan instance representing the connection to the Vulkan library.
     pub(crate) instance: Arc<Instance>,
     /// Selected physical device (GPU).
@@ -323,7 +322,8 @@ impl VMNLInstance {
     /// # Source
     /// <https://vulkano.rs/02-initialization/01-initialization.html#creating-an-instance>
     #[must_use = "VMNLInstance is required for Context initialization"]
-    pub fn new() -> VMNLResult<Self> {
+    pub(crate) fn new() -> VMNLResult<Self> {
+        log::debug!("initializing VMNL instance");
         let glfw: glfw::Glfw = glfw::init(glfw::fail_on_errors)
             .map_err(|_| VMNLError::new(VMNLErrorKind::GlfwInitFailed))?;
         let instance: Arc<Instance> = Self::create_instance(glfw.clone())?;
@@ -333,8 +333,15 @@ impl VMNLInstance {
         };
         let physical_device: Arc<PhysicalDevice> =
             Self::select_physical_device(&instance, &device_extensions)?;
+        let properties = physical_device.properties();
+        log::debug!(
+            "selected physical device: {} ({:?})",
+            properties.device_name,
+            properties.device_type
+        );
         let graphics_queue_family_index: u32 =
             Self::select_graphics_queue_family_index(&physical_device)?;
+        log::debug!("selected graphics queue family: {graphics_queue_family_index}");
         let (device, graphics_queue): (Arc<Device>, Arc<Queue>) = Self::create_device(
             &physical_device,
             graphics_queue_family_index,
@@ -343,6 +350,7 @@ impl VMNLInstance {
         let memory_allocator = Self::create_memory_allocator(&device);
         let command_buffer_allocator = Self::create_command_buffer_allocator(&device);
 
+        log::debug!("initialized VMNL instance");
         Ok(Self {
             instance,
             physical_device,
@@ -358,7 +366,7 @@ impl VMNLInstance {
 
 impl Drop for VMNLInstance {
     fn drop(&mut self) {
-        println!("{}", crate::vmnl_log("Dropping instance."));
+        log::trace!("dropping VMNL instance");
     }
 }
 

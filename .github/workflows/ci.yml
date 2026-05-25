@@ -21,5 +21,7 @@ jobs:
         run: cargo fmt --all --check
       - name: unit-tests
         run: cargo test --workspace --lib
+      - name: doc-tests
+        run: cargo test --workspace --all-features --doc
       - name: clippy
         run: cargo clippy --workspace --all-targets

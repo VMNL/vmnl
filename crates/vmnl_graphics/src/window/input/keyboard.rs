@@ -135,7 +135,7 @@ pub enum Key {
 /// An array containing all the keys defined in the `Key` enum.
 ///
 /// Used to iterate over all keys when updating their states.
-pub const ALL_KEYS: &[Key] = [
+pub(crate) const ALL_KEYS: &[Key] = [
     Key::A,
     Key::B,
     Key::C,
@@ -198,7 +198,7 @@ pub const ALL_KEYS: &[Key] = [
 /// The total number of keys supported.
 ///
 /// Calculated from the highest `Key` variant; used to size state arrays.
-pub const KEY_COUNT: usize = Key::F12 as usize + 1;
+pub(crate) const KEY_COUNT: usize = Key::F12 as usize + 1;
 
 /// Represents the state of keyboard input, tracking which keys are currently pressed
 /// and which were pressed in the previous frame.
@@ -386,7 +386,7 @@ impl KeyboardState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, Key};
+    /// use vmnl_graphics::{Input, Key};
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_down(Key::A) {
@@ -404,7 +404,7 @@ impl KeyboardState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, Key};
+    /// use vmnl_graphics::{Input, Key};
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_pressed(Key::A) {
@@ -422,7 +422,7 @@ impl KeyboardState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, Key};
+    /// use vmnl_graphics::{Input, Key};
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_released(Key::A) {
@@ -440,7 +440,7 @@ impl KeyboardState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, Key};
+    /// use vmnl_graphics::{Input, Key};
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_any_pressed(&[Key::A, Key::B, Key::C]) {
@@ -463,7 +463,7 @@ impl KeyboardState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, Key};
+    /// use vmnl_graphics::{Input, Key};
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_any_released(&[Key::A, Key::B, Key::C]) {
@@ -486,7 +486,7 @@ impl KeyboardState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, Key};
+    /// use vmnl_graphics::{Input, Key};
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_any_down(&[Key::A, Key::B, Key::C]) {
@@ -509,7 +509,7 @@ impl KeyboardState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, Key};
+    /// use vmnl_graphics::{Input, Key};
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_any_used(&[Key::A, Key::B, Key::C]) {
@@ -529,7 +529,7 @@ impl KeyboardState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::Input;
+    /// use vmnl_graphics::Input;
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_one_pressed() {
@@ -549,7 +549,7 @@ impl KeyboardState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::Input;
+    /// use vmnl_graphics::Input;
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_one_released() {
@@ -569,7 +569,7 @@ impl KeyboardState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::Input;
+    /// use vmnl_graphics::Input;
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_one_down() {
@@ -589,7 +589,7 @@ impl KeyboardState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::Input;
+    /// use vmnl_graphics::Input;
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_one_used() {

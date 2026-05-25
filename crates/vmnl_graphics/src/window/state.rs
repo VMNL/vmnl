@@ -14,7 +14,7 @@ use crate::window::inner::VMNLWindow;
 /// # Invariants
 /// - `is_ready == true` implies required resources (context, surface, swapchain, etc.) are initialized.
 /// - `is_open == false` implies no further rendering or event polling should be performed.
-pub struct WindowState {
+pub(crate) struct WindowState {
     /// Whether the window is fully initialized and ready for use.
     pub(crate) is_ready: bool,
     /// Whether the window is currently open.

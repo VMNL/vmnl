@@ -13,4 +13,4 @@ keywords = ["vulkan", "graphics", "windowing", "rendering"]
 categories = ["graphics", "rendering", "game-development"]
 
 [dependencies]
-vmnl_native = { path = "../vmnl_native", version = "0.1.0" }
+vmnl-graphics = { path = "../vmnl_graphics", version = "0.1.0" }

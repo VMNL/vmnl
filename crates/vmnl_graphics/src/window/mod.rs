@@ -14,17 +14,18 @@ use crate::{
     window::inner::VMNLWindow, window::shaders::ShaderInput, window::shaders::WindowShaders,
     Context, Rgba, Shape, VMNLError, VMNLErrorKind, VMNLResult,
 };
-pub mod api;
-pub mod config;
-pub mod event;
-pub mod handle;
+mod api;
+mod config;
+mod event;
+mod handle;
 mod inner;
-pub mod input;
-pub mod monitors;
-pub mod render;
-pub mod shaders;
-pub mod state;
-pub use event::{Event, EventQueue};
+mod input;
+mod monitors;
+mod render;
+mod shaders;
+mod state;
+pub use api::RenderCall;
+pub use event::Event;
 pub use input::{Input, Key, KeyboardState, MouseButton, MouseState};
 pub use monitors::{MonitorInfo, Monitors, VideoMode};
 
@@ -43,7 +44,7 @@ pub struct WindowBuilder {
 
 /// Configuration options for creating a `Window` instance.
 #[derive(Clone, Debug)]
-pub struct WindowOptions {
+pub(crate) struct WindowOptions {
     /// The title of the window.
     title: String,
     /// The width of the window in pixels (minimum 64).
@@ -107,7 +108,7 @@ impl Default for WindowBuilder {
 ///
 /// # Returns
 /// A `VMNLResult<()>` indicating success if the size limits are valid, or an error if any invalid configurations are found.
-pub const fn validate_size_limits(
+const fn validate_size_limits(
     min_width: Option<u32>,
     min_height: Option<u32>,
     max_width: Option<u32>,
@@ -130,8 +131,8 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .title("Custom Window")
@@ -152,8 +153,8 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .size(1920, 1080)
@@ -175,8 +176,8 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .unset_configure_window_polling()
@@ -213,8 +214,8 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .size(1920, 1080)
@@ -245,8 +246,8 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .vs_from_file("assets/shaders/quad.vert.spv")
@@ -266,8 +267,8 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .fs_from_file("assets/shaders/quad.frag.spv")
@@ -288,8 +289,8 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .vs_from_string("
@@ -322,8 +323,8 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .fs_from_string("
@@ -352,8 +353,8 @@ impl WindowBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .set_clear_color(Rgba::new(0, 0, 0, 255))
@@ -396,8 +397,8 @@ impl Window {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
     ///     .title("Custom Window")

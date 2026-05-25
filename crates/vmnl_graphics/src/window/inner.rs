@@ -15,8 +15,10 @@ use crate::window::event::EventQueue;
 use crate::window::handle::WindowHandle;
 use crate::window::input::Input;
 use crate::window::monitors::Monitors;
+use crate::window::shaders::{
+    ShaderInput, WindowShaders, DEFAULT_FRAGMENT_SHADER, DEFAULT_VERTEX_SHADER,
+};
 use crate::window::state::WindowState;
-use crate::window::{shaders::fs, shaders::vs, shaders::ShaderInput, shaders::WindowShaders};
 use crate::Context;
 use crate::VMNLResult;
 use std::rc::Rc;
@@ -52,7 +54,7 @@ use vulkano::{
 ///
 /// This type owns GLFW and Vulkan state required by the runtime, while public
 /// client access is intentionally exposed through the `Window` wrapper only.
-pub struct VMNLWindow {
+pub(crate) struct VMNLWindow {
     /// Encapsulates low-level resources required to manage the window instance.
     pub(crate) window_handle: WindowHandle,
     /// Runtime state of the window instance.
@@ -80,6 +82,7 @@ impl VMNLWindow {
         kind: shaderc::ShaderKind,
         input_file_name: &str,
     ) -> VMNLResult<Arc<ShaderModule>> {
+        log::debug!("compiling {kind:?} shader from {input_file_name}");
         let artifact = compiler
             .compile_into_spirv(source, kind, input_file_name, "main", None)
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed))?;
@@ -110,6 +113,7 @@ impl VMNLWindow {
         path: &std::path::Path,
         kind: shaderc::ShaderKind,
     ) -> VMNLResult<Arc<ShaderModule>> {
+        log::debug!("loading {kind:?} shader from {}", path.display());
         let source = std::fs::read_to_string(path)
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed))?;
 
@@ -229,6 +233,12 @@ impl VMNLWindow {
                 ]
             };
 
+        log::debug!(
+            "creating swapchain: extent={}x{}, images={}, format={image_format:?}, color_space={image_color_space:?}",
+            image_extent[0],
+            image_extent[1],
+            min_image_count
+        );
         Swapchain::new(
             device.clone(),
             surface.clone(),
@@ -342,7 +352,7 @@ impl VMNLWindow {
         shaders: &WindowShaders,
     ) -> VMNLResult<Arc<GraphicsPipeline>> {
         let compiler: shaderc::Compiler = shaderc::Compiler::new()
-            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed))?;
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed))?;
         let vs: Arc<ShaderModule> = match shaders.vertex.as_ref() {
             Some(ShaderInput::Src(source)) => Self::load_shader_from_src(
                 device,
@@ -357,8 +367,13 @@ impl VMNLWindow {
                 path.as_path(),
                 shaderc::ShaderKind::Vertex,
             )?,
-            _ => vs::load(device.clone())
-                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderModuleCreationFailed))?,
+            _ => Self::load_shader_from_src(
+                device,
+                &compiler,
+                DEFAULT_VERTEX_SHADER,
+                shaderc::ShaderKind::Vertex,
+                "default.vert",
+            )?,
         };
         let fs: Arc<ShaderModule> = match shaders.fragment.as_ref() {
             Some(ShaderInput::Src(source)) => Self::load_shader_from_src(
@@ -374,8 +389,13 @@ impl VMNLWindow {
                 path.as_path(),
                 shaderc::ShaderKind::Fragment,
             )?,
-            _ => fs::load(device.clone())
-                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderModuleCreationFailed))?,
+            _ => Self::load_shader_from_src(
+                device,
+                &compiler,
+                DEFAULT_FRAGMENT_SHADER,
+                shaderc::ShaderKind::Fragment,
+                "default.frag",
+            )?,
         };
         let vs: EntryPoint = vs
             .entry_point("main")
@@ -432,6 +452,7 @@ impl VMNLWindow {
         height: u32,
         title: &str,
     ) -> VMNLResult<(glfw::PWindow, glfw::GlfwReceiver<(f64, glfw::WindowEvent)>)> {
+        log::debug!("creating GLFW window \"{title}\" ({width}x{height})");
         instance
             .create_window(width, height, title, glfw::WindowMode::Windowed)
             .ok_or_else(|| VMNLError::new(VMNLErrorKind::GlfwWindowCreationFailed))
@@ -503,11 +524,11 @@ impl VMNLWindow {
             },
         };
 
-        println!(
-            "{}",
-            crate::vmnl_log(format!(
-                "Create window named \"{title}\" with [{width}, {height}]."
-            ))
+        log::debug!(
+            "created window \"{title}\" ({width}x{height}, framebuffer={}x{}, swapchain_images={})",
+            frame_buffer_width,
+            frame_buffer_height,
+            images.len()
         );
         Ok(window)
     }
@@ -515,12 +536,6 @@ impl VMNLWindow {
 
 impl Drop for VMNLWindow {
     fn drop(&mut self) {
-        println!(
-            "{}",
-            crate::vmnl_log(format!(
-                "Dropping window named \"{}\".",
-                self.window_config.title
-            ))
-        );
+        log::trace!("dropping window \"{}\"", self.window_config.title);
     }
 }

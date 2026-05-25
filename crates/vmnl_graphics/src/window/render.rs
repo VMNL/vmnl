@@ -208,14 +208,14 @@ impl VMNLWindow {
         match future {
             Ok(future) => future.boxed(),
             Err(Validated::Error(VulkanError::OutOfDate)) => {
-                eprintln!(
+                log::warn!(
                     "{}",
                     VMNLError::new(VMNLErrorKind::VulkanOutOfDate).report()
                 );
                 sync::now(device).boxed()
             }
             Err(error) => {
-                eprintln!(
+                log::error!(
                     "{}: {error:?}",
                     VMNLError::new(VMNLErrorKind::VulkanUnknownError).report()
                 );
@@ -233,7 +233,7 @@ impl VMNLWindow {
         let (image_index, suboptimal, acquire_future): (u32, bool, SwapchainAcquireFuture) =
             Self::acquire_next_image_from_swapchain(&self.window_handle.swapchain, None)?;
         if suboptimal {
-            eprintln!(
+            log::warn!(
                 "{}",
                 VMNLError::new(VMNLErrorKind::VulkanSurfaceLost).report()
             );

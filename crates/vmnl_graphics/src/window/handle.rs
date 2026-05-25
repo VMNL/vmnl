@@ -7,8 +7,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 extern crate glfw;
 use crate::{
-    vmnl_instance::VMNLInstance, window::inner::VMNLWindow, window::EventQueue, Event, Input,
-    VMNLErrorKind,
+    vmnl_instance::VMNLInstance, window::event::EventQueue, window::inner::VMNLWindow, Event,
+    Input, VMNLErrorKind,
 };
 use std::rc::Rc;
 use std::sync::Arc;
@@ -26,7 +26,7 @@ use vulkano::{
 /// - Vulkano futures: <https://docs.rs/vulkano/latest/vulkano/sync>/
 /// - GLFW windowing: <https://www.glfw.org/docs/latest/window_guide.html>
 /// - glfw-rs: <https://github.com/PistonDevelopers/glfw-rs>
-pub struct WindowHandle {
+pub(crate) struct WindowHandle {
     /// Reference to the core Vulkan instance and context used for rendering.
     pub(crate) vmnl_instance: Rc<VMNLInstance>,
     /// List of framebuffers associated with the swapchain images.
@@ -50,13 +50,7 @@ pub struct WindowHandle {
 impl VMNLWindow {
     /// Internal implementation backing `Window::close`.
     pub(crate) fn close(&mut self) {
-        println!(
-            "{}",
-            crate::vmnl_log(format!(
-                "Window named \"{}\" is closing.",
-                self.window_config.title
-            ))
-        );
+        log::debug!("closing window \"{}\"", self.window_config.title);
         self.window_handle.context.set_should_close(true);
     }
 

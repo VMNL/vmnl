@@ -81,7 +81,7 @@ pub enum Event {
 }
 
 /// Manages the queue of events received from GLFW and translates them into `Event` variants.
-pub struct EventQueue {
+pub(crate) struct EventQueue {
     /// The GLFW event receiver (timestamped window events).
     events: glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
 }

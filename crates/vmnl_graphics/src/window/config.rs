@@ -15,7 +15,7 @@ use crate::{window::inner::VMNLWindow, window::monitors::Monitors, VMNLResult};
 /// # Invariants
 /// - `width` cannot be set below 64 pixels.
 /// - `height` cannot be set below 64 pixels.
-pub struct WindowConfig {
+pub(crate) struct WindowConfig {
     /// The current title of the window instance.
     pub(crate) title: String,
     /// The current width of the window instance in pixels (minimum 64).

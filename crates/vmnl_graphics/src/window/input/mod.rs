@@ -6,8 +6,8 @@
 /// for managing keyboard and mouse input states.
 ////////////////////////////////////////////////////////////////////////////////
 extern crate glfw;
-pub mod keyboard;
-pub mod mouse;
+mod keyboard;
+mod mouse;
 pub use keyboard::{Key, KeyboardState};
 pub use mouse::{MouseButton, MouseState};
 
@@ -16,9 +16,9 @@ pub use mouse::{MouseButton, MouseState};
 /// Used to manage keyboard and mouse input and to provide convenient accessors for each sub-state.
 pub struct Input {
     /// The current state of the keyboard.
-    pub keyboard: KeyboardState,
+    keyboard: KeyboardState,
     /// The current state of the mouse.
-    pub mouse: MouseState,
+    mouse: MouseState,
 }
 
 impl Default for Input {
@@ -32,7 +32,7 @@ impl Input {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, Key};
+    /// use vmnl_graphics::{Input, Key};
     ///
     /// let input = Input::new();
     /// if input.keyboard().is_pressed(Key::A) {
@@ -55,7 +55,7 @@ impl Input {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, MouseButton};
+    /// use vmnl_graphics::{Input, MouseButton};
     ///
     /// let input = Input::new();
     /// if input.mouse().is_pressed(MouseButton::Left) {

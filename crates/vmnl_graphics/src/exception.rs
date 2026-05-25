@@ -286,30 +286,12 @@ impl fmt::Display for VMNLError {
 
 impl Error for VMNLError {}
 
-/// Utility function for logging messages within the VMNL library,
-/// prefixing them with a consistent tag for easier identification in logs.
-///
-/// # Arguments
-/// - `message`: The message to be logged, any type implementing `AsRef<str>`.
-///
-/// # Returns
-/// A formatted string containing the log message prefixed with "[VMNL Log]".
-#[inline]
-pub fn vmnl_log<S: AsRef<str>>(message: S) -> String {
-    format!("[VMNL Log] {}", message.as_ref())
-}
-
 /// Type alias for results returned by functions in the VMNL library using `VMNLError`.
 pub type VMNLResult<T> = Result<T, VMNLError>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn vmnl_log_prefixes_messages() {
-        assert_eq!(vmnl_log("hello"), "[VMNL Log] hello");
-    }
 
     #[test]
     fn error_display_formats_static_and_state_errors() {

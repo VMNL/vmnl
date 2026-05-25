@@ -77,8 +77,8 @@ impl LineBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Shape, Vector2f};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
     ///     .width(5.0)
@@ -98,8 +98,8 @@ impl LineBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, LineCap, Rgba, Shape, Vector2f};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, LineCap, Rgba, Shape, Vector2f};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
     ///     .cap(LineCap::Round)
@@ -119,8 +119,8 @@ impl LineBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Shape, Vector2f};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
     ///     .color(Rgba::new(0, 0, 255, 255))
@@ -148,8 +148,8 @@ impl LineBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, LineCap, Rgba, Shape, Vector2f};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, LineCap, Rgba, Shape, Vector2f};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
     ///     .width(5.0)
