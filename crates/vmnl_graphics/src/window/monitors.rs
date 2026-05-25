@@ -106,8 +106,8 @@ impl Monitors {
     /// Returns a slice of `MonitorInfo` for all connected monitors.
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// # let window = Window::builder().build(&context)?;
     /// for monitor in window.monitor().infos() {
@@ -133,8 +133,8 @@ impl Monitors {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// # let window = Window::builder().build(&context)?;
     /// let monitor_names = window.monitor().names();
@@ -150,8 +150,8 @@ impl Monitors {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Window};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// # let window = Window::builder().build(&context)?;
     /// if let Some(primary_monitor) = window.monitor().primary() {

@@ -15,7 +15,7 @@ use super::{
     Vector2f,
 };
 use bytemuck::{Pod, Zeroable};
-use indexed::IndexedShapeBuilder;
+pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
 pub use rect::RectBuilder;
 pub use triangle::TriangleBuilder;
@@ -26,7 +26,7 @@ pub(crate) type VertexBuffer = Subbuffer<[GpuVertex]>;
 
 /// Types of shape data that can be rendered in VMNL.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum ShapeKind {
+pub(crate) enum ShapeKind {
     /// Raw vertex data without indices.
     RawVertices,
     /// Indexed geometry using vertex and index buffers.
@@ -43,7 +43,7 @@ pub enum ShapeKind {
 ///
 /// # Example
 /// ```rust
-/// use vmnl_native::{Rgba, Vector2f, Vertex};
+/// use vmnl_graphics::{Rgba, Vector2f, Vertex};
 ///
 /// let vertex = Vertex {
 ///     position: Vector2f { x: 100.0, y: 150.0 },
@@ -126,8 +126,8 @@ impl Shape {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Shape};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Shape};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rectangle = Shape::rect(200.0, 100.0)
     ///     .position(100.0, 150.0)
@@ -146,8 +146,8 @@ impl Shape {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Shape, Vector2f, Vertex};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertices = [
     ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: Rgba::new(255, 0, 0, 255) },
@@ -173,8 +173,8 @@ impl Shape {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Shape, Vector2f, Vertex};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertex1 = Vertex {
     ///     position: Vector2f { x: 100.0, y: 150.0 },
@@ -203,8 +203,8 @@ impl Shape {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, LineCap, Rgba, Shape, Vector2f};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, LineCap, Rgba, Shape, Vector2f};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
     ///     .width(5.0)
@@ -221,12 +221,11 @@ impl Shape {
 
 impl Drop for Shape {
     fn drop(&mut self) {
-        println!(
-            "{}",
-            crate::vmnl_log(format!(
-                "Dropping {:?} (vertices={}, indices={})",
-                self.kind, self.vertex_count, self.index_count
-            ))
+        log::trace!(
+            "dropping {:?} shape (vertices={}, indices={})",
+            self.kind,
+            self.vertex_count,
+            self.index_count
         );
     }
 }

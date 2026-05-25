@@ -16,12 +16,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Test
         run: cargo test --workspace
-      - name: Dry-run vmnl_native publish
-        run: cargo publish -p vmnl_native --dry-run
-      - name: Publish vmnl_native
+      - name: Dry-run vmnl-graphics publish
+        run: cargo publish -p vmnl-graphics --dry-run
+      - name: Publish vmnl-graphics
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo publish -p vmnl_native
+        run: cargo publish -p vmnl-graphics
       - name: Wait for crates.io index
         run: sleep 60
       - name: Dry-run vmnl publish

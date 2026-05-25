@@ -60,8 +60,8 @@ impl RectBuilder {
     /// The updated `RectBuilder` instance with the specified position.
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Shape};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Shape};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
     ///     .position(50.0, 50.0)
@@ -85,8 +85,8 @@ impl RectBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Shape};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Shape};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
     ///     .color(Rgba::new(255, 0, 0, 255))
@@ -108,8 +108,8 @@ impl RectBuilder {
     /// A `Shape` instance representing the rectangle, ready for rendering.
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Shape};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Shape};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
     ///     .build(&context)?;
@@ -219,11 +219,17 @@ impl RectBuilder {
             Shape::indexed(vertices.to_vec(), indices.to_vec()).build(vmnl_context)?;
 
         graphics.kind = Rectangle;
-        println!("{}", crate::vmnl_log(format!("Creating rectangle at position [{}, {}] with size [{}, {}] and color [{}, {}, {}].",
-            position.x, position.y,
-            size.x, size.y,
-            color.r, color.g, color.b
-        )));
+        log::trace!(
+            "creating rectangle: position=({}, {}), size=({}, {}), color=({}, {}, {}, {})",
+            position.x,
+            position.y,
+            size.x,
+            size.y,
+            color.r,
+            color.g,
+            color.b,
+            color.a
+        );
         Ok(graphics)
     }
 }

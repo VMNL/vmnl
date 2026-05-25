@@ -37,7 +37,7 @@ pub enum MouseButton {
 /// An array containing all the mouse buttons defined in the `MouseButton` enum.
 ///
 /// Used to iterate over all mouse buttons when updating their states.
-pub const ALL_MOUSE_BUTTONS: &[MouseButton] = [
+pub(crate) const ALL_MOUSE_BUTTONS: &[MouseButton] = [
     MouseButton::Left,
     MouseButton::Right,
     MouseButton::Middle,
@@ -52,7 +52,7 @@ pub const ALL_MOUSE_BUTTONS: &[MouseButton] = [
 /// The total number of mouse buttons supported.
 ///
 /// Calculated from the highest `MouseButton` variant; used to size state arrays.
-pub const MOUSE_BUTTON_COUNT: usize = MouseButton::Button8 as usize + 1;
+pub(crate) const MOUSE_BUTTON_COUNT: usize = MouseButton::Button8 as usize + 1;
 
 /// Represents the state of mouse input, tracking which mouse buttons are currently pressed
 /// and which were pressed in the previous frame.
@@ -137,7 +137,7 @@ impl MouseState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, MouseButton};
+    /// use vmnl_graphics::{Input, MouseButton};
     ///
     /// let input = Input::new();
     /// if input.mouse().is_down(MouseButton::Left) {
@@ -155,7 +155,7 @@ impl MouseState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, MouseButton};
+    /// use vmnl_graphics::{Input, MouseButton};
     ///
     /// let input = Input::new();
     /// if input.mouse().is_pressed(MouseButton::Left) {
@@ -173,7 +173,7 @@ impl MouseState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, MouseButton};
+    /// use vmnl_graphics::{Input, MouseButton};
     ///
     /// let input = Input::new();
     /// if input.mouse().is_released(MouseButton::Left) {
@@ -191,7 +191,7 @@ impl MouseState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, MouseButton};
+    /// use vmnl_graphics::{Input, MouseButton};
     ///
     /// let input = Input::new();
     /// if input.mouse().is_any_down(&[MouseButton::Left, MouseButton::Right]) {
@@ -214,7 +214,7 @@ impl MouseState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, MouseButton};
+    /// use vmnl_graphics::{Input, MouseButton};
     ///
     /// let input = Input::new();
     /// if input.mouse().is_any_pressed(&[MouseButton::Left, MouseButton::Right]) {
@@ -237,7 +237,7 @@ impl MouseState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, MouseButton};
+    /// use vmnl_graphics::{Input, MouseButton};
     ///
     /// let input = Input::new();
     /// if input.mouse().is_any_released(&[MouseButton::Left, MouseButton::Right]) {
@@ -260,7 +260,7 @@ impl MouseState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::{Input, MouseButton};
+    /// use vmnl_graphics::{Input, MouseButton};
     ///
     /// let input = Input::new();
     /// if input.mouse().is_any_used(&[MouseButton::Left, MouseButton::Right]) {
@@ -280,7 +280,7 @@ impl MouseState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::Input;
+    /// use vmnl_graphics::Input;
     ///
     /// let input = Input::new();
     /// if input.mouse().is_one_down() {
@@ -300,7 +300,7 @@ impl MouseState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::Input;
+    /// use vmnl_graphics::Input;
     ///
     /// let input = Input::new();
     /// if input.mouse().is_one_pressed() {
@@ -320,7 +320,7 @@ impl MouseState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::Input;
+    /// use vmnl_graphics::Input;
     ///
     /// let input = Input::new();
     /// if input.mouse().is_one_released() {
@@ -340,7 +340,7 @@ impl MouseState {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_native::Input;
+    /// use vmnl_graphics::Input;
     ///
     /// let input = Input::new();
     /// if input.mouse().is_one_used() {

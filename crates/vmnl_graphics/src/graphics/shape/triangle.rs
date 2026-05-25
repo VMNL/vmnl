@@ -26,8 +26,8 @@ impl TriangleBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Shape, Vector2f, Vertex};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertex1 = Vertex {
     ///     position: Vector2f { x: 100.0, y: 150.0 },
@@ -93,15 +93,15 @@ impl TriangleBuilder {
             },
         ];
 
-        println!("{}", crate::vmnl_log(format!(
-            "Creating triangle with vertices at positions [{}, {}], [{}, {}], [{}, {}] and colors [{}, {}, {}, {}], [{}, {}, {}, {}], [{}, {}, {}, {}].",
+        log::trace!(
+            "creating triangle: positions=[({}, {}), ({}, {}), ({}, {})], colors=[({}, {}, {}, {}), ({}, {}, {}, {}), ({}, {}, {}, {})]",
             vertex1.position.x, vertex1.position.y,
             vertex2.position.x, vertex2.position.y,
             vertex3.position.x, vertex3.position.y,
             vertex1.color.r, vertex1.color.g, vertex1.color.b, vertex1.color.a,
             vertex2.color.r, vertex2.color.g, vertex2.color.b, vertex2.color.a,
             vertex3.color.r, vertex3.color.g, vertex3.color.b, vertex3.color.a
-        )));
+        );
         Ok(Shape {
             kind: RawVertices,
             vertex_count: vertices.len() as u32,

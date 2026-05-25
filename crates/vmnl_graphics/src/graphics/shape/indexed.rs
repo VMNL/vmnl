@@ -38,8 +38,8 @@ impl IndexedShapeBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_native::{Context, Rgba, Shape, Vector2f, Vertex};
-    /// # fn main() -> vmnl_native::VMNLResult<()> {
+    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertices = [
     ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: Rgba::new(255, 0, 0, 255) },
@@ -57,6 +57,11 @@ impl IndexedShapeBuilder {
         Self::indexed_shape(vmnl_context, &self.options.vertices, &self.options.indices)
     }
 
+    /// Validate the geometry of the indexed shape, ensuring it meets the requirements for rendering.
+    /// This includes checks for a minimum number of vertices, valid triangle indices, and index bounds.
+    ///
+    /// # Errors
+    /// Returns an error if the geometry is invalid, such as having too few vertices, non-triangle-aligned indices, or out-of-bounds indices.
     fn validate_geometry(vertices: &[Vertex], indices: &[u32]) -> VMNLResult<()> {
         if vertices.len() < 3 {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(
@@ -78,7 +83,6 @@ impl IndexedShapeBuilder {
                 vertices.len()
             ))));
         }
-
         Ok(())
     }
 
@@ -98,30 +102,10 @@ impl IndexedShapeBuilder {
     ) -> VMNLResult<Shape> {
         Self::validate_geometry(vertices, indices)?;
 
-        println!(
-            "{}",
-            crate::vmnl_log(format!(
-                "Creating indexed shape with vertices at positions {}, colors {} and indices {}.",
-                vertices
-                    .iter()
-                    .map(|v| v.position.x.to_string() + ", " + &v.position.y.to_string())
-                    .collect::<Vec<String>>()
-                    .join("], ["),
-                vertices
-                    .iter()
-                    .map(|v| v.color.r.to_string()
-                        + ", "
-                        + &v.color.g.to_string()
-                        + ", "
-                        + &v.color.b.to_string())
-                    .collect::<Vec<String>>()
-                    .join("], ["),
-                indices
-                    .iter()
-                    .map(std::string::ToString::to_string)
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            ))
+        log::trace!(
+            "creating indexed shape: vertices={}, indices={}",
+            vertices.len(),
+            indices.len()
         );
         Ok(Shape {
             kind: IndexedGeometry,

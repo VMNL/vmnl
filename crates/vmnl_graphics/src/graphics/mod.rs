@@ -5,11 +5,13 @@
 /// Root graphics module shared by renderable resource families such as shapes,
 /// textures, and text.
 ////////////////////////////////////////////////////////////////////////////////
-pub mod shape;
+mod shape;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use bytemuck::{Pod, Zeroable};
 pub(crate) use shape::{GpuVertex, VertexBuffer};
-pub use shape::{LineCap, Shape, Vertex};
+pub use shape::{
+    IndexedShapeBuilder, LineBuilder, LineCap, RectBuilder, Shape, TriangleBuilder, Vertex,
+};
 use std::cmp::Ordering;
 use std::sync::Arc;
 use vulkano::{
@@ -19,10 +21,10 @@ use vulkano::{
 };
 
 /// Index buffer alias shared by graphics resources using indexed draws.
-pub type VMNLIndexBuffer = Subbuffer<[u32]>;
+pub(crate) type VMNLIndexBuffer = Subbuffer<[u32]>;
 /// Uniform buffer object for frame data.
 #[allow(dead_code)]
-pub type VMNLFrameUboBuffer = Subbuffer<VMNLFrameUbo>;
+pub(crate) type VMNLFrameUboBuffer = Subbuffer<VMNLFrameUbo>;
 /// RGBA color represented as 8-bit components.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, Pod, Zeroable, PartialEq, Eq)]
@@ -50,7 +52,7 @@ impl Rgba {
     /// A new `Rgba` instance representing the specified color.
     /// # Example
     /// ```rust
-    /// use vmnl_native::Rgba;
+    /// use vmnl_graphics::Rgba;
     /// let color = Rgba::new(255, 0, 0, 255); /// Creates a fully opaque red color.
     /// ```
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
@@ -100,7 +102,7 @@ impl PartialOrd for Vector2f {
 #[repr(C)]
 #[derive(BufferContents, Clone, Copy, Debug, Default, PartialEq)]
 #[allow(dead_code)]
-pub struct VMNLFrameUbo {
+pub(crate) struct VMNLFrameUbo {
     /// Background color for the frame as `[r, g, b, a]`.
     color: Rgba,
 }
