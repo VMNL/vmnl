@@ -7,6 +7,7 @@
 use super::{Shape, ShapeKind::RawVertices, Vertex};
 use crate::{graphics::GraphicsResourceFactory, Context, VMNLError, VMNLErrorKind, VMNLResult};
 
+/// Builder for creating a triangle from three vertices.
 pub struct TriangleBuilder {
     vertices: [Vertex; 3],
 }
@@ -23,6 +24,9 @@ impl TriangleBuilder {
     ///
     /// # Returns
     /// A `Shape` instance representing the triangle, ready for rendering.
+    ///
+    /// # Errors
+    /// Returns an error if the vertices are invalid or GPU buffer creation fails.
     ///
     /// # Example
     /// ```rust,no_run
@@ -104,7 +108,7 @@ impl TriangleBuilder {
         );
         Ok(Shape {
             kind: RawVertices,
-            vertex_count: vertices.len() as u32,
+            vertex_count: 3,
             index_count: 0,
             vertex_buffer: Shape::create_vertex_buffer(
                 vertices.as_slice(),

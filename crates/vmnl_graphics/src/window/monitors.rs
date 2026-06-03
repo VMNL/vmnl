@@ -125,6 +125,7 @@ impl Monitors {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn infos(&self) -> &[MonitorInfo] {
         &self.info
     }
@@ -142,6 +143,7 @@ impl Monitors {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn names(&self) -> Vec<Option<String>> {
         self.info.iter().map(|info| info.name.clone()).collect()
     }
@@ -176,6 +178,7 @@ impl Monitors {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn primary(&self) -> Option<&MonitorInfo> {
         self.info.iter().find(|info| info.is_primary)
     }

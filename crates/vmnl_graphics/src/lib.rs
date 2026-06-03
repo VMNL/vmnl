@@ -1,11 +1,13 @@
+//! Graphics and windowing primitives for VMNL.
+
 mod exception;
 mod graphics;
 mod vmnl_instance;
 mod window;
 pub use exception::{VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult};
 pub use graphics::{
-    IndexedShapeBuilder, LineBuilder, LineCap, RectBuilder, Rgba, Shape, TriangleBuilder, Vector2f,
-    Vertex,
+    Anchor, IndexedShapeBuilder, LineBuilder, LineCap, RectBuilder, Rgba, Shape, TriangleBuilder,
+    Vector2f, Vertex,
 };
 pub use vmnl_instance::Context;
 pub use window::{

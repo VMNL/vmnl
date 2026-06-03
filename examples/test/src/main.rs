@@ -1,4 +1,6 @@
-use vmnl::{Context, Event, Key, MouseButton, Rgba, Shape, VMNLResult, Vector2f, Vertex, Window};
+use vmnl::{
+    Context, Event, Key, LineCap, MouseButton, Rgba, Shape, VMNLResult, Vector2f, Vertex, Window,
+};
 
 const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Rgba {
     Rgba { r, g, b, a }
@@ -116,7 +118,7 @@ fn create_pentagon_indexed(ctx: &Context) -> VMNLResult<Shape> {
         0, 5, 1, // center -> upper left -> top
     ];
 
-    Shape::indexed(VERTICES.to_vec(), INDICES.to_vec()).build(ctx)
+    Shape::indexed(VERTICES, INDICES).build(ctx)
 }
 
 fn main() -> VMNLResult<()> {
@@ -151,10 +153,19 @@ fn main() -> VMNLResult<()> {
     ])
     .build(&ctx)?;
     let pentagon_indexed: Shape = create_pentagon_indexed(&ctx)?;
-    let rectangle: Shape = Shape::rect(800.0, 100.0)
-        .position(100.0, 150.0)
+    let rectangle: Shape = Shape::rect(100.0, 300.0)
+        .position(1400.0, 800.0)
         .color(rgba(255, 0, 0, 255))
+        .rotation(90.0)
         .build(&ctx)?;
+    let line: Shape = Shape::line(
+        Vector2f { x: 100.0, y: 500.0 },
+        Vector2f { x: 300.0, y: 700.0 },
+    )
+    .color(rgba(255, 255, 0, 255))
+    .width(50.0)
+    .cap(LineCap::Round)
+    .build(&ctx)?;
 
     println!(
         "Monitors: {}",
@@ -171,7 +182,7 @@ fn main() -> VMNLResult<()> {
         }
         handle_keybind_test(&mut win);
         handle_mousebind_test(&mut win);
-        win.render([&rectangle, &triangle, &pentagon_indexed])
+        win.render([&rectangle, &triangle, &pentagon_indexed, &line])
             .per_object()?;
     }
     Ok(())

@@ -2,8 +2,7 @@
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// Shape utilities for the VMNL library, including vertex definitions, buffer
-/// creation helpers, and shape generation.
+/// Shape utilities for the VMNL library.
 ////////////////////////////////////////////////////////////////////////////////
 mod indexed;
 mod line;
@@ -11,18 +10,13 @@ mod rect;
 mod triangle;
 
 use super::{
-    Drawable, GraphicsResourceFactory, MaterialKey, PipelineKey, RenderItem, Rgba, VMNLIndexBuffer,
-    Vector2f,
+    Drawable, GraphicsResourceFactory, MaterialKey, PipelineKey, RenderItem, VMNLIndexBuffer,
+    Vector2f, Vertex, VertexBuffer,
 };
-use bytemuck::{Pod, Zeroable};
 pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
-pub use rect::RectBuilder;
+pub use rect::{Anchor, RectBuilder};
 pub use triangle::TriangleBuilder;
-use vulkano::{buffer::Subbuffer, pipeline::graphics::vertex_input::Vertex as VulkanoVertex};
-
-/// Alias for a vertex buffer containing GPU-ready vertices.
-pub(crate) type VertexBuffer = Subbuffer<[GpuVertex]>;
 
 /// Types of shape data that can be rendered in VMNL.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -37,47 +31,6 @@ pub(crate) enum ShapeKind {
     #[allow(dead_code)]
     Line,
     // Circle,
-}
-
-/// Public vertex with a 2D position and 8-bit RGBA color.
-///
-/// # Example
-/// ```rust
-/// use vmnl_graphics::{Rgba, Vector2f, Vertex};
-///
-/// let vertex = Vertex {
-///     position: Vector2f { x: 100.0, y: 150.0 },
-///     color: Rgba { r: 255, g: 0, b: 0, a: 255 },
-/// };
-/// ```
-#[repr(C)]
-#[derive(Pod, Zeroable, Clone, Copy, Default, Debug, PartialEq)]
-pub struct Vertex {
-    /// Position of the vertex as `[x, y]`.
-    pub position: Vector2f,
-    /// Color of the vertex as `[r, g, b, a]`.
-    pub color: Rgba,
-}
-
-/// GPU vertex format with position and normalized color, used for vertex buffers.
-#[repr(C)]
-#[derive(VulkanoVertex, Pod, Zeroable, Clone, Copy, Default, Debug, PartialEq)]
-pub(crate) struct GpuVertex {
-    /// Position of the vertex as `[x, y]`.
-    #[format(R32G32_SFLOAT)]
-    pub position: Vector2f,
-    /// Normalized color of the vertex as `[r, g, b, a]`, where each component is in the range `[0.0, 1.0]`.
-    #[format(R32G32B32A32_SFLOAT)]
-    pub color: [f32; 4],
-}
-
-impl From<Vertex> for GpuVertex {
-    fn from(vertex: Vertex) -> Self {
-        Self {
-            position: vertex.position,
-            color: vertex.color.normalized(),
-        }
-    }
 }
 
 /// Shape resource container holding vertex/index buffers and counts.
@@ -136,6 +89,7 @@ impl Shape {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn rect(w: f32, h: f32) -> RectBuilder {
         RectBuilder::new(Vector2f { x: w, y: h })
     }
@@ -193,6 +147,7 @@ impl Shape {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn triangle(vertices: [Vertex; 3]) -> TriangleBuilder {
         TriangleBuilder::new(vertices)
     }
@@ -214,6 +169,7 @@ impl Shape {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn line(from: Vector2f, to: Vector2f) -> LineBuilder {
         LineBuilder::new(from, to)
     }

@@ -1,10 +1,4 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Window runtime state utilities.
-////////////////////////////////////////////////////////////////////////////////
-extern crate glfw;
 use crate::window::inner::VMNLWindow;
 
 /// Runtime state of a window.
@@ -28,20 +22,20 @@ impl VMNLWindow {
     #[inline]
     #[must_use]
     pub(crate) fn is_open(&mut self) -> bool {
-        self.window_state.is_open = !self.window_handle.context.should_close();
-        self.window_state.is_open
+        self.state.is_open = !self.handle.context.should_close();
+        self.state.is_open
     }
 
     /// Internal implementation backing `Window::is_ready`.
     #[inline]
     #[must_use]
     pub(crate) const fn is_ready(&self) -> bool {
-        self.window_state.is_ready
+        self.state.is_ready
     }
 
     /// Internal method to set the clear color for rendering.
     #[inline]
     pub(crate) const fn set_clear_color(&mut self, color: [f32; 4]) {
-        self.window_state.clear_color = color;
+        self.state.clear_color = color;
     }
 }

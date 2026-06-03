@@ -393,6 +393,7 @@ impl KeyboardState {
     ///     println!("Key A is currently down!");
     /// }
     /// ```
+    #[must_use]
     pub const fn is_down(&self, key: Key) -> bool {
         self.current[Self::index(key)]
     }
@@ -411,6 +412,7 @@ impl KeyboardState {
     ///     println!("Key A was pressed!");
     /// }
     /// ```
+    #[must_use]
     pub const fn is_pressed(&self, key: Key) -> bool {
         self.current[Self::index(key)] && !self.previous[Self::index(key)]
     }
@@ -429,6 +431,7 @@ impl KeyboardState {
     ///     println!("Key A was released!");
     /// }
     /// ```
+    #[must_use]
     pub const fn is_released(&self, key: Key) -> bool {
         !self.current[Self::index(key)] && self.previous[Self::index(key)]
     }
@@ -447,6 +450,7 @@ impl KeyboardState {
     ///     println!("A, B, or C was pressed!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_any_pressed(&self, keys: &[Key]) -> bool {
         for &key in keys {
             if self.is_pressed(key) {
@@ -470,6 +474,7 @@ impl KeyboardState {
     ///     println!("A, B, or C was released!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_any_released(&self, keys: &[Key]) -> bool {
         for &key in keys {
             if self.is_released(key) {
@@ -493,6 +498,7 @@ impl KeyboardState {
     ///     println!("A, B, or C is currently down!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_any_down(&self, keys: &[Key]) -> bool {
         for &key in keys {
             if self.is_down(key) {
@@ -516,6 +522,7 @@ impl KeyboardState {
     ///     println!("A, B, or C was used!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_any_used(&self, keys: &[Key]) -> bool {
         for &key in keys {
             if self.is_down(key) || self.is_pressed(key) || self.is_released(key) {
@@ -536,6 +543,7 @@ impl KeyboardState {
     ///     println!("A key was pressed!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_one_pressed(&self) -> bool {
         for &key in ALL_KEYS {
             if self.is_pressed(key) {
@@ -556,6 +564,7 @@ impl KeyboardState {
     ///     println!("A key was released!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_one_released(&self) -> bool {
         for &key in ALL_KEYS {
             if self.is_released(key) {
@@ -576,6 +585,7 @@ impl KeyboardState {
     ///     println!("A key is currently down!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_one_down(&self) -> bool {
         for &key in ALL_KEYS {
             if self.is_down(key) {
@@ -596,6 +606,7 @@ impl KeyboardState {
     ///     println!("A key was used!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_one_used(&self) -> bool {
         for &key in ALL_KEYS {
             if self.is_down(key) || self.is_pressed(key) || self.is_released(key) {
@@ -615,6 +626,7 @@ impl KeyboardState {
     }
 
     /// Creates a new `KeyboardState` with all keys initialized to not pressed.
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             current: [false; KEY_COUNT],

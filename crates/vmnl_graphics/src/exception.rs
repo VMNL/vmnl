@@ -20,18 +20,21 @@ pub struct VMNLErrorLocation {
 impl VMNLErrorLocation {
     /// Returns the file in which the error occurred.
     #[inline]
+    #[must_use]
     pub const fn file(&self) -> &'static str {
         self.file
     }
 
     /// Returns the line number where the error occurred.
     #[inline]
+    #[must_use]
     pub const fn line(&self) -> u32 {
         self.line
     }
 
     /// Returns the column number where the error occurred.
     #[inline]
+    #[must_use]
     pub const fn column(&self) -> u32 {
         self.column
     }
@@ -152,7 +155,7 @@ impl VMNLError {
     #[track_caller]
     #[must_use]
     pub const fn new(kind: VMNLErrorKind) -> Self {
-        let caller: &Location = Location::caller();
+        let caller: &Location<'_> = Location::caller();
 
         Self {
             kind,
