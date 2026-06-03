@@ -6,10 +6,12 @@
 /// providing functions to create lines defined by start and end points, width, cap style, and color.
 ////////////////////////////////////////////////////////////////////////////////
 use super::{Shape, Vector2f};
-use crate::{Context, Rgba, VMNLError, VMNLErrorKind, VMNLResult};
+use crate::{Context, IndexedShapeBuilder, Rgba, VMNLError, VMNLErrorKind, VMNLResult, Vertex};
+
+const ROUND_CAP_SEGMENTS: u16 = 12;
 
 /// Line cap styles for rendering line endpoints.
-#[derive(Debug, Clone, PartialEq, Hash, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, Default)]
 pub enum LineCap {
     /// No additional geometry is added at the line endpoints; the line simply ends at the specified points.
     #[default]
@@ -86,6 +88,7 @@ impl LineBuilder {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn width(mut self, width: f32) -> Self {
         self.options.width = width;
         self
@@ -107,6 +110,7 @@ impl LineBuilder {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn cap(mut self, cap: LineCap) -> Self {
         self.options.cap = cap;
         self
@@ -128,6 +132,7 @@ impl LineBuilder {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn color(mut self, color: Rgba) -> Self {
         self.options.color = color;
         self
@@ -140,11 +145,14 @@ impl LineBuilder {
     /// - `from`: Starting point of the line as a `Vector2f`.
     /// - `to`: Ending point of the line as a `Vector2f`.
     /// - `width`: Optional width of the line (default is `1.0`).
-    /// - `cap`: Optional line cap style (default is `LineCap::Butt`).
+    /// - `cap`: Optional line cap style (default is `LineCap::Butt`, others options are `LineCap::Round` and `LineCap::Square`).
     /// - `color`: Optional RGBA color of the line (default is white `Rgba::new(255, 255, 255, 255)`).
     ///
     /// # Returns
     /// A `Shape` instance representing the line, ready for rendering.
+    ///
+    /// # Errors
+    /// Returns an error if the geometry is invalid or GPU buffer creation fails.
     ///
     /// # Example
     /// ```rust,no_run
@@ -171,9 +179,30 @@ impl LineBuilder {
     }
 
     fn validate_geometry(from: Vector2f, to: Vector2f, width: f32) -> VMNLResult<()> {
+        if from.x.is_nan() || from.y.is_nan() || to.x.is_nan() || to.y.is_nan() {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "line endpoints must not be NaN".to_string(),
+            )));
+        }
+        if from.x.is_infinite() || from.y.is_infinite() || to.x.is_infinite() || to.y.is_infinite()
+        {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "line endpoints must be finite".to_string(),
+            )));
+        }
         if from == to {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                 "line endpoints must be distinct".to_string(),
+            )));
+        }
+        if width.is_nan() {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "line width must not be NaN".to_string(),
+            )));
+        }
+        if width.is_infinite() {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "line width must be finite".to_string(),
             )));
         }
         if width <= 0.0 {
@@ -181,8 +210,151 @@ impl LineBuilder {
                 "line width must be strictly positive".to_string(),
             )));
         }
-
         Ok(())
+    }
+
+    fn flat_line_vertices(
+        from: Vector2f,
+        to: Vector2f,
+        width: f32,
+        cap: LineCap,
+        color: Rgba,
+    ) -> [Vertex; 4] {
+        let cap_extension: f32 = match cap {
+            LineCap::Butt | LineCap::Round => 0.0,
+            LineCap::Square => width / 2.0,
+        };
+        let half_width: f32 = width / 2.0;
+        let dir: Vector2f = (to - from).normalize();
+        let normal: Vector2f = Vector2f {
+            x: -dir.y * half_width,
+            y: dir.x * half_width,
+        };
+        let cap_offset: Vector2f = dir * cap_extension;
+        let from: Vector2f = Vector2f {
+            x: from.x - cap_offset.x,
+            y: from.y - cap_offset.y,
+        };
+        let to: Vector2f = Vector2f {
+            x: to.x + cap_offset.x,
+            y: to.y + cap_offset.y,
+        };
+
+        [
+            Vertex {
+                position: Vector2f {
+                    x: from.x + normal.x,
+                    y: from.y + normal.y,
+                },
+                color,
+            },
+            Vertex {
+                position: Vector2f {
+                    x: to.x + normal.x,
+                    y: to.y + normal.y,
+                },
+                color,
+            },
+            Vertex {
+                position: Vector2f {
+                    x: to.x - normal.x,
+                    y: to.y - normal.y,
+                },
+                color,
+            },
+            Vertex {
+                position: Vector2f {
+                    x: from.x - normal.x,
+                    y: from.y - normal.y,
+                },
+                color,
+            },
+        ]
+    }
+
+    fn push_round_cap(
+        vertices: &mut Vec<Vertex>,
+        indices: &mut Vec<u32>,
+        center: Vector2f,
+        axis: Vector2f,
+        normal: Vector2f,
+        radius: f32,
+        color: Rgba,
+    ) -> VMNLResult<()> {
+        let center_index: u32 = u32::try_from(vertices.len()).map_err(|_| {
+            VMNLError::new(VMNLErrorKind::InvalidState(
+                "line vertex count out of bounds".to_string(),
+            ))
+        })?;
+        vertices.push(Vertex {
+            position: center,
+            color,
+        });
+        let first_arc_index: u32 = u32::try_from(vertices.len()).map_err(|_| {
+            VMNLError::new(VMNLErrorKind::InvalidState(
+                "line vertex count out of bounds".to_string(),
+            ))
+        })?;
+
+        for segment in 0..=ROUND_CAP_SEGMENTS {
+            let t: f32 = f32::from(segment) / f32::from(ROUND_CAP_SEGMENTS);
+            let angle: f32 = -std::f32::consts::FRAC_PI_2 + t * std::f32::consts::PI;
+            let axis_scale: f32 = angle.cos() * radius;
+            let normal_scale: f32 = angle.sin() * radius;
+
+            vertices.push(Vertex {
+                position: Vector2f {
+                    x: center.x + axis.x * axis_scale + normal.x * normal_scale,
+                    y: center.y + axis.y * axis_scale + normal.y * normal_scale,
+                },
+                color,
+            });
+        }
+        for segment in 0..ROUND_CAP_SEGMENTS {
+            indices.extend_from_slice(&[
+                center_index,
+                first_arc_index + u32::from(segment),
+                first_arc_index + u32::from(segment) + 1,
+            ]);
+        }
+        Ok(())
+    }
+
+    fn geometry(
+        from: Vector2f,
+        to: Vector2f,
+        width: f32,
+        cap: LineCap,
+        color: Rgba,
+    ) -> VMNLResult<(Vec<Vertex>, Vec<u32>)> {
+        let body_cap: LineCap = match cap {
+            LineCap::Butt | LineCap::Round => LineCap::Butt,
+            LineCap::Square => LineCap::Square,
+        };
+        let mut vertices: Vec<Vertex> =
+            Self::flat_line_vertices(from, to, width, body_cap, color).to_vec();
+        let mut indices: Vec<u32> = vec![0, 1, 2, 2, 3, 0];
+
+        if cap == LineCap::Round {
+            let radius: f32 = width / 2.0;
+            let dir: Vector2f = (to - from).normalize();
+            let normal: Vector2f = Vector2f {
+                x: -dir.y,
+                y: dir.x,
+            };
+
+            Self::push_round_cap(
+                &mut vertices,
+                &mut indices,
+                from,
+                dir * -1.0,
+                normal,
+                radius,
+                color,
+            )?;
+            Self::push_round_cap(&mut vertices, &mut indices, to, dir, normal, radius, color)?;
+        }
+        Ok((vertices, indices))
     }
 
     /// Create a line shape defined by required `from` and `to` endpoints, optional `width`, optional `cap` style, and optional single `color`.
@@ -207,16 +379,21 @@ impl LineBuilder {
         cap: LineCap,
         color: Rgba,
     ) -> VMNLResult<Shape> {
-        let _ = (context, cap, color);
-
         Self::validate_geometry(from, to, width)?;
-        todo!("line shape rendering is not implemented yet")
+        let (vertices, indices): (Vec<Vertex>, Vec<u32>) =
+            Self::geometry(from, to, width, cap, color)?;
+        IndexedShapeBuilder::indexed_shape(context, &vertices, &indices)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn assert_vector_eq(actual: Vector2f, expected: Vector2f) {
+        assert!((actual.x - expected.x).abs() < f32::EPSILON);
+        assert!((actual.y - expected.y).abs() < f32::EPSILON);
+    }
 
     fn assert_invalid_state(result: VMNLResult<()>, expected: &str) {
         assert!(matches!(
@@ -248,6 +425,82 @@ mod tests {
     }
 
     #[test]
+    fn validate_geometry_rejects_nan_endpoints() {
+        assert_invalid_state(
+            LineBuilder::validate_geometry(
+                Vector2f {
+                    x: f32::NAN,
+                    y: 0.0,
+                },
+                Vector2f { x: 1.0, y: 1.0 },
+                1.0,
+            ),
+            "line endpoints must not be NaN",
+        );
+        assert_invalid_state(
+            LineBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f {
+                    x: 1.0,
+                    y: f32::NAN,
+                },
+                1.0,
+            ),
+            "line endpoints must not be NaN",
+        );
+    }
+
+    #[test]
+    fn validate_geometry_rejects_infinite_endpoints() {
+        assert_invalid_state(
+            LineBuilder::validate_geometry(
+                Vector2f {
+                    x: f32::INFINITY,
+                    y: 0.0,
+                },
+                Vector2f { x: 1.0, y: 1.0 },
+                1.0,
+            ),
+            "line endpoints must be finite",
+        );
+        assert_invalid_state(
+            LineBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f {
+                    x: 1.0,
+                    y: f32::NEG_INFINITY,
+                },
+                1.0,
+            ),
+            "line endpoints must be finite",
+        );
+    }
+
+    #[test]
+    fn validate_geometry_rejects_nan_width() {
+        assert_invalid_state(
+            LineBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f { x: 1.0, y: 1.0 },
+                f32::NAN,
+            ),
+            "line width must not be NaN",
+        );
+    }
+
+    #[test]
+    fn validate_geometry_rejects_infinite_width() {
+        assert_invalid_state(
+            LineBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f { x: 1.0, y: 1.0 },
+                f32::INFINITY,
+            ),
+            "line width must be finite",
+        );
+    }
+
+    #[test]
     fn validate_geometry_rejects_non_positive_width() {
         assert_invalid_state(
             LineBuilder::validate_geometry(
@@ -265,5 +518,71 @@ mod tests {
             ),
             "line width must be strictly positive",
         );
+    }
+
+    #[test]
+    fn flat_line_vertices_returns_butt_line_vertices_around_line_axis() {
+        let vertices: [Vertex; 4] = LineBuilder::flat_line_vertices(
+            Vector2f { x: 0.0, y: 0.0 },
+            Vector2f { x: 4.0, y: 0.0 },
+            2.0,
+            LineCap::Butt,
+            Rgba::new(255, 255, 255, 255),
+        );
+
+        assert_vector_eq(vertices[0].position, Vector2f { x: 0.0, y: 1.0 });
+        assert_vector_eq(vertices[1].position, Vector2f { x: 4.0, y: 1.0 });
+        assert_vector_eq(vertices[2].position, Vector2f { x: 4.0, y: -1.0 });
+        assert_vector_eq(vertices[3].position, Vector2f { x: 0.0, y: -1.0 });
+    }
+
+    #[test]
+    fn flat_line_vertices_extends_square_cap_by_half_width() {
+        let vertices: [Vertex; 4] = LineBuilder::flat_line_vertices(
+            Vector2f { x: 0.0, y: 0.0 },
+            Vector2f { x: 4.0, y: 0.0 },
+            2.0,
+            LineCap::Square,
+            Rgba::new(255, 255, 255, 255),
+        );
+
+        assert_vector_eq(vertices[0].position, Vector2f { x: -1.0, y: 1.0 });
+        assert_vector_eq(vertices[1].position, Vector2f { x: 5.0, y: 1.0 });
+        assert_vector_eq(vertices[2].position, Vector2f { x: 5.0, y: -1.0 });
+        assert_vector_eq(vertices[3].position, Vector2f { x: -1.0, y: -1.0 });
+    }
+
+    #[test]
+    fn flat_line_vertices_uses_perpendicular_normal_for_diagonal_line() {
+        let vertices: [Vertex; 4] = LineBuilder::flat_line_vertices(
+            Vector2f { x: 0.0, y: 0.0 },
+            Vector2f { x: 3.0, y: 4.0 },
+            10.0,
+            LineCap::Butt,
+            Rgba::new(255, 255, 255, 255),
+        );
+
+        assert_vector_eq(vertices[0].position, Vector2f { x: -4.0, y: 3.0 });
+        assert_vector_eq(vertices[1].position, Vector2f { x: -1.0, y: 7.0 });
+        assert_vector_eq(vertices[2].position, Vector2f { x: 7.0, y: 1.0 });
+        assert_vector_eq(vertices[3].position, Vector2f { x: 4.0, y: -3.0 });
+    }
+
+    #[test]
+    fn geometry_adds_round_cap_triangles() -> VMNLResult<()> {
+        let (vertices, indices): (Vec<Vertex>, Vec<u32>) = LineBuilder::geometry(
+            Vector2f { x: 0.0, y: 0.0 },
+            Vector2f { x: 4.0, y: 0.0 },
+            2.0,
+            LineCap::Round,
+            Rgba::new(255, 255, 255, 255),
+        )?;
+
+        assert_eq!(
+            vertices.len(),
+            4 + (usize::from(ROUND_CAP_SEGMENTS) + 2) * 2
+        );
+        assert_eq!(indices.len(), 6 + usize::from(ROUND_CAP_SEGMENTS) * 3 * 2);
+        Ok(())
     }
 }

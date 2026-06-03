@@ -50,56 +50,56 @@ pub(crate) struct WindowHandle {
 impl VMNLWindow {
     /// Internal implementation backing `Window::close`.
     pub(crate) fn close(&mut self) {
-        log::debug!("closing window \"{}\"", self.window_config.title);
-        self.window_handle.context.set_should_close(true);
+        log::debug!("closing window \"{}\"", self.config.title);
+        self.handle.context.set_should_close(true);
     }
 
     /// Internal implementation backing `Window::poll_events`.
     pub(crate) fn poll_events(&mut self) -> Vec<Event> {
-        self.window_handle.instance.poll_events();
-        self.window_handle.input.update(&self.window_handle.context);
-        self.window_handle.events.poll_events()
+        self.handle.instance.poll_events();
+        self.handle.input.update(&self.handle.context);
+        self.handle.events.poll_events()
     }
 
     /// Internal implementation backing `Window::input`.
     #[inline]
     pub(crate) const fn input(&self) -> &Input {
-        &self.window_handle.input
+        &self.handle.input
     }
 
     /// Internal implementation backing `Window::wait_events`.
     pub(crate) fn wait_events(&mut self) {
-        self.window_handle.instance.wait_events();
+        self.handle.instance.wait_events();
     }
 
     /// Internal implementation backing `Window::wait_events_timeout`.
     pub(crate) fn wait_events_timeout(&mut self, timeout: f64) {
-        self.window_handle.instance.wait_events_timeout(timeout);
+        self.handle.instance.wait_events_timeout(timeout);
     }
 
     /// Internal implementation backing `Window::post_empty_event`.
     pub(crate) fn post_empty_event(&mut self) {
-        self.window_handle.instance.post_empty_event();
+        self.handle.instance.post_empty_event();
     }
 
     /// Internal implementation backing `Window::get_time`.
     pub(crate) fn get_time(&mut self) -> f64 {
-        self.window_handle.instance.get_time()
+        self.handle.instance.get_time()
     }
 
     /// Internal implementation backing `Window::set_time`.
     pub(crate) fn set_time(&mut self, time: f64) {
-        self.window_handle.instance.set_time(time);
+        self.handle.instance.set_time(time);
     }
 
     /// Internal implementation backing `Window::get_timer_value`.
     pub(crate) fn get_timer_value(&self) -> u64 {
-        self.window_handle.instance.get_timer_value()
+        self.handle.instance.get_timer_value()
     }
 
     /// Internal implementation backing `Window::get_timer_frequency`.
     pub(crate) fn get_timer_frequency(&self) -> u64 {
-        self.window_handle.instance.get_timer_frequency()
+        self.handle.instance.get_timer_frequency()
     }
 
     /// Internal implementation backing `Window::set_error_callback`.
@@ -107,7 +107,7 @@ impl VMNLWindow {
         &mut self,
         mut callback: impl FnMut(VMNLErrorKind, String) + 'static,
     ) {
-        self.window_handle
+        self.handle
             .instance
             .set_error_callback(move |_error, description| {
                 callback(VMNLErrorKind::GlfwUnknownError, description);
@@ -116,153 +116,143 @@ impl VMNLWindow {
 
     /// Internal implementation backing `Window::unset_error_callback`.
     pub(crate) fn unset_error_callback(&mut self) {
-        self.window_handle.instance.unset_error_callback();
+        self.handle.instance.unset_error_callback();
     }
 
     /// Internal implementation backing `Window::set_char_polling`.
     pub(crate) fn set_char_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_char_polling(enabled);
+        self.handle.context.set_char_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_mouse_button_polling`.
     pub(crate) fn set_mouse_button_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_mouse_button_polling(enabled);
+        self.handle.context.set_mouse_button_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_cursor_pos_polling`.
     pub(crate) fn set_cursor_pos_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_cursor_pos_polling(enabled);
+        self.handle.context.set_cursor_pos_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_cursor_enter_polling`.
     pub(crate) fn set_cursor_enter_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_cursor_enter_polling(enabled);
+        self.handle.context.set_cursor_enter_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_scroll_polling`.
     pub(crate) fn set_scroll_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_scroll_polling(enabled);
+        self.handle.context.set_scroll_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_size_polling`.
     pub(crate) fn set_size_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_size_polling(enabled);
+        self.handle.context.set_size_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_framebuffer_size_polling`.
     pub(crate) fn set_framebuffer_size_polling(&mut self, enabled: bool) {
-        self.window_handle
-            .context
-            .set_framebuffer_size_polling(enabled);
+        self.handle.context.set_framebuffer_size_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_focus_polling`.
     pub(crate) fn set_focus_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_focus_polling(enabled);
+        self.handle.context.set_focus_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_close_polling`.
     pub(crate) fn set_close_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_close_polling(enabled);
+        self.handle.context.set_close_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_key_polling`.
     pub(crate) fn set_key_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_key_polling(enabled);
+        self.handle.context.set_key_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_char_mods_polling`.
     pub(crate) fn set_char_mods_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_char_mods_polling(enabled);
+        self.handle.context.set_char_mods_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_refresh_polling`.
     pub(crate) fn set_refresh_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_refresh_polling(enabled);
+        self.handle.context.set_refresh_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_iconify_polling`.
     pub(crate) fn set_iconify_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_iconify_polling(enabled);
+        self.handle.context.set_iconify_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_maximize_polling`.
     pub(crate) fn set_maximize_polling(&mut self, enabled: bool) {
-        self.window_handle.context.set_maximize_polling(enabled);
+        self.handle.context.set_maximize_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_drag_and_drop_polling`.
     pub(crate) fn set_drag_and_drop_polling(&mut self, enabled: bool) {
-        self.window_handle
-            .context
-            .set_drag_and_drop_polling(enabled);
+        self.handle.context.set_drag_and_drop_polling(enabled);
     }
 
     /// Internal implementation backing `Window::set_content_scale_polling`.
     pub(crate) fn set_content_scale_polling(&mut self, enabled: bool) {
-        self.window_handle
-            .context
-            .set_content_scale_polling(enabled);
+        self.handle.context.set_content_scale_polling(enabled);
     }
 
     /// Internal implementation backing `Window::enable_keyboard_polling`.
     pub(crate) fn enable_keyboard_polling(&mut self) {
-        self.window_handle.context.set_key_polling(true);
-        self.window_handle.context.set_char_polling(true);
-        self.window_handle.context.set_char_mods_polling(true);
+        self.handle.context.set_key_polling(true);
+        self.handle.context.set_char_polling(true);
+        self.handle.context.set_char_mods_polling(true);
     }
 
     /// Internal implementation backing `Window::disable_keyboard_polling`.
     pub(crate) fn disable_keyboard_polling(&mut self) {
-        self.window_handle.context.set_key_polling(false);
-        self.window_handle.context.set_char_polling(false);
-        self.window_handle.context.set_char_mods_polling(false);
+        self.handle.context.set_key_polling(false);
+        self.handle.context.set_char_polling(false);
+        self.handle.context.set_char_mods_polling(false);
     }
 
     /// Internal implementation backing `Window::enable_mouse_polling`.
     pub(crate) fn enable_mouse_polling(&mut self) {
-        self.window_handle.context.set_mouse_button_polling(true);
-        self.window_handle.context.set_cursor_pos_polling(true);
-        self.window_handle.context.set_cursor_enter_polling(true);
-        self.window_handle.context.set_scroll_polling(true);
+        self.handle.context.set_mouse_button_polling(true);
+        self.handle.context.set_cursor_pos_polling(true);
+        self.handle.context.set_cursor_enter_polling(true);
+        self.handle.context.set_scroll_polling(true);
     }
 
     /// Internal implementation backing `Window::disable_mouse_polling`.
     pub(crate) fn disable_mouse_polling(&mut self) {
-        self.window_handle.context.set_mouse_button_polling(false);
-        self.window_handle.context.set_cursor_pos_polling(false);
-        self.window_handle.context.set_cursor_enter_polling(false);
-        self.window_handle.context.set_scroll_polling(false);
+        self.handle.context.set_mouse_button_polling(false);
+        self.handle.context.set_cursor_pos_polling(false);
+        self.handle.context.set_cursor_enter_polling(false);
+        self.handle.context.set_scroll_polling(false);
     }
 
     /// Internal implementation backing `Window::enable_window_state_polling`.
     pub(crate) fn enable_window_state_polling(&mut self) {
-        self.window_handle.context.set_size_polling(true);
-        self.window_handle
-            .context
-            .set_framebuffer_size_polling(true);
-        self.window_handle.context.set_focus_polling(true);
-        self.window_handle.context.set_close_polling(true);
-        self.window_handle.context.set_refresh_polling(true);
-        self.window_handle.context.set_iconify_polling(true);
-        self.window_handle.context.set_maximize_polling(true);
-        self.window_handle.context.set_drag_and_drop_polling(true);
-        self.window_handle.context.set_content_scale_polling(true);
+        self.handle.context.set_size_polling(true);
+        self.handle.context.set_framebuffer_size_polling(true);
+        self.handle.context.set_focus_polling(true);
+        self.handle.context.set_close_polling(true);
+        self.handle.context.set_refresh_polling(true);
+        self.handle.context.set_iconify_polling(true);
+        self.handle.context.set_maximize_polling(true);
+        self.handle.context.set_drag_and_drop_polling(true);
+        self.handle.context.set_content_scale_polling(true);
     }
 
     /// Internal implementation backing `Window::disable_window_state_polling`.
     pub(crate) fn disable_window_state_polling(&mut self) {
-        self.window_handle.context.set_size_polling(false);
-        self.window_handle
-            .context
-            .set_framebuffer_size_polling(false);
-        self.window_handle.context.set_focus_polling(false);
-        self.window_handle.context.set_close_polling(false);
-        self.window_handle.context.set_refresh_polling(false);
-        self.window_handle.context.set_iconify_polling(false);
-        self.window_handle.context.set_maximize_polling(false);
-        self.window_handle.context.set_drag_and_drop_polling(false);
-        self.window_handle.context.set_content_scale_polling(false);
+        self.handle.context.set_size_polling(false);
+        self.handle.context.set_framebuffer_size_polling(false);
+        self.handle.context.set_focus_polling(false);
+        self.handle.context.set_close_polling(false);
+        self.handle.context.set_refresh_polling(false);
+        self.handle.context.set_iconify_polling(false);
+        self.handle.context.set_maximize_polling(false);
+        self.handle.context.set_drag_and_drop_polling(false);
+        self.handle.context.set_content_scale_polling(false);
     }
 
     /// Internal implementation backing `Window::configure_window_polling`.
@@ -281,6 +271,6 @@ impl VMNLWindow {
 
     /// Internal implementation backing `Window::enable_all_polling`.
     pub(crate) fn enable_all_polling(&mut self) {
-        self.window_handle.context.set_all_polling(true);
+        self.handle.context.set_all_polling(true);
     }
 }

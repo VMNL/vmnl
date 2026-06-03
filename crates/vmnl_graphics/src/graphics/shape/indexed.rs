@@ -76,7 +76,7 @@ impl IndexedShapeBuilder {
         if let Some(index) = indices
             .iter()
             .copied()
-            .find(|&index| index as usize >= vertices.len())
+            .find(|&index| usize::try_from(index).map_or(true, |index| index >= vertices.len()))
         {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
                 "indexed shape index {index} is out of bounds for {} vertices",
@@ -95,13 +95,12 @@ impl IndexedShapeBuilder {
     ///
     /// # Returns
     /// A `Shape` instance containing created vertex and index buffers ready for rendering.
-    fn indexed_shape(
+    pub(crate) fn indexed_shape(
         vmnl_context: &Context,
         vertices: &[Vertex],
         indices: &[u32],
     ) -> VMNLResult<Shape> {
         Self::validate_geometry(vertices, indices)?;
-
         log::trace!(
             "creating indexed shape: vertices={}, indices={}",
             vertices.len(),
@@ -109,8 +108,16 @@ impl IndexedShapeBuilder {
         );
         Ok(Shape {
             kind: IndexedGeometry,
-            vertex_count: vertices.len() as u32,
-            index_count: indices.len() as u32,
+            vertex_count: u32::try_from(vertices.len()).map_err(|_| {
+                VMNLError::new(VMNLErrorKind::InvalidState(
+                    "vertex count out of bounds".to_string(),
+                ))
+            })?,
+            index_count: u32::try_from(indices.len()).map_err(|_| {
+                VMNLError::new(VMNLErrorKind::InvalidState(
+                    "index count out of bounds".to_string(),
+                ))
+            })?,
             vertex_buffer: Shape::create_vertex_buffer(
                 vertices.iter().as_slice(),
                 &vmnl_context.inner.memory_allocator,

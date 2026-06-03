@@ -471,7 +471,7 @@ main()
         ok "shaderc library directory resolved"
         kv "[Info] resolved lib dir" "${lib_dir}"
         if [[ "${DO_TESTS}" -eq 1 ]]; then
-            exec cargo test -p vmnl_native --lib
+            exec cargo test -p vmnl-graphics --lib
         else
             run_cargo "${lib_dir}"
         fi
@@ -499,6 +499,13 @@ main()
         ok "doctests completed"
         exit 0
     fi
+    if [[ "${DO_CLEAN}" -eq 1 ]]; then
+        step "cleaning cargo artifacts"
+        cmd "cargo clean"
+        cargo clean
+        ok "cargo clean done"
+        exit 0
+    fi
     warn "shaderc not found, installation required"
     install_packages
     diagnostic_shaderc
@@ -513,7 +520,7 @@ main()
         DO_CLEAN=1
     fi
     if [[ "${DO_TESTS}" -eq 1 ]]; then
-        cargo test -p vmnl_native --lib
+        cargo test -p vmnl-graphics --lib
     else
         run_cargo "${lib_dir}"
     fi

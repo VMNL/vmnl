@@ -72,17 +72,17 @@ impl MouseState {
     /// - `button`: The GLFW mouse button to convert.
     ///
     /// # Returns
-    /// `Some(MouseButton)` if the conversion is successful, otherwise `None`.
-    pub(crate) const fn from_glfw(button: GlfwMouseButton) -> Option<MouseButton> {
+    /// The corresponding `MouseButton`.
+    pub(crate) const fn from_glfw(button: GlfwMouseButton) -> MouseButton {
         match button {
-            GlfwMouseButton::Left => Some(MouseButton::Left),
-            GlfwMouseButton::Right => Some(MouseButton::Right),
-            GlfwMouseButton::Middle => Some(MouseButton::Middle),
-            GlfwMouseButton::Button4 => Some(MouseButton::Button4),
-            GlfwMouseButton::Button5 => Some(MouseButton::Button5),
-            GlfwMouseButton::Button6 => Some(MouseButton::Button6),
-            GlfwMouseButton::Button7 => Some(MouseButton::Button7),
-            GlfwMouseButton::Button8 => Some(MouseButton::Button8),
+            GlfwMouseButton::Left => MouseButton::Left,
+            GlfwMouseButton::Right => MouseButton::Right,
+            GlfwMouseButton::Middle => MouseButton::Middle,
+            GlfwMouseButton::Button4 => MouseButton::Button4,
+            GlfwMouseButton::Button5 => MouseButton::Button5,
+            GlfwMouseButton::Button6 => MouseButton::Button6,
+            GlfwMouseButton::Button7 => MouseButton::Button7,
+            GlfwMouseButton::Button8 => MouseButton::Button8,
         }
     }
 
@@ -92,17 +92,17 @@ impl MouseState {
     /// - `button`: The `MouseButton` to convert.
     ///
     /// # Returns
-    /// `Some(glfw::MouseButton)` on success, otherwise `None`.
-    pub(crate) const fn to_glfw(button: MouseButton) -> Option<GlfwMouseButton> {
+    /// The corresponding GLFW mouse button.
+    pub(crate) const fn to_glfw(button: MouseButton) -> GlfwMouseButton {
         match button {
-            MouseButton::Left => Some(GlfwMouseButton::Left),
-            MouseButton::Right => Some(GlfwMouseButton::Right),
-            MouseButton::Middle => Some(GlfwMouseButton::Middle),
-            MouseButton::Button4 => Some(GlfwMouseButton::Button4),
-            MouseButton::Button5 => Some(GlfwMouseButton::Button5),
-            MouseButton::Button6 => Some(GlfwMouseButton::Button6),
-            MouseButton::Button7 => Some(GlfwMouseButton::Button7),
-            MouseButton::Button8 => Some(GlfwMouseButton::Button8),
+            MouseButton::Left => GlfwMouseButton::Left,
+            MouseButton::Right => GlfwMouseButton::Right,
+            MouseButton::Middle => GlfwMouseButton::Middle,
+            MouseButton::Button4 => GlfwMouseButton::Button4,
+            MouseButton::Button5 => GlfwMouseButton::Button5,
+            MouseButton::Button6 => GlfwMouseButton::Button6,
+            MouseButton::Button7 => GlfwMouseButton::Button7,
+            MouseButton::Button8 => GlfwMouseButton::Button8,
         }
     }
 
@@ -123,10 +123,8 @@ impl MouseState {
         self.previous = self.current;
 
         for &button in ALL_MOUSE_BUTTONS {
-            if let Some(glfw_button) = Self::to_glfw(button) {
-                self.current[Self::index(button)] =
-                    window.get_mouse_button(glfw_button) == glfw::Action::Press;
-            }
+            self.current[Self::index(button)] =
+                window.get_mouse_button(Self::to_glfw(button)) == glfw::Action::Press;
         }
     }
 
@@ -144,6 +142,7 @@ impl MouseState {
     ///     println!("The left mouse button is currently pressed!");
     /// }
     /// ```
+    #[must_use]
     pub const fn is_down(&self, button: MouseButton) -> bool {
         self.current[Self::index(button)]
     }
@@ -162,6 +161,7 @@ impl MouseState {
     ///     println!("The left mouse button was pressed!");
     /// }
     /// ```
+    #[must_use]
     pub const fn is_pressed(&self, button: MouseButton) -> bool {
         self.current[Self::index(button)] && !self.previous[Self::index(button)]
     }
@@ -180,6 +180,7 @@ impl MouseState {
     ///     println!("The left mouse button was released!");
     /// }
     /// ```
+    #[must_use]
     pub const fn is_released(&self, button: MouseButton) -> bool {
         !self.current[Self::index(button)] && self.previous[Self::index(button)]
     }
@@ -198,6 +199,7 @@ impl MouseState {
     ///     println!("The left or right mouse button is currently pressed!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_any_down(&self, buttons: &[MouseButton]) -> bool {
         for &button in buttons {
             if self.is_down(button) {
@@ -221,6 +223,7 @@ impl MouseState {
     ///     println!("The left or right mouse button was pressed!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_any_pressed(&self, buttons: &[MouseButton]) -> bool {
         for &button in buttons {
             if self.is_pressed(button) {
@@ -244,6 +247,7 @@ impl MouseState {
     ///     println!("The left or right mouse button was released!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_any_released(&self, buttons: &[MouseButton]) -> bool {
         for &button in buttons {
             if self.is_released(button) {
@@ -267,6 +271,7 @@ impl MouseState {
     ///     println!("The left or right mouse button was used!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_any_used(&self, buttons: &[MouseButton]) -> bool {
         for &button in buttons {
             if self.is_down(button) || self.is_pressed(button) || self.is_released(button) {
@@ -287,6 +292,7 @@ impl MouseState {
     ///     println!("A mouse button is currently pressed!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_one_down(&self) -> bool {
         for &button in ALL_MOUSE_BUTTONS {
             if self.is_down(button) {
@@ -307,6 +313,7 @@ impl MouseState {
     ///     println!("A mouse button was pressed!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_one_pressed(&self) -> bool {
         for &button in ALL_MOUSE_BUTTONS {
             if self.is_pressed(button) {
@@ -327,6 +334,7 @@ impl MouseState {
     ///     println!("A mouse button was released!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_one_released(&self) -> bool {
         for &button in ALL_MOUSE_BUTTONS {
             if self.is_released(button) {
@@ -347,6 +355,7 @@ impl MouseState {
     ///     println!("A mouse button was used!");
     /// }
     /// ```
+    #[must_use]
     pub fn is_one_used(&self) -> bool {
         for &button in ALL_MOUSE_BUTTONS {
             if self.is_down(button) || self.is_pressed(button) || self.is_released(button) {
@@ -365,6 +374,7 @@ impl MouseState {
     }
 
     /// Creates a new `MouseState` with all buttons initialized to not pressed.
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             current: [false; MOUSE_BUTTON_COUNT],
@@ -398,10 +408,7 @@ mod tests {
     #[test]
     fn all_tracked_mouse_buttons_round_trip_through_glfw() {
         for &button in ALL_MOUSE_BUTTONS {
-            assert_eq!(
-                MouseState::to_glfw(button).and_then(MouseState::from_glfw),
-                Some(button)
-            );
+            assert_eq!(MouseState::from_glfw(MouseState::to_glfw(button)), button);
         }
     }
 

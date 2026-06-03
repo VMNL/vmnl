@@ -91,7 +91,7 @@ impl EventQueue {
     ///
     /// # Arguments
     /// - `event`: The GLFW `WindowEvent` to translate.
-    fn translate_event(event: glfw::WindowEvent) -> Option<Event> {
+    fn translate_event(event: &glfw::WindowEvent) -> Option<Event> {
         use glfw::{Action, WindowEvent};
 
         match event {
@@ -99,35 +99,35 @@ impl EventQueue {
             WindowEvent::Focus(true) => Some(Event::FocusGained),
             WindowEvent::Focus(false) => Some(Event::FocusLost),
             WindowEvent::Size(w, h) => Some(Event::Resized {
-                width: w as u32,
-                height: h as u32,
+                width: u32::try_from(*w).ok()?,
+                height: u32::try_from(*h).ok()?,
             }),
             WindowEvent::FramebufferSize(w, h) => Some(Event::FramebufferResized {
-                width: w as u32,
-                height: h as u32,
+                width: u32::try_from(*w).ok()?,
+                height: u32::try_from(*h).ok()?,
             }),
             WindowEvent::Key(key, _scancode, Action::Press, _) => Some(Event::KeyPressed {
-                key: KeyboardState::from_glfw(key)?,
+                key: KeyboardState::from_glfw(*key)?,
                 repeat: false,
             }),
             WindowEvent::Key(key, _scancode, Action::Repeat, _) => Some(Event::KeyPressed {
-                key: KeyboardState::from_glfw(key)?,
+                key: KeyboardState::from_glfw(*key)?,
                 repeat: true,
             }),
             WindowEvent::Key(key, _scancode, Action::Release, _) => Some(Event::KeyReleased {
-                key: KeyboardState::from_glfw(key)?,
+                key: KeyboardState::from_glfw(*key)?,
             }),
-            WindowEvent::Char(c) => Some(Event::Text(c)),
-            WindowEvent::CursorPos(x, y) => Some(Event::MouseMoved { x, y }),
+            WindowEvent::Char(c) => Some(Event::Text(*c)),
+            WindowEvent::CursorPos(x, y) => Some(Event::MouseMoved { x: *x, y: *y }),
             WindowEvent::CursorEnter(true) => Some(Event::MouseEntered),
             WindowEvent::CursorEnter(false) => Some(Event::MouseLeft),
-            WindowEvent::Scroll(dx, dy) => Some(Event::MouseScrolled { dx, dy }),
+            WindowEvent::Scroll(dx, dy) => Some(Event::MouseScrolled { dx: *dx, dy: *dy }),
             WindowEvent::MouseButton(button, Action::Press, _) => Some(Event::MouseButtonPressed {
-                button: MouseState::from_glfw(button)?,
+                button: MouseState::from_glfw(*button),
             }),
             WindowEvent::MouseButton(button, Action::Release, _) => {
                 Some(Event::MouseButtonReleased {
-                    button: MouseState::from_glfw(button)?,
+                    button: MouseState::from_glfw(*button),
                 })
             }
             _ => None,
@@ -142,7 +142,7 @@ impl EventQueue {
         let mut polled_events = Vec::new();
 
         for (_, event) in glfw::flush_messages(&self.events) {
-            if let Some(event) = Self::translate_event(event) {
+            if let Some(event) = Self::translate_event(&event) {
                 polled_events.push(event);
             }
         }
@@ -166,26 +166,26 @@ mod tests {
     #[test]
     fn translate_window_lifecycle_and_resize_events() {
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::Close),
+            EventQueue::translate_event(&WindowEvent::Close),
             Some(Event::Closed)
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::Focus(true)),
+            EventQueue::translate_event(&WindowEvent::Focus(true)),
             Some(Event::FocusGained)
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::Focus(false)),
+            EventQueue::translate_event(&WindowEvent::Focus(false)),
             Some(Event::FocusLost)
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::Size(800, 600)),
+            EventQueue::translate_event(&WindowEvent::Size(800, 600)),
             Some(Event::Resized {
                 width: 800,
                 height: 600,
             })
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::FramebufferSize(1024, 768)),
+            EventQueue::translate_event(&WindowEvent::FramebufferSize(1024, 768)),
             Some(Event::FramebufferResized {
                 width: 1024,
                 height: 768,
@@ -196,7 +196,7 @@ mod tests {
     #[test]
     fn translate_keyboard_events_and_ignores_unknown_keys() {
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::Key(
+            EventQueue::translate_event(&WindowEvent::Key(
                 Key::A,
                 0,
                 Action::Press,
@@ -208,7 +208,7 @@ mod tests {
             })
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::Key(
+            EventQueue::translate_event(&WindowEvent::Key(
                 Key::A,
                 0,
                 Action::Repeat,
@@ -220,7 +220,7 @@ mod tests {
             })
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::Key(
+            EventQueue::translate_event(&WindowEvent::Key(
                 Key::A,
                 0,
                 Action::Release,
@@ -229,7 +229,7 @@ mod tests {
             Some(Event::KeyReleased { key: VMNLKey::A })
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::Key(
+            EventQueue::translate_event(&WindowEvent::Key(
                 Key::Unknown,
                 0,
                 Action::Press,
@@ -242,27 +242,27 @@ mod tests {
     #[test]
     fn translate_mouse_and_text_events() {
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::Char('x')),
+            EventQueue::translate_event(&WindowEvent::Char('x')),
             Some(Event::Text('x'))
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::CursorPos(12.5, 34.5)),
+            EventQueue::translate_event(&WindowEvent::CursorPos(12.5, 34.5)),
             Some(Event::MouseMoved { x: 12.5, y: 34.5 })
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::CursorEnter(true)),
+            EventQueue::translate_event(&WindowEvent::CursorEnter(true)),
             Some(Event::MouseEntered)
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::CursorEnter(false)),
+            EventQueue::translate_event(&WindowEvent::CursorEnter(false)),
             Some(Event::MouseLeft)
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::Scroll(1.0, -2.0)),
+            EventQueue::translate_event(&WindowEvent::Scroll(1.0, -2.0)),
             Some(Event::MouseScrolled { dx: 1.0, dy: -2.0 })
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::MouseButton(
+            EventQueue::translate_event(&WindowEvent::MouseButton(
                 MouseButton::Button1,
                 Action::Press,
                 Modifiers::empty()
@@ -272,7 +272,7 @@ mod tests {
             })
         );
         assert_eq!(
-            EventQueue::translate_event(WindowEvent::MouseButton(
+            EventQueue::translate_event(&WindowEvent::MouseButton(
                 MouseButton::Button1,
                 Action::Release,
                 Modifiers::empty()
@@ -285,6 +285,6 @@ mod tests {
 
     #[test]
     fn translate_unhandled_events_to_none() {
-        assert_eq!(EventQueue::translate_event(WindowEvent::Refresh), None);
+        assert_eq!(EventQueue::translate_event(&WindowEvent::Refresh), None);
     }
 }
