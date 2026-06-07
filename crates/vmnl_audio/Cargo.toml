@@ -1,0 +1,29 @@
+[package]
+name = "vmnl_audio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+thiserror = "1.0"
+
+hound = "3.5"
+lewton = "0.10"
+minimp3 = "0.5"
+claxon = "0.4"
+
+parking_lot = "0.12"
+crossbeam-queue = "0.3"
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true
