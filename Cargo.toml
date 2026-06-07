@@ -1,23 +1,6 @@
 [workspace]
-members = [
-    "crates/vmnl_graphics",
-    "crates/vmnl_macros",
-    "crates/vmnl",
-    "examples/d2/advanced_geometry",
-    "examples/d2/shapes",
-    "examples/raw/d2_composition",
-    "examples/raw/pipeline",
-    "examples/raw/triangle",
-    "examples/raw/uniform",
-    "examples/window/custom_shaders",
-    "examples/window/events_input",
-    "examples/window/wait_events",
-    "tests/api",
-    "tests/gpu",
-    "tests/platform",
-    "tests/smoke",
-]
-default-members = ["crates/vmnl_graphics", "crates/vmnl"]
+members = ["crates/vmnl_graphics", "crates/vmnl", "crates/vmnl_audio"]
+default-members = ["crates/vmnl_graphics", "crates/vmnl", "crates/vmnl_audio"]
 resolver = "2"
 
 [workspace.package]
