@@ -1,4 +1,8 @@
-use vmnl::{Context, Event, Key, MouseButton, Shape, VMNLRect, VMNLResult, VMNLVertex, Window};
+use vmnl::{Context, Event, Key, MouseButton, Rgba, Shape, VMNLResult, Vector2f, Vertex, Window};
+
+const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Rgba {
+    Rgba { r, g, b, a }
+}
 
 fn handle_event_test(event: &Event) {
     match event {
@@ -71,66 +75,48 @@ fn handle_mousebind_test(win: &mut Window) {
     }
 }
 
-fn create_quad_manual(ctx: &Context) -> VMNLResult<[Shape; 2]> {
-    let triangle: Shape = Shape::create_triangle(
-        ctx,
-        VMNLVertex {
-            position: [1020.0, 800.0],
-            color: [0.0, 255.0, 0.0],
+fn create_pentagon_indexed(ctx: &Context) -> VMNLResult<Shape> {
+    const VERTICES: [Vertex; 6] = [
+        // Center
+        Vertex {
+            position: Vector2f { x: 700.0, y: 600.0 },
+            color: rgba(255, 255, 255, 255),
         },
-        VMNLVertex {
-            position: [400.0, 800.0],
-            color: [255.0, 0.0, 0.0],
+        // Top
+        Vertex {
+            position: Vector2f { x: 700.0, y: 350.0 },
+            color: rgba(255, 0, 0, 255),
         },
-        VMNLVertex {
-            position: [1020.0, 400.0],
-            color: [0.0, 0.0, 255.0],
+        // Upper right
+        Vertex {
+            position: Vector2f { x: 938.0, y: 523.0 },
+            color: rgba(255, 255, 0, 255),
         },
-    )?;
-    let triangle2: Shape = Shape::create_triangle(
-        ctx,
-        VMNLVertex {
-            position: [400.0, 400.0],
-            color: [255.0, 255.0, 0.0],
+        // Lower right
+        Vertex {
+            position: Vector2f { x: 847.0, y: 802.0 },
+            color: rgba(0, 255, 0, 255),
         },
-        VMNLVertex {
-            position: [400.0, 800.0],
-            color: [255.0, 0.0, 0.0],
+        // Lower left
+        Vertex {
+            position: Vector2f { x: 553.0, y: 802.0 },
+            color: rgba(0, 255, 255, 255),
         },
-        VMNLVertex {
-            position: [1020.0, 400.0],
-            color: [0.0, 0.0, 255.0],
+        // Upper left
+        Vertex {
+            position: Vector2f { x: 462.0, y: 523.0 },
+            color: rgba(0, 0, 255, 255),
         },
-    )?;
-
-    Ok([triangle, triangle2])
-}
-
-fn create_quad_indexed(ctx: &Context) -> VMNLResult<Shape> {
-    const VERTICES: [VMNLVertex; 4] = [
-        VMNLVertex {
-            position: [400.0, 400.0],
-            color: [255.0, 255.0, 0.0],
-        }, // ! top-left
-        VMNLVertex {
-            position: [1020.0, 400.0],
-            color: [0.0, 255.0, 0.0],
-        }, // ! top-right
-        VMNLVertex {
-            position: [1020.0, 800.0],
-            color: [0.0, 0.0, 255.0],
-        }, // ! bottom-right
-        VMNLVertex {
-            position: [400.0, 800.0],
-            color: [255.0, 0.0, 0.0],
-        }, // ! bottom-left
     ];
-    const INDICES: [u32; 6] = [
-        0, 1, 2, // ! first triangle (top-left, top-right, bottom-right)
-        2, 3, 0, // ! second triangle (bottom-right, bottom-left, top-left)
+    const INDICES: [u32; 15] = [
+        0, 1, 2, // center -> top -> upper right
+        0, 2, 3, // center -> upper right -> lower right
+        0, 3, 4, // center -> lower right -> lower left
+        0, 4, 5, // center -> lower left -> upper left
+        0, 5, 1, // center -> upper left -> top
     ];
 
-    Shape::create_indexed_shape(ctx, VERTICES.as_slice(), INDICES.as_slice())
+    Shape::indexed(VERTICES.to_vec(), INDICES.to_vec()).build(ctx)
 }
 
 fn main() -> VMNLResult<()> {
@@ -138,30 +124,37 @@ fn main() -> VMNLResult<()> {
     let mut win: Window = Window::builder()
         .size(1920, 1080)
         .size_limit(Some(600), Some(600), Some(2000), Some(1500))?
-        .fs_from_string(
-            "
-            #version 460
-
-            layout(location = 0) in vec3 in_color;
-            layout(location = 0) out vec4 f_color;
-
-            void main() {
-                f_color = vec4(in_color, 1.0);
-            }
-        ",
-        )
-        .set_clear_color([0.0, 0.0, 0.0, 255.0])
+        .set_clear_color(rgba(0, 0, 0, 255))
         .build(&ctx)?;
-    let quad_manual: [Shape; 2] = create_quad_manual(&ctx)?;
-    let _quad_indexed: Shape = create_quad_indexed(&ctx)?;
-    let rectangle: Shape = Shape::create_rectangle(
-        &ctx,
-        VMNLRect {
-            position: [200.0, 200.0],
-            size: [620.0, 400.0],
+    let triangle: Shape = Shape::triangle([
+        Vertex {
+            position: Vector2f {
+                x: 1200.0,
+                y: 300.0,
+            },
+            color: rgba(255, 0, 0, 255),
         },
-        [255.0, 200.0, 0.0],
-    )?;
+        Vertex {
+            position: Vector2f {
+                x: 1600.0,
+                y: 300.0,
+            },
+            color: rgba(0, 255, 0, 255),
+        },
+        Vertex {
+            position: Vector2f {
+                x: 1200.0,
+                y: 500.0,
+            },
+            color: rgba(0, 0, 255, 255),
+        },
+    ])
+    .build(&ctx)?;
+    let pentagon_indexed: Shape = create_pentagon_indexed(&ctx)?;
+    let rectangle: Shape = Shape::rect(800.0, 100.0)
+        .position(100.0, 150.0)
+        .color(rgba(255, 0, 0, 255))
+        .build(&ctx)?;
 
     println!(
         "Monitors: {}",
@@ -178,7 +171,7 @@ fn main() -> VMNLResult<()> {
         }
         handle_keybind_test(&mut win);
         handle_mousebind_test(&mut win);
-        win.render([&rectangle, &quad_manual[0], &quad_manual[1]])
+        win.render([&rectangle, &triangle, &pentagon_indexed])
             .per_object()?;
     }
     Ok(())

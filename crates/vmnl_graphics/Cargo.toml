@@ -1,0 +1,25 @@
+[package]
+name = "vmnl-graphics"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = "https://docs.rs/vmnl-graphics"
+readme = "../../README.md"
+description = "VMNL graphics and windowing crate."
+keywords = ["vulkan", "graphics", "glfw", "rendering"]
+categories = ["graphics", "rendering", "game-development"]
+
+[lib]
+name = "vmnl_graphics"
+doctest = false
+
+[dependencies]
+vulkano         = "0.35.2"
+glfw            = { version = "0.62.0", default-features = false, features = ["prebuilt-libs", "raw-window-handle-v0-6", "vulkan", "wayland", "x11"] }
+bytemuck        = "1.25.0"
+log             = "0.4.30"
+shaderc         = "0.10.1"
+smallvec        = "1.15.1"

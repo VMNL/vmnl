@@ -1,12 +1,16 @@
 [workspace]
-members = ["crates/vmnl_native", "crates/vmnl", "examples/test"]
-default-members = ["crates/vmnl_native", "crates/vmnl"]
+members = ["crates/vmnl_graphics", "crates/vmnl", "examples/test"]
+default-members = ["crates/vmnl_graphics", "crates/vmnl"]
 resolver = "2"
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+rust-version = "1.87"
+repository = "https://github.com/VMNL/vmnl"
+homepage = "https://github.com/VMNL/vmnl"
+documentation = "https://docs.rs/vmnl"
 
 [profile.dev]
 opt-level = 3

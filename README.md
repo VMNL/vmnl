@@ -129,20 +129,32 @@ Constraint: **no hidden complexity, only structured complexity.**
 
 ## 📦 Build
 
+### Install
+
+```bash
+cargo add vmnl
+```
+
+### Minimal usage
+
+```rust
+use vmnl::*;
+```
+
+### From source
+
+```bash
+git clone https://github.com/VMNL/vmnl.git
+cd vmnl
+cargo build
+```
+
 ### Requirements
 
 - Rust (stable)
 - Cargo
 - Vulkan loader (`libvulkan.so`, `vulkan-1.dll`, etc.)
 - Vulkan-compatible GPU
-
-### Run
-
-```bash
-git clone git@github.com:VMNL/vmnl.git
-cd vmnl
-cargo run
-```
 
 ---
 
