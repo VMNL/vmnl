@@ -3,8 +3,6 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
-
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 
@@ -30,6 +28,7 @@ pub struct AudioBus {
 }
 
 impl AudioBus {
+    #[must_use]
     pub fn new(kind: BusKind) -> Self {
         Self {
             kind,
@@ -41,6 +40,7 @@ impl AudioBus {
         }
     }
 
+    #[must_use]
     pub fn kind(&self) -> BusKind {
         self.kind
     }
@@ -51,6 +51,7 @@ impl AudioBus {
             .store(volume.clamp(0.0, 1.0).to_bits(), Ordering::Relaxed);
     }
 
+    #[must_use]
     pub fn volume(&self) -> f32 {
         f32::from_bits(self.state.volume_bits.load(Ordering::Relaxed))
     }
@@ -63,6 +64,7 @@ impl AudioBus {
         self.state.muted.store(false, Ordering::Relaxed);
     }
 
+    #[must_use]
     pub fn is_muted(&self) -> bool {
         self.state.muted.load(Ordering::Relaxed)
     }
@@ -75,10 +77,12 @@ impl AudioBus {
         self.state.paused.store(false, Ordering::Relaxed);
     }
 
+    #[must_use]
     pub fn is_paused(&self) -> bool {
         self.state.paused.load(Ordering::Relaxed)
     }
 
+    #[must_use]
     pub fn gain(&self) -> f32 {
         if self.is_muted() || self.is_paused() {
             0.0

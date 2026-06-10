@@ -3,7 +3,6 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
 mod handle;
 mod voice;
 
@@ -53,10 +52,12 @@ impl Sound {
         Ok(SoundHandle::new(voice))
     }
 
+    #[must_use]
     pub fn path(&self) -> &Path {
         &self.path
     }
 
+    #[must_use]
     pub fn decoded_audio(&self) -> &DecodedAudio {
         self.decoded_audio.as_ref()
     }
