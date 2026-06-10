@@ -3,7 +3,6 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
 use crate::audio::bus::BusKind;
 use crate::audio::decoder::DecodedAudio;
 use crate::audio::PlaybackState;
@@ -26,6 +25,7 @@ pub struct MusicStream {
 }
 
 impl MusicStream {
+    #[must_use]
     pub fn new(id: u64, path: PathBuf, decoded_audio: Arc<DecodedAudio>, bus: BusKind) -> Self {
         Self {
             id,

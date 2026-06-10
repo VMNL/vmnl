@@ -3,7 +3,6 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
 use crate::audio::{PlaybackState, SoundVoice};
 
 use std::sync::Arc;
@@ -38,18 +37,22 @@ impl SoundHandle {
         self.voice.set_looping(looping);
     }
 
+    #[must_use]
     pub fn is_playing(&self) -> bool {
         self.voice.state() == PlaybackState::Playing
     }
 
+    #[must_use]
     pub fn is_paused(&self) -> bool {
         self.voice.state() == PlaybackState::Paused
     }
 
+    #[must_use]
     pub fn is_stopped(&self) -> bool {
         self.voice.state() == PlaybackState::Stopped
     }
 
+    #[must_use]
     pub fn cursor_frames(&self) -> usize {
         self.voice.cursor_frames()
     }
