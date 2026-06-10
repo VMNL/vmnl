@@ -3,7 +3,6 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
 use crate::audio::error::AudioError;
 
 use std::fs::File;
@@ -18,6 +17,7 @@ pub struct DecodedAudio {
 }
 
 impl DecodedAudio {
+    #[must_use]
     pub fn frame_count(&self) -> usize {
         if self.channels == 0 {
             0
@@ -26,6 +26,7 @@ impl DecodedAudio {
         }
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.samples.is_empty()
     }
@@ -58,7 +59,7 @@ impl AudioDecoder {
         let mut reader =
             hound::WavReader::open(path).map_err(|e| AudioError::DecoderFailed(e.to_string()))?;
         let spec = reader.spec();
-        let channels = spec.channels.max(1) as u32;
+        let channels = u32::from(spec.channels.max(1));
         let sample_rate = spec.sample_rate.max(1);
 
         let samples = match spec.sample_format {
@@ -71,13 +72,14 @@ impl AudioDecoder {
             }
             hound::SampleFormat::Int => {
                 let bits = spec.bits_per_sample.max(1);
-                let denom = (1i64 << (bits.saturating_sub(1) as u32)).max(1) as f32;
+                let denom = (1i64 << u32::from(bits.saturating_sub(1))).max(1) as f32;
                 let mut out = Vec::new();
                 if bits <= 16 {
                     for sample in reader.samples::<i16>() {
                         out.push(
-                            sample.map_err(|e| AudioError::DecoderFailed(e.to_string()))? as f32
-                                / denom,
+                            f32::from(
+                                sample.map_err(|e| AudioError::DecoderFailed(e.to_string()))?,
+                            ) / denom,
                         );
                     }
                 } else {
@@ -111,7 +113,12 @@ impl AudioDecoder {
                 Ok(frame) => {
                     channels = frame.channels.max(1) as u32;
                     sample_rate = frame.sample_rate.max(1) as u32;
-                    samples.extend(frame.data.into_iter().map(|s| s as f32 / i16::MAX as f32));
+                    samples.extend(
+                        frame
+                            .data
+                            .into_iter()
+                            .map(|s| f32::from(s) / f32::from(i16::MAX)),
+                    );
                 }
                 Err(minimp3::Error::Eof) => break,
                 Err(error) => return Err(AudioError::DecoderFailed(error.to_string())),
@@ -129,7 +136,7 @@ impl AudioDecoder {
         let file = File::open(path)?;
         let mut reader = lewton::inside_ogg::OggStreamReader::new(BufReader::new(file))
             .map_err(|e| AudioError::DecoderFailed(e.to_string()))?;
-        let channels = reader.ident_hdr.audio_channels.max(1) as u32;
+        let channels = u32::from(reader.ident_hdr.audio_channels.max(1));
         let sample_rate = reader.ident_hdr.audio_sample_rate.max(1);
         let mut samples = Vec::new();
 
@@ -137,7 +144,11 @@ impl AudioDecoder {
             .read_dec_packet_itl()
             .map_err(|e| AudioError::DecoderFailed(e.to_string()))?
         {
-            samples.extend(packet.into_iter().map(|s| s as f32 / i16::MAX as f32));
+            samples.extend(
+                packet
+                    .into_iter()
+                    .map(|s| f32::from(s) / f32::from(i16::MAX)),
+            );
         }
 
         Ok(DecodedAudio {

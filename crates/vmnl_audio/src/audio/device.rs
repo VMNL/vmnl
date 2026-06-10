@@ -3,7 +3,6 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
 use crate::audio::bus::AudioBus;
 use crate::audio::decoder::DecodedAudio;
 use crate::audio::error::AudioError;
@@ -61,14 +60,17 @@ impl AudioDevice {
         })
     }
 
+    #[must_use]
     pub fn runtime(&self) -> Arc<AudioRuntime> {
         self.runtime.clone()
     }
 
+    #[must_use]
     pub fn sample_rate(&self) -> u32 {
         self.sample_rate
     }
 
+    #[must_use]
     pub fn channels(&self) -> u32 {
         self.channels
     }
@@ -92,14 +94,17 @@ impl AudioDevice {
         self.update();
     }
 
+    #[must_use]
     pub fn master_volume(&self) -> f32 {
         self.runtime.master_bus.volume()
     }
 
+    #[must_use]
     pub fn music_bus(&self) -> AudioBus {
         self.runtime.music_bus.clone()
     }
 
+    #[must_use]
     pub fn sfx_bus(&self) -> AudioBus {
         self.runtime.sfx_bus.clone()
     }

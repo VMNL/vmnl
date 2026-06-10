@@ -3,7 +3,6 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
 mod handle;
 mod stream;
 
@@ -54,10 +53,12 @@ impl Music {
         Ok(MusicHandle::new(stream))
     }
 
+    #[must_use]
     pub fn path(&self) -> &Path {
         &self.path
     }
 
+    #[must_use]
     pub fn decoded_audio(&self) -> &DecodedAudio {
         self.decoded_audio.as_ref()
     }

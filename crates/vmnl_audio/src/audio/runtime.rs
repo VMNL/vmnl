@@ -1,11 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
+use crate::audio::decoder::{AudioDecoder, DecodedAudio};
 /// SPDX-FileCopyrightText: 2026 Nathan Flachat
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
 use crate::audio::{AudioBus, AudioError, AudioMixer, BusKind, MusicStream, SoundVoice};
-use crate::audio::decoder::{AudioDecoder, DecodedAudio};
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -38,6 +37,7 @@ pub struct AudioRuntime {
 }
 
 impl AudioRuntime {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             master_bus: AudioBus::new(BusKind::Master),
@@ -84,10 +84,10 @@ impl AudioRuntime {
             match command {
                 AudioCommand::SetMasterVolume(volume) => self.master_bus.set_volume(volume),
                 AudioCommand::SetBusVolume(BusKind::Master, volume) => {
-                    self.master_bus.set_volume(volume)
+                    self.master_bus.set_volume(volume);
                 }
                 AudioCommand::SetBusVolume(BusKind::Music, volume) => {
-                    self.music_bus.set_volume(volume)
+                    self.music_bus.set_volume(volume);
                 }
                 AudioCommand::SetBusVolume(BusKind::Sfx, volume) => self.sfx_bus.set_volume(volume),
                 AudioCommand::MuteBus(BusKind::Master) => self.master_bus.mute(),
@@ -223,14 +223,12 @@ impl AudioRuntime {
             .active_sound_voices
             .read()
             .ok()
-            .map(|v| v.iter().any(|x| x.is_playing()))
-            .unwrap_or(false);
+            .is_some_and(|v| v.iter().any(|x| x.is_playing()));
         let streams = self
             .active_music_streams
             .read()
             .ok()
-            .map(|s| s.iter().any(|x| x.is_playing()))
-            .unwrap_or(false);
+            .is_some_and(|s| s.iter().any(|x| x.is_playing()));
         voices || streams
     }
 
