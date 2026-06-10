@@ -3,7 +3,6 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
 use crate::audio::bus::BusKind;
 use crate::audio::decoder::DecodedAudio;
 
@@ -30,6 +29,7 @@ pub struct SoundVoice {
 }
 
 impl SoundVoice {
+    #[must_use]
     pub fn new(id: u64, decoded_audio: Arc<DecodedAudio>, bus: BusKind) -> Self {
         Self {
             id,

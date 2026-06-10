@@ -3,7 +3,6 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
 use crate::audio::{MusicStream, PlaybackState};
 
 use std::sync::Arc;
@@ -38,18 +37,22 @@ impl MusicHandle {
         self.stream.set_looping(looping);
     }
 
+    #[must_use]
     pub fn is_playing(&self) -> bool {
         self.stream.state() == PlaybackState::Playing
     }
 
+    #[must_use]
     pub fn is_paused(&self) -> bool {
         self.stream.state() == PlaybackState::Paused
     }
 
+    #[must_use]
     pub fn is_stopped(&self) -> bool {
         self.stream.state() == PlaybackState::Stopped
     }
 
+    #[must_use]
     pub fn cursor_frames(&self) -> usize {
         self.stream.cursor_frames()
     }
