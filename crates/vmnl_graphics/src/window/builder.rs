@@ -1,4 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
+use crate::common::Rgba;
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
@@ -6,7 +7,95 @@
 ////////////////////////////////////////////////////////////////////////////////
 use crate::window::shaders::{ShaderInput, WindowShaders};
 use crate::window::Window;
-use crate::{Context, Rgba, VMNLError, VMNLErrorKind, VMNLResult};
+use crate::{Context, VMNLError, VMNLErrorKind, VMNLResult};
+use vulkano::swapchain::PresentMode as VkPresentMode;
+
+/// Swapchain presentation mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub enum PresentMode {
+    /// Select the first supported low-latency mode using VMNL's priority order.
+    #[default]
+    Auto,
+    /// V-sync. Normally always supported.
+    Fifo,
+    /// Low latency. Can drop frames.
+    Mailbox,
+    /// No v-sync. Tearing is possible.
+    Immediate,
+    /// Relaxed v-sync variant.
+    FifoRelaxed,
+}
+
+impl PresentMode {
+    fn explicit_vk(self) -> Option<VkPresentMode> {
+        match self {
+            Self::Auto => None,
+            Self::Fifo => Some(VkPresentMode::Fifo),
+            Self::Mailbox => Some(VkPresentMode::Mailbox),
+            Self::Immediate => Some(VkPresentMode::Immediate),
+            Self::FifoRelaxed => Some(VkPresentMode::FifoRelaxed),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub(crate) enum PresentModeSelection {
+    #[default]
+    Auto,
+    Strict(PresentMode),
+    Preferred(PresentMode),
+}
+
+impl PresentModeSelection {
+    pub(crate) fn select_vk(self, supported: &[VkPresentMode]) -> VMNLResult<VkPresentMode> {
+        match self {
+            Self::Auto | Self::Strict(PresentMode::Auto) | Self::Preferred(PresentMode::Auto) => {
+                Self::auto_vk(supported)
+            }
+            Self::Strict(mode) => {
+                let mode: VkPresentMode = mode
+                    .explicit_vk()
+                    .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))?;
+                Self::explicit_vk(mode, supported)
+            }
+            Self::Preferred(mode) => {
+                let requested: VkPresentMode = mode
+                    .explicit_vk()
+                    .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))?;
+
+                if supported.contains(&requested) {
+                    return Ok(requested);
+                }
+
+                let fallback: VkPresentMode = Self::auto_vk(supported)?;
+                log::warn!(
+                    "requested present mode {requested:?} is unsupported, falling back to {fallback:?}"
+                );
+                Ok(fallback)
+            }
+        }
+    }
+
+    fn auto_vk(supported: &[VkPresentMode]) -> VMNLResult<VkPresentMode> {
+        [
+            VkPresentMode::Mailbox,
+            VkPresentMode::Immediate,
+            VkPresentMode::FifoRelaxed,
+            VkPresentMode::Fifo,
+        ]
+        .into_iter()
+        .find(|mode| supported.contains(mode))
+        .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))
+    }
+
+    fn explicit_vk(mode: VkPresentMode, supported: &[VkPresentMode]) -> VMNLResult<VkPresentMode> {
+        if supported.contains(&mode) {
+            Ok(mode)
+        } else {
+            Err(VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))
+        }
+    }
+}
 
 /// Builder pattern for constructing a `Window` instance with customizable options.
 pub struct WindowBuilder {
@@ -37,6 +126,8 @@ pub(crate) struct WindowOptions {
     pub(crate) shaders: WindowShaders,
     /// The clear color used for rendering, represented as RGBA (red, green, blue, alpha) values.
     pub(crate) clear_color: [f32; 4],
+    /// Swapchain presentation mode.
+    pub(crate) present_mode: PresentModeSelection,
 }
 
 impl Default for WindowOptions {
@@ -56,6 +147,7 @@ impl Default for WindowOptions {
                 fragment: None,
             },
             clear_color: [0.0, 0.0, 0.0, 1.0],
+            present_mode: PresentModeSelection::default(),
         }
     }
 }
@@ -162,6 +254,27 @@ impl WindowBuilder {
         self
     }
 
+    /// Sets the swapchain presentation mode.
+    #[must_use]
+    pub const fn present_mode(mut self, present_mode: PresentMode) -> Self {
+        self.options.present_mode = match present_mode {
+            PresentMode::Auto => PresentModeSelection::Auto,
+            present_mode => PresentModeSelection::Strict(present_mode),
+        };
+        self
+    }
+
+    /// Sets the preferred swapchain presentation mode, falling back to VMNL's auto priority order
+    /// when the requested mode is unsupported.
+    #[must_use]
+    pub const fn preferred_present_mode(mut self, present_mode: PresentMode) -> Self {
+        self.options.present_mode = match present_mode {
+            PresentMode::Auto => PresentModeSelection::Auto,
+            present_mode => PresentModeSelection::Preferred(present_mode),
+        };
+        self
+    }
+
     /// Builds the `Window` instance using the specified options and the provided `Context`.
     ///
     /// # Errors
@@ -187,6 +300,70 @@ mod tests {
             result,
             Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidWindowSize)
         ));
+    }
+
+    #[test]
+    fn present_mode_auto_selects_first_supported_low_latency_mode() {
+        // SAFETY: relies on the internal priority order of `PresentModeSelection::auto_vk`, which is tested separately.
+        unsafe {
+            assert_eq!(
+                PresentModeSelection::Auto
+                    .select_vk(&[VkPresentMode::Fifo, VkPresentMode::Mailbox])
+                    .unwrap_unchecked(),
+                VkPresentMode::Mailbox
+            );
+        }
+        // SAFETY: relies on the internal priority order of `PresentModeSelection::auto_vk`, which is tested separately.
+        unsafe {
+            assert_eq!(
+                PresentModeSelection::Auto
+                    .select_vk(&[VkPresentMode::Fifo, VkPresentMode::Immediate])
+                    .unwrap_unchecked(),
+                VkPresentMode::Immediate
+            );
+        }
+        // SAFETY: relies on the internal priority order of `PresentModeSelection::auto_vk`, which is tested separately.
+        unsafe {
+            assert_eq!(
+                PresentModeSelection::Auto
+                    .select_vk(&[VkPresentMode::FifoRelaxed, VkPresentMode::Fifo])
+                    .unwrap_unchecked(),
+                VkPresentMode::FifoRelaxed
+            );
+        }
+        // SAFETY: relies on the internal priority order of `PresentModeSelection::auto_vk`, which is tested separately.
+        unsafe {
+            assert_eq!(
+                PresentModeSelection::Auto
+                    .select_vk(&[VkPresentMode::Fifo])
+                    .unwrap_unchecked(),
+                VkPresentMode::Fifo
+            );
+        }
+    }
+
+    #[test]
+    fn present_mode_explicit_rejects_unsupported_mode() {
+        let result: VMNLResult<VkPresentMode> =
+            PresentModeSelection::Strict(PresentMode::Mailbox).select_vk(&[VkPresentMode::Fifo]);
+
+        assert!(matches!(
+            result,
+            Err(err) if matches!(err.kind(), VMNLErrorKind::VulkanUnsupportedFeature)
+        ));
+    }
+
+    #[test]
+    fn preferred_present_mode_falls_back_when_unsupported() {
+        // SAFETY: relies on the internal priority order of `PresentModeSelection::preferred_vk`, which is tested separately.
+        unsafe {
+            assert_eq!(
+                PresentModeSelection::Preferred(PresentMode::Mailbox)
+                    .select_vk(&[VkPresentMode::Immediate, VkPresentMode::Fifo])
+                    .unwrap_unchecked(),
+                VkPresentMode::Immediate
+            );
+        }
     }
 
     #[test]
@@ -217,6 +394,7 @@ mod tests {
         assert_eq!(options.shaders.vertex, None);
         assert_eq!(options.shaders.fragment, None);
         assert_color_eq(options.clear_color, [0.0, 0.0, 0.0, 1.0]);
+        assert_eq!(options.present_mode, PresentModeSelection::Auto);
     }
 
     #[test]
@@ -232,7 +410,8 @@ mod tests {
             let builder = builder
                 .vs_from_file("shader.vert")
                 .fs_from_string("fragment")
-                .set_clear_color(Rgba::new(255, 128, 0, 64));
+                .set_clear_color(Rgba::new(255, 128, 0, 64))
+                .present_mode(PresentMode::Mailbox);
             assert_eq!(builder.options.title, "Custom");
             assert_eq!(builder.options.width, 1024);
             assert_eq!(builder.options.height, 768);
@@ -253,7 +432,21 @@ mod tests {
                 builder.options.clear_color,
                 [1.0, 128.0 / 255.0, 0.0, 64.0 / 255.0],
             );
+            assert_eq!(
+                builder.options.present_mode,
+                PresentModeSelection::Strict(PresentMode::Mailbox)
+            );
         }
+    }
+
+    #[test]
+    fn preferred_present_mode_updates_options_without_building_window() {
+        let builder: WindowBuilder = Window::builder().preferred_present_mode(PresentMode::Mailbox);
+
+        assert_eq!(
+            builder.options.present_mode,
+            PresentModeSelection::Preferred(PresentMode::Mailbox)
+        );
     }
 
     #[test]

@@ -1,4 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
+use crate::common::Rgba;
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
@@ -6,7 +7,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use crate::window::monitors::Monitors;
 use crate::window::Window;
-use crate::{Rgba, VMNLResult};
+use crate::VMNLResult;
 
 impl Window {
     /// Returns the current window title as a string slice.

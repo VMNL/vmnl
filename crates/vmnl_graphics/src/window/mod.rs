@@ -10,9 +10,9 @@ mod runtime;
 mod shaders;
 use crate::window::inner::VMNLWindow;
 use crate::{Context, VMNLResult};
-pub use api::RenderCall;
-pub use builder::WindowBuilder;
-pub(crate) use builder::{validate_size_limits, WindowOptions};
+pub use api::{FrameRenderer, RenderMode};
+pub(crate) use builder::{validate_size_limits, PresentModeSelection, WindowOptions};
+pub use builder::{PresentMode, WindowBuilder};
 pub use event::Event;
 pub use input::{Input, Key, KeyboardState, MouseButton, MouseState};
 pub use monitors::{MonitorInfo, Monitors, VideoMode};
@@ -61,7 +61,7 @@ impl Window {
             options.max_width,
             options.max_height,
         )?;
-        let mut inner_window = VMNLWindow::create(context, options)?;
+        let mut inner_window: VMNLWindow = VMNLWindow::create(context, options)?;
 
         if options.configure_window_polling {
             inner_window.configure_window_polling();

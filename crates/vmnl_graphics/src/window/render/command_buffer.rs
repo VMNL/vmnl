@@ -7,9 +7,10 @@
 /// This module builds primary command buffers for rendering VMNL graphics objects
 /// into the current swapchain framebuffer.
 ////////////////////////////////////////////////////////////////////////////////
-use crate::graphics::{Drawable, MaterialKey, PipelineKey};
+use crate::common::{MaterialKey, PipelineKey};
+use crate::d2::RenderItem2D;
 use crate::window::PushConstants;
-use crate::{window::inner::VMNLWindow, Shape, VMNLError, VMNLErrorKind, VMNLResult};
+use crate::{window::inner::VMNLWindow, VMNLError, VMNLErrorKind, VMNLResult};
 use smallvec::smallvec;
 use std::sync::Arc;
 use vulkano::command_buffer::allocator::StandardCommandBufferAllocator;
@@ -34,17 +35,17 @@ impl VMNLWindow {
     ///
     /// # Arguments
     /// - `image_index`: Index of the swapchain image to render to.
-    /// - `graphics_list`: Slice of references to `Shape` objects to render.
+    /// - `render_items`: Slice of 2D render items to render.
     ///
     /// # Returns
     /// An `Arc<PrimaryAutoCommandBuffer>` containing the built command buffer ready for execution.
-    pub(super) fn build_command_buffer<const N: usize>(
+    pub(super) fn build_command_buffer(
         &self,
         image_index: u32,
-        graphics_list: &[&Shape; N],
+        render_items: &[RenderItem2D],
     ) -> VMNLResult<Arc<PrimaryAutoCommandBuffer>> {
         let swapchain: &Arc<Swapchain> = &self.handle.swapchain;
-        let pipeline: &Arc<GraphicsPipeline> = &self.handle.graphics_pipeline;
+        let pipeline: &Arc<GraphicsPipeline> = &self.handle.pipeline_2d;
         let allocator: Arc<StandardCommandBufferAllocator> =
             self.handle.vmnl_instance.command_buffer_allocator.clone();
         let queue_family: u32 = self
@@ -97,8 +98,7 @@ impl VMNLWindow {
                     }],
                 )
                 .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
-            for graphics in graphics_list {
-                let render_item = graphics.render_item();
+            for render_item in render_items {
                 debug_assert_eq!(render_item.pipeline_key, PipelineKey::Color2D);
                 debug_assert_eq!(render_item.material_key, MaterialKey::VertexColor);
                 let push_constants: PushConstants = PushConstants {
@@ -109,7 +109,7 @@ impl VMNLWindow {
                     .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?
                     .bind_vertex_buffers(0, render_item.vertex_buffer.as_subbuffer())
                     .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanVertexBufferCreationFailed))?;
-                if let Some(index_buffer) = render_item.index_buffer {
+                if let Some(index_buffer) = &render_item.index_buffer {
                     builder
                         .bind_index_buffer(index_buffer.as_subbuffer())
                         .map_err(|_| {

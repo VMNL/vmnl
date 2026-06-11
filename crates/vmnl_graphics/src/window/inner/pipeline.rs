@@ -5,7 +5,7 @@
 /// Vulkan graphics pipeline and shader module creation helpers.
 ////////////////////////////////////////////////////////////////////////////////
 use super::VMNLWindow;
-use crate::graphics::GpuVertex;
+use crate::d2::GpuVertex2D;
 use crate::window::shaders::{
     ShaderInput, WindowShaders, DEFAULT_FRAGMENT_SHADER, DEFAULT_VERTEX_SHADER,
 };
@@ -170,7 +170,7 @@ impl VMNLWindow {
         .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanPipelineLayoutCreationFailed))?;
         let subpass: Subpass = Subpass::from(render_pass.clone(), 0)
             .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanRenderPassCreationFailed))?;
-        let vertex_input_state: VertexInputState = GpuVertex::per_vertex()
+        let vertex_input_state: VertexInputState = GpuVertex2D::per_vertex()
             .definition(&vs)
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
 

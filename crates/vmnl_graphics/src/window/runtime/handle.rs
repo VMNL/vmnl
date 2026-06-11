@@ -31,8 +31,8 @@ pub(crate) struct WindowHandle {
     pub(crate) vmnl_instance: Rc<VMNLInstance>,
     /// List of framebuffers associated with the swapchain images.
     pub(crate) framebuffers: Vec<Arc<Framebuffer>>,
-    /// Preconfigured Vulkan graphics pipeline used to render into the framebuffer.
-    pub(crate) graphics_pipeline: Arc<GraphicsPipeline>,
+    /// Preconfigured 2D Vulkan graphics pipeline used to render into the framebuffer.
+    pub(crate) pipeline_2d: Arc<GraphicsPipeline>,
     /// Synchronization primitive representing the completion of the previous frame.
     pub(crate) previous_frame_end: Option<Box<dyn GpuFuture>>,
     /// Vulkan surface representing the OS window for presentation.

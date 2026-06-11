@@ -34,7 +34,9 @@ impl Context {
     ///
     /// # Example
     /// ```rust,no_run
-    /// use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex, Window};
+    /// use vmnl_graphics::{Context, RenderMode, Window};
+    /// use vmnl_graphics::common::Rgba;
+    /// use vmnl_graphics::d2::{Shape, Vector2f};
     ///
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// let context = Context::new()?;
@@ -43,18 +45,26 @@ impl Context {
     ///     .size(800, 600)
     ///     .build(&context)?;
     ///
-    /// let triangle = Shape::triangle([
-    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: Rgba::new(255, 0, 0, 255) },
-    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: Rgba::new(0, 255, 0, 255) },
-    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: Rgba::new(0, 0, 255, 255) },
-    /// ])
+    /// let triangle = Shape::triangle(
+    ///     Vector2f { x: 100.0, y: 100.0 },
+    ///     Vector2f { x: 300.0, y: 100.0 },
+    ///     Vector2f { x: 200.0, y: 300.0 },
+    /// )
+    /// .vertex_colors(
+    ///     Rgba::new(255, 0, 0, 255),
+    ///     Rgba::new(0, 255, 0, 255),
+    ///     Rgba::new(0, 0, 255, 255),
+    /// )
     /// .build(&context)?;
     ///
     /// while window.is_open() {
     ///     for event in window.poll_events() {
     ///         println!("{event:?}");
     ///     }
-    ///     window.render([&triangle]).per_object()?;
+    ///     window.render()
+    ///         .mode(RenderMode::PerObject)
+    ///         .draw2d([&triangle])
+    ///         .submit()?;
     /// }
     /// # Ok(())
     /// # }

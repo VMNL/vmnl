@@ -10,4 +10,4 @@ mod lifecycle;
 mod polling;
 mod render;
 
-pub use render::RenderCall;
+pub use render::{FrameRenderer, RenderMode};

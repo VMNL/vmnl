@@ -2,18 +2,18 @@
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// Root graphics module shared by renderable resource families such as shapes,
-/// textures, and text.
+/// 2D graphics resources and public types.
 ////////////////////////////////////////////////////////////////////////////////
-pub(crate) mod buffer;
 mod render_item;
 mod shape;
-mod types;
+mod vector;
+mod vertex;
 
+pub use render_item::{Drawable2D, RenderItem2D};
 pub use shape::{
     Anchor, IndexedShapeBuilder, LineBuilder, LineCap, RectBuilder, Shape, TriangleBuilder,
 };
-pub use types::{Rgba, Vector2f, Vertex};
+pub use vector::Vector2f;
+pub use vertex::Vertex2D;
 
-pub(crate) use buffer::{GpuVertex, GraphicsResourceFactory, VMNLIndexBuffer, VertexBuffer};
-pub(crate) use render_item::{Drawable, MaterialKey, PipelineKey, RenderItem};
+pub(crate) use vertex::GpuVertex2D;

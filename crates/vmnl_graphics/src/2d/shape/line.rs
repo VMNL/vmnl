@@ -6,7 +6,11 @@
 /// providing functions to create lines defined by start and end points, width, cap style, and color.
 ////////////////////////////////////////////////////////////////////////////////
 use super::{Shape, Vector2f};
-use crate::{Context, IndexedShapeBuilder, Rgba, VMNLError, VMNLErrorKind, VMNLResult, Vertex};
+use crate::{
+    common::{BufferMemoryPreference, Rgba},
+    d2::{IndexedShapeBuilder, Vertex2D},
+    Context, VMNLError, VMNLErrorKind, VMNLResult,
+};
 
 const ROUND_CAP_SEGMENTS: u16 = 12;
 
@@ -35,6 +39,8 @@ struct LineOptions {
     cap: LineCap,
     /// RGBA color of the line as an array of four `f32` values in the range `[0, 255]`, representing red, green, blue, and alpha components respectively.
     color: Rgba,
+    /// Preferred memory placement for the created vertex and index buffers.
+    buffer_memory_preference: BufferMemoryPreference,
 }
 
 /// Builder for creating line shapes with configurable properties such as endpoints, width, cap style, and color.
@@ -57,6 +63,7 @@ impl Default for LineOptions {
                 b: 255,
                 a: 255,
             },
+            buffer_memory_preference: BufferMemoryPreference::default(),
         }
     }
 }
@@ -138,6 +145,15 @@ impl LineBuilder {
         self
     }
 
+    /// Set the preferred memory placement for the created vertex and index buffers.
+    ///
+    /// This is a preference, not a guarantee. Defaults to `BufferMemoryPreference::Device`.
+    #[must_use]
+    pub fn buffer_memory_preference(mut self, preference: BufferMemoryPreference) -> Self {
+        self.options.buffer_memory_preference = preference;
+        self
+    }
+
     /// Create a `Shape` instance by transforming the input line parameters into a vertex buffer.
     ///
     /// # Arguments
@@ -175,6 +191,7 @@ impl LineBuilder {
             self.options.width,
             self.options.cap,
             self.options.color,
+            self.options.buffer_memory_preference,
         )
     }
 
@@ -219,7 +236,7 @@ impl LineBuilder {
         width: f32,
         cap: LineCap,
         color: Rgba,
-    ) -> [Vertex; 4] {
+    ) -> [Vertex2D; 4] {
         let cap_extension: f32 = match cap {
             LineCap::Butt | LineCap::Round => 0.0,
             LineCap::Square => width / 2.0,
@@ -241,28 +258,28 @@ impl LineBuilder {
         };
 
         [
-            Vertex {
+            Vertex2D {
                 position: Vector2f {
                     x: from.x + normal.x,
                     y: from.y + normal.y,
                 },
                 color,
             },
-            Vertex {
+            Vertex2D {
                 position: Vector2f {
                     x: to.x + normal.x,
                     y: to.y + normal.y,
                 },
                 color,
             },
-            Vertex {
+            Vertex2D {
                 position: Vector2f {
                     x: to.x - normal.x,
                     y: to.y - normal.y,
                 },
                 color,
             },
-            Vertex {
+            Vertex2D {
                 position: Vector2f {
                     x: from.x - normal.x,
                     y: from.y - normal.y,
@@ -273,7 +290,7 @@ impl LineBuilder {
     }
 
     fn push_round_cap(
-        vertices: &mut Vec<Vertex>,
+        vertices: &mut Vec<Vertex2D>,
         indices: &mut Vec<u32>,
         center: Vector2f,
         axis: Vector2f,
@@ -286,7 +303,7 @@ impl LineBuilder {
                 "line vertex count out of bounds".to_string(),
             ))
         })?;
-        vertices.push(Vertex {
+        vertices.push(Vertex2D {
             position: center,
             color,
         });
@@ -302,7 +319,7 @@ impl LineBuilder {
             let axis_scale: f32 = angle.cos() * radius;
             let normal_scale: f32 = angle.sin() * radius;
 
-            vertices.push(Vertex {
+            vertices.push(Vertex2D {
                 position: Vector2f {
                     x: center.x + axis.x * axis_scale + normal.x * normal_scale,
                     y: center.y + axis.y * axis_scale + normal.y * normal_scale,
@@ -326,12 +343,12 @@ impl LineBuilder {
         width: f32,
         cap: LineCap,
         color: Rgba,
-    ) -> VMNLResult<(Vec<Vertex>, Vec<u32>)> {
+    ) -> VMNLResult<(Vec<Vertex2D>, Vec<u32>)> {
         let body_cap: LineCap = match cap {
             LineCap::Butt | LineCap::Round => LineCap::Butt,
             LineCap::Square => LineCap::Square,
         };
-        let mut vertices: Vec<Vertex> =
+        let mut vertices: Vec<Vertex2D> =
             Self::flat_line_vertices(from, to, width, body_cap, color).to_vec();
         let mut indices: Vec<u32> = vec![0, 1, 2, 2, 3, 0];
 
@@ -378,11 +395,12 @@ impl LineBuilder {
         width: f32,
         cap: LineCap,
         color: Rgba,
+        buffer_memory_preference: BufferMemoryPreference,
     ) -> VMNLResult<Shape> {
         Self::validate_geometry(from, to, width)?;
-        let (vertices, indices): (Vec<Vertex>, Vec<u32>) =
+        let (vertices, indices): (Vec<Vertex2D>, Vec<u32>) =
             Self::geometry(from, to, width, cap, color)?;
-        IndexedShapeBuilder::indexed_shape(context, &vertices, &indices)
+        IndexedShapeBuilder::indexed_shape(context, &vertices, &indices, buffer_memory_preference)
     }
 }
 
@@ -400,6 +418,29 @@ mod tests {
             result,
             Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == expected)
         ));
+    }
+
+    #[test]
+    fn buffer_memory_preference_defaults_to_device() {
+        let builder: LineBuilder =
+            LineBuilder::new(Vector2f { x: 0.0, y: 0.0 }, Vector2f { x: 1.0, y: 1.0 });
+
+        assert_eq!(
+            builder.options.buffer_memory_preference,
+            BufferMemoryPreference::Device
+        );
+    }
+
+    #[test]
+    fn buffer_memory_preference_can_be_overridden() {
+        let builder: LineBuilder =
+            LineBuilder::new(Vector2f { x: 0.0, y: 0.0 }, Vector2f { x: 1.0, y: 1.0 })
+                .buffer_memory_preference(BufferMemoryPreference::Host);
+
+        assert_eq!(
+            builder.options.buffer_memory_preference,
+            BufferMemoryPreference::Host
+        );
     }
 
     #[test]
@@ -522,7 +563,7 @@ mod tests {
 
     #[test]
     fn flat_line_vertices_returns_butt_line_vertices_around_line_axis() {
-        let vertices: [Vertex; 4] = LineBuilder::flat_line_vertices(
+        let vertices: [Vertex2D; 4] = LineBuilder::flat_line_vertices(
             Vector2f { x: 0.0, y: 0.0 },
             Vector2f { x: 4.0, y: 0.0 },
             2.0,
@@ -538,7 +579,7 @@ mod tests {
 
     #[test]
     fn flat_line_vertices_extends_square_cap_by_half_width() {
-        let vertices: [Vertex; 4] = LineBuilder::flat_line_vertices(
+        let vertices: [Vertex2D; 4] = LineBuilder::flat_line_vertices(
             Vector2f { x: 0.0, y: 0.0 },
             Vector2f { x: 4.0, y: 0.0 },
             2.0,
@@ -554,7 +595,7 @@ mod tests {
 
     #[test]
     fn flat_line_vertices_uses_perpendicular_normal_for_diagonal_line() {
-        let vertices: [Vertex; 4] = LineBuilder::flat_line_vertices(
+        let vertices: [Vertex2D; 4] = LineBuilder::flat_line_vertices(
             Vector2f { x: 0.0, y: 0.0 },
             Vector2f { x: 3.0, y: 4.0 },
             10.0,
@@ -570,7 +611,7 @@ mod tests {
 
     #[test]
     fn geometry_adds_round_cap_triangles() -> VMNLResult<()> {
-        let (vertices, indices): (Vec<Vertex>, Vec<u32>) = LineBuilder::geometry(
+        let (vertices, indices): (Vec<Vertex2D>, Vec<u32>) = LineBuilder::geometry(
             Vector2f { x: 0.0, y: 0.0 },
             Vector2f { x: 4.0, y: 0.0 },
             2.0,

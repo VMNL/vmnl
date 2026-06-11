@@ -4,99 +4,113 @@
 ///
 /// Public rendering entry points for `Window`.
 ////////////////////////////////////////////////////////////////////////////////
+use crate::d2::{Drawable2D, RenderItem2D};
+use crate::d3::{Camera, Drawable3D, RenderItem3D};
 use crate::window::Window;
-use crate::{Shape, VMNLResult};
+use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 
-/// Pending render operation for a fixed list of shapes.
-pub struct RenderCall<'w, 'g, const N: usize> {
-    window: &'w mut Window,
-    graphics: [&'g Shape; N],
+/// Draw submission strategy for objects inside a render pass.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+pub enum RenderMode {
+    /// One object emits one draw call.
+    #[default]
+    PerObject,
+    /// Batch compatible objects when implemented.
+    Batched,
 }
 
-impl<const N: usize> RenderCall<'_, '_, N> {
-    /// Executes the draw call for the provided graphics objects by preparing the command buffer and synchronizing frame presentation.
-    /// This method performs per-object rendering,
-    /// where each graphics object is rendered with its own draw call.
-    /// This can be less efficient than batched rendering,
-    /// but allows for more flexibility in rendering individual objects.
-    ///
-    /// # Example
-    /// ```rust,ignore
-    /// let background = Shape::rect(200.0, 100.0)
-    ///     .position(100.0, 150.0)
-    ///     .color(Rgba::new(255, 0, 0, 255))
-    ///     .build(&context)?;
-    ///
-    /// while window.is_open() {
-    ///     for event in window.poll_events() {
-    ///         println!("{event:?}");
-    ///     }
-    ///     window.render([&background]).per_object()?;
-    /// }
-    /// ```
-    ///
-    /// # Errors
-    /// Returns an error if frame acquisition, command recording, submission, or presentation fails.
-    #[inline]
-    pub fn per_object(self) -> VMNLResult<()> {
-        self.window.inner.render_per_object(&self.graphics)
+enum FramePass<'g> {
+    D2 {
+        items: Vec<RenderItem2D>,
+    },
+    D3 {
+        camera: &'g Camera,
+        items: Vec<RenderItem3D>,
+    },
+}
+
+/// Pending frame render operation.
+pub struct FrameRenderer<'w, 'g> {
+    window: &'w mut Window,
+    mode: RenderMode,
+    passes: Vec<FramePass<'g>>,
+}
+
+impl<'w, 'g> FrameRenderer<'w, 'g> {
+    pub(crate) fn new(window: &'w mut Window) -> Self {
+        Self {
+            window,
+            mode: RenderMode::default(),
+            passes: Vec::new(),
+        }
     }
 
-    /// Executes the draw call for the provided graphics objects by preparing the command buffer and synchronizing frame presentation.
-    /// This method performs batched rendering, where multiple graphics objects are rendered together in a single draw call.
-    /// Batched rendering can be more efficient than per-object rendering, especially when rendering a large number of objects,
-    /// but may require additional setup to group objects together and manage state changes.
-    ///
-    /// # Example
-    /// ```rust,ignore
-    /// let background = Shape::rect(200.0, 100.0)
-    ///     .position(100.0, 150.0)
-    ///     .color(Rgba::new(255, 0, 0, 255))
-    ///     .build(&context)?;
-    ///
-    /// while window.is_open() {
-    ///     for event in window.poll_events() {
-    ///         println!("{event:?}");
-    ///     }
-    ///     window.render([&background]).batched()?;
-    /// }
-    /// ```
+    /// Set the draw submission strategy for this frame.
+    #[must_use]
+    pub fn mode(mut self, mode: RenderMode) -> Self {
+        self.mode = mode;
+        self
+    }
+
+    /// Add a 2D render pass. Pass order is preserved exactly at submit time.
+    #[must_use]
+    pub fn draw2d<D, const N: usize>(mut self, drawables: [&'g D; N]) -> Self
+    where
+        D: Drawable2D + ?Sized,
+    {
+        self.passes.push(FramePass::D2 {
+            items: drawables
+                .into_iter()
+                .map(Drawable2D::render_item_2d)
+                .collect(),
+        });
+        self
+    }
+
+    /// Add a 3D render pass. Pass order is preserved exactly at submit time.
+    #[must_use]
+    pub fn draw3d<D, const N: usize>(mut self, camera: &'g Camera, drawables: [&'g D; N]) -> Self
+    where
+        D: Drawable3D + ?Sized,
+    {
+        self.passes.push(FramePass::D3 {
+            camera,
+            items: drawables
+                .into_iter()
+                .map(Drawable3D::render_item_3d)
+                .collect(),
+        });
+        self
+    }
+
+    /// Submit the frame to the GPU.
     ///
     /// # Errors
     /// Returns an error if frame acquisition, command recording, submission, or presentation fails.
-    #[inline]
-    pub fn batched(self) -> VMNLResult<()> {
-        self.window.inner.render_batched(&self.graphics)
+    pub fn submit(self) -> VMNLResult<()> {
+        let mut items_2d: Vec<RenderItem2D> = Vec::new();
+
+        for pass in self.passes {
+            match pass {
+                FramePass::D2 { items } => items_2d.extend(items),
+                FramePass::D3 { camera, items } => {
+                    let _ = (camera, items.len());
+                    return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                        "3D rendering is not implemented yet".to_string(),
+                    )));
+                }
+            }
+        }
+
+        self.window.inner.render_2d(self.mode, &items_2d)
     }
 }
 
 impl Window {
-    /// Executes the draw call for the provided graphics objects by preparing the command buffer and synchronizing frame presentation.
-    ///
-    /// # Arguments
-    /// - `graphics`: Slice of graphics objects to render.
-    ///
-    /// # Example
-    /// ```rust,ignore
-    /// let background = Shape::rect(200.0, 100.0)
-    ///     .position(100.0, 150.0)
-    ///     .color(Rgba::new(255, 0, 0, 255))
-    ///     .build(&context)?;
-    ///
-    /// while window.is_open() {
-    ///     window.poll_events();
-    ///     window.render([&background]).per_object()?;
-    /// }
-    /// ```
+    /// Begin a frame render operation.
     #[inline]
     #[must_use]
-    pub const fn render<'w, 'g, const N: usize>(
-        &'w mut self,
-        graphics: [&'g Shape; N],
-    ) -> RenderCall<'w, 'g, N> {
-        RenderCall {
-            window: self,
-            graphics,
-        }
+    pub fn render(&mut self) -> FrameRenderer<'_, '_> {
+        FrameRenderer::new(self)
     }
 }
