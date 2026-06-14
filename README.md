@@ -201,12 +201,12 @@ cargo build
 
 | Name | Role |
 | ---- | ---- |
-| [Hugo Duda](https://github.com/HugoDuda) | Lead tech - Vulkan / GLFW, low-level & high-level referent / developer |
-| [Maxence Pierre](https://github.com/Anexoms) | Product owner & low-level developer |
-| [Nathan Flachat](https://github.com/NathanFlachat) | Low-level / high-level developer |
+| [Hugo Duda](https://github.com/HugoDuda) | Product Owner · Tech Lead - graphics (low-level & high-level) |
+| [Maxence Pierre](https://github.com/Anexoms) | Low-level developer |
+| [Nathan Flachat](https://github.com/NathanFlachat) | Low-level & high-level developer |
 | [Naouel Bouhali](https://github.com/BouhaliNaouel) | High-level developer |
-| [Julien Michel](https://github.com/JulienMICHELgithub) | Web referent / developer |
-| [Laszlo Serdet](https://github.com/lszsrd) | Networking referent / developer |
+| [Julien Michel](https://github.com/JulienMICHELgithub) | Web Lead |
+| [Laszlo Serdet](https://github.com/lszsrd) | Networking Lead |
 
 ---
 
