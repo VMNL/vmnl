@@ -84,6 +84,15 @@ impl Input {
     }
 
     /// Creates a new `Input` with fresh keyboard and mouse states.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::Input;
+    ///
+    /// let input = Input::new();
+    /// assert!(!input.keyboard().is_one_used());
+    /// assert!(!input.mouse().is_one_used());
+    /// ```
     #[must_use]
     pub fn new() -> Self {
         Self {

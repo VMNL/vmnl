@@ -368,12 +368,29 @@ impl MouseState {
     /// Resets all mouse button states to not pressed.
     /// This can be useful when the application needs to clear input states,
     /// such as when pausing the game or resetting the input system.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::MouseState;
+    ///
+    /// let mut mouse = MouseState::new();
+    /// mouse.reset();
+    /// assert!(!mouse.is_one_used());
+    /// ```
     pub const fn reset(&mut self) {
         self.current = [false; MOUSE_BUTTON_COUNT];
         self.previous = [false; MOUSE_BUTTON_COUNT];
     }
 
     /// Creates a new `MouseState` with all buttons initialized to not pressed.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::MouseState;
+    ///
+    /// let mouse = MouseState::new();
+    /// assert!(!mouse.is_one_down());
+    /// ```
     #[must_use]
     pub const fn new() -> Self {
         Self {

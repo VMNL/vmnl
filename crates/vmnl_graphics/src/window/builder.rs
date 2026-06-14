@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
-use crate::common::Rgba;
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
 /// Window builder and option validation utilities.
 ////////////////////////////////////////////////////////////////////////////////
+use crate::common::Rgba;
 use crate::window::shaders::{ShaderInput, WindowShaders};
 use crate::window::Window;
 use crate::{Context, VMNLError, VMNLErrorKind, VMNLResult};
@@ -178,14 +178,48 @@ pub(crate) const fn validate_size_limits(
 }
 
 impl WindowBuilder {
-    /// Sets the title of the window.
+    /// Set the window title used by the native window manager.
+    ///
+    /// # Arguments
+    /// - `title`: New UTF-8 window title.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .title("VMNL")
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn title(mut self, title: &str) -> Self {
         self.options.title = title.to_string();
         self
     }
 
-    /// Sets the size of the window in pixels. Both width and height must be at least 64.
+    /// Set the initial window size in screen pixels.
+    ///
+    /// Both dimensions must be at least `64`; smaller values are rejected by
+    /// [`WindowBuilder::build`].
+    ///
+    /// # Arguments
+    /// - `width`: Initial window width in screen pixels.
+    /// - `height`: Initial window height in screen pixels.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .size(1280, 720)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub const fn size(mut self, width: u32, height: u32) -> Self {
         self.options.width = width;
@@ -193,17 +227,50 @@ impl WindowBuilder {
         self
     }
 
-    /// Disables automatic polling of events after rendering.
+    /// Disable automatic event polling after each rendered frame.
+    ///
+    /// When disabled, the application is responsible for calling
+    /// `poll_events`, `wait_events`, or another event function explicitly.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .unset_configure_window_polling()
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub const fn unset_configure_window_polling(mut self) -> Self {
         self.options.configure_window_polling = false;
         self
     }
 
-    /// Sets the minimum and maximum size limits of the window.
+    /// Set optional minimum and maximum size limits for the native window.
+    ///
+    /// # Arguments
+    /// - `min_width`: Optional minimum width in screen pixels.
+    /// - `min_height`: Optional minimum height in screen pixels.
+    /// - `max_width`: Optional maximum width in screen pixels.
+    /// - `max_height`: Optional maximum height in screen pixels.
     ///
     /// # Errors
     /// Returns an error if a minimum dimension exceeds its maximum dimension.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .size_limit(Some(320), Some(240), Some(1920), Some(1080))?
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn size_limit(
         mut self,
         min_width: Option<u32>,
@@ -219,42 +286,152 @@ impl WindowBuilder {
         Ok(self)
     }
 
-    /// Sets the vertex shader for the window using a file path to the compiled SPIR-V shader.
+    /// Set the 2D vertex shader from a GLSL source file.
+    ///
+    /// The source is compiled during window creation. This replaces the default
+    /// VMNL 2D vertex shader for the window.
+    ///
+    /// # Arguments
+    /// - `path`: Path to a GLSL vertex shader source file.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .vs_from_file("shaders/color2d.vert")
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn vs_from_file(mut self, path: impl AsRef<std::path::Path>) -> Self {
         self.options.shaders.vertex = Some(ShaderInput::Path(path.as_ref().into()));
         self
     }
 
-    /// Sets the fragment shader for the window using a file path to the compiled SPIR-V shader.
+    /// Set the 2D fragment shader from a GLSL source file.
+    ///
+    /// The source is compiled during window creation. This replaces the default
+    /// VMNL 2D fragment shader for the window.
+    ///
+    /// # Arguments
+    /// - `path`: Path to a GLSL fragment shader source file.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .fs_from_file("shaders/color2d.frag")
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn fs_from_file(mut self, path: impl AsRef<std::path::Path>) -> Self {
         self.options.shaders.fragment = Some(ShaderInput::Path(path.as_ref().into()));
         self
     }
 
-    /// Sets the vertex shader for the window using a string containing the GLSL source code.
+    /// Set the 2D vertex shader from inline GLSL source code.
+    ///
+    /// This replaces the default VMNL 2D vertex shader for the window.
+    ///
+    /// # Arguments
+    /// - `source`: GLSL vertex shader source code.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .vs_from_string("#version 460\nvoid main() {}")
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn vs_from_string(mut self, source: impl Into<String>) -> Self {
         self.options.shaders.vertex = Some(ShaderInput::Src(source.into()));
         self
     }
 
-    /// Sets the fragment shader for the window using a string containing the GLSL source code.
+    /// Set the 2D fragment shader from inline GLSL source code.
+    ///
+    /// This replaces the default VMNL 2D fragment shader for the window.
+    ///
+    /// # Arguments
+    /// - `source`: GLSL fragment shader source code.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .fs_from_string("#version 460\nvoid main() {}")
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn fs_from_string(mut self, source: impl Into<String>) -> Self {
         self.options.shaders.fragment = Some(ShaderInput::Src(source.into()));
         self
     }
 
-    /// Sets the clear color for the window, which is used to clear the screen before rendering each frame.
+    /// Set the clear color used at the beginning of each submitted frame.
+    ///
+    /// This color is visible when a frame has no draw calls or where rendered
+    /// geometry does not cover the framebuffer.
+    ///
+    /// # Arguments
+    /// - `clear_color`: Color convertible to `Rgba`, for example `Rgba::BLACK`, `[r, g, b]`, or `[r, g, b, a]`.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .set_clear_color([20, 24, 32])
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
-    pub fn set_clear_color(mut self, clear_color: Rgba) -> Self {
-        self.options.clear_color = clear_color.normalized();
+    pub fn set_clear_color<C>(mut self, clear_color: C) -> Self
+    where
+        C: Into<Rgba>,
+    {
+        self.options.clear_color = clear_color.into().normalized();
         self
     }
 
-    /// Sets the swapchain presentation mode.
+    /// Set the required swapchain presentation mode.
+    ///
+    /// If the mode is unsupported by the surface, [`WindowBuilder::build`]
+    /// returns an error. Use [`WindowBuilder::preferred_present_mode`] for a
+    /// fallback behavior.
+    ///
+    /// # Arguments
+    /// - `present_mode`: Required swapchain presentation mode.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, PresentMode, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .present_mode(PresentMode::Fifo)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub const fn present_mode(mut self, present_mode: PresentMode) -> Self {
         self.options.present_mode = match present_mode {
@@ -264,8 +441,25 @@ impl WindowBuilder {
         self
     }
 
-    /// Sets the preferred swapchain presentation mode, falling back to VMNL's auto priority order
-    /// when the requested mode is unsupported.
+    /// Set the preferred swapchain presentation mode.
+    ///
+    /// If the mode is unsupported by the surface, window creation falls back to
+    /// VMNL's automatic priority order instead of returning an error.
+    ///
+    /// # Arguments
+    /// - `present_mode`: Preferred swapchain presentation mode.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, PresentMode, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .preferred_present_mode(PresentMode::Mailbox)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub const fn preferred_present_mode(mut self, present_mode: PresentMode) -> Self {
         self.options.present_mode = match present_mode {
@@ -275,10 +469,26 @@ impl WindowBuilder {
         self
     }
 
-    /// Builds the `Window` instance using the specified options and the provided `Context`.
+    /// Build a `Window` from the configured options and an existing [`Context`].
+    ///
+    /// # Arguments
+    /// - `context`: Graphics context that owns the Vulkan instance/device resources.
     ///
     /// # Errors
     /// Returns an error if the options are invalid or window initialization fails.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .title("VMNL")
+    ///     .size(800, 600)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn build(self, context: &Context) -> VMNLResult<Window> {
         Window::from_options(context, &self.options)
     }

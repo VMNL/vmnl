@@ -40,8 +40,32 @@ impl TriangleBuilder {
     /// Set one uniform color for all triangle vertices.
     ///
     /// Overrides any previous uniform or per-vertex color configuration.
+    ///
+    /// # Arguments
+    /// - `color`: Color convertible to `Rgba`, applied to all three vertices.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let triangle = Shape::triangle(
+    ///     Vector2f { x: 0.0, y: 0.0 },
+    ///     Vector2f { x: 100.0, y: 0.0 },
+    ///     Vector2f { x: 50.0, y: 100.0 },
+    /// )
+    /// .color([255, 0, 0])
+    /// .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
-    pub const fn color(mut self, color: Rgba) -> Self {
+    pub fn color<C>(mut self, color: C) -> Self
+    where
+        C: Into<Rgba>,
+    {
+        let color = color.into();
         self.colors = [color; 3];
         self
     }
@@ -49,15 +73,66 @@ impl TriangleBuilder {
     /// Set one color per triangle vertex.
     ///
     /// Overrides any previous uniform or per-vertex color configuration.
+    ///
+    /// # Arguments
+    /// - `a`: Color for the first vertex.
+    /// - `b`: Color for the second vertex.
+    /// - `c`: Color for the third vertex.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let triangle = Shape::triangle(
+    ///     Vector2f { x: 0.0, y: 0.0 },
+    ///     Vector2f { x: 100.0, y: 0.0 },
+    ///     Vector2f { x: 50.0, y: 100.0 },
+    /// )
+    /// .vertex_colors(
+    ///     Rgba::new(255, 0, 0, 255),
+    ///     Rgba::new(0, 255, 0, 255),
+    ///     Rgba::new(0, 0, 255, 255),
+    /// )
+    /// .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
-    pub const fn vertex_colors(mut self, a: Rgba, b: Rgba, c: Rgba) -> Self {
-        self.colors = [a, b, c];
+    pub fn vertex_colors<C>(mut self, color1: C, color2: C, color3: C) -> Self
+    where
+        C: Into<Rgba>,
+    {
+        self.colors = [color1.into(), color2.into(), color3.into()];
         self
     }
 
     /// Set the preferred memory placement for the created vertex buffer.
     ///
     /// This is a preference, not a guarantee. Defaults to `BufferMemoryPreference::Device`.
+    ///
+    /// # Arguments
+    /// - `preference`: Preferred GPU buffer memory placement.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::BufferMemoryPreference;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let triangle = Shape::triangle(
+    ///     Vector2f { x: 0.0, y: 0.0 },
+    ///     Vector2f { x: 100.0, y: 0.0 },
+    ///     Vector2f { x: 50.0, y: 100.0 },
+    /// )
+    /// .buffer_memory_preference(BufferMemoryPreference::Host)
+    /// .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub const fn buffer_memory_preference(mut self, preference: BufferMemoryPreference) -> Self {
         self.buffer_memory_preference = preference;
@@ -97,7 +172,9 @@ impl TriangleBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let triangle = Shape::triangle(

@@ -37,7 +37,7 @@ struct LineOptions {
     width: f32,
     /// Line cap style defining how the endpoints of the line are rendered.
     cap: LineCap,
-    /// RGBA color of the line as an array of four `f32` values in the range `[0, 255]`, representing red, green, blue, and alpha components respectively.
+    /// RGBA color of the line, using 8-bit components in the range `[0, 255]`.
     color: Rgba,
     /// Preferred memory placement for the created vertex and index buffers.
     buffer_memory_preference: BufferMemoryPreference,
@@ -86,7 +86,8 @@ impl LineBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
@@ -108,7 +109,8 @@ impl LineBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, LineCap, Rgba, Shape, Vector2f};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::{LineCap, Shape, Vector2f};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
@@ -123,31 +125,52 @@ impl LineBuilder {
         self
     }
 
-    /// Set the color of the line using RGBA values in the range `[0, 255]`.
+    /// Set the color of the line.
     ///
     /// # Arguments
-    /// - `color`: RGBA color of the line as an array of four `f32` values in the range `[0, 255]`, representing red, green, blue, and alpha components respectively.
+    /// - `color`: Color convertible to `Rgba`, for example `Rgba::BLUE`, `[r, g, b]`, or `[r, g, b, a]`.
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
-    ///     .color(Rgba::new(0, 0, 255, 255))
+    ///     .color([0, 0, 255])
     ///     .build(&context)?;
     /// # Ok(())
     /// # }
     /// ```
     #[must_use]
-    pub fn color(mut self, color: Rgba) -> Self {
-        self.options.color = color;
+    pub fn color<C>(mut self, color: C) -> Self
+    where
+        C: Into<Rgba>,
+    {
+        self.options.color = color.into();
         self
     }
 
     /// Set the preferred memory placement for the created vertex and index buffers.
     ///
     /// This is a preference, not a guarantee. Defaults to `BufferMemoryPreference::Device`.
+    ///
+    /// # Arguments
+    /// - `preference`: Preferred GPU buffer memory placement.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::BufferMemoryPreference;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let line = Shape::line(Vector2f { x: 0.0, y: 0.0 }, Vector2f { x: 100.0, y: 0.0 })
+    ///     .buffer_memory_preference(BufferMemoryPreference::Host)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn buffer_memory_preference(mut self, preference: BufferMemoryPreference) -> Self {
         self.options.buffer_memory_preference = preference;
@@ -157,12 +180,7 @@ impl LineBuilder {
     /// Create a `Shape` instance by transforming the input line parameters into a vertex buffer.
     ///
     /// # Arguments
-    /// - `vmnl_context`: Reference to the VMNL context providing the memory allocator.
-    /// - `from`: Starting point of the line as a `Vector2f`.
-    /// - `to`: Ending point of the line as a `Vector2f`.
-    /// - `width`: Optional width of the line (default is `1.0`).
-    /// - `cap`: Optional line cap style (default is `LineCap::Butt`, others options are `LineCap::Round` and `LineCap::Square`).
-    /// - `color`: Optional RGBA color of the line (default is white `Rgba::new(255, 255, 255, 255)`).
+    /// - `context`: Graphics context used to allocate GPU buffers.
     ///
     /// # Returns
     /// A `Shape` instance representing the line, ready for rendering.
@@ -172,7 +190,9 @@ impl LineBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, LineCap, Rgba, Shape, Vector2f};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{LineCap, Shape, Vector2f};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
@@ -374,17 +394,16 @@ impl LineBuilder {
         Ok((vertices, indices))
     }
 
-    /// Create a line shape defined by required `from` and `to` endpoints, optional `width`, optional `cap` style, and optional single `color`.
-    ///
-    /// `width` defaults to `1.0`, `cap` defaults to `Butt`, and `color` defaults to white.
+    /// Create a line shape from validated builder options.
     ///
     /// # Arguments
     /// - `context`: Reference to the VMNL context providing the memory allocator.
     /// - `from`: Starting point of the line as a `Vector2f`.
     /// - `to`: Ending point of the line as a `Vector2f`.
-    /// - `width`: Optional width of the line (default is `1.0`).
-    /// - `cap`: Optional line cap style (default is `LineCap::Butt`).
-    /// - `color`: Optional RGBA color of the line (default is white `Rgba::new(255, 255, 255, 255)`).
+    /// - `width`: Width of the line in pixels.
+    /// - `cap`: Line cap style.
+    /// - `color`: RGBA color of the line.
+    /// - `buffer_memory_preference`: Preferred GPU buffer memory placement.
     ///
     /// # Returns
     /// A `Shape` instance representing the line, ready for rendering.

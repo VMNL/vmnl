@@ -5,21 +5,21 @@
 // Shader input definitions and default GLSL sources for the VMNL window pipeline.
 ////////////////////////////////////////////////////////////////////////////////
 
+/// Shader input, either as inline GLSL source or as a path to a GLSL source file.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-/// Enum to represent shader input, either as a raw GLSL source string or a file path to a SPIR-V binary.
 pub(crate) enum ShaderInput {
     /// Raw GLSL source code as a string.
     Src(String),
-    /// File path to a SPIR-V binary shader module.
+    /// File path to GLSL source code.
     Path(std::path::PathBuf),
 }
 
 /// Struct to hold shader inputs for a window, allowing for dynamic shader management.
 #[derive(Debug, Clone)]
 pub(crate) struct WindowShaders {
-    /// Optional vertex shader input (GLSL source or SPIR-V file path).
+    /// Optional vertex shader input.
     pub vertex: Option<ShaderInput>,
-    /// Optional fragment shader input (GLSL source or SPIR-V file path).
+    /// Optional fragment shader input.
     pub fragment: Option<ShaderInput>,
 }
 

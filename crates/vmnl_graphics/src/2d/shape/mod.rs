@@ -47,8 +47,7 @@ impl AsRef<Self> for Shape {
 }
 
 impl Drawable2D for Shape {
-    /// Convert the `Shape` into a `RenderItem` for the rendering backend, specifying pipeline and material keys.
-    /// The `RenderItem` includes the vertex buffer, optional index buffer, and counts needed for drawing.
+    /// Convert the shape into a 2D backend draw item.
     fn render_item_2d(&self) -> RenderItem2D {
         RenderItem2D {
             pipeline_key: PipelineKey::Color2D,
@@ -68,9 +67,15 @@ impl Shape {
     ///
     /// `position` defaults to `(0, 0)` and `color` defaults to white.
     ///
+    /// # Arguments
+    /// - `w`: Rectangle width in pixels.
+    /// - `h`: Rectangle height in pixels.
+    ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::Shape;
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rectangle = Shape::rect(200.0, 100.0)
@@ -89,9 +94,15 @@ impl Shape {
     ///
     /// `build` validates that indices describe triangles and stay within bounds.
     ///
+    /// # Arguments
+    /// - `vertices`: Vertex list containing 2D positions and colors.
+    /// - `indices`: Triangle index list referencing `vertices`.
+    ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex2D};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f, Vertex2D};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertices = [
@@ -118,9 +129,16 @@ impl Shape {
     ///
     /// `color` defaults to white. Use `vertex_colors` for per-vertex colors.
     ///
+    /// # Arguments
+    /// - `a`: First triangle position.
+    /// - `b`: Second triangle position.
+    /// - `c`: Third triangle position.
+    ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let triangle = Shape::triangle(
@@ -140,9 +158,14 @@ impl Shape {
 
     /// Create a triangle builder from exactly three required vertices.
     ///
+    /// # Arguments
+    /// - `vertices`: Three vertices containing triangle positions and colors.
+    ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex2D};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f, Vertex2D};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertex1 = Vertex2D {
@@ -171,9 +194,15 @@ impl Shape {
     ///
     /// `width` defaults to `1.0`, `cap` defaults to `Butt`, and `color` defaults to white.
     ///
+    /// # Arguments
+    /// - `from`: Start point of the line.
+    /// - `to`: End point of the line.
+    ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, LineCap, Rgba, Shape, Vector2f};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{LineCap, Shape, Vector2f};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })

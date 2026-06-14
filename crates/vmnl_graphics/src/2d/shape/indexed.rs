@@ -46,6 +46,28 @@ impl IndexedShapeBuilder {
     /// Set the preferred memory placement for the created vertex and index buffers.
     ///
     /// This is a preference, not a guarantee. Defaults to `BufferMemoryPreference::Device`.
+    ///
+    /// # Arguments
+    /// - `preference`: Preferred GPU buffer memory placement.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::{BufferMemoryPreference, Rgba};
+    /// # use vmnl_graphics::d2::{Shape, Vector2f, Vertex2D};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let vertices = [
+    ///     Vertex2D { position: Vector2f { x: 0.0, y: 0.0 }, color: Rgba::new(255, 0, 0, 255) },
+    ///     Vertex2D { position: Vector2f { x: 100.0, y: 0.0 }, color: Rgba::new(0, 255, 0, 255) },
+    ///     Vertex2D { position: Vector2f { x: 50.0, y: 100.0 }, color: Rgba::new(0, 0, 255, 255) },
+    /// ];
+    /// let shape = Shape::indexed(vertices, [0, 1, 2])
+    ///     .buffer_memory_preference(BufferMemoryPreference::Host)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn buffer_memory_preference(mut self, preference: BufferMemoryPreference) -> Self {
         self.options.buffer_memory_preference = preference;
@@ -54,13 +76,18 @@ impl IndexedShapeBuilder {
 
     /// Build the indexed shape from the vertices and indices required by `Shape::indexed`.
     ///
+    /// # Arguments
+    /// - `vmnl_context`: Graphics context used to allocate GPU buffers.
+    ///
     /// # Errors
     /// Returns an error when the geometry is empty, not triangle-aligned, or references
     /// a vertex outside the provided vertex list.
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex2D};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f, Vertex2D};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertices = [

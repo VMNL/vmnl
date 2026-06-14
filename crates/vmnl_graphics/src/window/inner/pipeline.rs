@@ -36,7 +36,7 @@ impl VMNLWindow {
     /// - `compiler`: Shader compiler instance for compiling GLSL source code.
     /// - `source`: GLSL source code of the shader.
     /// - `kind`: The kind of shader (vertex, fragment, etc.) to compile.
-    /// - `input_file_name`: A string used for error reporting during compilation.
+    /// - `input_file_name`: Name used by the shader compiler for diagnostics.
     ///
     /// # Returns
     /// An `Arc<ShaderModule>` representing the compiled shader module, or an error if compilation or creation fails.
@@ -69,7 +69,6 @@ impl VMNLWindow {
     /// - `compiler`: Shader compiler instance for compiling GLSL source code.
     /// - `path`: File path to the shader source code.
     /// - `kind`: The kind of shader (vertex, fragment, etc.) to compile.
-    /// - `input_file_name`: A string used for error reporting during compilation.
     ///
     /// # Returns
     /// An `Arc<ShaderModule>` representing the compiled shader module, or an error if compilation or creation fails.
@@ -95,7 +94,7 @@ impl VMNLWindow {
     /// - `render_pass`: Render pass the pipeline must be compatible with.
     ///
     /// # Returns
-    /// An `Arc<ShapePipeline>` representing the created graphics pipeline.
+    /// An `Arc<GraphicsPipeline>` representing the created graphics pipeline.
     ///
     /// # Sources
     /// <https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap9.html>

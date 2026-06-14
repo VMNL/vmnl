@@ -84,7 +84,7 @@ struct RectOptions {
     position: Vector2f,
     /// Size of the rectangle as a `Vector2f`, where `x` is the width and `y` is the height. Both components must be strictly positive.
     size: Vector2f,
-    /// RGBA color of the rectangle as an array of four `f32` values in the range `[0, 255]`, representing red, green, blue, and alpha components respectively.
+    /// RGBA color of the rectangle, using 8-bit components in the range `[0, 255]`.
     color: Rgba,
     /// Rotation of the rectangle in degrees. Rotation is applied around `origin`.
     rotation: f32,
@@ -138,7 +138,8 @@ impl RectBuilder {
     /// The updated `RectBuilder` instance with the specified position.
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::Shape;
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
@@ -156,26 +157,29 @@ impl RectBuilder {
     /// Set the color of the rectangle.
     ///
     /// # Arguments
-    /// - `color`: RGBA color as an array of four `f32` values in the range `[0, 255]`,
-    ///   representing red, green, blue, and alpha components respectively.
+    /// - `color`: Color convertible to `Rgba`, for example `Rgba::RED`, `[r, g, b]`, or `[r, g, b, a]`.
     ///
     /// # Returns
     /// The updated `RectBuilder` instance with the specified color.
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::Shape;
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
-    ///     .color(Rgba::new(255, 0, 0, 255))
+    ///     .color([255, 0, 0])
     ///     .build(&context)?;
     /// # Ok(())
     /// # }
     /// ```
     #[must_use]
-    pub fn color(mut self, color: Rgba) -> Self {
-        self.options.color = color;
+    pub fn color<C>(mut self, color: C) -> Self
+    where
+        C: Into<Rgba>,
+    {
+        self.options.color = color.into();
         self
     }
 
@@ -188,7 +192,8 @@ impl RectBuilder {
     /// The updated `RectBuilder` instance with the specified rotation.
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::Shape;
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
@@ -206,6 +211,23 @@ impl RectBuilder {
     /// Set the rectangle rotation pivot using a predefined anchor.
     ///
     /// Replaces any previous custom origin.
+    ///
+    /// # Arguments
+    /// - `anchor`: Predefined local origin used as the rotation pivot.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::{Anchor, Shape};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let rect = Shape::rect(100.0, 100.0)
+    ///     .anchor(Anchor::Center)
+    ///     .rotation(45.0)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn anchor(mut self, anchor: Anchor) -> Self {
         self.options.origin = RectOrigin::Anchor(anchor);
@@ -219,6 +241,20 @@ impl RectBuilder {
     /// - `y`: Y coordinate relative to the rectangle top-left corner.
     ///
     /// Replaces any previous anchor.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::Shape;
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let rect = Shape::rect(100.0, 100.0)
+    ///     .origin(50.0, 50.0)
+    ///     .rotation(45.0)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn origin(mut self, x: f32, y: f32) -> Self {
         self.options.origin = RectOrigin::Custom(Vector2f { x, y });
@@ -228,6 +264,23 @@ impl RectBuilder {
     /// Set the preferred memory placement for the created vertex and index buffers.
     ///
     /// This is a preference, not a guarantee. Defaults to `BufferMemoryPreference::Device`.
+    ///
+    /// # Arguments
+    /// - `preference`: Preferred GPU buffer memory placement.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::BufferMemoryPreference;
+    /// # use vmnl_graphics::d2::Shape;
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let rect = Shape::rect(100.0, 100.0)
+    ///     .buffer_memory_preference(BufferMemoryPreference::Host)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn buffer_memory_preference(mut self, preference: BufferMemoryPreference) -> Self {
         self.options.buffer_memory_preference = preference;
@@ -247,7 +300,8 @@ impl RectBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::Shape;
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rect = Shape::rect(100.0, 100.0)
@@ -303,7 +357,11 @@ impl RectBuilder {
                 "rectangle position must not be NaN".to_string(),
             )));
         }
-        if position.x.is_infinite() || position.y.is_infinite() {
+        let bounds: Vector2f = Vector2f {
+            x: position.x + size.x,
+            y: position.y + size.y,
+        };
+        if bounds.x.is_infinite() || bounds.y.is_infinite() {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                 "rectangle bounds must be finite".to_string(),
             )));
