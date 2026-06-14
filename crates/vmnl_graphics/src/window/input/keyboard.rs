@@ -620,12 +620,29 @@ impl KeyboardState {
     /// This is useful for situations where you want to ignore all previous input,
     /// such as when the window gains focus or when you want to start fresh after a certain event.
     /// This can be used to clear the state when the window is focused or when you want to ignore all previous input.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::KeyboardState;
+    ///
+    /// let mut keyboard = KeyboardState::new();
+    /// keyboard.reset();
+    /// assert!(!keyboard.is_one_used());
+    /// ```
     pub const fn reset(&mut self) {
         self.current = [false; KEY_COUNT];
         self.previous = [false; KEY_COUNT];
     }
 
     /// Creates a new `KeyboardState` with all keys initialized to not pressed.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::KeyboardState;
+    ///
+    /// let keyboard = KeyboardState::new();
+    /// assert!(!keyboard.is_one_down());
+    /// ```
     #[must_use]
     pub const fn new() -> Self {
         Self {

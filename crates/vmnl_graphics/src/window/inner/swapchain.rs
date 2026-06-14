@@ -5,6 +5,7 @@
 /// Vulkan swapchain and image-view creation helpers.
 ////////////////////////////////////////////////////////////////////////////////
 use super::VMNLWindow;
+use crate::window::PresentModeSelection;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;
 use vulkano::{
@@ -15,8 +16,8 @@ use vulkano::{
         Image, ImageUsage,
     },
     swapchain::{
-        ColorSpace, PresentMode, Surface, SurfaceCapabilities, SurfaceInfo, Swapchain,
-        SwapchainCreateInfo,
+        ColorSpace, PresentMode as VkPresentMode, Surface, SurfaceCapabilities, SurfaceInfo,
+        Swapchain, SwapchainCreateInfo,
     },
 };
 
@@ -65,6 +66,7 @@ impl VMNLWindow {
         device: &Arc<Device>,
         surface: &Arc<Surface>,
         window_extent: [u32; 2],
+        present_mode: PresentModeSelection,
     ) -> VMNLResult<(Arc<Swapchain>, Vec<Arc<Image>>)> {
         let surface_capabilities: SurfaceCapabilities = device
             .physical_device()
@@ -74,6 +76,12 @@ impl VMNLWindow {
             .physical_device()
             .surface_formats(surface, SurfaceInfo::default())
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSurfaceCreationFailed))?;
+        let supported_present_modes: Vec<VkPresentMode> = device
+            .physical_device()
+            .surface_present_modes(surface, SurfaceInfo::default())
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSurfaceCreationFailed))?;
+        let selected_present_mode: VkPresentMode =
+            present_mode.select_vk(&supported_present_modes)?;
         let (image_format, image_color_space): (Format, ColorSpace) = surface_formats
             .iter()
             .copied()
@@ -101,30 +109,27 @@ impl VMNLWindow {
             };
 
         log::debug!(
-            "creating swapchain: extent={}x{}, images={}, format={image_format:?}, color_space={image_color_space:?}",
+            "creating swapchain: extent={}x{}, images={}, format={image_format:?}, color_space={image_color_space:?}, requested_present_mode={present_mode:?}, selected_present_mode={selected_present_mode:?}",
             image_extent[0],
             image_extent[1],
             min_image_count
         );
-        Swapchain::new(
-            device.clone(),
-            surface.clone(),
-            SwapchainCreateInfo {
-                min_image_count,
-                image_format,
-                image_color_space,
-                image_extent,
-                image_usage: ImageUsage::COLOR_ATTACHMENT,
-                composite_alpha: surface_capabilities
-                    .supported_composite_alpha
-                    .into_iter()
-                    .next()
-                    .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))?,
-                pre_transform: surface_capabilities.current_transform,
-                present_mode: PresentMode::Fifo,
-                ..Default::default()
-            },
-        )
-        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed))
+        let swapchain_create_info: SwapchainCreateInfo = SwapchainCreateInfo {
+            min_image_count,
+            image_format,
+            image_color_space,
+            image_extent,
+            image_usage: ImageUsage::COLOR_ATTACHMENT,
+            composite_alpha: surface_capabilities
+                .supported_composite_alpha
+                .into_iter()
+                .next()
+                .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))?,
+            pre_transform: surface_capabilities.current_transform,
+            present_mode: selected_present_mode,
+            ..Default::default()
+        };
+        Swapchain::new(device.clone(), surface.clone(), swapchain_create_info)
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed))
     }
 }

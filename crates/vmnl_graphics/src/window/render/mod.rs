@@ -11,7 +11,9 @@ mod acquire;
 mod command_buffer;
 mod sync;
 
-use crate::{window::inner::VMNLWindow, Shape, VMNLError, VMNLErrorKind, VMNLResult};
+use crate::d2::RenderItem2D;
+use crate::window::{inner::VMNLWindow, RenderMode};
+use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;
 use vulkano::{
     command_buffer::PrimaryAutoCommandBuffer, swapchain::SwapchainAcquireFuture, sync::GpuFuture,
@@ -20,10 +22,17 @@ use vulkano::{
 
 impl VMNLWindow {
     /// Internal implementation backing `Window::render`.
-    pub(crate) fn render_per_object<const N: usize>(
+    pub(crate) fn render_2d(
         &mut self,
-        graphics_list: &[&Shape; N],
+        mode: RenderMode,
+        render_items: &[RenderItem2D],
     ) -> VMNLResult<()> {
+        match mode {
+            RenderMode::PerObject | RenderMode::Batched => self.render_2d_per_object(render_items),
+        }
+    }
+
+    fn render_2d_per_object(&mut self, render_items: &[RenderItem2D]) -> VMNLResult<()> {
         Self::begin_frame(&mut self.handle.previous_frame_end);
         let (image_index, suboptimal, acquire_future): (u32, bool, SwapchainAcquireFuture) =
             Self::acquire_next_image_from_swapchain(&self.handle.swapchain, None)?;
@@ -34,7 +43,7 @@ impl VMNLWindow {
             );
         }
         let command_buffer: Arc<PrimaryAutoCommandBuffer> =
-            self.build_command_buffer(image_index, graphics_list)?;
+            self.build_command_buffer(image_index, render_items)?;
         let future: Result<Box<dyn GpuFuture>, Validated<VulkanError>> = Self::frame_sync(
             &mut self.handle.previous_frame_end,
             acquire_future,
@@ -48,14 +57,5 @@ impl VMNLWindow {
             self.handle.vmnl_instance.device.clone(),
         ));
         Ok(())
-    }
-
-    pub(crate) fn render_batched<const N: usize>(
-        &mut self,
-        graphics_list: &[&Shape; N],
-    ) -> VMNLResult<()> {
-        // For simplicity, we call the per-object rendering for now.
-        // In a real implementation, this would involve batching draw calls together.
-        self.render_per_object(graphics_list)
     }
 }

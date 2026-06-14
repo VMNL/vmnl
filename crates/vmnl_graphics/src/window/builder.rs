@@ -4,9 +4,98 @@
 ///
 /// Window builder and option validation utilities.
 ////////////////////////////////////////////////////////////////////////////////
+use crate::common::Rgba;
 use crate::window::shaders::{ShaderInput, WindowShaders};
 use crate::window::Window;
-use crate::{Context, Rgba, VMNLError, VMNLErrorKind, VMNLResult};
+use crate::{Context, VMNLError, VMNLErrorKind, VMNLResult};
+use vulkano::swapchain::PresentMode as VkPresentMode;
+
+/// Swapchain presentation mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub enum PresentMode {
+    /// Select the first supported low-latency mode using VMNL's priority order.
+    #[default]
+    Auto,
+    /// V-sync. Normally always supported.
+    Fifo,
+    /// Low latency. Can drop frames.
+    Mailbox,
+    /// No v-sync. Tearing is possible.
+    Immediate,
+    /// Relaxed v-sync variant.
+    FifoRelaxed,
+}
+
+impl PresentMode {
+    fn explicit_vk(self) -> Option<VkPresentMode> {
+        match self {
+            Self::Auto => None,
+            Self::Fifo => Some(VkPresentMode::Fifo),
+            Self::Mailbox => Some(VkPresentMode::Mailbox),
+            Self::Immediate => Some(VkPresentMode::Immediate),
+            Self::FifoRelaxed => Some(VkPresentMode::FifoRelaxed),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub(crate) enum PresentModeSelection {
+    #[default]
+    Auto,
+    Strict(PresentMode),
+    Preferred(PresentMode),
+}
+
+impl PresentModeSelection {
+    pub(crate) fn select_vk(self, supported: &[VkPresentMode]) -> VMNLResult<VkPresentMode> {
+        match self {
+            Self::Auto | Self::Strict(PresentMode::Auto) | Self::Preferred(PresentMode::Auto) => {
+                Self::auto_vk(supported)
+            }
+            Self::Strict(mode) => {
+                let mode: VkPresentMode = mode
+                    .explicit_vk()
+                    .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))?;
+                Self::explicit_vk(mode, supported)
+            }
+            Self::Preferred(mode) => {
+                let requested: VkPresentMode = mode
+                    .explicit_vk()
+                    .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))?;
+
+                if supported.contains(&requested) {
+                    return Ok(requested);
+                }
+
+                let fallback: VkPresentMode = Self::auto_vk(supported)?;
+                log::warn!(
+                    "requested present mode {requested:?} is unsupported, falling back to {fallback:?}"
+                );
+                Ok(fallback)
+            }
+        }
+    }
+
+    fn auto_vk(supported: &[VkPresentMode]) -> VMNLResult<VkPresentMode> {
+        [
+            VkPresentMode::Mailbox,
+            VkPresentMode::Immediate,
+            VkPresentMode::FifoRelaxed,
+            VkPresentMode::Fifo,
+        ]
+        .into_iter()
+        .find(|mode| supported.contains(mode))
+        .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))
+    }
+
+    fn explicit_vk(mode: VkPresentMode, supported: &[VkPresentMode]) -> VMNLResult<VkPresentMode> {
+        if supported.contains(&mode) {
+            Ok(mode)
+        } else {
+            Err(VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))
+        }
+    }
+}
 
 /// Builder pattern for constructing a `Window` instance with customizable options.
 pub struct WindowBuilder {
@@ -37,6 +126,8 @@ pub(crate) struct WindowOptions {
     pub(crate) shaders: WindowShaders,
     /// The clear color used for rendering, represented as RGBA (red, green, blue, alpha) values.
     pub(crate) clear_color: [f32; 4],
+    /// Swapchain presentation mode.
+    pub(crate) present_mode: PresentModeSelection,
 }
 
 impl Default for WindowOptions {
@@ -56,6 +147,7 @@ impl Default for WindowOptions {
                 fragment: None,
             },
             clear_color: [0.0, 0.0, 0.0, 1.0],
+            present_mode: PresentModeSelection::default(),
         }
     }
 }
@@ -86,14 +178,48 @@ pub(crate) const fn validate_size_limits(
 }
 
 impl WindowBuilder {
-    /// Sets the title of the window.
+    /// Set the window title used by the native window manager.
+    ///
+    /// # Arguments
+    /// - `title`: New UTF-8 window title.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .title("VMNL")
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn title(mut self, title: &str) -> Self {
         self.options.title = title.to_string();
         self
     }
 
-    /// Sets the size of the window in pixels. Both width and height must be at least 64.
+    /// Set the initial window size in screen pixels.
+    ///
+    /// Both dimensions must be at least `64`; smaller values are rejected by
+    /// [`WindowBuilder::build`].
+    ///
+    /// # Arguments
+    /// - `width`: Initial window width in screen pixels.
+    /// - `height`: Initial window height in screen pixels.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .size(1280, 720)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub const fn size(mut self, width: u32, height: u32) -> Self {
         self.options.width = width;
@@ -101,17 +227,50 @@ impl WindowBuilder {
         self
     }
 
-    /// Disables automatic polling of events after rendering.
+    /// Disable automatic event polling after each rendered frame.
+    ///
+    /// When disabled, the application is responsible for calling
+    /// `poll_events`, `wait_events`, or another event function explicitly.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .unset_configure_window_polling()
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub const fn unset_configure_window_polling(mut self) -> Self {
         self.options.configure_window_polling = false;
         self
     }
 
-    /// Sets the minimum and maximum size limits of the window.
+    /// Set optional minimum and maximum size limits for the native window.
+    ///
+    /// # Arguments
+    /// - `min_width`: Optional minimum width in screen pixels.
+    /// - `min_height`: Optional minimum height in screen pixels.
+    /// - `max_width`: Optional maximum width in screen pixels.
+    /// - `max_height`: Optional maximum height in screen pixels.
     ///
     /// # Errors
     /// Returns an error if a minimum dimension exceeds its maximum dimension.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .size_limit(Some(320), Some(240), Some(1920), Some(1080))?
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn size_limit(
         mut self,
         min_width: Option<u32>,
@@ -127,45 +286,209 @@ impl WindowBuilder {
         Ok(self)
     }
 
-    /// Sets the vertex shader for the window using a file path to the compiled SPIR-V shader.
+    /// Set the 2D vertex shader from a GLSL source file.
+    ///
+    /// The source is compiled during window creation. This replaces the default
+    /// VMNL 2D vertex shader for the window.
+    ///
+    /// # Arguments
+    /// - `path`: Path to a GLSL vertex shader source file.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .vs_from_file("shaders/color2d.vert")
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn vs_from_file(mut self, path: impl AsRef<std::path::Path>) -> Self {
         self.options.shaders.vertex = Some(ShaderInput::Path(path.as_ref().into()));
         self
     }
 
-    /// Sets the fragment shader for the window using a file path to the compiled SPIR-V shader.
+    /// Set the 2D fragment shader from a GLSL source file.
+    ///
+    /// The source is compiled during window creation. This replaces the default
+    /// VMNL 2D fragment shader for the window.
+    ///
+    /// # Arguments
+    /// - `path`: Path to a GLSL fragment shader source file.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .fs_from_file("shaders/color2d.frag")
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn fs_from_file(mut self, path: impl AsRef<std::path::Path>) -> Self {
         self.options.shaders.fragment = Some(ShaderInput::Path(path.as_ref().into()));
         self
     }
 
-    /// Sets the vertex shader for the window using a string containing the GLSL source code.
+    /// Set the 2D vertex shader from inline GLSL source code.
+    ///
+    /// This replaces the default VMNL 2D vertex shader for the window.
+    ///
+    /// # Arguments
+    /// - `source`: GLSL vertex shader source code.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .vs_from_string("#version 460\nvoid main() {}")
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn vs_from_string(mut self, source: impl Into<String>) -> Self {
         self.options.shaders.vertex = Some(ShaderInput::Src(source.into()));
         self
     }
 
-    /// Sets the fragment shader for the window using a string containing the GLSL source code.
+    /// Set the 2D fragment shader from inline GLSL source code.
+    ///
+    /// This replaces the default VMNL 2D fragment shader for the window.
+    ///
+    /// # Arguments
+    /// - `source`: GLSL fragment shader source code.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .fs_from_string("#version 460\nvoid main() {}")
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn fs_from_string(mut self, source: impl Into<String>) -> Self {
         self.options.shaders.fragment = Some(ShaderInput::Src(source.into()));
         self
     }
 
-    /// Sets the clear color for the window, which is used to clear the screen before rendering each frame.
+    /// Set the clear color used at the beginning of each submitted frame.
+    ///
+    /// This color is visible when a frame has no draw calls or where rendered
+    /// geometry does not cover the framebuffer.
+    ///
+    /// # Arguments
+    /// - `clear_color`: Color convertible to `Rgba`, for example `Rgba::BLACK`, `[r, g, b]`, or `[r, g, b, a]`.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .set_clear_color([20, 24, 32])
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
-    pub fn set_clear_color(mut self, clear_color: Rgba) -> Self {
-        self.options.clear_color = clear_color.normalized();
+    pub fn set_clear_color<C>(mut self, clear_color: C) -> Self
+    where
+        C: Into<Rgba>,
+    {
+        self.options.clear_color = clear_color.into().normalized();
         self
     }
 
-    /// Builds the `Window` instance using the specified options and the provided `Context`.
+    /// Set the required swapchain presentation mode.
+    ///
+    /// If the mode is unsupported by the surface, [`WindowBuilder::build`]
+    /// returns an error. Use [`WindowBuilder::preferred_present_mode`] for a
+    /// fallback behavior.
+    ///
+    /// # Arguments
+    /// - `present_mode`: Required swapchain presentation mode.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, PresentMode, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .present_mode(PresentMode::Fifo)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[must_use]
+    pub const fn present_mode(mut self, present_mode: PresentMode) -> Self {
+        self.options.present_mode = match present_mode {
+            PresentMode::Auto => PresentModeSelection::Auto,
+            present_mode => PresentModeSelection::Strict(present_mode),
+        };
+        self
+    }
+
+    /// Set the preferred swapchain presentation mode.
+    ///
+    /// If the mode is unsupported by the surface, window creation falls back to
+    /// VMNL's automatic priority order instead of returning an error.
+    ///
+    /// # Arguments
+    /// - `present_mode`: Preferred swapchain presentation mode.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, PresentMode, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .preferred_present_mode(PresentMode::Mailbox)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[must_use]
+    pub const fn preferred_present_mode(mut self, present_mode: PresentMode) -> Self {
+        self.options.present_mode = match present_mode {
+            PresentMode::Auto => PresentModeSelection::Auto,
+            present_mode => PresentModeSelection::Preferred(present_mode),
+        };
+        self
+    }
+
+    /// Build a `Window` from the configured options and an existing [`Context`].
+    ///
+    /// # Arguments
+    /// - `context`: Graphics context that owns the Vulkan instance/device resources.
     ///
     /// # Errors
     /// Returns an error if the options are invalid or window initialization fails.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Window};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// let context = Context::new()?;
+    /// let window = Window::builder()
+    ///     .title("VMNL")
+    ///     .size(800, 600)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn build(self, context: &Context) -> VMNLResult<Window> {
         Window::from_options(context, &self.options)
     }
@@ -187,6 +510,70 @@ mod tests {
             result,
             Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidWindowSize)
         ));
+    }
+
+    #[test]
+    fn present_mode_auto_selects_first_supported_low_latency_mode() {
+        // SAFETY: relies on the internal priority order of `PresentModeSelection::auto_vk`, which is tested separately.
+        unsafe {
+            assert_eq!(
+                PresentModeSelection::Auto
+                    .select_vk(&[VkPresentMode::Fifo, VkPresentMode::Mailbox])
+                    .unwrap_unchecked(),
+                VkPresentMode::Mailbox
+            );
+        }
+        // SAFETY: relies on the internal priority order of `PresentModeSelection::auto_vk`, which is tested separately.
+        unsafe {
+            assert_eq!(
+                PresentModeSelection::Auto
+                    .select_vk(&[VkPresentMode::Fifo, VkPresentMode::Immediate])
+                    .unwrap_unchecked(),
+                VkPresentMode::Immediate
+            );
+        }
+        // SAFETY: relies on the internal priority order of `PresentModeSelection::auto_vk`, which is tested separately.
+        unsafe {
+            assert_eq!(
+                PresentModeSelection::Auto
+                    .select_vk(&[VkPresentMode::FifoRelaxed, VkPresentMode::Fifo])
+                    .unwrap_unchecked(),
+                VkPresentMode::FifoRelaxed
+            );
+        }
+        // SAFETY: relies on the internal priority order of `PresentModeSelection::auto_vk`, which is tested separately.
+        unsafe {
+            assert_eq!(
+                PresentModeSelection::Auto
+                    .select_vk(&[VkPresentMode::Fifo])
+                    .unwrap_unchecked(),
+                VkPresentMode::Fifo
+            );
+        }
+    }
+
+    #[test]
+    fn present_mode_explicit_rejects_unsupported_mode() {
+        let result: VMNLResult<VkPresentMode> =
+            PresentModeSelection::Strict(PresentMode::Mailbox).select_vk(&[VkPresentMode::Fifo]);
+
+        assert!(matches!(
+            result,
+            Err(err) if matches!(err.kind(), VMNLErrorKind::VulkanUnsupportedFeature)
+        ));
+    }
+
+    #[test]
+    fn preferred_present_mode_falls_back_when_unsupported() {
+        // SAFETY: relies on the internal priority order of `PresentModeSelection::preferred_vk`, which is tested separately.
+        unsafe {
+            assert_eq!(
+                PresentModeSelection::Preferred(PresentMode::Mailbox)
+                    .select_vk(&[VkPresentMode::Immediate, VkPresentMode::Fifo])
+                    .unwrap_unchecked(),
+                VkPresentMode::Immediate
+            );
+        }
     }
 
     #[test]
@@ -217,6 +604,7 @@ mod tests {
         assert_eq!(options.shaders.vertex, None);
         assert_eq!(options.shaders.fragment, None);
         assert_color_eq(options.clear_color, [0.0, 0.0, 0.0, 1.0]);
+        assert_eq!(options.present_mode, PresentModeSelection::Auto);
     }
 
     #[test]
@@ -232,7 +620,8 @@ mod tests {
             let builder = builder
                 .vs_from_file("shader.vert")
                 .fs_from_string("fragment")
-                .set_clear_color(Rgba::new(255, 128, 0, 64));
+                .set_clear_color(Rgba::new(255, 128, 0, 64))
+                .present_mode(PresentMode::Mailbox);
             assert_eq!(builder.options.title, "Custom");
             assert_eq!(builder.options.width, 1024);
             assert_eq!(builder.options.height, 768);
@@ -253,7 +642,21 @@ mod tests {
                 builder.options.clear_color,
                 [1.0, 128.0 / 255.0, 0.0, 64.0 / 255.0],
             );
+            assert_eq!(
+                builder.options.present_mode,
+                PresentModeSelection::Strict(PresentMode::Mailbox)
+            );
         }
+    }
+
+    #[test]
+    fn preferred_present_mode_updates_options_without_building_window() {
+        let builder: WindowBuilder = Window::builder().preferred_present_mode(PresentMode::Mailbox);
+
+        assert_eq!(
+            builder.options.present_mode,
+            PresentModeSelection::Preferred(PresentMode::Mailbox)
+        );
     }
 
     #[test]

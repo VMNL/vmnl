@@ -9,10 +9,8 @@ mod line;
 mod rect;
 mod triangle;
 
-use super::{
-    Drawable, GraphicsResourceFactory, MaterialKey, PipelineKey, RenderItem, VMNLIndexBuffer,
-    Vector2f, Vertex, VertexBuffer,
-};
+use super::{Drawable2D, GpuVertex2D, RenderItem2D, Vector2f, Vertex2D};
+use crate::common::{GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey};
 pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
 pub use rect::{Anchor, RectBuilder};
@@ -37,15 +35,8 @@ pub(crate) enum ShapeKind {
 pub struct Shape {
     /// Type of graphics data.
     pub(crate) kind: ShapeKind,
-    /// Vertex buffer for rendering.
-    pub(crate) vertex_buffer: VertexBuffer,
-    /// Optional index buffer for indexed rendering.
-    pub(crate) index_buffer: Option<VMNLIndexBuffer>,
-    /// Number of vertices.
-    pub(crate) vertex_count: u32,
-    /// Number of indices.
-    pub(crate) index_count: u32,
-    // pub frame_ubo_buffer: FrameUboBuffer
+    /// GPU geometry used by the 2D backend.
+    pub(crate) geometry: GpuGeometry<GpuVertex2D>,
 }
 
 impl AsRef<Self> for Shape {
@@ -55,17 +46,16 @@ impl AsRef<Self> for Shape {
     }
 }
 
-impl Drawable for Shape {
-    /// Convert the `Shape` into a `RenderItem` for the rendering backend, specifying pipeline and material keys.
-    /// The `RenderItem` includes the vertex buffer, optional index buffer, and counts needed for drawing.
-    fn render_item(&self) -> RenderItem {
-        RenderItem {
+impl Drawable2D for Shape {
+    /// Convert the shape into a 2D backend draw item.
+    fn render_item_2d(&self) -> RenderItem2D {
+        RenderItem2D {
             pipeline_key: PipelineKey::Color2D,
             material_key: MaterialKey::VertexColor,
-            vertex_buffer: self.vertex_buffer.clone(),
-            index_buffer: self.index_buffer.clone(),
-            vertex_count: self.vertex_count,
-            index_count: self.index_count,
+            vertex_buffer: self.geometry.vertex_buffer.clone(),
+            index_buffer: self.geometry.index_buffer.clone(),
+            vertex_count: self.geometry.vertex_count,
+            index_count: self.geometry.index_count,
         }
     }
 }
@@ -77,9 +67,15 @@ impl Shape {
     ///
     /// `position` defaults to `(0, 0)` and `color` defaults to white.
     ///
+    /// # Arguments
+    /// - `w`: Rectangle width in pixels.
+    /// - `h`: Rectangle height in pixels.
+    ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::Shape;
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let rectangle = Shape::rect(200.0, 100.0)
@@ -98,15 +94,21 @@ impl Shape {
     ///
     /// `build` validates that indices describe triangles and stay within bounds.
     ///
+    /// # Arguments
+    /// - `vertices`: Vertex list containing 2D positions and colors.
+    /// - `indices`: Triangle index list referencing `vertices`.
+    ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f, Vertex2D};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertices = [
-    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: Rgba::new(255, 0, 0, 255) },
-    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: Rgba::new(0, 255, 0, 255) },
-    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: Rgba::new(0, 0, 255, 255) },
+    ///     Vertex2D { position: Vector2f { x: 100.0, y: 100.0 }, color: Rgba::new(255, 0, 0, 255) },
+    ///     Vertex2D { position: Vector2f { x: 300.0, y: 100.0 }, color: Rgba::new(0, 255, 0, 255) },
+    ///     Vertex2D { position: Vector2f { x: 200.0, y: 300.0 }, color: Rgba::new(0, 0, 255, 255) },
     /// ];
     /// let indices = [0, 1, 2];
     ///
@@ -117,48 +119,90 @@ impl Shape {
     /// ```
     pub fn indexed<V, I>(vertices: V, indices: I) -> IndexedShapeBuilder
     where
-        V: Into<Vec<Vertex>>,
+        V: Into<Vec<Vertex2D>>,
         I: Into<Vec<u32>>,
     {
         IndexedShapeBuilder::new(vertices.into(), indices.into())
     }
 
-    /// Create a triangle builder from exactly three required vertices.
+    /// Create a triangle builder from exactly three required positions.
+    ///
+    /// `color` defaults to white. Use `vertex_colors` for per-vertex colors.
+    ///
+    /// # Arguments
+    /// - `a`: First triangle position.
+    /// - `b`: Second triangle position.
+    /// - `c`: Third triangle position.
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
-    /// let vertex1 = Vertex {
-    ///     position: Vector2f { x: 100.0, y: 150.0 },
-    ///     color: Rgba::new(255, 0, 0, 255),
-    /// };
-    /// let vertex2 = Vertex {
-    ///     position: Vector2f { x: 300.0, y: 150.0 },
-    ///     color: Rgba::new(0, 255, 0, 255),
-    /// };
-    /// let vertex3 = Vertex {
-    ///     position: Vector2f { x: 200.0, y: 300.0 },
-    ///     color: Rgba::new(0, 0, 255, 255),
-    /// };
-    /// let triangle = Shape::triangle([vertex1, vertex2, vertex3])
+    /// let triangle = Shape::triangle(
+    ///     Vector2f { x: 100.0, y: 150.0 },
+    ///     Vector2f { x: 300.0, y: 150.0 },
+    ///     Vector2f { x: 200.0, y: 300.0 },
+    /// )
+    ///     .color(Rgba::new(255, 0, 0, 255))
     ///     .build(&context)?;
     /// # Ok(())
     /// # }
     /// ```
     #[must_use]
-    pub fn triangle(vertices: [Vertex; 3]) -> TriangleBuilder {
-        TriangleBuilder::new(vertices)
+    pub fn triangle(a: Vector2f, b: Vector2f, c: Vector2f) -> TriangleBuilder {
+        TriangleBuilder::new(a, b, c)
+    }
+
+    /// Create a triangle builder from exactly three required vertices.
+    ///
+    /// # Arguments
+    /// - `vertices`: Three vertices containing triangle positions and colors.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f, Vertex2D};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let vertex1 = Vertex2D {
+    ///     position: Vector2f { x: 100.0, y: 150.0 },
+    ///     color: Rgba::new(255, 0, 0, 255),
+    /// };
+    /// let vertex2 = Vertex2D {
+    ///     position: Vector2f { x: 300.0, y: 150.0 },
+    ///     color: Rgba::new(0, 255, 0, 255),
+    /// };
+    /// let vertex3 = Vertex2D {
+    ///     position: Vector2f { x: 200.0, y: 300.0 },
+    ///     color: Rgba::new(0, 0, 255, 255),
+    /// };
+    /// let triangle = Shape::triangle_from_vertices([vertex1, vertex2, vertex3])
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[must_use]
+    pub fn triangle_from_vertices(vertices: [Vertex2D; 3]) -> TriangleBuilder {
+        TriangleBuilder::from_vertices(vertices)
     }
 
     /// Create a line builder from required endpoints.
     ///
     /// `width` defaults to `1.0`, `cap` defaults to `Butt`, and `color` defaults to white.
     ///
+    /// # Arguments
+    /// - `from`: Start point of the line.
+    /// - `to`: End point of the line.
+    ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, LineCap, Rgba, Shape, Vector2f};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{LineCap, Shape, Vector2f};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let line = Shape::line(Vector2f { x: 100.0, y: 150.0 }, Vector2f { x: 300.0, y: 150.0 })
@@ -180,8 +224,8 @@ impl Drop for Shape {
         log::trace!(
             "dropping {:?} shape (vertices={}, indices={})",
             self.kind,
-            self.vertex_count,
-            self.index_count
+            self.geometry.vertex_count,
+            self.geometry.index_count
         );
     }
 }

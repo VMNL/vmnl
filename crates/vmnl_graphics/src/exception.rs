@@ -19,6 +19,15 @@ pub struct VMNLErrorLocation {
 
 impl VMNLErrorLocation {
     /// Returns the file in which the error occurred.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::{VMNLError, VMNLErrorKind};
+    ///
+    /// let error = VMNLError::new(VMNLErrorKind::InvalidWindowSize);
+    /// let file = error.location().file();
+    /// assert!(!file.is_empty());
+    /// ```
     #[inline]
     #[must_use]
     pub const fn file(&self) -> &'static str {
@@ -26,6 +35,15 @@ impl VMNLErrorLocation {
     }
 
     /// Returns the line number where the error occurred.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::{VMNLError, VMNLErrorKind};
+    ///
+    /// let error = VMNLError::new(VMNLErrorKind::InvalidWindowSize);
+    /// let line = error.location().line();
+    /// assert!(line > 0);
+    /// ```
     #[inline]
     #[must_use]
     pub const fn line(&self) -> u32 {
@@ -33,6 +51,15 @@ impl VMNLErrorLocation {
     }
 
     /// Returns the column number where the error occurred.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::{VMNLError, VMNLErrorKind};
+    ///
+    /// let error = VMNLError::new(VMNLErrorKind::InvalidWindowSize);
+    /// let column = error.location().column();
+    /// assert!(column > 0);
+    /// ```
     #[inline]
     #[must_use]
     pub const fn column(&self) -> u32 {
@@ -147,11 +174,19 @@ pub struct VMNLError {
 impl VMNLError {
     /// Create a new `VMNLError` with the specified error kind and caller location.
     ///
-    /// # Parameters
+    /// # Arguments
     /// - `kind`: The specific kind of error that occurred.
     ///
     /// # Returns
     /// A new `VMNLError` containing the provided error kind and caller location.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::{VMNLError, VMNLErrorKind};
+    ///
+    /// let error = VMNLError::new(VMNLErrorKind::InvalidWindowSize);
+    /// assert!(matches!(error.kind(), VMNLErrorKind::InvalidWindowSize));
+    /// ```
     #[track_caller]
     #[must_use]
     pub const fn new(kind: VMNLErrorKind) -> Self {
@@ -168,6 +203,14 @@ impl VMNLError {
     }
 
     /// Returns the kind of error that occurred.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::{VMNLError, VMNLErrorKind};
+    ///
+    /// let error = VMNLError::new(VMNLErrorKind::InvalidWindowSize);
+    /// assert!(matches!(error.kind(), VMNLErrorKind::InvalidWindowSize));
+    /// ```
     #[inline]
     #[must_use]
     pub const fn kind(&self) -> &VMNLErrorKind {
@@ -175,6 +218,15 @@ impl VMNLError {
     }
 
     /// Returns the location in the source code where the error occurred.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::{VMNLError, VMNLErrorKind};
+    ///
+    /// let error = VMNLError::new(VMNLErrorKind::InvalidWindowSize);
+    /// let location = error.location();
+    /// assert!(!location.file().is_empty());
+    /// ```
     #[inline]
     #[must_use]
     pub const fn location(&self) -> VMNLErrorLocation {
@@ -185,6 +237,15 @@ impl VMNLError {
     ///
     /// # Returns
     /// A formatted string containing the error message and its location in the source code.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::{VMNLError, VMNLErrorKind};
+    ///
+    /// let error = VMNLError::new(VMNLErrorKind::InvalidWindowSize);
+    /// let report = error.report();
+    /// assert!(report.contains("invalid window size"));
+    /// ```
     #[inline]
     #[must_use]
     pub fn report(&self) -> String {

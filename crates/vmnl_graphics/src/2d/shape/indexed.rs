@@ -5,15 +5,24 @@
 /// Implementation of indexed shapes for the VMNL graphics module,
 /// allowing for efficient rendering of complex geometries using vertex and index buffers.
 ////////////////////////////////////////////////////////////////////////////////
-use super::{Shape, ShapeKind::IndexedGeometry, Vertex};
-use crate::{graphics::GraphicsResourceFactory, Context, VMNLError, VMNLErrorKind, VMNLResult};
+use super::{Shape, ShapeKind::IndexedGeometry, Vertex2D};
+use crate::{
+    common::{
+        checked_draw_counts, validate_triangle_indices, BufferMemoryPreference, GpuGeometry,
+        GraphicsResourceFactory,
+    },
+    d2::GpuVertex2D,
+    Context, VMNLResult,
+};
 
 /// Options for configuring an indexed shape, including vertex and index data.
 struct IndexedShapeOptions {
-    /// Vertex data for the shape, defining positions and colors.
-    vertices: Vec<Vertex>,
+    /// `Vertex2D` data for the shape, defining positions and colors.
+    vertices: Vec<Vertex2D>,
     /// Index data for indexed rendering, defining the order of vertex usage.
     indices: Vec<u32>,
+    /// Preferred memory placement for the created vertex and index buffers.
+    buffer_memory_preference: BufferMemoryPreference,
 }
 
 /// Builder for creating indexed shapes in the VMNL graphics module.
@@ -24,13 +33,51 @@ pub struct IndexedShapeBuilder {
 }
 
 impl IndexedShapeBuilder {
-    pub(crate) fn new(vertices: Vec<Vertex>, indices: Vec<u32>) -> Self {
+    pub(crate) fn new(vertices: Vec<Vertex2D>, indices: Vec<u32>) -> Self {
         Self {
-            options: IndexedShapeOptions { vertices, indices },
+            options: IndexedShapeOptions {
+                vertices,
+                indices,
+                buffer_memory_preference: BufferMemoryPreference::default(),
+            },
         }
     }
 
+    /// Set the preferred memory placement for the created vertex and index buffers.
+    ///
+    /// This is a preference, not a guarantee. Defaults to `BufferMemoryPreference::Device`.
+    ///
+    /// # Arguments
+    /// - `preference`: Preferred GPU buffer memory placement.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::{BufferMemoryPreference, Rgba};
+    /// # use vmnl_graphics::d2::{Shape, Vector2f, Vertex2D};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let vertices = [
+    ///     Vertex2D { position: Vector2f { x: 0.0, y: 0.0 }, color: Rgba::new(255, 0, 0, 255) },
+    ///     Vertex2D { position: Vector2f { x: 100.0, y: 0.0 }, color: Rgba::new(0, 255, 0, 255) },
+    ///     Vertex2D { position: Vector2f { x: 50.0, y: 100.0 }, color: Rgba::new(0, 0, 255, 255) },
+    /// ];
+    /// let shape = Shape::indexed(vertices, [0, 1, 2])
+    ///     .buffer_memory_preference(BufferMemoryPreference::Host)
+    ///     .build(&context)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[must_use]
+    pub fn buffer_memory_preference(mut self, preference: BufferMemoryPreference) -> Self {
+        self.options.buffer_memory_preference = preference;
+        self
+    }
+
     /// Build the indexed shape from the vertices and indices required by `Shape::indexed`.
+    ///
+    /// # Arguments
+    /// - `vmnl_context`: Graphics context used to allocate GPU buffers.
     ///
     /// # Errors
     /// Returns an error when the geometry is empty, not triangle-aligned, or references
@@ -38,13 +85,15 @@ impl IndexedShapeBuilder {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Rgba, Shape, Vector2f, Vertex};
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{Shape, Vector2f, Vertex2D};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let vertices = [
-    ///     Vertex { position: Vector2f { x: 100.0, y: 100.0 }, color: Rgba::new(255, 0, 0, 255) },
-    ///     Vertex { position: Vector2f { x: 300.0, y: 100.0 }, color: Rgba::new(0, 255, 0, 255) },
-    ///     Vertex { position: Vector2f { x: 200.0, y: 300.0 }, color: Rgba::new(0, 0, 255, 255) },
+    ///     Vertex2D { position: Vector2f { x: 100.0, y: 100.0 }, color: Rgba::new(255, 0, 0, 255) },
+    ///     Vertex2D { position: Vector2f { x: 300.0, y: 100.0 }, color: Rgba::new(0, 255, 0, 255) },
+    ///     Vertex2D { position: Vector2f { x: 200.0, y: 300.0 }, color: Rgba::new(0, 0, 255, 255) },
     /// ];
     /// let indices = [0, 1, 2];
     ///
@@ -54,7 +103,12 @@ impl IndexedShapeBuilder {
     /// # }
     /// ```
     pub fn build(self, vmnl_context: &Context) -> VMNLResult<Shape> {
-        Self::indexed_shape(vmnl_context, &self.options.vertices, &self.options.indices)
+        Self::indexed_shape(
+            vmnl_context,
+            &self.options.vertices,
+            &self.options.indices,
+            self.options.buffer_memory_preference,
+        )
     }
 
     /// Validate the geometry of the indexed shape, ensuring it meets the requirements for rendering.
@@ -62,43 +116,24 @@ impl IndexedShapeBuilder {
     ///
     /// # Errors
     /// Returns an error if the geometry is invalid, such as having too few vertices, non-triangle-aligned indices, or out-of-bounds indices.
-    fn validate_geometry(vertices: &[Vertex], indices: &[u32]) -> VMNLResult<()> {
-        if vertices.len() < 3 {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "indexed shape requires at least 3 vertices".to_string(),
-            )));
-        }
-        if indices.len() < 3 || !indices.len().is_multiple_of(3) {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "indexed shape requires a non-empty triangle index list".to_string(),
-            )));
-        }
-        if let Some(index) = indices
-            .iter()
-            .copied()
-            .find(|&index| usize::try_from(index).map_or(true, |index| index >= vertices.len()))
-        {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
-                "indexed shape index {index} is out of bounds for {} vertices",
-                vertices.len()
-            ))));
-        }
-        Ok(())
+    fn validate_geometry(vertices: &[Vertex2D], indices: &[u32]) -> VMNLResult<()> {
+        validate_triangle_indices(vertices.len(), indices, "indexed shape")
     }
 
     /// Create a `Shape` instance with indexed vertices.
     ///
     /// # Arguments
     /// - `vmnl_context`: Reference to the VMNL context providing the memory allocator.
-    /// - `vertices`: Slice of `Vertex` instances.
+    /// - `vertices`: Slice of `Vertex2D` instances.
     /// - `indices`: Slice of `u32` indices for indexed rendering.
     ///
     /// # Returns
     /// A `Shape` instance containing created vertex and index buffers ready for rendering.
     pub(crate) fn indexed_shape(
         vmnl_context: &Context,
-        vertices: &[Vertex],
+        vertices: &[Vertex2D],
         indices: &[u32],
+        buffer_memory_preference: BufferMemoryPreference,
     ) -> VMNLResult<Shape> {
         Self::validate_geometry(vertices, indices)?;
         log::trace!(
@@ -106,26 +141,25 @@ impl IndexedShapeBuilder {
             vertices.len(),
             indices.len()
         );
+        let (vertex_count, index_count): (u32, u32) =
+            checked_draw_counts(vertices.len(), indices.len())?;
+
         Ok(Shape {
             kind: IndexedGeometry,
-            vertex_count: u32::try_from(vertices.len()).map_err(|_| {
-                VMNLError::new(VMNLErrorKind::InvalidState(
-                    "vertex count out of bounds".to_string(),
-                ))
-            })?,
-            index_count: u32::try_from(indices.len()).map_err(|_| {
-                VMNLError::new(VMNLErrorKind::InvalidState(
-                    "index count out of bounds".to_string(),
-                ))
-            })?,
-            vertex_buffer: Shape::create_vertex_buffer(
-                vertices.iter().as_slice(),
-                &vmnl_context.inner.memory_allocator,
-            )?,
-            index_buffer: Some(Shape::create_index_buffer(
-                indices,
-                &vmnl_context.inner.memory_allocator,
-            )?),
+            geometry: GpuGeometry {
+                vertex_count,
+                index_count,
+                vertex_buffer: Shape::create_vertex_buffer(
+                    vertices.iter().copied().map(GpuVertex2D::from),
+                    buffer_memory_preference,
+                    &vmnl_context.inner.memory_allocator,
+                )?,
+                index_buffer: Some(Shape::create_index_buffer(
+                    indices,
+                    buffer_memory_preference,
+                    &vmnl_context.inner.memory_allocator,
+                )?),
+            },
         })
     }
 }
@@ -133,16 +167,16 @@ impl IndexedShapeBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Rgba, Vector2f};
+    use crate::{common::Rgba, d2::Vector2f, VMNLErrorKind};
 
-    fn vertex(x: f32, y: f32) -> Vertex {
-        Vertex {
+    fn vertex(x: f32, y: f32) -> Vertex2D {
+        Vertex2D {
             position: Vector2f { x, y },
             color: Rgba::new(255, 255, 255, 255),
         }
     }
 
-    fn vertices() -> [Vertex; 3] {
+    fn vertices() -> [Vertex2D; 3] {
         [vertex(0.0, 0.0), vertex(1.0, 0.0), vertex(0.0, 1.0)]
     }
 
@@ -188,5 +222,28 @@ mod tests {
             result,
             Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "indexed shape index 3 is out of bounds for 3 vertices")
         ));
+    }
+
+    #[test]
+    fn buffer_memory_preference_defaults_to_device() {
+        let builder: IndexedShapeBuilder =
+            IndexedShapeBuilder::new(vertices().to_vec(), vec![0, 1, 2]);
+
+        assert_eq!(
+            builder.options.buffer_memory_preference,
+            BufferMemoryPreference::Device
+        );
+    }
+
+    #[test]
+    fn buffer_memory_preference_can_be_overridden() {
+        let builder: IndexedShapeBuilder =
+            IndexedShapeBuilder::new(vertices().to_vec(), vec![0, 1, 2])
+                .buffer_memory_preference(BufferMemoryPreference::Host);
+
+        assert_eq!(
+            builder.options.buffer_memory_preference,
+            BufferMemoryPreference::Host
+        );
     }
 }

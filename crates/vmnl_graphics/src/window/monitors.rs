@@ -2,15 +2,11 @@
 /// SPDX-FileCopyrightText: 2026 Hugo Duda
 /// SPDX-License-Identifier: MIT
 ///
-/// Brief
+/// Monitor discovery and monitor metadata helpers.
 ////////////////////////////////////////////////////////////////////////////////
 extern crate glfw;
 
-/// Monitor information and utilities for the VMNL window module.
-///
-/// This module defines the `Monitor` struct, which encapsulates information about connected monitors,
-/// including their video modes, physical characteristics, and primary status. It provides methods
-/// to access this information in a structured way.
+/// Video mode supported by a monitor.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct VideoMode {
     /// The width of the video mode in pixels.
@@ -41,8 +37,7 @@ impl From<glfw::VidMode> for VideoMode {
     }
 }
 
-/// Represents detailed information about a monitor, including its name, position, physical size,
-/// content scale, work area, current video mode, available video modes, and whether it is the primary monitor.
+/// Snapshot of one connected monitor and its display capabilities.
 #[derive(Debug, Clone)]
 pub struct MonitorInfo {
     /// The name of the monitor, if available.
@@ -63,7 +58,7 @@ pub struct MonitorInfo {
     pub is_primary: bool,
 }
 
-/// Represents the collection of connected monitors and their information.
+/// Collection of connected monitor snapshots.
 #[derive(Debug, Clone)]
 pub struct Monitors {
     /// A vector containing information about all connected monitors.

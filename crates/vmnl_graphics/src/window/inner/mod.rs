@@ -14,7 +14,7 @@ mod render_target;
 mod surface;
 mod swapchain;
 
-use super::WindowOptions;
+use super::{PresentModeSelection, WindowOptions};
 use crate::exception::{VMNLError, VMNLErrorKind};
 use crate::vmnl_instance::VMNLInstance;
 use crate::window::event::EventQueue;
@@ -57,6 +57,7 @@ impl VMNLWindow {
             &options.title,
             &options.shaders,
             options.clear_color,
+            options.present_mode,
         )
     }
 
@@ -68,6 +69,7 @@ impl VMNLWindow {
         title: &str,
         shaders: &WindowShaders,
         clear_color: [f32; 4],
+        present_mode: PresentModeSelection,
     ) -> VMNLResult<Self> {
         let vmnl_instance: Rc<VMNLInstance> = vmnl_context.inner.clone();
         let mut glfw: ::glfw::Glfw = vmnl_instance.glfw.clone();
@@ -93,14 +95,18 @@ impl VMNLWindow {
             u32::try_from(frame_buffer_height)
                 .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed))?,
         ];
-        let (swapchain, images): (Arc<Swapchain>, Vec<Arc<Image>>) =
-            Self::create_swapchain(&vmnl_instance.device, &surface, framebuffer_extent)?;
+        let (swapchain, images): (Arc<Swapchain>, Vec<Arc<Image>>) = Self::create_swapchain(
+            &vmnl_instance.device,
+            &surface,
+            framebuffer_extent,
+            present_mode,
+        )?;
         let image_views: Vec<Arc<ImageView>> = Self::create_image_views(&images)?;
         let render_pass: Arc<RenderPass> =
             Self::create_render_pass(&vmnl_instance.device, &swapchain)?;
         let framebuffers: Vec<Arc<Framebuffer>> =
             Self::create_framebuffers(&image_views, &render_pass)?;
-        let graphics_pipeline: Arc<GraphicsPipeline> =
+        let pipeline_2d: Arc<GraphicsPipeline> =
             Self::create_graphics_pipeline(&vmnl_instance.device, &render_pass, shaders)?;
         let previous_frame_end: Option<Box<dyn GpuFuture>> =
             Some(sync::now(vmnl_instance.device.clone()).boxed());
@@ -113,7 +119,7 @@ impl VMNLWindow {
                 context: window,
                 events,
                 framebuffers,
-                graphics_pipeline,
+                pipeline_2d,
                 previous_frame_end,
                 swapchain,
                 input,
