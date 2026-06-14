@@ -1,6 +1,6 @@
 [workspace]
-members = ["crates/vmnl_graphics", "crates/vmnl", "examples/test"]
-default-members = ["crates/vmnl_graphics", "crates/vmnl"]
+members = ["crates/vmnl_graphics", "crates/vmnl", "crates/vmnl_audio", "examples/test"]
+default-members = ["crates/vmnl_graphics", "crates/vmnl", "crates/vmnl_audio"]
 resolver = "2"
 
 [workspace.package]
