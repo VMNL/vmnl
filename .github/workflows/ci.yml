@@ -6,22 +6,44 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  fmt:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
+          components: rustfmt
+      - name: fmt
+        run: cargo fmt --all --check
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - name: install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwayland-dev libxkbcommon-dev xorg-dev
-      - name: fmt
-        run: cargo fmt --all --check
-      - name: unit-tests
-        run: cargo test --workspace --lib
-      - name: doc-tests
-        run: cargo test --workspace --all-features --doc
+          sudo apt-get install -y \
+            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
+            libvulkan-dev vulkan-tools libglfw3-dev \
+            libwayland-dev libxkbcommon-dev xorg-dev
+      - name: tests
+        run: cargo test --workspace --all-targets
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
+            libvulkan-dev vulkan-tools libglfw3-dev \
+            libwayland-dev libxkbcommon-dev xorg-dev
       - name: clippy
-        run: cargo clippy --workspace --all-targets
+        run: cargo clippy --workspace --all-targets -- -D warnings
