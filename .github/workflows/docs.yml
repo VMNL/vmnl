@@ -1,0 +1,26 @@
+name: docs
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
+            libvulkan-dev vulkan-tools libglfw3-dev \
+            libwayland-dev libxkbcommon-dev xorg-dev
+      - name: doc-tests
+        run: cargo test --workspace --all-features --doc
+      - name: doc
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --workspace --no-deps
