@@ -201,7 +201,7 @@ cargo build
 
 | Name | Role |
 | ---- | ---- |
-| [Hugo Duda](https://github.com/HugoDuda) | Product Owner · Tech Lead - graphics (low-level & high-level) |
+| [Hugo Duda](https://github.com/HugoDuda) | Product Owner · Graphics Lead (low-level & high-level) |
 | [Maxence Pierre](https://github.com/Anexoms) | Low-level developer |
 | [Nathan Flachat](https://github.com/NathanFlachat) | Low-level & high-level developer |
 | [Naouel Bouhali](https://github.com/BouhaliNaouel) | High-level developer |
