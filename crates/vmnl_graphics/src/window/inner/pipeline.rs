@@ -5,16 +5,15 @@
 /// Vulkan graphics pipeline and shader module creation helpers.
 ////////////////////////////////////////////////////////////////////////////////
 use super::VMNLWindow;
+use crate::common::{BlendMode, ShaderSource};
 use crate::d2::GpuVertex2D;
-use crate::window::shaders::{
-    ShaderInput, WindowShaders, DEFAULT_FRAGMENT_SHADER, DEFAULT_VERTEX_SHADER,
-};
+use crate::window::shaders::{WindowShaders, DEFAULT_FRAGMENT_SHADER, DEFAULT_VERTEX_SHADER};
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;
 use vulkano::{
     device::Device,
     pipeline::{
-        graphics::color_blend::{ColorBlendAttachmentState, ColorBlendState},
+        graphics::color_blend::{AttachmentBlend, ColorBlendAttachmentState, ColorBlendState},
         graphics::input_assembly::InputAssemblyState,
         graphics::multisample::MultisampleState,
         graphics::rasterization::RasterizationState,
@@ -103,18 +102,19 @@ impl VMNLWindow {
         device: &Arc<Device>,
         render_pass: &Arc<RenderPass>,
         shaders: &WindowShaders,
+        blend_mode: BlendMode,
     ) -> VMNLResult<Arc<GraphicsPipeline>> {
         let compiler: shaderc::Compiler = shaderc::Compiler::new()
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderCompilationFailed))?;
         let vs: Arc<ShaderModule> = match shaders.vertex.as_ref() {
-            Some(ShaderInput::Src(source)) => Self::load_shader_from_src(
+            Some(ShaderSource::Src(source)) => Self::load_shader_from_src(
                 device,
                 &compiler,
                 source,
                 shaderc::ShaderKind::Vertex,
                 "user.vert",
             )?,
-            Some(ShaderInput::Path(path)) => Self::load_shader_from_path(
+            Some(ShaderSource::Path(path)) => Self::load_shader_from_path(
                 device,
                 &compiler,
                 path.as_path(),
@@ -129,14 +129,14 @@ impl VMNLWindow {
             )?,
         };
         let fs: Arc<ShaderModule> = match shaders.fragment.as_ref() {
-            Some(ShaderInput::Src(source)) => Self::load_shader_from_src(
+            Some(ShaderSource::Src(source)) => Self::load_shader_from_src(
                 device,
                 &compiler,
                 source,
                 shaderc::ShaderKind::Fragment,
                 "user.frag",
             )?,
-            Some(ShaderInput::Path(path)) => Self::load_shader_from_path(
+            Some(ShaderSource::Path(path)) => Self::load_shader_from_path(
                 device,
                 &compiler,
                 path.as_path(),
@@ -172,6 +172,13 @@ impl VMNLWindow {
         let vertex_input_state: VertexInputState = GpuVertex2D::per_vertex()
             .definition(&vs)
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+        let color_blend_attachment_state = match blend_mode {
+            BlendMode::Opaque => ColorBlendAttachmentState::default(),
+            BlendMode::Alpha => ColorBlendAttachmentState {
+                blend: Some(AttachmentBlend::alpha()),
+                ..Default::default()
+            },
+        };
 
         GraphicsPipeline::new(
             device.clone(),
@@ -186,7 +193,7 @@ impl VMNLWindow {
                 multisample_state: Some(MultisampleState::default()),
                 color_blend_state: Some(ColorBlendState::with_attachment_states(
                     subpass.num_color_attachments(),
-                    ColorBlendAttachmentState::default(),
+                    color_blend_attachment_state,
                 )),
                 subpass: Some(subpass.into()),
                 ..GraphicsPipelineCreateInfo::layout(layout)

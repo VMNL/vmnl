@@ -1,1 +1,3 @@
-A guide that describes the technological environment of your project
+This file is kept as a compatibility pointer.
+
+Canonical testing documentation lives in [testing.md](testing.md).

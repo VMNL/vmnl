@@ -8,6 +8,8 @@ mod monitors;
 mod render;
 mod runtime;
 mod shaders;
+use std::sync::Arc;
+
 use crate::window::inner::VMNLWindow;
 use crate::{Context, VMNLResult};
 pub use api::{FrameRenderer, RenderMode};
@@ -16,6 +18,7 @@ pub use builder::{PresentMode, WindowBuilder};
 pub use event::Event;
 pub use input::{Input, Key, KeyboardState, MouseButton, MouseState};
 pub use monitors::{MonitorInfo, Monitors, VideoMode};
+use vulkano::{device::Device, render_pass::RenderPass};
 
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
@@ -101,5 +104,13 @@ impl Window {
         Ok(Self {
             inner: inner_window,
         })
+    }
+
+    pub(crate) fn device(&self) -> Arc<Device> {
+        self.inner.handle.vmnl_instance.device.clone()
+    }
+
+    pub(crate) fn render_pass(&self) -> Arc<RenderPass> {
+        self.inner.handle.render_pass.clone()
     }
 }

@@ -36,6 +36,7 @@ A low-level, explicit, and modular Rust foundation for graphics, audio, and netw
 - [Status](#status)
 - [Installation](#installation)
 - [Building from Source](#building-from-source)
+- [Technical Documentation](#technical-documentation)
 - [Roadmap](#roadmap)
 - [References](#references)
 - [Authors](#authors)
@@ -160,6 +161,12 @@ git clone https://github.com/VMNL/vmnl.git
 cd vmnl
 cargo build
 ```
+
+---
+
+## Technical Documentation
+
+Technical documentation starts at [docs/README.md](docs/README.md).
 
 ---
 

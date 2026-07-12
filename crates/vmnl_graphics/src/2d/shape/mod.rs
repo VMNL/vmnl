@@ -10,7 +10,7 @@ mod rect;
 mod triangle;
 
 use super::{Drawable2D, GpuVertex2D, RenderItem2D, Vector2f, Vertex2D};
-use crate::common::{GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey};
+use crate::common::{BlendMode, GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey};
 pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
 pub use rect::{Anchor, RectBuilder};
@@ -35,6 +35,8 @@ pub(crate) enum ShapeKind {
 pub struct Shape {
     /// Type of graphics data.
     pub(crate) kind: ShapeKind,
+    /// Color blending policy selected from the CPU-side vertex alpha values.
+    pub(crate) blend_mode: BlendMode,
     /// GPU geometry used by the 2D backend.
     pub(crate) geometry: GpuGeometry<GpuVertex2D>,
 }
@@ -52,6 +54,7 @@ impl Drawable2D for Shape {
         RenderItem2D {
             pipeline_key: PipelineKey::Color2D,
             material_key: MaterialKey::VertexColor,
+            blend_mode: self.blend_mode,
             vertex_buffer: self.geometry.vertex_buffer.clone(),
             index_buffer: self.geometry.index_buffer.clone(),
             vertex_count: self.geometry.vertex_count,
@@ -63,6 +66,14 @@ impl Drawable2D for Shape {
 impl GraphicsResourceFactory for Shape {}
 
 impl Shape {
+    pub(crate) fn blend_mode_from_vertices(vertices: &[Vertex2D]) -> BlendMode {
+        if vertices.iter().all(|vertex| vertex.color.a == 255) {
+            BlendMode::Opaque
+        } else {
+            BlendMode::Alpha
+        }
+    }
+
     /// Create a rectangle builder with a required size.
     ///
     /// `position` defaults to `(0, 0)` and `color` defaults to white.
@@ -227,5 +238,60 @@ impl Drop for Shape {
             self.geometry.vertex_count,
             self.geometry.index_count
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::common::Rgba;
+
+    fn vertex(alpha: u8) -> Vertex2D {
+        Vertex2D {
+            position: Vector2f { x: 0.0, y: 0.0 },
+            color: Rgba::rgba(255, 255, 255, alpha),
+        }
+    }
+
+    #[test]
+    fn blend_mode_from_vertices_is_opaque_when_all_alpha_values_are_255() {
+        let vertices = [vertex(255), vertex(255), vertex(255)];
+
+        assert_eq!(
+            Shape::blend_mode_from_vertices(&vertices),
+            BlendMode::Opaque
+        );
+    }
+
+    #[test]
+    fn blend_mode_from_vertices_is_alpha_when_one_alpha_is_below_255() {
+        let vertices = [vertex(255), vertex(254), vertex(255)];
+
+        assert_eq!(Shape::blend_mode_from_vertices(&vertices), BlendMode::Alpha);
+    }
+
+    #[test]
+    fn blend_mode_from_vertices_is_alpha_when_one_alpha_is_zero() {
+        let vertices = [vertex(255), vertex(0), vertex(255)];
+
+        assert_eq!(Shape::blend_mode_from_vertices(&vertices), BlendMode::Alpha);
+    }
+
+    #[test]
+    #[ignore = "Requires Vulkan + GLFW display."]
+    fn render_item_2d_preserves_shape_blend_mode() -> crate::VMNLResult<()> {
+        let context = crate::Context::new()?;
+        let shape = Shape::triangle(
+            Vector2f { x: 0.0, y: 0.0 },
+            Vector2f { x: 1.0, y: 0.0 },
+            Vector2f { x: 0.0, y: 1.0 },
+        )
+        .color(Rgba::rgba(255, 255, 255, 128))
+        .build(&context)?;
+
+        let render_item = shape.render_item_2d();
+
+        assert_eq!(render_item.blend_mode, BlendMode::Alpha);
+        Ok(())
     }
 }

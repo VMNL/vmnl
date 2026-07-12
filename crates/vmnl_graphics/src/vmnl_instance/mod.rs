@@ -24,13 +24,15 @@ mod tests;
 
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 pub use context::Context;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use vulkano::{
     command_buffer::allocator::StandardCommandBufferAllocator,
     device::{physical::PhysicalDevice, Device, DeviceExtensions, Queue},
     instance::Instance,
     memory::allocator::StandardMemoryAllocator,
 };
+
+static GLFW_INIT_LOCK: Mutex<()> = Mutex::new(());
 
 /// Represents the core Vulkan context used by the graphical part of the library.
 ///
@@ -69,8 +71,15 @@ impl VMNLInstance {
     #[must_use = "VMNLInstance is required for Context initialization"]
     pub(crate) fn new() -> VMNLResult<Self> {
         log::debug!("initializing VMNL instance");
-        let glfw: glfw::Glfw = glfw::init(glfw::fail_on_errors)
-            .map_err(|_| VMNLError::new(VMNLErrorKind::GlfwInitFailed))?;
+        let _glfw_init_guard = GLFW_INIT_LOCK.lock().map_err(|_| {
+            VMNLError::new(VMNLErrorKind::InvalidState(
+                "GLFW initialization lock is poisoned".into(),
+            ))
+        })?;
+        let glfw: glfw::Glfw = glfw::init(|error, description| {
+            log::error!("GLFW error {error:?}: {description}");
+        })
+        .map_err(|_| VMNLError::new(VMNLErrorKind::GlfwInitFailed))?;
         let instance: Arc<Instance> = Self::create_instance(&glfw)?;
         let device_extensions: DeviceExtensions = DeviceExtensions {
             khr_swapchain: true,

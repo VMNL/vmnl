@@ -19,3 +19,12 @@ pub(crate) enum MaterialKey {
     /// Per-vertex color only, without texture sampling.
     VertexColor,
 }
+
+/// Per-item color blending policy.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub(crate) enum BlendMode {
+    /// Disable blending and write fragment output directly.
+    Opaque,
+    /// Enable source-alpha blending.
+    Alpha,
+}

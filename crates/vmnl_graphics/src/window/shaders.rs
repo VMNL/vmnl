@@ -1,26 +1,18 @@
 ////////////////////////////////////////////////////////////////////////////////
-// SPDX-FileCopyrightText: 2026 Hugo Duda
-// SPDX-License-Identifier: MIT
-//
-// Shader input definitions and default GLSL sources for the VMNL window pipeline.
+/// SPDX-FileCopyrightText: 2026 Hugo Duda
+/// SPDX-License-Identifier: MIT
+///
+/// Shader definitions and default GLSL sources for the VMNL window pipeline.
 ////////////////////////////////////////////////////////////////////////////////
-
-/// Shader input, either as inline GLSL source or as a path to a GLSL source file.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub(crate) enum ShaderInput {
-    /// Raw GLSL source code as a string.
-    Src(String),
-    /// File path to GLSL source code.
-    Path(std::path::PathBuf),
-}
+use crate::common::ShaderSource;
 
 /// Struct to hold shader inputs for a window, allowing for dynamic shader management.
 #[derive(Debug, Clone)]
 pub(crate) struct WindowShaders {
     /// Optional vertex shader input.
-    pub vertex: Option<ShaderInput>,
+    pub vertex: Option<ShaderSource>,
     /// Optional fragment shader input.
-    pub fragment: Option<ShaderInput>,
+    pub fragment: Option<ShaderSource>,
 }
 
 pub(crate) const DEFAULT_VERTEX_SHADER: &str = r"
@@ -31,9 +23,8 @@ pub(crate) const DEFAULT_VERTEX_SHADER: &str = r"
     } pc;
 
     layout(location = 0) in vec2 position;
-    layout(location = 1) in vec3 color;
-
-    layout(location = 0) out vec3 out_color;
+    layout(location = 1) in vec4 color;
+    layout(location = 0) out vec4 out_color;
 
     void main() {
         vec2 ndc = vec2(
@@ -49,10 +40,10 @@ pub(crate) const DEFAULT_VERTEX_SHADER: &str = r"
 pub(crate) const DEFAULT_FRAGMENT_SHADER: &str = r"
     #version 460
 
-    layout(location = 0) in vec3 in_color;
+    layout(location = 0) in vec4 in_color;
     layout(location = 0) out vec4 f_color;
 
     void main() {
-        f_color = vec4(in_color, 1.0);
+        f_color = in_color;
     }
 ";

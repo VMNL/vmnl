@@ -6,6 +6,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 use crate::d2::{Drawable2D, RenderItem2D};
 use crate::d3::{Camera, Drawable3D, RenderItem3D};
+use crate::raw::{Geometry as RawGeometry, Pipeline as RawPipeline, RenderItemRaw};
+use crate::window::render::RenderPassCommand;
 use crate::window::Window;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 
@@ -33,6 +35,8 @@ enum FramePass<'g> {
         camera: &'g Camera,
         items: Vec<RenderItem3D>,
     },
+    /// Raw render pass.
+    Raw { items: Vec<RenderItemRaw> },
 }
 
 /// Pending frame render operation created by [`Window::render`].
@@ -173,6 +177,22 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
         self
     }
 
+    /// Add a raw render pass to the pending frame.
+    #[must_use]
+    pub fn draw_raw<TVertex, const N: usize>(
+        mut self,
+        pipeline: &'g RawPipeline<TVertex>,
+        geometries: [&'g RawGeometry<TVertex>; N],
+    ) -> Self {
+        self.passes.push(FramePass::Raw {
+            items: geometries
+                .into_iter()
+                .map(|geometry| pipeline.render_item(geometry))
+                .collect(),
+        });
+        self
+    }
+
     /// Submit the frame to the GPU.
     ///
     /// The recorded passes are consumed by this call. A frame with no draw pass
@@ -213,21 +233,22 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
     /// error if frame acquisition, command recording, submission, or
     /// presentation fails.
     pub fn submit(self) -> VMNLResult<()> {
-        let mut items_2d: Vec<RenderItem2D> = Vec::new();
+        let mut commands: Vec<RenderPassCommand> = Vec::new();
 
         for pass in self.passes {
             match pass {
-                FramePass::D2 { items } => items_2d.extend(items),
+                FramePass::D2 { items } => commands.push(RenderPassCommand::D2 { items }),
                 FramePass::D3 { camera, items } => {
                     let _ = (camera, items.len());
                     return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                         "3D rendering is not implemented yet".to_string(),
                     )));
                 }
+                FramePass::Raw { items } => commands.push(RenderPassCommand::Raw { items }),
             }
         }
 
-        self.window.inner.render_2d(self.mode, &items_2d)
+        self.window.inner.render_commands(self.mode, &commands)
     }
 }
 

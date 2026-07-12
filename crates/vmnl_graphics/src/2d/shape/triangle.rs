@@ -248,6 +248,7 @@ impl TriangleBuilder {
         );
         Ok(Shape {
             kind: RawVertices,
+            blend_mode: Shape::blend_mode_from_vertices(&vertices),
             geometry: GpuGeometry {
                 vertex_count: 3,
                 index_count: 0,

@@ -2,87 +2,158 @@
 
 set -euo pipefail
 
-PROJECT_PACKAGE="${PROJECT_PACKAGE:-test}"
+PROJECT_PACKAGE="${PROJECT_PACKAGE:-d2_shapes}"
 
 DO_CLEAN=0
 DO_RUN=1
 DO_BUILD=0
 DO_VERBOSE=0
-DO_TESTS=0
+DO_UNIT_TESTS=0
+DO_API_TESTS=0
+DO_SMOKE_TESTS=0
+DO_GPU_TESTS=0
 DO_LINT=0
 DO_WARNING=0
 DO_DOCTESTS=0
+DO_TESTS=0
 
 usage()
 {
     cat >&2 <<'EOF'
-Usage: ./run.sh [-c | --clean] [-r | --run] [-b | --build] [-v | --verbose] [-t | --tests] [-l | --lint] [-w | --warning] [-d | --doctests]
+Usage: ./run [options] [example]
 
 Options:
-  -c | --clean      cargo clean only
-  -r | --run        cargo clean + cargo run
-  -b | --build      cargo build
-  -v | --verbose    verbose cargo output (-vv)
-  -t | --tests      run tests instead of examples
-  -l | --lint       run clippy lints instead of building/running
-  -w | --warning    run clippy lints with warnings
-  -d | --doctests   run doctests
+  -c  | --clean             cargo clean only
+  -r  | --run               cargo clean + cargo run
+  -b  | --build             cargo build
+  -v  | --verbose           verbose cargo output (-vv)
+  -ut | --unit-tests        run unit tests
+  -at | --api-tests         run API tests
+  -ft | --functional-tests  alias for --api-tests
+  -st | --smoke-tests       run smoke tests
+  -gt | --gpu-tests         run GPU/display tests
+  -t  | --tests             run unit, API, and smoke tests
+  -l  | --lint              run clippy lints instead of building/running
+  -w  | --warning           run clippy lints with warnings
+  -d  | --doctests          run doctests
+
+Examples:
+  ./run d2_shapes
+  ./run -b raw_pipeline
+  ./run -ut
+  ./run -at
+  ./run -st
+  ./run -gt
+  ./run -t
 
 Default:
-  cargo run
+  cargo run -p d2_shapes
 EOF
 }
 
-while getopts ":crbvtlwd--clean--run--build--verbose--tests--lint--warning--doctests" opt; do
-    case "${opt}" in
-        c|--clean)
+EXAMPLE_ARG=""
+
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        -c|--clean)
             DO_CLEAN=1
             DO_RUN=0
             DO_BUILD=0
             ;;
-        r|--run)
+        -r|--run)
             DO_CLEAN=1
             DO_RUN=1
             DO_BUILD=0
             ;;
-        b|--build)
+        -b|--build)
             DO_CLEAN=0
             DO_RUN=0
             DO_BUILD=1
             ;;
-        v|--verbose)
+        -v|--verbose)
             DO_VERBOSE=1
             ;;
-        t|--tests)
-            DO_TESTS=1
+        -ut|--unit-tests)
+            DO_UNIT_TESTS=1
             DO_CLEAN=0
             DO_RUN=0
             DO_BUILD=0
             ;;
-        l|--lint)
+        -at|--api-tests|-ft|--functional-tests)
+            DO_API_TESTS=1
+            DO_CLEAN=0
+            DO_RUN=0
+            DO_BUILD=0
+            ;;
+        -st|--smoke-tests)
+            DO_SMOKE_TESTS=1
+            DO_CLEAN=0
+            DO_RUN=0
+            DO_BUILD=0
+            ;;
+        -gt|--gpu-tests)
+            DO_GPU_TESTS=1
+            DO_CLEAN=0
+            DO_RUN=0
+            DO_BUILD=0
+            ;;
+        -t|--tests)
+            DO_UNIT_TESTS=0
+            DO_API_TESTS=0
+            DO_SMOKE_TESTS=0
+            DO_GPU_TESTS=0
+            DO_CLEAN=0
+            DO_RUN=0
+            DO_BUILD=0
+            DO_TESTS=1
+            ;;
+        -l|--lint)
             DO_LINT=1
             DO_CLEAN=0
             DO_RUN=0
             DO_BUILD=0
             ;;
-        w|--warning)
+        -w|--warning)
             DO_WARNING=1
             DO_CLEAN=0
             DO_RUN=0
             DO_BUILD=0
             ;;
-        d|--doctests)
+        -d|--doctests)
             DO_DOCTESTS=1
             DO_CLEAN=0
             DO_RUN=0
             DO_BUILD=0
             ;;
-        \?)
+        --)
+            shift
+            if [[ "$#" -gt 1 ]]; then
+                usage
+                exit 1
+            fi
+            if [[ "$#" -eq 1 ]]; then
+                EXAMPLE_ARG="$1"
+            fi
+            break
+            ;;
+        -*)
             usage
             exit 1
             ;;
+        *)
+            if [[ -n "${EXAMPLE_ARG}" ]]; then
+                usage
+                exit 1
+            fi
+            EXAMPLE_ARG="$1"
+            ;;
     esac
+    shift
 done
+
+if [[ -n "${EXAMPLE_ARG}" ]]; then
+    PROJECT_PACKAGE="${EXAMPLE_ARG}"
+fi
 
 if [[ -t 2 ]]; then
     R=$'\033[0m'
@@ -139,6 +210,10 @@ die()
     exit 1
 }
 
+if [[ -n "${EXAMPLE_ARG}" && ( "${DO_UNIT_TESTS}" -eq 1 || "${DO_API_TESTS}" -eq 1 || "${DO_SMOKE_TESTS}" -eq 1 || "${DO_GPU_TESTS}" -eq 1 || "${DO_TESTS}" -eq 1 ) ]]; then
+    die "test flags do not accept an example argument"
+fi
+
 kv()
 {
     local key="$1"
@@ -148,7 +223,7 @@ kv()
 
 cmd()
 {
-    printf '%b %s\n' "${MAG}$${R}" "$*" >&2
+    printf '%b %s\n' "${MAG}\$${R}" "$*" >&2
 }
 
 step()
@@ -183,7 +258,11 @@ print_runtime_config()
     kv "run"      "${DO_RUN}"
     kv "build"    "${DO_BUILD}"
     kv "verbose"  "${DO_VERBOSE}"
-    kv "tests"    "${DO_TESTS}"
+    kv "unit tests" "${DO_UNIT_TESTS}"
+    kv "API tests" "${DO_API_TESTS}"
+    kv "smoke tests" "${DO_SMOKE_TESTS}"
+    kv "GPU tests" "${DO_GPU_TESTS}"
+    kv "tests" "${DO_TESTS}"
     kv "lint"     "${DO_LINT}"
     kv "warning"  "${DO_WARNING}"
     kv "doctests" "${DO_DOCTESTS}"
@@ -457,6 +536,72 @@ run_cargo()
     ok "nothing else to do"
 }
 
+run_unit_tests()
+{
+    local cargo_flags=()
+
+    section "Unit tests"
+    if [[ "${DO_VERBOSE}" -eq 1 ]]; then
+        cargo_flags+=("-vv")
+        ok "verbose mode enabled"
+    fi
+    cmd "cargo test ${cargo_flags[*]:-} --workspace --lib --exclude vmnl-api-tests --exclude vmnl-gpu-tests --exclude vmnl-smoke-tests"
+    cargo test "${cargo_flags[@]}" --workspace --lib \
+        --exclude vmnl-api-tests \
+        --exclude vmnl-gpu-tests \
+        --exclude vmnl-smoke-tests
+    ok "unit tests completed"
+}
+
+run_api_tests()
+{
+    local cargo_flags=()
+
+    section "API tests"
+    if [[ "${DO_VERBOSE}" -eq 1 ]]; then
+        cargo_flags+=("-vv")
+        ok "verbose mode enabled"
+    fi
+    cmd "cargo test ${cargo_flags[*]:-} -p vmnl-api-tests"
+    cargo test "${cargo_flags[@]}" -p vmnl-api-tests
+    ok "API tests completed"
+}
+
+run_smoke_tests()
+{
+    local cargo_flags=()
+
+    section "Smoke tests"
+    if [[ "${DO_VERBOSE}" -eq 1 ]]; then
+        cargo_flags+=("-vv")
+        ok "verbose mode enabled"
+    fi
+    cmd "cargo run ${cargo_flags[*]:-} -p vmnl-smoke-tests"
+    cargo run "${cargo_flags[@]}" -p vmnl-smoke-tests
+    ok "smoke tests completed"
+}
+
+run_gpu_tests()
+{
+    local cargo_flags=()
+
+    section "GPU/display tests"
+    if [[ "${DO_VERBOSE}" -eq 1 ]]; then
+        cargo_flags+=("-vv")
+        ok "verbose mode enabled"
+    fi
+    cmd "cargo test ${cargo_flags[*]:-} -p vmnl-gpu-tests -- --ignored"
+    cargo test "${cargo_flags[@]}" -p vmnl-gpu-tests -- --ignored
+    ok "GPU/display tests completed"
+}
+
+run_default_tests()
+{
+    run_unit_tests
+    run_api_tests
+    run_smoke_tests
+}
+
 main()
 {
     title "Testing script for vmnl"
@@ -470,8 +615,23 @@ main()
     if lib_dir="$(find_shaderc_lib_dir)"; then
         ok "shaderc library directory resolved"
         kv "[Info] resolved lib dir" "${lib_dir}"
+        export SHADERC_LIB_DIR="${lib_dir}"
         if [[ "${DO_TESTS}" -eq 1 ]]; then
-            exec cargo test -p vmnl-graphics --lib
+            run_default_tests
+            exit 0
+        fi
+        if [[ "${DO_UNIT_TESTS}" -eq 1 ]]; then
+            run_unit_tests
+            exit 0
+        elif [[ "${DO_API_TESTS}" -eq 1 ]]; then
+            run_api_tests
+            exit 0
+        elif [[ "${DO_SMOKE_TESTS}" -eq 1 ]]; then
+            run_smoke_tests
+            exit 0
+        elif [[ "${DO_GPU_TESTS}" -eq 1 ]]; then
+            run_gpu_tests
+            exit 0
         else
             run_cargo "${lib_dir}"
         fi
@@ -515,12 +675,27 @@ main()
     fi
     ok "shaderc detected after installation"
     kv "[Info] resolved lib dir" "${lib_dir}"
+    export SHADERC_LIB_DIR="${lib_dir}"
     if [[ "${DO_CLEAN}" -eq 0 && "${DO_BUILD}" -eq 0 && "${DO_RUN}" -eq 1 ]]; then
         warn "forcing clean after fresh shaderc install"
         DO_CLEAN=1
     fi
     if [[ "${DO_TESTS}" -eq 1 ]]; then
-        cargo test -p vmnl-graphics --lib
+        run_default_tests
+        exit 0
+    fi
+    if [[ "${DO_UNIT_TESTS}" -eq 1 ]]; then
+        run_unit_tests
+        exit 0
+    elif [[ "${DO_API_TESTS}" -eq 1 ]]; then
+        run_api_tests
+        exit 0
+    elif [[ "${DO_SMOKE_TESTS}" -eq 1 ]]; then
+        run_smoke_tests
+        exit 0
+    elif [[ "${DO_GPU_TESTS}" -eq 1 ]]; then
+        run_gpu_tests
+        exit 0
     else
         run_cargo "${lib_dir}"
     fi

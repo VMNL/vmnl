@@ -15,6 +15,7 @@ mod surface;
 mod swapchain;
 
 use super::{PresentModeSelection, WindowOptions};
+use crate::common::BlendMode;
 use crate::exception::{VMNLError, VMNLErrorKind};
 use crate::vmnl_instance::VMNLInstance;
 use crate::window::event::EventQueue;
@@ -106,8 +107,18 @@ impl VMNLWindow {
             Self::create_render_pass(&vmnl_instance.device, &swapchain)?;
         let framebuffers: Vec<Arc<Framebuffer>> =
             Self::create_framebuffers(&image_views, &render_pass)?;
-        let pipeline_2d: Arc<GraphicsPipeline> =
-            Self::create_graphics_pipeline(&vmnl_instance.device, &render_pass, shaders)?;
+        let pipeline_2d_opaque: Arc<GraphicsPipeline> = Self::create_graphics_pipeline(
+            &vmnl_instance.device,
+            &render_pass,
+            shaders,
+            BlendMode::Opaque,
+        )?;
+        let pipeline_2d_alpha: Arc<GraphicsPipeline> = Self::create_graphics_pipeline(
+            &vmnl_instance.device,
+            &render_pass,
+            shaders,
+            BlendMode::Alpha,
+        )?;
         let previous_frame_end: Option<Box<dyn GpuFuture>> =
             Some(sync::now(vmnl_instance.device.clone()).boxed());
         let input: Input = Input::new();
@@ -119,7 +130,9 @@ impl VMNLWindow {
                 context: window,
                 events,
                 framebuffers,
-                pipeline_2d,
+                render_pass,
+                pipeline_2d_opaque,
+                pipeline_2d_alpha,
                 previous_frame_end,
                 swapchain,
                 input,
