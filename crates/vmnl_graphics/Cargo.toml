@@ -23,6 +23,7 @@ bytemuck        = "1.25.0"
 log             = "0.4.30"
 shaderc         = "0.10.1"
 smallvec        = "1.15.1"
+vmnl-macros     = { path = "../vmnl_macros" }
 
 [lints]
 workspace = true

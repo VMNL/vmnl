@@ -70,7 +70,7 @@ impl VMNLWindow {
         image_views: &[Arc<ImageView>],
         render_pass: &Arc<RenderPass>,
     ) -> VMNLResult<Vec<Arc<Framebuffer>>> {
-        let framebuffers = image_views
+        image_views
             .iter()
             .map(|image_view| {
                 Framebuffer::new(
@@ -82,8 +82,6 @@ impl VMNLWindow {
                 )
                 .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanFramebufferCreationFailed))
             })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(framebuffers)
+            .collect::<VMNLResult<Vec<_>>>()
     }
 }

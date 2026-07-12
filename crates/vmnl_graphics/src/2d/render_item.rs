@@ -5,7 +5,7 @@
 /// 2D render item descriptors.
 ////////////////////////////////////////////////////////////////////////////////
 use super::GpuVertex2D;
-use crate::common::{IndexBuffer, MaterialKey, PipelineKey, VertexBuffer};
+use crate::common::{BlendMode, IndexBuffer, MaterialKey, PipelineKey, VertexBuffer};
 
 /// Minimal backend draw description emitted by 2D renderable objects.
 #[derive(Clone)]
@@ -14,6 +14,8 @@ pub struct RenderItem2D {
     pub(crate) pipeline_key: PipelineKey,
     /// Material family required to draw the item.
     pub(crate) material_key: MaterialKey,
+    /// Color blending policy required to draw the item.
+    pub(crate) blend_mode: BlendMode,
     /// Vertex buffer consumed by the active pipeline.
     pub(crate) vertex_buffer: VertexBuffer<GpuVertex2D>,
     /// Optional index buffer for indexed geometry.

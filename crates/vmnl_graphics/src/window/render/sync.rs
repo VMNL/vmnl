@@ -17,6 +17,11 @@ use vulkano::{
     Validated, VulkanError,
 };
 
+pub(super) enum FrameSyncResult {
+    Submitted(Box<dyn GpuFuture>),
+    SwapchainOutOfDate,
+}
+
 impl VMNLWindow {
     /// Synchronizes rendering with presentation by chaining GPU futures for the current frame.
     ///
@@ -28,8 +33,6 @@ impl VMNLWindow {
     /// - `graphics_queue`: Queue to execute command buffer.
     /// - `swapchain`: Swapchain used for presentation.
     ///
-    /// # Returns
-    /// A `Result` containing a boxed future representing completion of rendering and presentation.
     pub(super) fn frame_sync(
         previous_frame_end: &mut Option<Box<dyn GpuFuture>>,
         acquire_future: SwapchainAcquireFuture,
@@ -37,7 +40,7 @@ impl VMNLWindow {
         image_index: u32,
         graphics_queue: Arc<Queue>,
         swapchain: Arc<Swapchain>,
-    ) -> VMNLResult<Result<Box<dyn GpuFuture>, Validated<VulkanError>>> {
+    ) -> VMNLResult<FrameSyncResult> {
         let previous = previous_frame_end
             .take()
             .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnknownError))?;
@@ -49,33 +52,34 @@ impl VMNLWindow {
             graphics_queue,
             SwapchainPresentInfo::swapchain_image_index(swapchain, image_index),
         );
-        let flushed = after_present
-            .then_signal_fence_and_flush()
-            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
-
-        Ok(Ok(flushed.boxed()))
+        match after_present.then_signal_fence_and_flush() {
+            Ok(flushed) => Ok(FrameSyncResult::Submitted(flushed.boxed())),
+            Err(Validated::Error(VulkanError::OutOfDate)) => {
+                Ok(FrameSyncResult::SwapchainOutOfDate)
+            }
+            Err(error) => {
+                log::error!(
+                    "{}: {error:?}",
+                    VMNLError::new(VMNLErrorKind::VulkanUnknownError).report()
+                );
+                Err(VMNLError::new(VMNLErrorKind::VulkanValidationFailed))
+            }
+        }
     }
 
     /// Updates `previous_frame_end` based on the result of frame synchronization.
     ///
     /// Returns a ready future on error to keep the application running.
     pub(super) fn update_previous_frame_end(
-        future: Result<Box<dyn GpuFuture>, Validated<VulkanError>>,
+        frame_sync: FrameSyncResult,
         device: Arc<Device>,
     ) -> Box<dyn GpuFuture> {
-        match future {
-            Ok(future) => future.boxed(),
-            Err(Validated::Error(VulkanError::OutOfDate)) => {
+        match frame_sync {
+            FrameSyncResult::Submitted(future) => future,
+            FrameSyncResult::SwapchainOutOfDate => {
                 log::warn!(
                     "{}",
                     VMNLError::new(VMNLErrorKind::VulkanOutOfDate).report()
-                );
-                sync::now(device).boxed()
-            }
-            Err(error) => {
-                log::error!(
-                    "{}: {error:?}",
-                    VMNLError::new(VMNLErrorKind::VulkanUnknownError).report()
                 );
                 sync::now(device).boxed()
             }

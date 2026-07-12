@@ -4,8 +4,8 @@
 ///
 /// Window builder and option validation utilities.
 ////////////////////////////////////////////////////////////////////////////////
-use crate::common::Rgba;
-use crate::window::shaders::{ShaderInput, WindowShaders};
+use crate::common::{Rgba, ShaderSource};
+use crate::window::shaders::WindowShaders;
 use crate::window::Window;
 use crate::{Context, VMNLError, VMNLErrorKind, VMNLResult};
 use vulkano::swapchain::PresentMode as VkPresentMode;
@@ -286,101 +286,53 @@ impl WindowBuilder {
         Ok(self)
     }
 
-    /// Set the 2D vertex shader from a GLSL source file.
+    /// Set the 2D vertex shader source.
     ///
     /// The source is compiled during window creation. This replaces the default
     /// VMNL 2D vertex shader for the window.
     ///
     /// # Arguments
-    /// - `path`: Path to a GLSL vertex shader source file.
+    /// - `source`: Inline GLSL source or path to a GLSL source file.
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Window};
+    /// # use vmnl_graphics::{Context, ShaderSource, Window};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
-    ///     .vs_from_file("shaders/color2d.vert")
+    ///     .vertex_shader(ShaderSource::Path("shaders/color2d.vert".into()))
     ///     .build(&context)?;
     /// # Ok(())
     /// # }
     /// ```
     #[must_use]
-    pub fn vs_from_file(mut self, path: impl AsRef<std::path::Path>) -> Self {
-        self.options.shaders.vertex = Some(ShaderInput::Path(path.as_ref().into()));
+    pub fn vertex_shader(mut self, source: ShaderSource) -> Self {
+        self.options.shaders.vertex = Some(source);
         self
     }
 
-    /// Set the 2D fragment shader from a GLSL source file.
+    /// Set the 2D fragment shader source.
     ///
     /// The source is compiled during window creation. This replaces the default
     /// VMNL 2D fragment shader for the window.
     ///
     /// # Arguments
-    /// - `path`: Path to a GLSL fragment shader source file.
+    /// - `source`: Inline GLSL source or path to a GLSL source file.
     ///
     /// # Example
     /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Window};
+    /// # use vmnl_graphics::{Context, ShaderSource, Window};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// let window = Window::builder()
-    ///     .fs_from_file("shaders/color2d.frag")
+    ///     .fragment_shader(ShaderSource::Path("shaders/color2d.frag".into()))
     ///     .build(&context)?;
     /// # Ok(())
     /// # }
     /// ```
     #[must_use]
-    pub fn fs_from_file(mut self, path: impl AsRef<std::path::Path>) -> Self {
-        self.options.shaders.fragment = Some(ShaderInput::Path(path.as_ref().into()));
-        self
-    }
-
-    /// Set the 2D vertex shader from inline GLSL source code.
-    ///
-    /// This replaces the default VMNL 2D vertex shader for the window.
-    ///
-    /// # Arguments
-    /// - `source`: GLSL vertex shader source code.
-    ///
-    /// # Example
-    /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Window};
-    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
-    /// # let context = Context::new()?;
-    /// let window = Window::builder()
-    ///     .vs_from_string("#version 460\nvoid main() {}")
-    ///     .build(&context)?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    #[must_use]
-    pub fn vs_from_string(mut self, source: impl Into<String>) -> Self {
-        self.options.shaders.vertex = Some(ShaderInput::Src(source.into()));
-        self
-    }
-
-    /// Set the 2D fragment shader from inline GLSL source code.
-    ///
-    /// This replaces the default VMNL 2D fragment shader for the window.
-    ///
-    /// # Arguments
-    /// - `source`: GLSL fragment shader source code.
-    ///
-    /// # Example
-    /// ```rust,no_run
-    /// # use vmnl_graphics::{Context, Window};
-    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
-    /// # let context = Context::new()?;
-    /// let window = Window::builder()
-    ///     .fs_from_string("#version 460\nvoid main() {}")
-    ///     .build(&context)?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    #[must_use]
-    pub fn fs_from_string(mut self, source: impl Into<String>) -> Self {
-        self.options.shaders.fragment = Some(ShaderInput::Src(source.into()));
+    pub fn fragment_shader(mut self, source: ShaderSource) -> Self {
+        self.options.shaders.fragment = Some(source);
         self
     }
 
@@ -618,8 +570,8 @@ mod tests {
         assert!(builder.is_ok());
         if let Ok(builder) = builder {
             let builder = builder
-                .vs_from_file("shader.vert")
-                .fs_from_string("fragment")
+                .vertex_shader(ShaderSource::Path(PathBuf::from("shader.vert")))
+                .fragment_shader(ShaderSource::Src("fragment".to_string()))
                 .set_clear_color(Rgba::new(255, 128, 0, 64))
                 .present_mode(PresentMode::Mailbox);
             assert_eq!(builder.options.title, "Custom");
@@ -632,11 +584,11 @@ mod tests {
             assert_eq!(builder.options.max_height, Some(1080));
             assert_eq!(
                 builder.options.shaders.vertex,
-                Some(ShaderInput::Path(PathBuf::from("shader.vert")))
+                Some(ShaderSource::Path(PathBuf::from("shader.vert")))
             );
             assert_eq!(
                 builder.options.shaders.fragment,
-                Some(ShaderInput::Src("fragment".to_string()))
+                Some(ShaderSource::Src("fragment".to_string()))
             );
             assert_color_eq(
                 builder.options.clear_color,

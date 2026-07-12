@@ -9,8 +9,11 @@ pub mod d2;
 #[path = "3d/mod.rs"]
 pub mod d3;
 mod exception;
+/// Low-level raw graphics resources and public types.
+pub mod raw;
 mod vmnl_instance;
 mod window;
+pub use common::ShaderSource;
 pub use exception::{VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult};
 pub use vmnl_instance::Context;
 pub use window::{

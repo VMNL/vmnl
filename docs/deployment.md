@@ -6,23 +6,39 @@ Required secret:
 
 - `CARGO_REGISTRY_TOKEN`: crates.io API token with publish permission.
 
-Manual checks before tagging:
+Manual checks before release work:
 
 ```bash
-cargo test --workspace
-cargo doc -p vmnl --no-deps
-cargo publish -p vmnl_native --dry-run
+./run -t
+./run -d
+cargo doc --workspace --no-deps
 cargo package -p vmnl --list
 ```
 
-Publish order:
+Current publishing constraint:
 
-```bash
-cargo publish -p vmnl_native
-sleep 60
-cargo publish -p vmnl --dry-run
-cargo publish -p vmnl
+`vmnl-graphics` depends on `vmnl-macros` through a path dependency, and `vmnl-macros` is currently `publish = false`.
+
+Do not publish crates until the workspace publish graph is made crates.io-compatible.
+
+Expected publish order after that cleanup:
+
+```text
+vmnl-macros
+vmnl-graphics
+vmnl
 ```
 
-`vmnl_native` must be visible in the crates.io index before `vmnl` can be
-published, because `vmnl` depends on `vmnl_native` by version.
+Then run dry-runs before publishing:
+
+```bash
+cargo publish -p vmnl-macros --dry-run
+cargo publish -p vmnl-graphics --dry-run
+cargo publish -p vmnl --dry-run
+```
+
+Invariant:
+
+```text
+Every published crate dependency must resolve from crates.io by version, not only by local path.
+```

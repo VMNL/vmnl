@@ -13,7 +13,10 @@ use crate::{
 use std::rc::Rc;
 use std::sync::Arc;
 use vulkano::{
-    pipeline::GraphicsPipeline, render_pass::Framebuffer, swapchain::Swapchain, sync::GpuFuture,
+    pipeline::GraphicsPipeline,
+    render_pass::{Framebuffer, RenderPass},
+    swapchain::Swapchain,
+    sync::GpuFuture,
 };
 
 /// Encapsulates low-level resources required to manage a window and its associated rendering state.
@@ -31,8 +34,12 @@ pub(crate) struct WindowHandle {
     pub(crate) vmnl_instance: Rc<VMNLInstance>,
     /// List of framebuffers associated with the swapchain images.
     pub(crate) framebuffers: Vec<Arc<Framebuffer>>,
-    /// Preconfigured 2D Vulkan graphics pipeline used to render into the framebuffer.
-    pub(crate) pipeline_2d: Arc<GraphicsPipeline>,
+    /// Render pass shared by the window pipelines and framebuffers.
+    pub(crate) render_pass: Arc<RenderPass>,
+    /// Preconfigured opaque 2D Vulkan graphics pipeline used to render into the framebuffer.
+    pub(crate) pipeline_2d_opaque: Arc<GraphicsPipeline>,
+    /// Preconfigured alpha-blended 2D Vulkan graphics pipeline used to render into the framebuffer.
+    pub(crate) pipeline_2d_alpha: Arc<GraphicsPipeline>,
     /// Synchronization primitive representing the completion of the previous frame.
     pub(crate) previous_frame_end: Option<Box<dyn GpuFuture>>,
     /// Vulkan surface representing the OS window for presentation.

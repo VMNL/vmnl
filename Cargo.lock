@@ -96,6 +96,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
+name = "d2_shapes"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
 name = "dispatch2"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -432,6 +439,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "raw_pipeline"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
+name = "raw_triangle"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.5.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -561,13 +582,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "test"
-version = "0.1.0"
-dependencies = [
- "vmnl",
-]
-
-[[package]]
 name = "thread_local"
 version = "1.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -629,6 +643,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "vmnl-api-tests"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
+name = "vmnl-gpu-tests"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
 name = "vmnl-graphics"
 version = "0.1.0"
 dependencies = [
@@ -637,7 +665,25 @@ dependencies = [
  "log",
  "shaderc",
  "smallvec",
+ "vmnl-macros",
  "vulkano",
+]
+
+[[package]]
+name = "vmnl-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "vmnl-smoke-tests"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
 ]
 
 [[package]]
@@ -705,6 +751,20 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "window_custom_shaders"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
+name = "window_events_input"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
 
 [[package]]
 name = "windows-link"

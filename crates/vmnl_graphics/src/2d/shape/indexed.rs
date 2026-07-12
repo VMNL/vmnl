@@ -146,6 +146,7 @@ impl IndexedShapeBuilder {
 
         Ok(Shape {
             kind: IndexedGeometry,
+            blend_mode: Shape::blend_mode_from_vertices(vertices),
             geometry: GpuGeometry {
                 vertex_count,
                 index_count,

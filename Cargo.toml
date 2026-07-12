@@ -1,5 +1,17 @@
 [workspace]
-members = ["crates/vmnl_graphics", "crates/vmnl", "examples/test"]
+members = [
+    "crates/vmnl_graphics",
+    "crates/vmnl_macros",
+    "crates/vmnl",
+    "examples/d2_shapes",
+    "examples/raw_pipeline",
+    "examples/raw_triangle",
+    "examples/window_custom_shaders",
+    "examples/window_events_input",
+    "tests/api",
+    "tests/gpu",
+    "tests/smoke",
+]
 default-members = ["crates/vmnl_graphics", "crates/vmnl"]
 resolver = "2"
 
