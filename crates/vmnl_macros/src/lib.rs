@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-License-Identifier: MIT
+
 //! Proc macros for VMNL public derives.
 
 use proc_macro::TokenStream;

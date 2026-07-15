@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-License-Identifier: MIT
+
 use std::path::PathBuf;
 
 use vmnl::{common::BufferMemoryPreference, raw, Context, Key, PresentMode, VMNLResult, Window};

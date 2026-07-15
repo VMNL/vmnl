@@ -1,61 +1,35 @@
-# Git Commit Guidelines
+# Contributing
 
-## Adding a Feature
+Follow the project rules in [docs/INSTRUCTIONS.md](docs/INSTRUCTIONS.md).
 
-```
-git checkout -b [feature/hotfix]/[featureName] [Branch you want you feature in]
-```
+## Before Submission
 
-Creates the feature branch off your branch. Do your work and then
+Run the checks relevant to the change:
 
-
-```
-git add [files to be commited]
-git commit -m "< :gitmoji: >[scope/feature, hotfix, ...] ..."
-```
-
-Now merge your changes to your branch without a fast-forward (to avoid your branch to be squished)
-
-```
-git checkout [Branch you want you feature in]
-git merge --no-ff [feature/hotfix]/[featureName]
-```
-
-Finally, push the changes to the server
-
-```
-git push origin [Branch you want you feature in]
-```
-
-#### [Source](https://stackoverflow.com/questions/4470523/create-a-branch-in-git-from-another-branch)
-
-## Committing
-
-```
-< :gitmoji: >[scope/feature] Title
-Description
-```
-
-### Exemple :
 ```bash
-git add main.cpp
-git commit -m "Title" -m "Descrption"
-git push
+./run -w
+./run -t
+./run -d
 ```
 
-`:gitmoji:` -> Describe the type of change
-[Get the list](https://gitmoji.dev/)
+Run `./run -gt` only on a machine with a Vulkan-capable GPU and a display server.
 
-`scope` -> Branch of the project
-- `server` -> server branch
-- `engine` -> engine Branch
-- `client` -> client branch
+- Public API changes update Rustdoc and API tests.
+- Bug fixes include a regression test.
+- Visual workflows belong in `examples/`; headless checks belong in `tests/`.
 
-`feature` -> Feature name (The branch name usually)
+## Commit Messages
 
-`Title` -> Title of the commit, short and imperative <= 50 characters
+Format:
 
-`Description` (Optional) Explain what and why
+```text
+<type>: <description>
+```
 
-- Add `Closes #XXX (X is a number of closes)` to close an issue/PR automatically
-- Add `BREAKING CHANGE:` if it breaks backward compatibility (e.g. renaming a public function or class)
+- Use imperative mood, lowercase, at most 72 characters, and no trailing period.
+- Use an optional body after a blank line; each line stays under 80 characters.
+- Do not use gitmoji or legacy project scopes.
+- Add `BREAKING CHANGE:` in the body when a public contract is incompatible.
+- For more information, see [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+
+Allowed types are defined in [docs/INSTRUCTIONS.md](docs/INSTRUCTIONS.md#commit-type-usage-guidelines).

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-License-Identifier: MIT
+
 ////////////////////////////////////////////////////////////////////////////////
 use crate::{
     window::inner::VMNLWindow, window::monitors::Monitors, VMNLError, VMNLErrorKind, VMNLResult,

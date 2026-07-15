@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-License-Identifier: MIT
+
 //! Graphics and windowing primitives for VMNL.
 
 /// Shared graphics primitives used by 2D and 3D resources.

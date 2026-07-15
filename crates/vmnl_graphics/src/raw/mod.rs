@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-License-Identifier: MIT
+
 //! Low-level raw rendering API.
 
 use std::marker::PhantomData;

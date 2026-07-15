@@ -46,3 +46,22 @@ application
 - 3D public types exist, but 3D rendering is still scaffolded.
 - Internal backend details stay out of the facade unless they are deliberate public API.
 
+## Public API Maturity
+
+All public APIs are experimental and may change without compatibility guarantees.
+
+| Area | Maturity | Scope |
+|------|----------|-------|
+| `window` and input | Available | Window lifecycle, events, monitors, keyboard, and mouse. |
+| `d2` | Available | 2D shapes and rendering primitives. |
+| `d3` | Scaffolded | Public types exist; rendering is not implemented. |
+| `raw` | Experimental | Lower-level pipeline and geometry control. |
+
+Rustdoc defines the contract of a public item. This table only describes the current subsystem maturity.
+
+## Design Principles
+
+- Do not create abstractions without a concrete use case.
+- Prefer simple implementations before generic frameworks.
+- Do not add future-proof code without current requirements.
+- Avoid creating managers, factories, or wrappers unless they solve a real problem.
