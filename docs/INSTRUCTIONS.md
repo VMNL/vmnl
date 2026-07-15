@@ -21,3 +21,45 @@
 - Boolean values use the `is_`, `has_`, `can_`, or `should_` prefix.
 - Conversions use `from_*`, `to_*`, `as_*`, or `into_*` according to Rust conventions.
 - Avoid opaque abbreviations. Keep established Rust and Vulkan terminology such as `Vk`, `SPIR-V`, and `ID`.
+
+## Documentation
+
+- Avoid unnecessary code comments or obvious comments
+- Avoid comments explaining what the code does. Explain WHY when required
+- Add comment to explain WHY certain design decisions where made 
+- Only complex algorithms should have explanatory comments
+
+## Code organization and structure
+
+- Maintain alphabetical order when adding new entries
+- Keep related methods adjacent to each other
+- Group code by purpose using blank lines to separate logical blocks
+- Add blank lines after guard statements to separate validation from business logic
+ 
+## Resource Management and Localization
+
+- Check for existing resource tags before creating new ones
+- Use generic resource as much as possible
+
+## Commit Messages
+
+Format: `<type>: <description>` — imperative mood, lowercase, under 72 characters, no trailing period.
+
+Optional body: blank line after subject, then a dash list of the most important changes, each under 80 characters.
+
+## Commit Type usage guidelines
+
+| Type | Use when |
+|------|----------|
+| `build` | build system or external dependency changes |
+| `cicd` | CI/CD pipeline or script changes |
+| `chore` | no-impact housekeeping (e.g. .gitignore, tooling config) |
+| `docs` | documentation only |
+| `feat` | new feature |
+| `fix` | bug fix |
+| `perf` | performance improvement |
+| `refactor` | restructuring without behaviour change |
+| `style` | formatting, whitespace, missing semicolons |
+| `test` | adding or correcting tests |
+
+ 
