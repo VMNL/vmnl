@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Shared render backend selectors.
-////////////////////////////////////////////////////////////////////////////////
+//! Shared render backend selectors.
+
 /// Backend pipeline selector for draw items.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub(crate) enum PipelineKey {

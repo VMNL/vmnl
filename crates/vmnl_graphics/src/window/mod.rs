@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
 mod api;
 mod builder;
 mod event;

@@ -1,13 +1,9 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Rectangle shape utilities for the VMNL graphics module,
-/// providing functions to create axis-aligned rectangles defined by position, size, and color.
-////////////////////////////////////////////////////////////////////////////////
+//! Rectangle shape utilities for the VMNL graphics module,
+//! providing functions to create axis-aligned rectangles defined by position, size, and color.
+
 use super::{Shape, ShapeKind::Rectangle, Vector2f, Vertex2D};
 use crate::{
     common::{BufferMemoryPreference, Rgba},

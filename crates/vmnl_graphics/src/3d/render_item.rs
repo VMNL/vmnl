@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// 3D render item descriptors.
-////////////////////////////////////////////////////////////////////////////////
+//! 3D render item descriptors.
+
 use super::GpuVertex3D;
 use crate::common::{IndexBuffer, MaterialKey, PipelineKey, VertexBuffer};
 

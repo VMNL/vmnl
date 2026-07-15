@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// GLFW window creation helpers for the internal window backend.
-////////////////////////////////////////////////////////////////////////////////
+//! GLFW window creation helpers for the internal window backend.
+
 use super::VMNLWindow;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 

@@ -1,16 +1,12 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Inner implementation details of the `Window` struct in the VMNL library.
-///
-/// This module owns the `VMNLWindow` backend and orchestrates GLFW window
-/// creation, Vulkan surface setup, swapchain resources, and rendering pipeline
-/// initialization.
-////////////////////////////////////////////////////////////////////////////////
+//! Inner implementation details of the `Window` struct in the VMNL library.
+//!
+//! This module owns the `VMNLWindow` backend and orchestrates GLFW window
+//! creation, Vulkan surface setup, swapchain resources, and rendering pipeline
+//! initialization.
+
 mod glfw;
 mod pipeline;
 mod render_target;

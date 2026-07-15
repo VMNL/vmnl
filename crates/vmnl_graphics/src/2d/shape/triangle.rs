@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Triangle shape builder for creating triangle shapes from vertices or positions.
-////////////////////////////////////////////////////////////////////////////////
+//! Triangle shape builder for creating triangle shapes from vertices or positions.
+
 use super::{Shape, ShapeKind::RawVertices, Vector2f, Vertex2D};
 use crate::{
     common::{BufferMemoryPreference, GpuGeometry, GraphicsResourceFactory, Rgba},

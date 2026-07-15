@@ -1,15 +1,11 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Logical device submodule for VMNL Vulkan initialization.
-///
-/// This module creates the Vulkan logical device and graphics queue from the
-/// selected physical device.
-////////////////////////////////////////////////////////////////////////////////
+//! Logical device submodule for VMNL Vulkan initialization.
+//!
+//! This module creates the Vulkan logical device and graphics queue from the
+//! selected physical device.
+
 use super::VMNLInstance;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;

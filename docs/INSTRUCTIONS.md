@@ -10,12 +10,14 @@
 - Every maintained Rust file under `crates/`, `examples/`, and `tests/` must begin with the following SPDX header:
 
   ```rust
-  // SPDX-FileCopyrightText: 2026 VMNL
+  // SPDX-FileCopyrightText: 2026 Hugo Duda
   // SPDX-License-Identifier: MIT
+
+  //! <Description>
   ```
 
 - Do not modify generated or third-party files solely to add SPDX metadata.
-- Use a module-level `//!` Rustdoc comment when a public module boundary needs context beyond its item-level Rustdoc; this summary is separate from the SPDX metadata.
+- When a legacy file header provides a description, preserve it as the `//!` Rustdoc summary. Otherwise, add a summary only when a public module boundary needs context beyond its item-level Rustdoc.
 - Every `unsafe` block must include a `// SAFETY:` comment that states the verifiable invariant.
 - Do not use `unwrap` or `expect` in library crates unless the documented invariant makes failure impossible.
 - Prefer types, `Result`, and dedicated error types over ambiguous error strings.

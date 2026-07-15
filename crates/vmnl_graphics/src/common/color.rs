@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Public RGBA color type.
-////////////////////////////////////////////////////////////////////////////////
+//! Public RGBA color type.
+
 use bytemuck::{Pod, Zeroable};
 use std::cmp::Ordering;
 use std::ops::{AddAssign, Mul, Sub, SubAssign};

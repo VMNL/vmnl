@@ -1,15 +1,11 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Allocator submodule for VMNL Vulkan resource allocation.
-///
-/// This module creates memory and command buffer allocators shared by the
-/// graphics context.
-////////////////////////////////////////////////////////////////////////////////
+//! Allocator submodule for VMNL Vulkan resource allocation.
+//!
+//! This module creates memory and command buffer allocators shared by the
+//! graphics context.
+
 use super::VMNLInstance;
 use std::sync::Arc;
 use vulkano::{

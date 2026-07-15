@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Shared shader source descriptors.
-////////////////////////////////////////////////////////////////////////////////
+//! Shared shader source descriptors.
+
 use std::path::PathBuf;
 
 /// Shader input, either as inline GLSL source or as a path to a GLSL source file.

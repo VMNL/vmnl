@@ -1,19 +1,13 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// `VMNLInstance` module of the VMNL library, encapsulating Vulkan context initialization and management.
-/// This module defines the `VMNLInstance` struct, which represents the core Vulkan context used by the graphical part of the library.
-/// It is responsible for initializing and managing Vulkan resources such as the Vulkan instance,
-/// physical device, logical device, graphics queue, memory allocator, and command buffer allocator.
-/// The `Context` struct serves as a high-level wrapper around `VMNLInstance`,
-/// providing a user friendly interface for interacting with the Vulkan context
-/// without exposing the underlying implementation details.
-////////////////////////////////////////////////////////////////////////////////
-extern crate vulkano;
+//! `VMNLInstance` module of the VMNL library, encapsulating Vulkan context initialization and management.
+//! This module defines the `VMNLInstance` struct, which represents the core Vulkan context used by the graphical part of the library.
+//! It is responsible for initializing and managing Vulkan resources such as the Vulkan instance,
+//! physical device, logical device, graphics queue, memory allocator, and command buffer allocator.
+//! The `Context` struct serves as a high-level wrapper around `VMNLInstance`,
+//! providing a user friendly interface for interacting with the Vulkan context
+//! without exposing the underlying implementation details.
 
 mod allocator;
 mod context;

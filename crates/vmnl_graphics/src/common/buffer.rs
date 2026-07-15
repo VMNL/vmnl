@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// GPU buffer types and creation helpers shared by render resources.
-////////////////////////////////////////////////////////////////////////////////
+//! GPU buffer types and creation helpers shared by render resources.
+
 use super::Rgba;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;

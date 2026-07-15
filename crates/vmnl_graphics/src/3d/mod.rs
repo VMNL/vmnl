@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// 3D graphics resources and public types.
-////////////////////////////////////////////////////////////////////////////////
+//! 3D graphics resources and public types.
+
 mod camera;
 mod mesh;
 mod render_item;

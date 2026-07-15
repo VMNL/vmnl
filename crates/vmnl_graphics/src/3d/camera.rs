@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Public 3D camera placeholder.
-////////////////////////////////////////////////////////////////////////////////
+//! Public 3D camera placeholder.
+
 use super::Vector3f;
 
 /// Camera data attached to a 3D render pass.

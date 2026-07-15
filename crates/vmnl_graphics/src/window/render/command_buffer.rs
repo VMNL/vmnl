@@ -1,15 +1,11 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Command buffer submodule for recording Vulkan draw commands.
-///
-/// This module builds primary command buffers for rendering VMNL graphics objects
-/// into the current swapchain framebuffer.
-////////////////////////////////////////////////////////////////////////////////
+//! Command buffer submodule for recording Vulkan draw commands.
+//!
+//! This module builds primary command buffers for rendering VMNL graphics objects
+//! into the current swapchain framebuffer.
+
 use crate::common::{BlendMode, MaterialKey, PipelineKey};
 use crate::window::render::RenderPassCommand;
 use crate::window::PushConstants;

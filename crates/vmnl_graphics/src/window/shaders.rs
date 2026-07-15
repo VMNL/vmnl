@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Shader definitions and default GLSL sources for the VMNL window pipeline.
-////////////////////////////////////////////////////////////////////////////////
+//! Shader definitions and default GLSL sources for the VMNL window pipeline.
+
 use crate::common::ShaderSource;
 
 /// Struct to hold shader inputs for a window, allowing for dynamic shader management.

@@ -1,16 +1,11 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Keyboard submodule for handling keyboard input and events in the VMNL application.
-///
-/// This module provides functionality to track the state of keys, manage key events,
-/// and integrate with the windowing system to capture keyboard input.
-////////////////////////////////////////////////////////////////////////////////
-extern crate glfw;
+//! Keyboard submodule for handling keyboard input and events in the VMNL application.
+//!
+//! This module provides functionality to track the state of keys, manage key events,
+//! and integrate with the windowing system to capture keyboard input.
+
 use glfw::Key as GlfwKey;
 
 /// Defines the `Key` enum, representing keys tracked for input events.

@@ -1,13 +1,9 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Line shape utilities for the VMNL graphics module,
-/// providing functions to create lines defined by start and end points, width, cap style, and color.
-////////////////////////////////////////////////////////////////////////////////
+//! Line shape utilities for the VMNL graphics module,
+//! providing functions to create lines defined by start and end points, width, cap style, and color.
+
 use super::{Shape, Vector2f};
 use crate::{
     common::{BufferMemoryPreference, Rgba},

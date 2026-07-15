@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Vulkan graphics pipeline and shader module creation helpers.
-////////////////////////////////////////////////////////////////////////////////
+//! Vulkan graphics pipeline and shader module creation helpers.
+
 use super::VMNLWindow;
 use crate::common::{BlendMode, ShaderSource};
 use crate::d2::GpuVertex2D;

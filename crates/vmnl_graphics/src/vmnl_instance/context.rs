@@ -1,15 +1,11 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Public context submodule for the VMNL graphics API.
-///
-/// This module exposes the `Context` wrapper around the internal Vulkan
-/// instance state.
-////////////////////////////////////////////////////////////////////////////////
+//! Public context submodule for the VMNL graphics API.
+//!
+//! This module exposes the `Context` wrapper around the internal Vulkan
+//! instance state.
+
 use super::VMNLInstance;
 use crate::VMNLResult;
 use std::rc::Rc;

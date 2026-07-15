@@ -1,13 +1,7 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Monitor discovery and monitor metadata helpers.
-////////////////////////////////////////////////////////////////////////////////
-extern crate glfw;
+//! Monitor discovery and monitor metadata helpers.
 
 /// Video mode supported by a monitor.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

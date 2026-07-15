@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Shape utilities for the VMNL library.
-////////////////////////////////////////////////////////////////////////////////
+//! Shape utilities for the VMNL library.
+
 mod indexed;
 mod line;
 mod rect;

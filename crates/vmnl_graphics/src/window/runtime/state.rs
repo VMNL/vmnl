@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-////////////////////////////////////////////////////////////////////////////////
 use crate::window::inner::VMNLWindow;
 
 /// Runtime state of a window.

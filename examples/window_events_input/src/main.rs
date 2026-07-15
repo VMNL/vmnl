@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 VMNL
+// SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
 use vmnl::{Context, Event, Key, MouseButton, PresentMode, VMNLResult, Window};
