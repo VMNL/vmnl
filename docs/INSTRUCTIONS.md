@@ -10,7 +10,7 @@
 - Every maintained Rust file under `crates/`, `examples/`, and `tests/` must begin with the following SPDX header:
 
   ```rust
-  // SPDX-FileCopyrightText: 2026 Hugo Duda
+  // SPDX-FileCopyrightText: 2026 <Your Name>
   // SPDX-License-Identifier: MIT
 
   //! <Description>
