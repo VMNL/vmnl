@@ -52,7 +52,6 @@ fn main() -> VMNLResult<()> {
     let mut window = Window::builder()
         .title("VMNL raw_pipeline")
         .size(1000, 700)
-        .set_clear_color([10, 12, 16, 255])
         .present_mode(PresentMode::Auto)
         .build(&context)?;
 
