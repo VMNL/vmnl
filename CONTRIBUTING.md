@@ -74,7 +74,7 @@ Every VMNL pull request description uses exactly this structure:
 Format:
 
 ```text
-<type>: <description>
+type(optionnal scope): description
 ```
 
 - Use imperative mood, lowercase, at most 72 characters, and no trailing period.
