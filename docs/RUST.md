@@ -59,10 +59,13 @@
 - Keep data layouts cache-friendly
 - Minimize unnecessary copies
 
-For performance validation:
+Do not infer a performance improvement from build or lint commands. Define a workload and metric, then measure before and after under the same build profile, machine, GPU/driver, and rendering configuration.
+
+For non-mutating code validation:
 
 ```bash
-./run -l -w
+cargo fmt --all --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
 ```
 
 ---
@@ -134,10 +137,19 @@ Avoid:
 Before submitting changes:
 
 ```bash
-cargo fmt
-cargo clippy -- -D warnings
-cargo test
+cargo build --workspace --all-targets
+cargo fmt --all --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+./run -d
+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+./run -ut
+./run -at
+./run -st
+cargo test -p vmnl-gpu-tests --no-run # GPU-facing changes
+./run -gt                              # when the environment supports it
 ```
+
+Keep this order for every applicable completion check. Document the technical reason for any required deviation.
 
 All warnings must be resolved
 

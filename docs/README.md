@@ -15,8 +15,8 @@ Local `README.md` files are only navigation aids for their directory. Public API
 - [Testing](testing.md): unit, API, smoke, GPU, and doctest conventions.
 - [Examples](examples.md): visual example rules and command conventions.
 - [Troubleshooting](troubleshooting.md): shaderc, Vulkan, GLFW, and display diagnostics.
-- [Deployment](deployment.md): release checks and current publishing constraints.
-- [Contributing](../CONTRIBUTING.md): contribution workflow and commit convention.
+- [Deployment](deployment.md): manual release checks and current publishing constraints.
+- [Contributing](../CONTRIBUTING.md): validation, pull request, and commit conventions.
 
 ## Documentation Rules
 
