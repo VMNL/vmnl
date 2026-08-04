@@ -1,0 +1,4 @@
+interface:
+  display_name: "Develop VMNL Graphics"
+  short_description: "Build and validate VMNL graphics changes"
+  default_prompt: "Use $develop-vmnl-graphics to implement and validate a scoped VMNL graphics change."

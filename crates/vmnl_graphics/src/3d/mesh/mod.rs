@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// 3D mesh resource and builder.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! 3D mesh resource and builder.
+
 use super::{Drawable3D, GpuVertex3D, RenderItem3D, Vertex3D};
 use crate::common::{
     checked_draw_counts, validate_triangle_indices, BufferMemoryPreference, GpuGeometry,

@@ -168,6 +168,11 @@ cargo build
 
 Technical documentation starts at [docs/README.md](docs/README.md).
 
+- [Getting Started](docs/getting_started.md)
+- [Coding Instructions](docs/INSTRUCTIONS.md)
+- [Build and platform support](docs/build.md)
+- [Testing](docs/testing.md)
+
 ---
 
 ## Roadmap

@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Public GLFW event polling configuration API.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Public GLFW event polling configuration API.
+
 use crate::window::Window;
 
 impl Window {

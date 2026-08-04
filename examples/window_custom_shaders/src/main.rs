@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
 use vmnl::{
     common::Rgba,
     d2::{Shape, Vector2f},

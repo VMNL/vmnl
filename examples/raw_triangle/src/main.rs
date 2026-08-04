@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
 use vmnl::{raw, Context, PresentMode, VMNLResult, Window};
 
 const VERT: &str = r#"

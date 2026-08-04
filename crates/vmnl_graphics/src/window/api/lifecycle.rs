@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Public window lifecycle and visibility API.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Public window lifecycle and visibility API.
+
 use crate::window::Window;
 
 impl Window {

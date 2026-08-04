@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Public rendering entry points for `Window`.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Public rendering entry points for `Window`.
+
 use crate::d2::{Drawable2D, RenderItem2D};
 use crate::d3::{Camera, Drawable3D, RenderItem3D};
 use crate::raw::{Geometry as RawGeometry, Pipeline as RawPipeline, RenderItemRaw};

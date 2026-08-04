@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
 use std::path::PathBuf;
 
 use vmnl::{raw, VMNLResult};

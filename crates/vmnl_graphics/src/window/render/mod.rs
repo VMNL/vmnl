@@ -1,12 +1,11 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Draw submodule for handling rendering operations in the VMNL application.
-///
-/// This module provides functionality to build command buffers, manage frame synchronization,
-/// and execute draw calls using Vulkan through the Vulkano library.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Draw submodule for handling rendering operations in the VMNL application.
+//!
+//! This module provides functionality to build command buffers, manage frame synchronization,
+//! and execute draw calls using Vulkan through the Vulkano library.
+
 mod acquire;
 mod command_buffer;
 mod sync;

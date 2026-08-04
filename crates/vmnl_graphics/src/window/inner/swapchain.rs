@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Vulkan swapchain and image-view creation helpers.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Vulkan swapchain and image-view creation helpers.
+
 use super::VMNLWindow;
 use crate::window::PresentModeSelection;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};

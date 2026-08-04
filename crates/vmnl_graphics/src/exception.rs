@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Exception handling for the VMNL library, defining custom error types and result aliases.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Exception handling for the VMNL library, defining custom error types and result aliases.
+
 use std::{error::Error, fmt, panic::Location};
 
 /// Represents the location in the source code where a VMNL error occurred.

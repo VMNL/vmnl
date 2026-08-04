@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Window builder and option validation utilities.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Window builder and option validation utilities.
+
 use crate::common::{Rgba, ShaderSource};
 use crate::window::shaders::WindowShaders;
 use crate::window::Window;

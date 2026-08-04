@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
 use vmnl::{Context, Event, Key, MouseButton, PresentMode, VMNLResult, Window};
 
 fn print_event(event: &Event) {

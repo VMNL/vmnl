@@ -1,12 +1,11 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Render synchronization submodule for GPU futures and presentation.
-///
-/// This module chains image acquisition, command execution, presentation,
-/// and fence signaling for a rendered frame.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Render synchronization submodule for GPU futures and presentation.
+//!
+//! This module chains image acquisition, command execution, presentation,
+//! and fence signaling for a rendered frame.
+
 use crate::{window::inner::VMNLWindow, VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;
 use vulkano::{

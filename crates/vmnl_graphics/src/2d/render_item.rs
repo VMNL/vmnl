@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// 2D render item descriptors.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! 2D render item descriptors.
+
 use super::GpuVertex2D;
 use crate::common::{BlendMode, IndexBuffer, MaterialKey, PipelineKey, VertexBuffer};
 

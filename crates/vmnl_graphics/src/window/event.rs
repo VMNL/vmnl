@@ -1,14 +1,12 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Event module for handling window events in the VMNL application.
-///
-/// This module defines the `Event` enum, which represents various types of window events
-/// such as resizing, key presses, mouse movements, and more. The `EventQueue` struct
-/// polls events from GLFW and translates them into VMNL-specific events.
-////////////////////////////////////////////////////////////////////////////////
-extern crate glfw;
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Event module for handling window events in the VMNL application.
+//!
+//! This module defines the `Event` enum, which represents various types of window events
+//! such as resizing, key presses, mouse movements, and more. The `EventQueue` struct
+//! polls events from GLFW and translates them into VMNL-specific events.
+
 use super::{Key as VMNLKey, KeyboardState, MouseButton as VMNLMouseButton, MouseState};
 
 /// The `Event` enum represents the different types of events that can occur in the VMNL application.

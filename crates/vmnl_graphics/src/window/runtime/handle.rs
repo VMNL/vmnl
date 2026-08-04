@@ -1,11 +1,9 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Handle for the window, encapsulating both GLFW and Vulkan resources related
-/// to window management and rendering.
-////////////////////////////////////////////////////////////////////////////////
-extern crate glfw;
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Handle for the window, encapsulating both GLFW and Vulkan resources related
+//! to window management and rendering.
+
 use crate::{
     vmnl_instance::VMNLInstance, window::event::EventQueue, window::inner::VMNLWindow, Event,
     Input, VMNLErrorKind,

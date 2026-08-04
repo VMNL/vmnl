@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
 use std::path::PathBuf;
 
 use vmnl::{common::BufferMemoryPreference, raw, Context, Key, PresentMode, VMNLResult, Window};
@@ -49,7 +52,6 @@ fn main() -> VMNLResult<()> {
     let mut window = Window::builder()
         .title("VMNL raw_pipeline")
         .size(1000, 700)
-        .set_clear_color([10, 12, 16, 255])
         .present_mode(PresentMode::Auto)
         .build(&context)?;
 

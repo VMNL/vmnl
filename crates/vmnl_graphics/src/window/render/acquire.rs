@@ -1,12 +1,11 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Swapchain acquisition submodule for render frame setup.
-///
-/// This module prepares frame futures and acquires the next swapchain image
-/// before command submission.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Swapchain acquisition submodule for render frame setup.
+//!
+//! This module prepares frame futures and acquires the next swapchain image
+//! before command submission.
+
 use crate::{window::inner::VMNLWindow, VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;
 use vulkano::{

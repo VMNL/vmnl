@@ -1,10 +1,9 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Implementation of indexed shapes for the VMNL graphics module,
-/// allowing for efficient rendering of complex geometries using vertex and index buffers.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Implementation of indexed shapes for the VMNL graphics module,
+//! allowing for efficient rendering of complex geometries using vertex and index buffers.
+
 use super::{Shape, ShapeKind::IndexedGeometry, Vertex2D};
 use crate::{
     common::{

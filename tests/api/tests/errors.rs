@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
 use vmnl::{VMNLError, VMNLErrorKind, VMNLResult, Window};
 
 #[test]

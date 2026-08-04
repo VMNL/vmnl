@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
 use vmnl::{
     common::{BufferMemoryPreference, Rgba},
     d2::{LineCap, Shape, Vector2f, Vertex2D},

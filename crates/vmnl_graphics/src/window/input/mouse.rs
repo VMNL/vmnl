@@ -1,13 +1,11 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Mouse submodule for handling mouse input and events in the VMNL application.
-///
-/// This module provides functionality to track the state of mouse buttons, manage mouse events,
-/// and integrate with the windowing system to capture mouse input.
-////////////////////////////////////////////////////////////////////////////////
-extern crate glfw;
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Mouse submodule for handling mouse input and events in the VMNL application.
+//!
+//! This module provides functionality to track the state of mouse buttons, manage mouse events,
+//! and integrate with the windowing system to capture mouse input.
+
 use glfw::MouseButton as GlfwMouseButton;
 
 /// Defines the `MouseButton` enum, representing the mouse buttons tracked for input events.

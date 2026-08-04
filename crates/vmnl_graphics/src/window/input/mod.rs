@@ -1,11 +1,9 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Input handling for the VMNL library, defining the `Input` struct and related methods
-/// for managing keyboard and mouse input states.
-////////////////////////////////////////////////////////////////////////////////
-extern crate glfw;
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Input handling for the VMNL library, defining the `Input` struct and related methods
+//! for managing keyboard and mouse input states.
+
 mod keyboard;
 mod mouse;
 pub use keyboard::{Key, KeyboardState};

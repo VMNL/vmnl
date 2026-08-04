@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Vulkan surface creation helpers for GLFW-backed windows.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Vulkan surface creation helpers for GLFW-backed windows.
+
 use super::VMNLWindow;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;

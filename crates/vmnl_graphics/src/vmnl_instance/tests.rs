@@ -1,11 +1,10 @@
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
 #![allow(clippy::expect_used)]
 
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Unit tests for VMNL Vulkan context initialization helpers.
-////////////////////////////////////////////////////////////////////////////////
+//! Unit tests for VMNL Vulkan context initialization helpers.
+
 use super::{Context, VMNLInstance};
 use crate::{VMNLError, VMNLErrorKind};
 use std::sync::{Mutex, OnceLock};

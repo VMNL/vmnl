@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
 use vmnl::{
     common::Rgba,
     d3::{Camera, Mesh, Vector3f, Vertex3D},

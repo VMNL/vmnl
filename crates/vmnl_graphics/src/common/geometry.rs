@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Shared geometry descriptors and validation helpers.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Shared geometry descriptors and validation helpers.
+
 use super::{IndexBuffer, VertexBuffer};
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 

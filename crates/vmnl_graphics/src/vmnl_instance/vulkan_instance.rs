@@ -1,12 +1,11 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Vulkan instance submodule for VMNL graphics initialization.
-///
-/// This module creates the Vulkan instance with the extensions required for
-/// GLFW surface integration.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Vulkan instance submodule for VMNL graphics initialization.
+//!
+//! This module creates the Vulkan instance with the extensions required for
+//! GLFW surface integration.
+
 use super::VMNLInstance;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;

@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Vulkan render target helpers for render pass and framebuffer creation.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Vulkan render target helpers for render pass and framebuffer creation.
+
 use super::VMNLWindow;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;

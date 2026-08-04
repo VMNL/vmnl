@@ -13,6 +13,8 @@
 
 The `./run` script checks the required tools and reports shaderc/GLFW discovery.
 
+For build, run, unit, API, smoke, GPU, and combined-test modes, failed shaderc discovery causes the runner to invoke the platform package manager through `sudo` without a confirmation prompt. Provision dependencies first; do not use those modes when host modifications are not authorized.
+
 ## Common Commands
 
 ```bash
@@ -43,9 +45,18 @@ cargo run -p d2_shapes
 ./run -gt   GPU/display tests
 ./run -t    unit + API + smoke
 ./run -d    doctests
-./run -w    warning checks
-./run -l    lint/fix pass
+./run -w    checks without -D warnings
+./run -l    mutating format/fix pass
 ```
+
+For non-mutating validation with warnings denied, use:
+
+```bash
+cargo fmt --all --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+```
+
+`./run -l` applies formatting and automatic fixes across the workspace. Inspect the worktree first and use it only when those modifications are intended.
 
 ## shaderc Discovery
 
@@ -84,4 +95,3 @@ Decision:
 - If `pkg-config` finds shaderc, prefer fixing `SHADERC_LIB_DIR` or library paths.
 - If `pkg-config` does not find shaderc, install the system shaderc development package.
 - If Vulkan fails at runtime, inspect loader/driver state separately from shaderc.
-

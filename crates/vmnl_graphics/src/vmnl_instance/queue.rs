@@ -1,11 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Queue selection submodule for VMNL Vulkan initialization.
-///
-/// This module locates a Vulkan queue family supporting graphics operations.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Queue selection submodule for VMNL Vulkan initialization.
+//!
+//! This module locates a Vulkan queue family supporting graphics operations.
+
 use super::VMNLInstance;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;

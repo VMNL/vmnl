@@ -1,9 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Public 2D vector type.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Public 2D vector type.
+
 use bytemuck::{Pod, Zeroable};
 use std::cmp::Ordering;
 use std::ops::{AddAssign, Mul, Sub, SubAssign};

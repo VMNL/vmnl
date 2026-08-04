@@ -1,12 +1,11 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Hugo Duda
-/// SPDX-License-Identifier: MIT
-///
-/// Physical device submodule for VMNL Vulkan initialization.
-///
-/// This module ranks and selects a Vulkan physical device compatible with the
-/// required extensions and graphics queue support.
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Physical device submodule for VMNL Vulkan initialization.
+//!
+//! This module ranks and selects a Vulkan physical device compatible with the
+//! required extensions and graphics queue support.
+
 use super::VMNLInstance;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;

@@ -1,4 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
 use crate::{
     window::inner::VMNLWindow, window::monitors::Monitors, VMNLError, VMNLErrorKind, VMNLResult,
 };
