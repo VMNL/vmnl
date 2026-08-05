@@ -12,6 +12,9 @@ use vulkano::{
     command_buffer::allocator::{
         StandardCommandBufferAllocator, StandardCommandBufferAllocatorCreateInfo,
     },
+    descriptor_set::allocator::{
+        StandardDescriptorSetAllocator, StandardDescriptorSetAllocatorCreateInfo,
+    },
     device::Device,
     memory::allocator::StandardMemoryAllocator,
 };
@@ -34,6 +37,18 @@ impl VMNLInstance {
             StandardCommandBufferAllocatorCreateInfo::default(),
         )
         .into()
+    }
+
+    /// Initialize the descriptor set allocator for shader resource bindings.
+    #[inline]
+    #[must_use = "descriptor set allocator is required for binding shader resources"]
+    pub(super) fn create_descriptor_set_allocator(
+        device: &Arc<Device>,
+    ) -> Arc<StandardDescriptorSetAllocator> {
+        Arc::new(StandardDescriptorSetAllocator::new(
+            device.clone(),
+            StandardDescriptorSetAllocatorCreateInfo::default(),
+        ))
     }
 
     /// Initialize the memory allocator for the Vulkan device.

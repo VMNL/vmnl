@@ -24,6 +24,7 @@ pub use context::Context;
 use std::sync::{Arc, Mutex};
 use vulkano::{
     command_buffer::allocator::StandardCommandBufferAllocator,
+    descriptor_set::allocator::StandardDescriptorSetAllocator,
     device::{physical::PhysicalDevice, Device, DeviceExtensions, Queue},
     instance::Instance,
     memory::allocator::StandardMemoryAllocator,
@@ -52,6 +53,8 @@ pub(crate) struct VMNLInstance {
     pub(crate) memory_allocator: Arc<StandardMemoryAllocator>,
     /// Command buffer allocator used to allocate and reuse command buffers.
     pub(crate) command_buffer_allocator: Arc<StandardCommandBufferAllocator>,
+    /// Descriptor set allocator used to bind raw shader resources.
+    pub(crate) descriptor_set_allocator: Arc<StandardDescriptorSetAllocator>,
     /// GLFW context used for window management and input handling.
     pub(crate) glfw: glfw::Glfw,
 }
@@ -100,6 +103,7 @@ impl VMNLInstance {
         )?;
         let memory_allocator = Self::create_memory_allocator(&device);
         let command_buffer_allocator = Self::create_command_buffer_allocator(&device);
+        let descriptor_set_allocator = Self::create_descriptor_set_allocator(&device);
 
         log::debug!("initialized VMNL instance");
         Ok(Self {
@@ -110,6 +114,7 @@ impl VMNLInstance {
             graphics_queue_family_index,
             memory_allocator,
             command_buffer_allocator,
+            descriptor_set_allocator,
             glfw,
         })
     }

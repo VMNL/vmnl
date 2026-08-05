@@ -3,13 +3,19 @@
 
 //! Low-level raw rendering API.
 
+use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
 pub use vmnl_macros::{Pod, Vertex, Zeroable};
 
 use vulkano::buffer::BufferContents as VulkanoBufferContents;
+use vulkano::buffer::BufferUsage;
 use vulkano::buffer::Subbuffer;
+use vulkano::descriptor_set::layout::{
+    DescriptorSetLayout, DescriptorSetLayoutCreateInfo, DescriptorType,
+};
+use vulkano::descriptor_set::{DescriptorSet, WriteDescriptorSet};
 use vulkano::device::Device;
 use vulkano::pipeline::graphics::color_blend::{
     AttachmentBlend, ColorBlendAttachmentState, ColorBlendState,
@@ -25,7 +31,8 @@ use vulkano::pipeline::graphics::vertex_input::{
 use vulkano::pipeline::graphics::viewport::ViewportState;
 use vulkano::pipeline::layout::PipelineDescriptorSetLayoutCreateInfo;
 use vulkano::pipeline::{
-    DynamicState, GraphicsPipeline, PipelineLayout, PipelineShaderStageCreateInfo,
+    DynamicState, GraphicsPipeline, Pipeline as VulkanoPipeline, PipelineLayout,
+    PipelineShaderStageCreateInfo,
 };
 use vulkano::render_pass::{RenderPass, Subpass};
 use vulkano::shader::{ShaderModule, ShaderModuleCreateInfo};
@@ -167,7 +174,7 @@ impl<TVertex> PipelineSpec<TVertex> {
     ///
     /// # Errors
     /// Returns an error if shaders are missing, fail to compile, declare
-    /// descriptors or push constants, or if Vulkan pipeline creation fails.
+    /// unsupported resources or push constants, or if Vulkan pipeline creation fails.
     pub fn build(self, window: &Window) -> VMNLResult<Pipeline<TVertex>>
     where
         TVertex: BufferContents + Vertex + 'static,
@@ -206,13 +213,7 @@ impl<TVertex> PipelineSpec<TVertex> {
         ];
 
         let layout_info = PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages);
-        validate_raw_pipeline_layout(
-            layout_info
-                .set_layouts
-                .iter()
-                .any(|set_layout| !set_layout.bindings.is_empty()),
-            !layout_info.push_constant_ranges.is_empty(),
-        )?;
+        validate_raw_pipeline_layout(&layout_info)?;
 
         let layout = PipelineLayout::new(
             device.clone(),
@@ -274,11 +275,31 @@ impl<TVertex> Pipeline<TVertex> {
     }
 
     pub(crate) fn render_item(&self, geometry: &Geometry<TVertex>) -> RenderItemRaw {
+        self.render_item_with_resources(geometry, None)
+    }
+
+    pub(crate) fn render_item_with(
+        &self,
+        geometry: &Geometry<TVertex>,
+        resources: &Resources,
+    ) -> RenderItemRaw {
+        self.render_item_with_resources(geometry, Some(resources))
+    }
+
+    fn render_item_with_resources(
+        &self,
+        geometry: &Geometry<TVertex>,
+        resources: Option<&Resources>,
+    ) -> RenderItemRaw {
         RenderItemRaw {
             pipeline: self.inner.clone(),
             pipeline_device: self.device.clone(),
             pipeline_render_pass: self.render_pass.clone(),
             geometry_device: geometry.device.clone(),
+            resources_device: resources.map(|resources| resources.device.clone()),
+            resources_pipeline_layout: resources.map(|resources| resources.pipeline_layout.clone()),
+            descriptor_sets: resources.map_or_else(Vec::new, Resources::descriptor_sets),
+            required_descriptor_set_count: required_descriptor_set_count(self.inner.layout()),
             vertex_buffer: geometry.vertex_buffer_bytes(),
             index_buffer: geometry.index_buffer(),
             vertex_count: geometry.vertex_count,
@@ -392,12 +413,187 @@ impl<TVertex> GeometryBuilder<TVertex> {
 
 impl<TVertex> GraphicsResourceFactory for GeometryBuilder<TVertex> {}
 
+/// Typed raw uniform buffer.
+pub struct Uniform<TData> {
+    buffer: Subbuffer<TData>,
+    device: Arc<Device>,
+}
+
+impl<TData> Uniform<TData> {
+    /// Starts a raw uniform buffer builder.
+    #[must_use]
+    pub fn builder(data: TData) -> UniformBuilder<TData> {
+        UniformBuilder {
+            data,
+            memory_preference: BufferMemoryPreference::default(),
+        }
+    }
+
+    fn buffer_bytes(&self) -> Subbuffer<[u8]> {
+        self.buffer.clone().into_bytes()
+    }
+}
+
+/// Builder for typed raw uniform buffers.
+pub struct UniformBuilder<TData> {
+    data: TData,
+    memory_preference: BufferMemoryPreference,
+}
+
+impl<TData> UniformBuilder<TData> {
+    /// Sets the buffer memory preference.
+    #[must_use]
+    pub fn buffer_memory_preference(mut self, preference: BufferMemoryPreference) -> Self {
+        self.memory_preference = preference;
+        self
+    }
+
+    /// Builds a GPU uniform buffer.
+    ///
+    /// # Errors
+    /// Returns an error if GPU buffer allocation fails.
+    pub fn build(self, context: &Context) -> VMNLResult<Uniform<TData>>
+    where
+        TData: BufferContents,
+    {
+        let buffer = <Self as GraphicsResourceFactory>::create_buffer_from_data(
+            self.data,
+            BufferUsage::UNIFORM_BUFFER,
+            self.memory_preference,
+            &context.inner.memory_allocator,
+            VMNLErrorKind::VulkanFrameUboBufferCreationFailed,
+        )?;
+
+        Ok(Uniform {
+            buffer,
+            device: context.inner.device.clone(),
+        })
+    }
+}
+
+impl<TData> GraphicsResourceFactory for UniformBuilder<TData> {}
+
+/// Descriptor resources bound by a raw draw call.
+pub struct Resources {
+    device: Arc<Device>,
+    pipeline_layout: Arc<PipelineLayout>,
+    descriptor_sets: Vec<Arc<DescriptorSet>>,
+}
+
+impl Resources {
+    /// Starts a raw resource builder for a specific pipeline layout.
+    #[must_use]
+    pub fn builder<TVertex>(pipeline: &Pipeline<TVertex>) -> ResourcesBuilder {
+        let pipeline_layout = pipeline.inner.layout().clone();
+        ResourcesBuilder {
+            pipeline_device: pipeline.device.clone(),
+            pipeline_layout: pipeline_layout.clone(),
+            set_layouts: pipeline_layout.set_layouts().to_vec(),
+            bindings: BTreeMap::new(),
+            duplicate_binding: None,
+        }
+    }
+
+    fn descriptor_sets(&self) -> Vec<Arc<DescriptorSet>> {
+        self.descriptor_sets.clone()
+    }
+}
+
+/// Builder for raw descriptor resources.
+pub struct ResourcesBuilder {
+    pipeline_device: Arc<Device>,
+    pipeline_layout: Arc<PipelineLayout>,
+    set_layouts: Vec<Arc<DescriptorSetLayout>>,
+    bindings: BTreeMap<u32, BTreeMap<u32, ResourceBinding>>,
+    duplicate_binding: Option<(u32, u32)>,
+}
+
+impl ResourcesBuilder {
+    /// Binds a uniform buffer to a shader descriptor binding.
+    #[must_use]
+    pub fn uniform<TData>(mut self, set: u32, binding: u32, uniform: &Uniform<TData>) -> Self {
+        let old = self.bindings.entry(set).or_default().insert(
+            binding,
+            ResourceBinding::UniformBuffer {
+                buffer: uniform.buffer_bytes(),
+                device: uniform.device.clone(),
+            },
+        );
+        if old.is_some() && self.duplicate_binding.is_none() {
+            self.duplicate_binding = Some((set, binding));
+        }
+        self
+    }
+
+    /// Builds descriptor sets compatible with the pipeline used by this builder.
+    ///
+    /// # Errors
+    /// Returns an error if a required binding is missing, unsupported, duplicated,
+    /// or if descriptor set allocation fails.
+    pub fn build(mut self, context: &Context) -> VMNLResult<Resources> {
+        validate_resources_context(context, &self.pipeline_device)?;
+        if let Some((set, binding)) = self.duplicate_binding {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                "raw resources duplicate binding set {set} binding {binding}"
+            ))));
+        }
+
+        validate_supplied_resource_bindings(&self.set_layouts, &self.bindings)?;
+        let required_set_count = required_descriptor_set_count_from_layouts(&self.set_layouts);
+        let mut descriptor_sets = Vec::with_capacity(required_set_count);
+
+        for set_index in 0..required_set_count {
+            let set = u32::try_from(set_index)
+                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+            let set_layout = self
+                .set_layouts
+                .get(set_index)
+                .cloned()
+                .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+            let supplied_bindings = self.bindings.remove(&set).unwrap_or_default();
+            let writes = descriptor_writes_for_set(context, set, &set_layout, &supplied_bindings)?;
+            let descriptor_set = DescriptorSet::new(
+                context.inner.descriptor_set_allocator.clone(),
+                set_layout,
+                writes,
+                Vec::new(),
+            )
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanDescriptorSetCreationFailed))?;
+            descriptor_sets.push(descriptor_set);
+        }
+
+        if let Some((&set, _)) = self.bindings.iter().next() {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                "raw resources set {set} is not declared by the pipeline"
+            ))));
+        }
+
+        Ok(Resources {
+            device: context.inner.device.clone(),
+            pipeline_layout: self.pipeline_layout,
+            descriptor_sets,
+        })
+    }
+}
+
+#[derive(Clone)]
+enum ResourceBinding {
+    UniformBuffer {
+        buffer: Subbuffer<[u8]>,
+        device: Arc<Device>,
+    },
+}
+
 #[derive(Clone)]
 pub(crate) struct RenderItemRaw {
     pub(crate) pipeline: Arc<GraphicsPipeline>,
     pub(crate) pipeline_device: Arc<Device>,
     pub(crate) pipeline_render_pass: Arc<RenderPass>,
     pub(crate) geometry_device: Arc<Device>,
+    pub(crate) resources_device: Option<Arc<Device>>,
+    pub(crate) resources_pipeline_layout: Option<Arc<PipelineLayout>>,
+    pub(crate) descriptor_sets: Vec<Arc<DescriptorSet>>,
+    pub(crate) required_descriptor_set_count: usize,
     pub(crate) vertex_buffer: Subbuffer<[u8]>,
     pub(crate) index_buffer: Option<Subbuffer<[u32]>>,
     pub(crate) vertex_count: u32,
@@ -433,23 +629,138 @@ fn validate_geometry_inputs(vertex_count: usize, indices: Option<&[u32]>) -> VMN
     Ok(())
 }
 
-fn validate_raw_pipeline_layout(
-    has_descriptor_bindings: bool,
-    has_push_constants: bool,
-) -> VMNLResult<()> {
-    if has_descriptor_bindings {
+fn validate_resources_context(context: &Context, expected_device: &Arc<Device>) -> VMNLResult<()> {
+    if !Arc::ptr_eq(&context.inner.device, expected_device) {
         return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-            "raw pipeline descriptors are not supported in checkpoint 1".into(),
-        )));
-    }
-
-    if has_push_constants {
-        return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-            "raw pipeline push constants are not supported in checkpoint 1".into(),
+            "raw resources must be built from the same context as the raw pipeline".into(),
         )));
     }
 
     Ok(())
+}
+
+fn validate_supplied_resource_bindings(
+    set_layouts: &[Arc<DescriptorSetLayout>],
+    supplied_sets: &BTreeMap<u32, BTreeMap<u32, ResourceBinding>>,
+) -> VMNLResult<()> {
+    for (&set, supplied_bindings) in supplied_sets {
+        let set_layout = set_layouts.get(usize::try_from(set).map_err(|_| {
+            VMNLError::new(VMNLErrorKind::InvalidState(
+                "raw resources set index out of bounds".into(),
+            ))
+        })?);
+        let Some(set_layout) = set_layout else {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                "raw resources set {set} is not declared by the pipeline"
+            ))));
+        };
+
+        for &binding in supplied_bindings.keys() {
+            if !set_layout.bindings().contains_key(&binding) {
+                return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                    "raw resources set {set} binding {binding} is not declared by the pipeline"
+                ))));
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn descriptor_writes_for_set(
+    context: &Context,
+    set: u32,
+    set_layout: &Arc<DescriptorSetLayout>,
+    supplied_bindings: &BTreeMap<u32, ResourceBinding>,
+) -> VMNLResult<Vec<WriteDescriptorSet>> {
+    let mut writes = Vec::with_capacity(supplied_bindings.len());
+
+    for (&binding, binding_layout) in set_layout.bindings() {
+        validate_raw_descriptor_binding(set, binding, binding_layout.descriptor_type)?;
+        if binding_layout.descriptor_count != 1 {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                "raw resources set {set} binding {binding} descriptor arrays are not supported yet"
+            ))));
+        }
+
+        let resource = supplied_bindings.get(&binding).ok_or_else(|| {
+            VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                "raw resources missing set {set} binding {binding}"
+            )))
+        })?;
+
+        match resource {
+            ResourceBinding::UniformBuffer { buffer, device } => {
+                if !Arc::ptr_eq(device, &context.inner.device) {
+                    return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                        "raw resources set {set} binding {binding} must belong to this context"
+                    ))));
+                }
+                writes.push(WriteDescriptorSet::buffer(binding, buffer.clone()));
+            }
+        }
+    }
+
+    Ok(writes)
+}
+
+fn validate_raw_pipeline_layout(
+    layout_info: &PipelineDescriptorSetLayoutCreateInfo,
+) -> VMNLResult<()> {
+    if !layout_info.push_constant_ranges.is_empty() {
+        return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+            "raw pipeline push constants are not supported yet".into(),
+        )));
+    }
+
+    for (set, set_layout) in layout_info.set_layouts.iter().enumerate() {
+        let set = u32::try_from(set)
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+        validate_raw_descriptor_set_layout(set, set_layout)?;
+    }
+
+    Ok(())
+}
+
+fn validate_raw_descriptor_set_layout(
+    set: u32,
+    set_layout: &DescriptorSetLayoutCreateInfo,
+) -> VMNLResult<()> {
+    for (&binding, binding_layout) in &set_layout.bindings {
+        validate_raw_descriptor_binding(set, binding, binding_layout.descriptor_type)?;
+        if binding_layout.descriptor_count != 1 {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                "raw pipeline set {set} binding {binding} descriptor arrays are not supported yet"
+            ))));
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_raw_descriptor_binding(
+    set: u32,
+    binding: u32,
+    descriptor_type: DescriptorType,
+) -> VMNLResult<()> {
+    if descriptor_type != DescriptorType::UniformBuffer {
+        return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+            "raw pipeline set {set} binding {binding} only supports uniform buffers for now"
+        ))));
+    }
+
+    Ok(())
+}
+
+fn required_descriptor_set_count(layout: &PipelineLayout) -> usize {
+    required_descriptor_set_count_from_layouts(layout.set_layouts())
+}
+
+fn required_descriptor_set_count_from_layouts(set_layouts: &[Arc<DescriptorSetLayout>]) -> usize {
+    set_layouts
+        .iter()
+        .rposition(|set_layout| !set_layout.bindings().is_empty())
+        .map_or(0, |index| index + 1)
 }
 
 fn compile_shader(
@@ -502,6 +813,9 @@ fn color_blend_state(blend_mode: BlendMode) -> ColorBlendState {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use vulkano::descriptor_set::layout::DescriptorSetLayoutBinding;
+    use vulkano::pipeline::layout::{PipelineLayoutCreateFlags, PushConstantRange};
+    use vulkano::shader::ShaderStages;
 
     #[repr(C)]
     #[derive(Clone, Copy)]
@@ -538,16 +852,69 @@ mod tests {
     }
 
     #[test]
-    fn raw_pipeline_refuses_descriptor_layouts() {
-        let result = validate_raw_pipeline_layout(true, false);
+    fn raw_pipeline_accepts_uniform_descriptor_layouts() {
+        let layout_info = pipeline_layout_info(vec![descriptor_set_layout(
+            DescriptorType::UniformBuffer,
+            1,
+        )]);
 
-        assert!(result.is_err());
+        assert!(validate_raw_pipeline_layout(&layout_info).is_ok());
+    }
+
+    #[test]
+    fn raw_pipeline_refuses_unsupported_descriptor_layouts() {
+        let layout_info = pipeline_layout_info(vec![descriptor_set_layout(
+            DescriptorType::CombinedImageSampler,
+            1,
+        )]);
+
+        assert!(validate_raw_pipeline_layout(&layout_info).is_err());
+    }
+
+    #[test]
+    fn raw_pipeline_refuses_descriptor_arrays() {
+        let layout_info = pipeline_layout_info(vec![descriptor_set_layout(
+            DescriptorType::UniformBuffer,
+            2,
+        )]);
+
+        assert!(validate_raw_pipeline_layout(&layout_info).is_err());
     }
 
     #[test]
     fn raw_pipeline_refuses_push_constants() {
-        let result = validate_raw_pipeline_layout(false, true);
+        let layout_info = PipelineDescriptorSetLayoutCreateInfo {
+            flags: PipelineLayoutCreateFlags::empty(),
+            set_layouts: Vec::new(),
+            push_constant_ranges: vec![PushConstantRange {
+                stages: ShaderStages::VERTEX,
+                offset: 0,
+                size: 4,
+            }],
+        };
 
-        assert!(result.is_err());
+        assert!(validate_raw_pipeline_layout(&layout_info).is_err());
+    }
+
+    fn pipeline_layout_info(
+        set_layouts: Vec<DescriptorSetLayoutCreateInfo>,
+    ) -> PipelineDescriptorSetLayoutCreateInfo {
+        PipelineDescriptorSetLayoutCreateInfo {
+            flags: PipelineLayoutCreateFlags::empty(),
+            set_layouts,
+            push_constant_ranges: Vec::new(),
+        }
+    }
+
+    fn descriptor_set_layout(
+        descriptor_type: DescriptorType,
+        descriptor_count: u32,
+    ) -> DescriptorSetLayoutCreateInfo {
+        let mut layout = DescriptorSetLayoutCreateInfo::default();
+        let mut binding = DescriptorSetLayoutBinding::descriptor_type(descriptor_type);
+        binding.stages = ShaderStages::VERTEX;
+        binding.descriptor_count = descriptor_count;
+        layout.bindings.insert(0, binding);
+        layout
     }
 }
