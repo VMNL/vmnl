@@ -19,7 +19,7 @@ use vulkano::{
         RenderPassBeginInfo, SubpassBeginInfo, SubpassContents, SubpassEndInfo,
     },
     pipeline::Pipeline,
-    pipeline::{graphics::viewport::Viewport, GraphicsPipeline},
+    pipeline::{graphics::viewport::Viewport, GraphicsPipeline, PipelineBindPoint},
     render_pass::Framebuffer,
     swapchain::Swapchain,
 };
@@ -162,12 +162,57 @@ impl VMNLWindow {
                                         .into(),
                                 )));
                             }
+                            if let Some(resources_device) = &render_item.resources_device {
+                                if !Arc::ptr_eq(resources_device, &self.handle.vmnl_instance.device)
+                                {
+                                    return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                                        "raw resources must belong to this window context".into(),
+                                    )));
+                                }
+                            }
+                            if render_item.required_descriptor_set_count > 0 {
+                                let Some(resources_pipeline_layout) =
+                                    &render_item.resources_pipeline_layout
+                                else {
+                                    return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                                        "raw pipeline requires descriptor resources".into(),
+                                    )));
+                                };
+                                if render_item.descriptor_sets.len()
+                                    != render_item.required_descriptor_set_count
+                                {
+                                    return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                                        "raw pipeline descriptor resources are incomplete".into(),
+                                    )));
+                                }
+                                if !Arc::ptr_eq(
+                                    resources_pipeline_layout,
+                                    render_item.pipeline.layout(),
+                                ) {
+                                    return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                                        "raw resources must be built for this raw pipeline".into(),
+                                    )));
+                                }
+                            }
 
                             builder
                                 .bind_pipeline_graphics(render_item.pipeline.clone())
                                 .map_err(|_| {
                                     VMNLError::new(VMNLErrorKind::VulkanPipelineCreationFailed)
-                                })?
+                                })?;
+                            if !render_item.descriptor_sets.is_empty() {
+                                builder
+                                    .bind_descriptor_sets(
+                                        PipelineBindPoint::Graphics,
+                                        render_item.pipeline.layout().clone(),
+                                        0,
+                                        render_item.descriptor_sets.clone(),
+                                    )
+                                    .map_err(|_| {
+                                        VMNLError::new(VMNLErrorKind::VulkanValidationFailed)
+                                    })?;
+                            }
+                            builder
                                 .bind_vertex_buffers(0, render_item.vertex_buffer.clone())
                                 .map_err(|_| {
                                     VMNLError::new(VMNLErrorKind::VulkanVertexBufferCreationFailed)

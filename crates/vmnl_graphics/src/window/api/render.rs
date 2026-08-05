@@ -5,7 +5,9 @@
 
 use crate::d2::{Drawable2D, RenderItem2D};
 use crate::d3::{Camera, Drawable3D, RenderItem3D};
-use crate::raw::{Geometry as RawGeometry, Pipeline as RawPipeline, RenderItemRaw};
+use crate::raw::{
+    Geometry as RawGeometry, Pipeline as RawPipeline, RenderItemRaw, Resources as RawResources,
+};
 use crate::window::render::RenderPassCommand;
 use crate::window::Window;
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
@@ -187,6 +189,23 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
             items: geometries
                 .into_iter()
                 .map(|geometry| pipeline.render_item(geometry))
+                .collect(),
+        });
+        self
+    }
+
+    /// Add a raw render pass with descriptor resources to the pending frame.
+    #[must_use]
+    pub fn draw_raw_with<TVertex, const N: usize>(
+        mut self,
+        pipeline: &'g RawPipeline<TVertex>,
+        resources: &'g RawResources,
+        geometries: [&'g RawGeometry<TVertex>; N],
+    ) -> Self {
+        self.passes.push(FramePass::Raw {
+            items: geometries
+                .into_iter()
+                .map(|geometry| pipeline.render_item_with(geometry, resources))
                 .collect(),
         });
         self

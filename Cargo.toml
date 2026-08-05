@@ -6,6 +6,7 @@ members = [
     "examples/d2_shapes",
     "examples/raw_pipeline",
     "examples/raw_triangle",
+    "examples/raw_uniform",
     "examples/window_custom_shaders",
     "examples/window_events_input",
     "tests/api",
