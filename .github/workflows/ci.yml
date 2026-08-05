@@ -1,4 +1,4 @@
-name: ci
+name: CI
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   fmt:
-    name: fmt
+    name: Formatting
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -30,7 +30,7 @@ jobs:
         run: cargo fmt --all --check
 
   clippy:
-    name: clippy
+    name: Clippy
     needs: fmt
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -62,7 +62,7 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 
   build:
-    name: build (${{ matrix.name }})
+    name: Build — ${{ matrix.name }}
     needs: clippy
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
@@ -105,7 +105,7 @@ jobs:
         run: cargo build --workspace --all-targets --locked
 
   unit:
-    name: unit (${{ matrix.name }})
+    name: Unit Tests — ${{ matrix.name }}
     needs: build
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
@@ -150,7 +150,7 @@ jobs:
           --exclude vmnl-smoke-tests --locked
 
   api:
-    name: api (${{ matrix.name }})
+    name: API Tests — ${{ matrix.name }}
     needs: unit
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
@@ -193,7 +193,7 @@ jobs:
         run: cargo test -p vmnl-api-tests --locked
 
   smoke:
-    name: smoke (${{ matrix.name }})
+    name: Smoke Tests — ${{ matrix.name }}
     needs: api
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
@@ -236,7 +236,7 @@ jobs:
         run: cargo run -p vmnl-smoke-tests --locked
 
   doctests:
-    name: doctests
+    name: Doc Tests
     needs: smoke
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -267,7 +267,7 @@ jobs:
         run: cargo test --workspace --all-features --doc --locked
 
   documentation:
-    name: documentation
+    name: Documentation Build
     needs: doctests
     runs-on: ubuntu-24.04
     timeout-minutes: 45
