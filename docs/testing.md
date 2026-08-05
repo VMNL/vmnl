@@ -42,12 +42,12 @@ invoked in CI.
 Its strict order is:
 
 ```text
-format -> Clippy -> build -> unit -> API -> smoke -> doctests -> documentation
+format -> Clippy -> build -> unit -> API -> smoke -> documentation -> doctests
 ```
 
 Build, unit, API, and smoke stages run concurrently on the Linux, macOS, and Windows matrix.
-Each stage starts only after every platform in the previous stage succeeds. Doctests and the
-documentation build run on Linux after the smoke matrix.
+Each stage starts only after every platform in the previous stage succeeds. The documentation
+build and doctests run on Linux after the smoke matrix.
 
 GPU/display tests remain excluded from hosted CI because they require a compatible GPU, driver,
 and display server.
