@@ -4,12 +4,12 @@
 
 | Platform | CI validation | `./run` support | Status |
 |----------|---------------|-----------------|--------|
-| Ubuntu Linux | Yes | Yes | Supported development path. |
+| Ubuntu Linux | Configured on `ubuntu-24.04`; first matrix run pending. | Yes | Supported development path. |
 | Other Linux distributions | No | Package installation paths are provided. | Best effort. |
-| Windows | No | No | Not validated. Use Cargo and native dependencies manually. |
-| macOS | No | No | Not validated. Use Cargo and native dependencies manually. |
+| Windows | Configured on `windows-2022`; first matrix run pending. | No | Cargo is invoked directly by CI. |
+| macOS | Configured on `macos-14`; first matrix run pending. | No | Cargo is invoked directly by CI. |
 
-The `./run` script requires `/etc/os-release` for dependency installation and only contains Linux package-manager paths.
+The `./run` script requires `/etc/os-release` for dependency installation and only contains Linux package-manager paths. It is a local development helper and is never invoked by CI.
 
 ## Runtime Constraints
 
