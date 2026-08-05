@@ -34,6 +34,28 @@ examples/                     visual runnable examples
 
 `./run -t` intentionally excludes GPU/display tests.
 
+## Continuous Integration
+
+The CI workflow invokes Cargo directly. `./run` is a local development helper and is never
+invoked in CI.
+
+Its strict order is:
+
+```text
+format -> Clippy -> build -> headless tests -> documentation
+```
+
+Build and headless test stages run concurrently on the Linux, macOS, and Windows matrix. The
+headless test stage runs unit, API, then smoke tests on each platform. Each job starts only after
+every platform in the previous matrix succeeds. The final Linux documentation job builds Rustdoc,
+then runs doctests.
+
+CI sets `CARGO_INCREMENTAL=0` because GitHub-hosted jobs use fresh workspaces. This avoids
+producing incremental artifacts that cannot be reused by later jobs.
+
+GPU/display tests remain excluded from hosted CI because they require a compatible GPU, driver,
+and display server.
+
 ## Invariants
 
 - API tests must be headless.
@@ -75,4 +97,3 @@ Run them explicitly:
 ```bash
 ./run -gt
 ```
-

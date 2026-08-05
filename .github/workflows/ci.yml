@@ -1,49 +1,192 @@
-name: ci
+name: CI
 
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_INCREMENTAL: "0"
 
 jobs:
   fmt:
-    runs-on: ubuntu-latest
+    name: "Formatting"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          toolchain: 1.87.0
           components: rustfmt
-      - name: fmt
+      - name: Check formatting
         run: cargo fmt --all --check
 
-  tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
-            libvulkan-dev vulkan-tools libglfw3-dev \
-            libwayland-dev libxkbcommon-dev xorg-dev
-      - name: tests
-        run: cargo test --workspace --all-targets
-
   clippy:
-    runs-on: ubuntu-latest
+    name: "Clippy"
+    needs: fmt
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          toolchain: 1.87.0
           components: clippy
-      - name: install system dependencies
+      - name: Restore Cargo cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cargo-
+      - name: Install Linux dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
             libvulkan-dev vulkan-tools libglfw3-dev \
             libwayland-dev libxkbcommon-dev xorg-dev
-      - name: clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+
+  build:
+    name: "Build: ${{ matrix.name }}"
+    needs: clippy
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - name: Linux
+            runner: ubuntu-24.04
+          - name: macOS
+            runner: macos-14
+          - name: Windows
+            runner: windows-2022
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          toolchain: 1.87.0
+      - name: Restore Cargo cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cargo-
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
+            libvulkan-dev vulkan-tools libglfw3-dev \
+            libwayland-dev libxkbcommon-dev xorg-dev
+      - name: Build workspace
+        run: cargo build --workspace --all-targets --locked
+
+  headless_tests:
+    name: "Headless Tests: ${{ matrix.name }}"
+    needs: build
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - name: Linux
+            runner: ubuntu-24.04
+          - name: macOS
+            runner: macos-14
+          - name: Windows
+            runner: windows-2022
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          toolchain: 1.87.0
+      - name: Restore Cargo cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cargo-
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
+            libvulkan-dev vulkan-tools libglfw3-dev \
+            libwayland-dev libxkbcommon-dev xorg-dev
+      - name: Run Unit Tests
+        run: >-
+          cargo test --workspace --lib --exclude vmnl-api-tests --exclude vmnl-gpu-tests
+          --exclude vmnl-smoke-tests --locked
+      - name: Run API Tests
+        run: cargo test -p vmnl-api-tests --locked
+      - name: Run Smoke Tests
+        run: cargo run -p vmnl-smoke-tests --locked
+
+  documentation:
+    name: "Documentation"
+    needs: headless_tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          toolchain: 1.87.0
+      - name: Restore Cargo cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cargo-
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
+            libvulkan-dev vulkan-tools libglfw3-dev \
+            libwayland-dev libxkbcommon-dev xorg-dev
+      - name: Build documentation
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: cargo doc --workspace --no-deps --locked
+      - name: Run doctests
+        run: cargo test --workspace --all-features --doc --locked
