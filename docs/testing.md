@@ -42,12 +42,16 @@ invoked in CI.
 Its strict order is:
 
 ```text
-format -> Clippy -> build -> unit -> API -> smoke -> documentation -> doctests
+format -> Clippy -> build -> headless tests -> documentation
 ```
 
-Build, unit, API, and smoke stages run concurrently on the Linux, macOS, and Windows matrix.
-Each stage starts only after every platform in the previous stage succeeds. The documentation
-build and doctests run on Linux after the smoke matrix.
+Build and headless test stages run concurrently on the Linux, macOS, and Windows matrix. The
+headless test stage runs unit, API, then smoke tests on each platform. Each job starts only after
+every platform in the previous matrix succeeds. The final Linux documentation job builds Rustdoc,
+then runs doctests.
+
+CI sets `CARGO_INCREMENTAL=0` because GitHub-hosted jobs use fresh workspaces. This avoids
+producing incremental artifacts that cannot be reused by later jobs.
 
 GPU/display tests remain excluded from hosted CI because they require a compatible GPU, driver,
 and display server.
