@@ -57,10 +57,9 @@ Do not silently support descriptors, push constants, or pipeline features that t
 
 - Use `VMNLResult`, `VMNLError`, and `VMNLErrorKind` conventions.
 - Preserve source and actionable context without stabilizing Vulkano or GLFW details as public errors.
-- Add no `unwrap`, `expect`, `panic!`, `todo!`, or `unimplemented!` in normal library paths unless an adjacent invariant proves impossibility.
-- Keep unsafe operations local.
-- Put an adjacent `// SAFETY:` comment on every unsafe block and cover the applicable validity, alignment, initialization, aliasing, lifetime, threading, Vulkan-object, and external-API preconditions.
-- Preserve `unsafe_op_in_unsafe_fn`, `undocumented_unsafe_blocks`, and `missing_safety_doc` enforcement.
+- Before changing unsafe or FFI code, state the invariant that makes each operation valid and identify the test, lint, or external specification that can disprove it.
+- Keep unsafe operations local. Put an adjacent `// SAFETY:` comment on every unsafe block covering applicable validity, alignment, initialization, aliasing, lifetime, threading, Vulkan-object, and external-API preconditions.
+- Do not suppress workspace error or unsafe-code lints without a local invariant and technical justification.
 
 ## Costs, Performance, and Platforms
 
