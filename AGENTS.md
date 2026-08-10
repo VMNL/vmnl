@@ -88,26 +88,6 @@ Execute every applicable automatic check in this order:
 
 Do not change the order of applicable completion checks without an explicit technical justification. A blocked check does not authorize silently skipping later checks; report the blocker and continue only when doing so is safe and meaningful. Documentation-only work requires only applicable document, link, structure, and consistency checks.
 
-## Validate with Evidence
-
-During development, run the narrowest check that can disprove the current hypothesis. For maintained Rust source changes, execute every applicable completion check in this order:
-
-1. `cargo build --workspace --all-targets`
-2. `cargo fmt --all --check`
-3. `cargo clippy --workspace --all-targets --all-features -- -D warnings`
-4. `./run -d`
-5. `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps`
-6. `./run -ut`
-7. `./run -at`
-8. `./run -st`
-9. For GPU-facing changes, `cargo test -p vmnl-gpu-tests --no-run`, followed by `./run -gt` when the environment supports execution.
-
-`./run -ft` aliases `./run -at`; never execute or report both as separate suites. Documentation-only work requires only applicable document, link, structure, and consistency checks. Rustdoc or embedded Rust example changes also require the relevant doctest or documentation build.
-
-Do not reorder applicable completion checks without a technical justification. On failure, record the exact command, the first relevant error, whether evidence indicates code or environment, and the behavior left unverified. A blocked check does not authorize silently skipping later checks; continue only when doing so is safe and meaningful.
-
-Graphics test placement, runner preflight, GPU requirements, and mandatory operator validation are defined in the graphics skill's [`validation.md`](.agents/skills/develop-vmnl-graphics/references/validation.md).
-
 ## Report and Prepare PR Descriptions
 
 Report the changed behavior or documentation, relevant files, commands actually executed and observed results, failed or blocked checks, unverified behavior, and remaining uncertainty. Make no claim about compilation, tests, rendering, portability, correctness, publication, or performance without current-task evidence. Report unrelated observations separately without expanding the patch.
