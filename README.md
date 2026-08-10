@@ -149,6 +149,7 @@ use vmnl::*;
 ### Requirements
 
 - Rust (stable) + Cargo
+- Just
 - A Vulkan loader (`libvulkan.so`, `vulkan-1.dll`, `libvulkan.dylib`)
 - A Vulkan-compatible GPU
 
@@ -159,7 +160,7 @@ use vmnl::*;
 ```bash
 git clone https://github.com/VMNL/vmnl.git
 cd vmnl
-cargo build
+just build-workspace
 ```
 
 ---

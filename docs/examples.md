@@ -15,8 +15,8 @@ examples/window_events_input
 ## Commands
 
 ```bash
-./run d2_shapes
-./run -b raw_pipeline
+just run d2_shapes
+just build raw_pipeline
 ```
 
 ## Invariants
@@ -33,5 +33,4 @@ examples/window_events_input
 2. Add it to workspace `members`.
 3. Depend on `vmnl` through `path = "../../crates/vmnl"`.
 4. Add a row to `examples/README.md`.
-5. Keep the example runnable through `./run <name>`.
-
+5. Keep the example runnable through `just run <name>`.

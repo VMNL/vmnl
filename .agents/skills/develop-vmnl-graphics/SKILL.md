@@ -29,7 +29,7 @@ Treat `docs/` as the canonical home for stable architecture, contracts, and proc
 
 ## Route Agent References
 
-- Read [`references/current-limitations.md`](references/current-limitations.md) before changing context/device selection, GLFW initialization, 3D status, Rustdoc examples, GPU tests, or the runner.
+- Read [`references/current-limitations.md`](references/current-limitations.md) before changing context/device selection, GLFW initialization, 3D status, Rustdoc examples, GPU tests, or the Justfile.
 - Read [`references/graphics-correctness.md`](references/graphics-correctness.md) for Vulkan, synchronization, swapchain, window, resource, shader, pipeline, unsafe, platform, or performance work.
 - Read [`references/validation.md`](references/validation.md) for every feature, fix, Rust source change, test/example change, tooling change, dependency change, or validation claim.
 

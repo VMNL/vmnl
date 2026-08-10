@@ -137,16 +137,16 @@ Avoid:
 Before submitting changes:
 
 ```bash
-cargo build --workspace --all-targets
-cargo fmt --all --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-./run -d
-RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
-./run -ut
-./run -at
-./run -st
-cargo test -p vmnl-gpu-tests --no-run # GPU-facing changes
-./run -gt                              # when the environment supports it
+just build-workspace
+just check-fmt
+just check-clippy
+just doctest
+just docs
+just test-unit
+just test-api
+just test-smoke
+just test-gpu-compile # GPU-facing changes
+just test-gpu         # when the environment supports it
 ```
 
 Keep this order for every applicable completion check. Document the technical reason for any required deviation.

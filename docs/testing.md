@@ -24,19 +24,19 @@ examples/                     visual runnable examples
 ## Commands
 
 ```bash
-./run -ut
-./run -at
-./run -st
-./run -gt
-./run -t
-./run -d
+just test-unit
+just test-api
+just test-smoke
+just test-gpu
+just test
+just doctest
 ```
 
-`./run -t` intentionally excludes GPU/display tests.
+`just test` intentionally excludes GPU/display tests and doctests.
 
 ## Continuous Integration
 
-The CI workflow invokes Cargo directly. `./run` is a local development helper and is never
+The CI workflow invokes Cargo directly. The Justfile is a local development helper and is never
 invoked in CI.
 
 Its strict order is:
@@ -63,7 +63,7 @@ and display server.
 - GPU tests must be isolated under `tests/gpu`.
 - Visual examples must live under `examples`.
 - Tests must assert behavior or fail through a non-zero exit code.
-- `./run -ft` remains a compatibility alias for `./run -at`.
+- `just test` combines the unit, API, and smoke suites.
 
 ## Classification
 
@@ -89,11 +89,11 @@ GPU tests are separated because they depend on the machine:
 Compile without running them:
 
 ```bash
-cargo test -p vmnl-gpu-tests --no-run
+just test-gpu-compile
 ```
 
 Run them explicitly:
 
 ```bash
-./run -gt
+just test-gpu
 ```

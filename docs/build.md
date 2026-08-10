@@ -4,6 +4,7 @@
 
 - Rust stable matching `workspace.package.rust-version`.
 - Cargo.
+- Just.
 - C and C++ toolchains.
 - CMake, Git, Python 3.
 - `pkg-config`.
@@ -11,68 +12,55 @@
 - GLFW.
 - shaderc.
 
-The `./run` script checks the required tools and reports shaderc/GLFW discovery.
-
-For build, run, unit, API, smoke, GPU, and combined-test modes, failed shaderc discovery causes the runner to invoke the platform package manager through `sudo` without a confirmation prompt. Provision dependencies first; do not use those modes when host modifications are not authorized.
+Install Just on the development machine and verify it with `just --version`. The Justfile runs
+Cargo directly; system dependencies remain a prerequisite.
 
 ## Common Commands
 
 ```bash
-cargo build
-./run -b d2_shapes
-./run d2_shapes
+just --list
+just build
+just build raw_pipeline
+just build-workspace
+just run
+just run d2_shapes
+just test
+just validate
 ```
 
-Default run target:
+`just build` and `just run` default to `d2_shapes`. `just build-workspace` compiles every
+workspace target. `just validate` runs the required non-GPU build, check, Rustdoc, and headless
+test sequence.
 
-```bash
-./run
-```
-
-Equivalent to:
-
-```bash
-cargo run -p d2_shapes
-```
-
-## Runner Flags
+## Recipes
 
 ```text
-./run -ut   unit tests
-./run -at   API tests
-./run -ft   compatibility alias for API tests
-./run -st   smoke tests
-./run -gt   GPU/display tests
-./run -t    unit + API + smoke
-./run -d    doctests
-./run -w    checks without -D warnings
-./run -l    mutating format/fix pass
+just test                  unit + API + smoke tests
+just test-unit             unit tests
+just test-api              API tests
+just test-smoke            smoke tests
+just test-gpu-compile      compile GPU tests without running them
+just test-gpu              GPU/display tests
+just doctest               Rustdoc examples
+just check                 formatting and strict Clippy checks
+just lint                  mutating format/fix pass
+just docs                  Rustdoc build with warnings denied
+just bootstrap             install Linux system dependencies
 ```
 
-For non-mutating validation with warnings denied, use:
+`just lint` applies formatting and automatic fixes across the workspace. Inspect the worktree
+first and use it only when those modifications are intended.
 
-```bash
-cargo fmt --all --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-```
+## Dependency Bootstrap
 
-`./run -l` applies formatting and automatic fixes across the workspace. Inspect the worktree first and use it only when those modifications are intended.
+`just bootstrap` installs the system packages required for VMNL builds on supported Linux
+distributions. It invokes the dedicated `./deps` script.
+
+It requires `/etc/os-release` and invokes the appropriate package manager for the detected distro family.
 
 ## shaderc Discovery
 
-`./run` resolves shaderc through:
-
-1. `SHADERC_LIB_DIR`, if set.
-2. `pkg-config --variable=libdir shaderc`.
-3. Common system library paths.
-
-Invariant:
-
-```text
-SHADERC_LIB_DIR must be absolute and point to an existing directory.
-```
-
-## Debug Protocol
+### Debug Protocol
 
 Hypothesis: shaderc is not discoverable.
 
@@ -87,11 +75,11 @@ pkg-config --variable=libdir shaderc
 Instrumentation:
 
 ```bash
-./run -b d2_shapes
+just build d2_shapes
 ```
 
 Decision:
 
-- If `pkg-config` finds shaderc, prefer fixing `SHADERC_LIB_DIR` or library paths.
-- If `pkg-config` does not find shaderc, install the system shaderc development package.
+- If `pkg-config` finds shaderc, retry the smallest failing Just recipe.
+- If `pkg-config` does not find shaderc, run `just bootstrap` or install the system shaderc development package.
 - If Vulkan fails at runtime, inspect loader/driver state separately from shaderc.

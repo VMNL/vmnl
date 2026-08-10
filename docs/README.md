@@ -8,7 +8,7 @@ Local `README.md` files are only navigation aids for their directory. Public API
 
 - [API](API.md): control spectrum and high-level/low-level API composition.
 - [Architecture](architecture.md): workspace layout, crates, public facade, internal layers.
-- [Build](build.md): toolchain, system dependencies, shaderc/Vulkan discovery, runner usage.
+- [Build](build.md): toolchain, system dependencies, shaderc/Vulkan discovery, Justfile usage.
 - [Coding Instructions](INSTRUCTIONS.md): project coding and documentation standards.
 - [Contributing](../CONTRIBUTING.md): contribution workflow and commit convention.
 - [Deployment](deployment.md): release checks and current publishing constraints.

@@ -62,7 +62,31 @@ Before invoking repository tooling, read its prerequisites and mutation behavior
 
 Add or upgrade a dependency only when required. State why the current graph is insufficient, inspect API and duplicate-version impact, and validate the resulting graph.
 
-All VMNL releases are manual. The repository must not contain automatic release or publication workflows unless this policy is explicitly changed. Never publish, create or push a release tag, create a GitHub release, or use release credentials without explicit authorization. Do not claim publishability without successful dry-runs of the current workspace graph.
+## Release Policy
+
+All VMNL releases are performed manually. The repository MUST NOT contain an automatic release or publication workflow unless the policy is explicitly changed.
+
+`docs/deployment.md` is authoritative for release preconditions and current publication blockers. Manual release policy does not imply that the current crates.io dependency graph is publishable.
+
+Never run a non-dry-run publication, create or push a release tag, create a GitHub release, or use release credentials without explicit authorization. Do not claim publishability until the documented blockers are resolved and the required dry-runs succeed.
+
+## Automated Validation Order
+
+Execute every applicable automatic check in this order:
+
+1. compilation: `cargo build --workspace --all-targets`;
+2. formatting: `cargo fmt --all --check`;
+3. Clippy with warnings denied: `cargo clippy --workspace --all-targets --all-features -- -D warnings`;
+4. doctests: `just doctest`;
+5. documentation build: `just docs`;
+6. unit tests: `just test-unit`;
+7. API tests: `just test-api`;
+8. smoke tests: `just test-smoke`;
+9. when the task affects GPU-facing behavior, GPU test compilation with `just test-gpu-compile`, followed by `just test-gpu` when the environment supports execution.
+
+`just test` combines unit, API, and smoke tests; do not report it as separate suites.
+
+Do not change the order of applicable completion checks without an explicit technical justification. A blocked check does not authorize silently skipping later checks; report the blocker and continue only when doing so is safe and meaningful. Documentation-only work requires only applicable document, link, structure, and consistency checks.
 
 ## Validate with Evidence
 
