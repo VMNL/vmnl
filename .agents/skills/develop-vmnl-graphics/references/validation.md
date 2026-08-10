@@ -41,7 +41,7 @@ Run the narrowest command that can disprove the current hypothesis. Do not repea
 
 For documentation-only work, run relevant structure, link, and consistency checks. Do not run the Rust suite merely to produce validation output. Run doctests or documentation builds when Rustdoc or embedded Rust examples change.
 
-## Complete Rust Source Changes
+## Complete Graphics Changes
 
 After maintained Rust source changes, attempt every applicable check in this exact order:
 
@@ -87,12 +87,4 @@ Automated checks, GPU tests, Codex-run examples, screenshots, and planned proced
 
 ## Report Evidence
 
-For each relevant command, report its exact command and observed result. For every failed, blocked, or skipped applicable check, include:
-
-- `Failed` or `Blocked / not run`;
-- observed reason;
-- code-versus-environment cause;
-- behavior left unverified;
-- documented resolution when available.
-
-Never claim compilation, tests, rendering, visual correctness, portability, or performance without direct evidence from the current task. Never claim human manual validation without an explicit operator report.
+In addition to the root report, identify which GPU/display/platform assumptions were exercised. Distinguish GPU-test compilation, GPU execution, Codex-observed example output, and operator-reported graphical validation; none is evidence for the others.
