@@ -98,14 +98,14 @@ Execute every applicable automatic check in this order:
 1. compilation: `cargo build --workspace --all-targets`;
 2. formatting: `cargo fmt --all --check`;
 3. Clippy with warnings denied: `cargo clippy --workspace --all-targets --all-features -- -D warnings`;
-4. doctests: `./run -d`;
-5. documentation build: `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps`;
-6. unit tests: `./run -ut`;
-7. API tests: `./run -at`;
-8. smoke tests: `./run -st`;
-9. when the task affects GPU-facing behavior, GPU test compilation with `cargo test -p vmnl-gpu-tests --no-run`, followed by `./run -gt` when the environment supports execution.
+4. doctests: `just doctest`;
+5. documentation build: `just docs`;
+6. unit tests: `just test-unit`;
+7. API tests: `just test-api`;
+8. smoke tests: `just test-smoke`;
+9. when the task affects GPU-facing behavior, GPU test compilation with `just test-gpu-compile`, followed by `just test-gpu` when the environment supports execution.
 
-`./run -ft` is only an alias for `./run -at`; do not execute or report both as separate suites.
+`just test` combines unit, API, and smoke tests; do not report it as separate suites.
 
 Do not change the order of applicable completion checks without an explicit technical justification. A blocked check does not authorize silently skipping later checks; report the blocker and continue only when doing so is safe and meaningful. Documentation-only work requires only applicable document, link, structure, and consistency checks.
 

@@ -26,26 +26,15 @@ Consequences:
 
 The public 3D types remain scaffolding without an operational rendering backend. Do not claim 3D rendering support. If a task makes part of it operational, update every canonical status location describing it as scaffolding.
 
-## Rustdoc Coverage
-
-`crates/vmnl_graphics` currently sets `doctest = false`. `./run -d` therefore does not compile its Rustdoc examples.
-
-When changing such an example:
-
-- add equivalent compile coverage when practical; or
-- report the coverage gap explicitly.
-
-Re-enabling doctests is a separate behavior/tooling change.
-
 ## GPU Test Routing
 
-`./run -gt` currently runs ignored tests only in `vmnl-gpu-tests`. It does not execute ignored library tests.
+`just test-gpu` runs ignored tests only in `vmnl-gpu-tests`. It does not execute ignored library tests.
 
 Two legacy GPU-oriented ignored tests still live outside `tests/gpu`:
 
 - `crates/vmnl_graphics/src/vmnl_instance/tests.rs`;
 - `crates/vmnl_graphics/src/2d/shape/mod.rs`.
 
-Do not count them as executed by `./run -gt`. When modifying their behavior, prefer migrating durable GPU coverage to `tests/gpu` rather than adding more out-of-suite tests.
+Do not count them as executed by `just test-gpu`. When modifying their behavior, prefer migrating durable GPU coverage to `tests/gpu` rather than adding more out-of-suite tests.
 
-New GPU/display tests under `tests/gpu` must stay ignored because the runner selects them with `--ignored`.
+New GPU/display tests under `tests/gpu` must stay ignored because `just test-gpu` selects them with `--ignored`.

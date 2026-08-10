@@ -9,11 +9,11 @@ Test crates are split by execution boundary:
 Commands:
 
 ```bash
-./run -ut
-./run -at
-./run -st
-./run -gt
-./run -t
+just test-unit
+just test-api
+just test-smoke
+just test-gpu
+just test
 ```
 
 See [docs/testing.md](../docs/testing.md) for the full policy.

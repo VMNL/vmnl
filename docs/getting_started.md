@@ -9,7 +9,7 @@ Follow the system requirements in [Build](build.md). The validated development p
 ```bash
 git clone https://github.com/VMNL/vmnl.git
 cd vmnl
-cargo build
+just build-workspace
 ```
 
 ## Verify the Workspace
@@ -17,7 +17,7 @@ cargo build
 Run the headless suite before using a display-dependent example:
 
 ```bash
-./run -t
+just test
 ```
 
 The command runs unit, API, and smoke tests. It must exit with status `0`.
@@ -25,7 +25,7 @@ The command runs unit, API, and smoke tests. It must exit with status `0`.
 ## Run a First Example
 
 ```bash
-./run d2_shapes
+just run d2_shapes
 ```
 
 Expected result: a window opens and renders the 2D shapes example. A Vulkan-capable GPU and a display server are required.

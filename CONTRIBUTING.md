@@ -7,19 +7,19 @@ Follow the project rules in [docs/INSTRUCTIONS.md](docs/INSTRUCTIONS.md).
 Run every applicable automatic check in this order:
 
 ```bash
-cargo build --workspace --all-targets
-cargo fmt --all --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-./run -d
-RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
-./run -ut
-./run -at
-./run -st
-cargo test -p vmnl-gpu-tests --no-run # GPU-facing changes
-./run -gt                              # when the environment supports it
+just build-workspace
+just check-fmt
+just check-clippy
+just doctest
+just docs
+just test-unit
+just test-api
+just test-smoke
+just test-gpu-compile # GPU-facing changes
+just test-gpu         # when the environment supports it
 ```
 
-Do not reorder applicable completion checks without documenting the technical reason. Run `./run -gt` only on a machine with a Vulkan-capable GPU and a display server. `./run -ft` is an alias for `./run -at`, not an additional suite.
+Do not reorder applicable completion checks without documenting the technical reason. Run `just test-gpu` only on a machine with a Vulkan-capable GPU and a display server. `just test` is the combined headless suite, not an additional suite.
 
 - Public API changes update Rustdoc and API tests.
 - Bug fixes include a regression test.
