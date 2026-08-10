@@ -4,7 +4,7 @@ default:
 
 # Build an example without opening a window.
 build example='d2_shapes':
-    cargo build -p '{{example}}'
+    cargo build -p '{{ example }}'
 
 # Build every workspace target.
 build-workspace:
@@ -12,7 +12,7 @@ build-workspace:
 
 # Run an example.
 run example='d2_shapes':
-    cargo run -p '{{example}}'
+    cargo run -p '{{ example }}'
 
 # Run the headless test suites.
 test: test-unit test-api test-smoke

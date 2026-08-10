@@ -28,9 +28,9 @@ just test
 just validate
 ```
 
-`just build` and `just run` default to `d2_shapes`. `just build-workspace` compiles every
-workspace target. `just validate` runs the required non-GPU build, check, Rustdoc, and headless
-test sequence.
+`just build` and `just run` default to `d2_shapes`; pass another package name as the positional
+argument. `just build-workspace` compiles every workspace target. `just validate` runs the
+required non-GPU build, check, Rustdoc, and headless test sequence.
 
 ## Recipes
 
