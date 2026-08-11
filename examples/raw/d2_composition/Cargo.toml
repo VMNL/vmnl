@@ -1,8 +1,8 @@
 [package]
-name = "d2_shapes"
+name = "raw_d2_composition"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [dependencies]
-vmnl = { path = "../../crates/vmnl" }
+vmnl = { path = "../../../crates/vmnl" }

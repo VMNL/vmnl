@@ -54,7 +54,8 @@ impl Window {
     /// - `height`: New window height in screen pixels.
     ///
     /// # Errors
-    /// Returns an error if a dimension exceeds the range accepted by GLFW.
+    /// Returns [`VMNLErrorKind::InvalidWindowSize`](crate::VMNLErrorKind::InvalidWindowSize)
+    /// if a dimension is below `64` pixels or exceeds the range accepted by GLFW.
     ///
     /// # Example
     /// ```rust,no_run
@@ -167,19 +168,23 @@ impl Window {
     /// # Arguments
     /// - `aspect_ratio`: Optional `(numerator, denominator)` aspect ratio.
     ///
+    /// # Errors
+    /// Returns [`VMNLErrorKind::InvalidState`](crate::VMNLErrorKind::InvalidState) if either
+    /// term is zero or cannot be represented by GLFW.
+    ///
     /// # Example
     /// ```rust,no_run
     /// # use vmnl_graphics::{Context, Window};
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
     /// # let mut window = Window::builder().build(&context)?;
-    /// window.set_aspect_ratio(Some((16, 9)));
+    /// window.set_aspect_ratio(Some((16, 9)))?;
     /// # Ok(())
     /// # }
     /// ```
     #[inline]
-    pub fn set_aspect_ratio(&mut self, aspect_ratio: Option<(u32, u32)>) {
-        self.inner.set_aspect_ratio(aspect_ratio);
+    pub fn set_aspect_ratio(&mut self, aspect_ratio: Option<(u32, u32)>) -> VMNLResult<()> {
+        self.inner.set_aspect_ratio(aspect_ratio)
     }
 
     /// Sets the position of the window on the screen.

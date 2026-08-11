@@ -5,19 +5,9 @@
 
 //! Unit tests for VMNL Vulkan context initialization helpers.
 
-use super::{Context, VMNLInstance};
+use super::VMNLInstance;
 use crate::{VMNLError, VMNLErrorKind};
-use std::sync::{Mutex, OnceLock};
 use vulkano::device::{physical::PhysicalDeviceType, QueueFlags};
-
-static GPU_TEST_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-
-fn gpu_test_guard() -> std::sync::MutexGuard<'static, ()> {
-    GPU_TEST_LOCK
-        .get_or_init(|| Mutex::new(()))
-        .lock()
-        .expect("gpu test lock poisoned")
-}
 
 #[test]
 fn queue_family_index_returns_first_graphics_family() {
@@ -134,20 +124,5 @@ fn physical_device_priority_other_is_lowest() {
     assert_eq!(
         VMNLInstance::physical_device_priority(PhysicalDeviceType::Other),
         0
-    );
-}
-
-#[test]
-#[ignore = "Requires Vulkan + GLFW display."]
-fn smoke_context_initialization() {
-    let _guard = gpu_test_guard();
-    let context = Context::new().expect("context should initialize");
-
-    assert!(
-        context
-            .inner
-            .physical_device
-            .supported_extensions()
-            .khr_swapchain
     );
 }

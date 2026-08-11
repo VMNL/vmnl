@@ -41,7 +41,7 @@ impl VMNLWindow {
         match swapchain::acquire_next_image(swapchain.clone(), timeout) {
             Ok(result) => Ok(result),
             Err(Validated::Error(VulkanError::OutOfDate)) => {
-                Err(VMNLError::new(VMNLErrorKind::VulkanSurfaceLost))
+                Err(VMNLError::new(VMNLErrorKind::VulkanOutOfDate))
             }
             Err(error) => Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
                 "{error:?}"

@@ -5,17 +5,24 @@ Examples are user-facing visual programs.
 ## Layout
 
 ```text
-examples/d2_shapes
-examples/raw_pipeline
-examples/raw_triangle
-examples/window_custom_shaders
-examples/window_events_input
+examples/d2/advanced_geometry
+examples/d2/shapes
+examples/raw/d2_composition
+examples/raw/pipeline
+examples/raw/triangle
+examples/raw/uniform
+examples/window/custom_shaders
+examples/window/events_input
+examples/window/wait_events
 ```
 
 ## Commands
 
 ```bash
 just run d2_shapes
+just run d2_advanced_geometry
+just run window_wait_events
+just run raw_d2_composition
 just build raw_pipeline
 ```
 

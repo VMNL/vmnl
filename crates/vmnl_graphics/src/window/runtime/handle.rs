@@ -63,7 +63,16 @@ impl VMNLWindow {
     pub(crate) fn poll_events(&mut self) -> Vec<Event> {
         self.handle.instance.poll_events();
         self.handle.input.update(&self.handle.context);
-        self.handle.events.poll_events()
+        let events: Vec<Event> = self.handle.events.poll_events();
+        if events.iter().any(|event| {
+            matches!(
+                event,
+                Event::Resized { .. } | Event::FramebufferResized { .. }
+            )
+        }) {
+            self.state.swapchain_recreation_requested = true;
+        }
+        events
     }
 
     /// Internal implementation backing `Window::input`.

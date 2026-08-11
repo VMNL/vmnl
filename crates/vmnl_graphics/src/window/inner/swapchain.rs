@@ -131,4 +131,33 @@ impl VMNLWindow {
         Swapchain::new(device.clone(), surface.clone(), swapchain_create_info)
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed))
     }
+
+    /// Recreates the swapchain images and framebuffers for the current framebuffer extent.
+    ///
+    /// The render pass and graphics pipelines remain valid because recreation preserves the
+    /// existing swapchain format; only resources that reference individual swapchain images are
+    /// replaced.
+    pub(crate) fn recreate_swapchain(&mut self) -> VMNLResult<()> {
+        let (width, height): (u32, u32) = self.get_framebuffer_size();
+        if width == 0 || height == 0 {
+            return Err(VMNLError::new(VMNLErrorKind::VulkanOutOfDate));
+        }
+
+        let create_info: SwapchainCreateInfo = SwapchainCreateInfo {
+            image_extent: [width, height],
+            ..self.handle.swapchain.create_info()
+        };
+        let (swapchain, images): (Arc<Swapchain>, Vec<Arc<Image>>) = self
+            .handle
+            .swapchain
+            .recreate(create_info)
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed))?;
+        let image_views: Vec<Arc<ImageView>> = Self::create_image_views(&images)?;
+        let framebuffers = Self::create_framebuffers(&image_views, &self.handle.render_pass)?;
+
+        self.handle.swapchain = swapchain;
+        self.handle.framebuffers = framebuffers;
+        self.state.swapchain_recreation_requested = false;
+        Ok(())
+    }
 }

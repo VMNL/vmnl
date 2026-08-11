@@ -5,8 +5,8 @@ use std::path::PathBuf;
 
 use vmnl::{common::BufferMemoryPreference, raw, Context, Key, PresentMode, VMNLResult, Window};
 
-const VERT_PATH: &str = "examples/raw_pipeline/shaders/raw.vert";
-const FRAG_PATH: &str = "examples/raw_pipeline/shaders/raw.frag";
+const VERT_PATH: &str = "examples/raw/pipeline/shaders/raw.vert";
+const FRAG_PATH: &str = "examples/raw/pipeline/shaders/raw.frag";
 
 #[repr(C)]
 #[derive(Clone, Copy, raw::Vertex, raw::Pod, raw::Zeroable)]

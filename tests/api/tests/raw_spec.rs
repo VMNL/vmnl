@@ -3,7 +3,7 @@
 
 use std::path::PathBuf;
 
-use vmnl::{raw, VMNLResult};
+use vmnl::{common::BufferMemoryPreference, raw, PresentMode, RenderMode, VMNLResult};
 
 struct RawSpecVertex;
 
@@ -40,5 +40,16 @@ fn raw_pipeline_spec_exposes_topology_and_blend_mode() -> VMNLResult<()> {
     assert_eq!(spec.topology_value(), raw::PrimitiveTopology::TriangleList);
     assert_eq!(spec.blend_mode_value(), raw::BlendMode::Opaque);
 
+    Ok(())
+}
+
+#[test]
+fn public_graphics_defaults_are_stable() -> VMNLResult<()> {
+    assert_eq!(PresentMode::default(), PresentMode::Auto);
+    assert_eq!(RenderMode::default(), RenderMode::PerObject);
+    assert_eq!(
+        BufferMemoryPreference::default(),
+        BufferMemoryPreference::Device
+    );
     Ok(())
 }

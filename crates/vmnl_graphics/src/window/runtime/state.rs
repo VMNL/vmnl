@@ -17,6 +17,8 @@ pub(crate) struct WindowState {
     pub(crate) is_open: bool,
     /// The current color used for rendering, represented as RGBA (red, green, blue, alpha) values.
     pub(crate) clear_color: [f32; 4],
+    /// Whether the next frame must recreate resources tied to the swapchain extent.
+    pub(crate) swapchain_recreation_requested: bool,
 }
 
 impl VMNLWindow {

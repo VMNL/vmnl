@@ -15,7 +15,8 @@ use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 /// Draw submission strategy for objects inside each logical render pass.
 ///
 /// The mode may change how objects are submitted inside one pass, but it must
-/// not reorder calls to [`FrameRenderer::draw2d`] and [`FrameRenderer::draw3d`].
+/// not reorder calls to [`FrameRenderer::draw2d`], [`FrameRenderer::draw3d`],
+/// [`FrameRenderer::draw_raw`], or [`FrameRenderer::draw_raw_with`].
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub enum RenderMode {
     /// Submit each object independently.
@@ -43,7 +44,8 @@ enum FramePass<'g> {
 /// Pending frame render operation created by [`Window::render`].
 ///
 /// `FrameRenderer` records the logical passes requested for the next frame.
-/// No swapchain image is acquired and no GPU command is submitted until
+/// Passes are submitted in the order they are added, including 2D and raw
+/// passes. No swapchain image is acquired and no GPU command is submitted until
 /// [`FrameRenderer::submit`] is called.
 pub struct FrameRenderer<'w, 'g> {
     window: &'w mut Window,
@@ -63,8 +65,9 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
     /// Set the draw submission strategy used by this frame.
     ///
     /// The mode applies to the objects inside each pass. It does not change the
-    /// order of the passes added with [`FrameRenderer::draw2d`] or
-    /// [`FrameRenderer::draw3d`].
+    /// order of the passes added with [`FrameRenderer::draw2d`],
+    /// [`FrameRenderer::draw3d`], [`FrameRenderer::draw_raw`], or
+    /// [`FrameRenderer::draw_raw_with`].
     ///
     /// # Arguments
     /// - `mode`: Submission strategy used for objects inside each pass.
@@ -221,6 +224,11 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
     /// `VMNLErrorKind::InvalidState("3D rendering is not implemented yet")`
     /// before acquiring a swapchain image.
     ///
+    /// After a logical or framebuffer resize, `submit` recreates the
+    /// swapchain images and framebuffers before recording the next frame. A
+    /// zero-sized framebuffer, for example while minimized, returns
+    /// `VMNLErrorKind::VulkanOutOfDate` until it has a renderable extent again.
+    ///
     /// # Returns
     /// Returns `Ok(())` when command recording, queue submission, presentation,
     /// and optional event polling complete successfully.
@@ -273,8 +281,8 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
 impl Window {
     /// Begin a new pending frame render operation.
     ///
-    /// Use the returned [`FrameRenderer`] to append 2D or 3D passes, then call
-    /// [`FrameRenderer::submit`] to render and present the frame.
+    /// Use the returned [`FrameRenderer`] to append 2D, 3D, or raw passes,
+    /// then call [`FrameRenderer::submit`] to render and present the frame.
     ///
     /// # Example
     /// ```rust,no_run

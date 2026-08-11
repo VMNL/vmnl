@@ -96,6 +96,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
+name = "d2_advanced_geometry"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
 name = "d2_shapes"
 version = "0.1.0"
 dependencies = [
@@ -439,6 +446,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "raw_d2_composition"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
 name = "raw_pipeline"
 version = "0.1.0"
 dependencies = [
@@ -768,6 +782,13 @@ dependencies = [
 
 [[package]]
 name = "window_events_input"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
+name = "window_wait_events"
 version = "0.1.0"
 dependencies = [
  "vmnl",

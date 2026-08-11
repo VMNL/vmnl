@@ -15,7 +15,9 @@ use std::sync::Arc;
 use crate::window::inner::VMNLWindow;
 use crate::{Context, VMNLResult};
 pub use api::{FrameRenderer, RenderMode};
-pub(crate) use builder::{validate_size_limits, PresentModeSelection, WindowOptions};
+pub(crate) use builder::{
+    validate_size_limits, validate_window_size, PresentModeSelection, WindowOptions,
+};
 pub use builder::{PresentMode, WindowBuilder};
 pub use event::Event;
 pub use input::{Input, Key, KeyboardState, MouseButton, MouseState};
@@ -85,6 +87,7 @@ impl Window {
 
     /// Internal method to create a `Window` instance from the provided `WindowOptions`.
     pub(crate) fn from_options(context: &Context, options: &WindowOptions) -> VMNLResult<Self> {
+        validate_window_size(options.width, options.height)?;
         validate_size_limits(
             options.min_width,
             options.min_height,

@@ -140,6 +140,7 @@ impl VMNLWindow {
                 is_ready: true,
                 is_open: false,
                 clear_color,
+                swapchain_recreation_requested: false,
             },
             config: WindowConfig {
                 title: title.to_string(),

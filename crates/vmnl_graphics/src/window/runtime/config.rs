@@ -4,6 +4,8 @@
 use crate::{
     window::inner::VMNLWindow, window::monitors::Monitors, VMNLError, VMNLErrorKind, VMNLResult,
 };
+use glfw::Context as _;
+use std::ffi::c_int;
 
 /// Represents the parameter configuration of the window instance.
 ///
@@ -40,6 +42,7 @@ impl VMNLWindow {
     /// Internal implementation backing `Window::set_size`.
     #[inline]
     pub(crate) fn set_size(&mut self, width: u32, height: u32) -> VMNLResult<()> {
+        crate::window::validate_window_size(width, height)?;
         let glfw_width: i32 =
             i32::try_from(width).map_err(|_| VMNLError::new(VMNLErrorKind::InvalidWindowSize))?;
         let glfw_height: i32 =
@@ -47,6 +50,7 @@ impl VMNLWindow {
         self.handle.context.set_size(glfw_width, glfw_height);
         self.config.width = width;
         self.config.height = height;
+        self.state.swapchain_recreation_requested = true;
         Ok(())
     }
 
@@ -89,12 +93,22 @@ impl VMNLWindow {
     }
 
     /// Internal implementation backing `Window::set_aspect_ratio`.
-    pub(crate) fn set_aspect_ratio(&mut self, aspect_ratio: Option<(u32, u32)>) {
-        if let Some((numerator, denominator)) = aspect_ratio {
-            self.handle.context.set_aspect_ratio(numerator, denominator);
-        } else {
-            self.handle.context.set_aspect_ratio(0, 0);
+    pub(crate) fn set_aspect_ratio(&mut self, aspect_ratio: Option<(u32, u32)>) -> VMNLResult<()> {
+        let (numerator, denominator) = match aspect_ratio {
+            Some(aspect_ratio) => validate_aspect_ratio(aspect_ratio)?,
+            None => (glfw::ffi::GLFW_DONT_CARE, glfw::ffi::GLFW_DONT_CARE),
+        };
+
+        // SAFETY: `context` owns a live GLFW window for the duration of this exclusive borrow,
+        // and the validated terms satisfy GLFW's aspect-ratio preconditions.
+        unsafe {
+            glfw::ffi::glfwSetWindowAspectRatio(
+                self.handle.context.window_ptr(),
+                numerator,
+                denominator,
+            );
         }
+        Ok(())
     }
 
     /// Internal implementation backing `Window::set_position`.
@@ -197,5 +211,56 @@ impl VMNLWindow {
     #[inline]
     pub(crate) const fn monitor(&self) -> &Monitors {
         &self.config.monitor
+    }
+}
+
+fn validate_aspect_ratio(aspect_ratio: (u32, u32)) -> VMNLResult<(c_int, c_int)> {
+    let (numerator, denominator) = aspect_ratio;
+    let numerator = c_int::try_from(numerator).map_err(|_| invalid_aspect_ratio_error())?;
+    let denominator = c_int::try_from(denominator).map_err(|_| invalid_aspect_ratio_error())?;
+
+    if numerator <= 0 || denominator <= 0 {
+        return Err(invalid_aspect_ratio_error());
+    }
+
+    Ok((numerator, denominator))
+}
+
+fn invalid_aspect_ratio_error() -> VMNLError {
+    VMNLError::new(VMNLErrorKind::InvalidState(
+        "window aspect ratio terms must be positive and fit GLFW int".into(),
+    ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_aspect_ratio;
+    use crate::VMNLErrorKind;
+    use std::ffi::c_int;
+
+    #[test]
+    fn validate_aspect_ratio_accepts_positive_glfw_terms() {
+        assert_eq!(validate_aspect_ratio((4, 3)).ok(), Some((4, 3)));
+    }
+
+    #[test]
+    fn validate_aspect_ratio_rejects_zero_and_out_of_range_terms() {
+        for aspect_ratio in [(0, 3), (4, 0)] {
+            assert!(matches!(
+                validate_aspect_ratio(aspect_ratio),
+                Err(error)
+                    if matches!(
+                        error.kind(),
+                        VMNLErrorKind::InvalidState(message)
+                            if message == "window aspect ratio terms must be positive and fit GLFW int"
+                    )
+            ));
+        }
+
+        if let Ok(maximum) = u32::try_from(c_int::MAX) {
+            if let Some(too_large) = maximum.checked_add(1) {
+                assert!(validate_aspect_ratio((too_large, 1)).is_err());
+            }
+        }
     }
 }

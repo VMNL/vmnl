@@ -51,6 +51,15 @@ just bootstrap             install Linux system dependencies
 `just lint` applies formatting and automatic fixes across the workspace. Inspect the worktree
 first and use it only when those modifications are intended.
 
+## Test Summaries
+
+Each `just test-*` recipe streams Cargo output then prints a final suite summary. Interactive
+terminals use color; `NO_COLOR=1 just test-api` disables it. The summary distinguishes executed
+tests from `just test-gpu-compile`, which reports compiled executables only.
+
+`just test` and `just validate` finish with a detailed recap of each executed suite or step,
+followed by their aggregate. `just validate` remains a local non-GPU validation, not CI parity.
+
 ## Dependency Bootstrap
 
 `just bootstrap` installs the system packages required for VMNL builds on supported Linux

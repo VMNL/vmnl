@@ -275,22 +275,4 @@ mod tests {
 
         assert_eq!(Shape::blend_mode_from_vertices(&vertices), BlendMode::Alpha);
     }
-
-    #[test]
-    #[ignore = "Requires Vulkan + GLFW display."]
-    fn render_item_2d_preserves_shape_blend_mode() -> crate::VMNLResult<()> {
-        let context = crate::Context::new()?;
-        let shape = Shape::triangle(
-            Vector2f { x: 0.0, y: 0.0 },
-            Vector2f { x: 1.0, y: 0.0 },
-            Vector2f { x: 0.0, y: 1.0 },
-        )
-        .color(Rgba::rgba(255, 255, 255, 128))
-        .build(&context)?;
-
-        let render_item = shape.render_item_2d();
-
-        assert_eq!(render_item.blend_mode, BlendMode::Alpha);
-        Ok(())
-    }
 }

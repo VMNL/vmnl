@@ -1,8 +1,8 @@
 [package]
-name = "window_custom_shaders"
+name = "d2_shapes"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [dependencies]
-vmnl = { path = "../../crates/vmnl" }
+vmnl = { path = "../../../crates/vmnl" }

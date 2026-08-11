@@ -72,15 +72,15 @@ impl VMNLWindow {
     pub(super) fn update_previous_frame_end(
         frame_sync: FrameSyncResult,
         device: Arc<Device>,
-    ) -> Box<dyn GpuFuture> {
+    ) -> (Box<dyn GpuFuture>, bool) {
         match frame_sync {
-            FrameSyncResult::Submitted(future) => future,
+            FrameSyncResult::Submitted(future) => (future, false),
             FrameSyncResult::SwapchainOutOfDate => {
                 log::warn!(
                     "{}",
                     VMNLError::new(VMNLErrorKind::VulkanOutOfDate).report()
                 );
-                sync::now(device).boxed()
+                (sync::now(device).boxed(), true)
             }
         }
     }

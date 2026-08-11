@@ -34,14 +34,25 @@ impl VMNLWindow {
     }
 
     fn render_per_object(&mut self, commands: &[RenderPassCommand]) -> VMNLResult<()> {
+        if self.state.swapchain_recreation_requested {
+            self.recreate_swapchain()?;
+        }
         Self::begin_frame(&mut self.handle.previous_frame_end);
         let (image_index, suboptimal, acquire_future): (u32, bool, SwapchainAcquireFuture) =
-            Self::acquire_next_image_from_swapchain(&self.handle.swapchain, None)?;
+            match Self::acquire_next_image_from_swapchain(&self.handle.swapchain, None) {
+                Ok(acquisition) => acquisition,
+                Err(error) if matches!(error.kind(), VMNLErrorKind::VulkanOutOfDate) => {
+                    self.recreate_swapchain()?;
+                    Self::acquire_next_image_from_swapchain(&self.handle.swapchain, None)?
+                }
+                Err(error) => return Err(error),
+            };
         if suboptimal {
             log::warn!(
                 "{}",
-                VMNLError::new(VMNLErrorKind::VulkanSurfaceLost).report()
+                VMNLError::new(VMNLErrorKind::VulkanOutOfDate).report()
             );
+            self.state.swapchain_recreation_requested = true;
         }
         let command_buffer: Arc<PrimaryAutoCommandBuffer> =
             self.build_command_buffer(image_index, commands)?;
@@ -53,10 +64,10 @@ impl VMNLWindow {
             self.handle.vmnl_instance.graphics_queue.clone(),
             self.handle.swapchain.clone(),
         )?;
-        self.handle.previous_frame_end = Some(Self::update_previous_frame_end(
-            frame_sync,
-            self.handle.vmnl_instance.device.clone(),
-        ));
+        let (previous_frame_end, swapchain_recreation_requested) =
+            Self::update_previous_frame_end(frame_sync, self.handle.vmnl_instance.device.clone());
+        self.handle.previous_frame_end = Some(previous_frame_end);
+        self.state.swapchain_recreation_requested |= swapchain_recreation_requested;
         Ok(())
     }
 }

@@ -176,6 +176,18 @@ pub(crate) const fn validate_size_limits(
     Ok(())
 }
 
+/// Smallest supported logical window dimension.
+pub(crate) const MIN_WINDOW_DIMENSION: u32 = 64;
+
+/// Validates a logical window size before GLFW or Vulkan resources are created.
+pub(crate) const fn validate_window_size(width: u32, height: u32) -> VMNLResult<()> {
+    if width < MIN_WINDOW_DIMENSION || height < MIN_WINDOW_DIMENSION {
+        return Err(VMNLError::new(VMNLErrorKind::InvalidWindowSize));
+    }
+
+    Ok(())
+}
+
 impl WindowBuilder {
     /// Set the window title used by the native window manager.
     ///
@@ -538,6 +550,13 @@ mod tests {
     fn validate_size_limits_rejects_min_greater_than_max() {
         assert_invalid_window_size(validate_size_limits(Some(129), None, Some(128), None));
         assert_invalid_window_size(validate_size_limits(None, Some(129), None, Some(128)));
+    }
+
+    #[test]
+    fn validate_window_size_enforces_minimum_dimension() {
+        assert!(validate_window_size(64, 64).is_ok());
+        assert_invalid_window_size(validate_window_size(63, 64));
+        assert_invalid_window_size(validate_window_size(64, 63));
     }
 
     #[test]

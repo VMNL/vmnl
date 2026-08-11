@@ -29,7 +29,7 @@ fn configure_runtime_window(window: &mut Window) -> VMNLResult<()> {
     window.set_title("VMNL window_events_input");
     window.set_size(960, 540)?;
     window.set_size_limits(Some(320), Some(240), Some(1920), Some(1080))?;
-    window.set_aspect_ratio(Some((16, 9)));
+    window.set_aspect_ratio(Some((16, 9)))?;
     window.set_position(80, 80);
     window.opacity(0.96);
     window.set_clear_color([20, 24, 32, 255]);
@@ -51,7 +51,7 @@ fn configure_runtime_window(window: &mut Window) -> VMNLResult<()> {
     Ok(())
 }
 
-fn apply_keybinds(window: &mut Window) {
+fn apply_keybinds(window: &mut Window) -> VMNLResult<()> {
     let keyboard = window.input().keyboard();
     let close = keyboard.is_pressed(Key::Escape);
     let focus = keyboard.is_pressed(Key::F);
@@ -89,7 +89,7 @@ fn apply_keybinds(window: &mut Window) {
         window.show();
     }
     if clear_aspect {
-        window.set_aspect_ratio(None);
+        window.set_aspect_ratio(None)?;
     }
     if any_arrow {
         println!("[input] arrow key is down");
@@ -102,6 +102,8 @@ fn apply_keybinds(window: &mut Window) {
     if mouse_used || left_or_right_down {
         println!("[input] mouse used={mouse_used} left_or_right_down={left_or_right_down}");
     }
+
+    Ok(())
 }
 
 fn main() -> VMNLResult<()> {
@@ -149,7 +151,7 @@ fn main() -> VMNLResult<()> {
         for event in window.poll_events() {
             print_event(&event);
         }
-        apply_keybinds(&mut window);
+        apply_keybinds(&mut window)?;
         println!(
             "time={:.3} iconified={} maximized={}",
             window.get_time(),

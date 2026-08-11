@@ -6,6 +6,7 @@ use vmnl::{
     d3::{Camera, Mesh, Vector3f, Vertex3D},
     Context, PresentMode, VMNLError, VMNLErrorKind, VMNLResult, Window,
 };
+use vmnl_gpu_tests::gpu_test_guard;
 
 fn v3(x: f32, y: f32, z: f32) -> Vector3f {
     Vector3f { x, y, z }
@@ -21,6 +22,7 @@ fn vertex(x: f32, y: f32, z: f32, color: Rgba) -> Vertex3D {
 #[test]
 #[ignore = "Requires Vulkan + GLFW display."]
 fn draw3d_reports_explicit_unimplemented_backend_error() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
     let context = Context::new()?;
     let mut window = Window::builder()
         .title("VMNL gpu d3 scaffold")

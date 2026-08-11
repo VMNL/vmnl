@@ -26,10 +26,10 @@ fn main() -> VMNLResult<()> {
     } else {
         builder = builder
             .vertex_shader(ShaderSource::Path(
-                "examples/window_custom_shaders/shaders/color.vert".into(),
+                "examples/window/custom_shaders/shaders/color.vert".into(),
             ))
             .fragment_shader(ShaderSource::Path(
-                "examples/window_custom_shaders/shaders/color.frag".into(),
+                "examples/window/custom_shaders/shaders/color.frag".into(),
             ));
         println!("shader source: files");
     }

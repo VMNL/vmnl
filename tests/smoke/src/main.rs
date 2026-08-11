@@ -4,8 +4,8 @@
 use vmnl::{
     common::Rgba,
     d2::{Vector2f, Vertex2D},
-    d3::{Vector3f, Vertex3D},
-    VMNLResult,
+    d3::{Camera, Vector3f, Vertex3D},
+    raw, Input, Key, MouseButton, PresentMode, RenderMode, VMNLErrorKind, VMNLResult, Window,
 };
 
 fn main() -> VMNLResult<()> {
@@ -75,15 +75,57 @@ fn main() -> VMNLResult<()> {
     ];
     vertices3.sort();
 
-    println!("Rgba constructors: {from_rgb:?} {from_rgba:?} {from_new:?}");
-    println!(
-        "Rgba arrays/constants: {from_array_rgb:?} {from_array_rgba:?} {:?}",
-        Rgba::TRANSPARENT
+    assert_eq!(from_rgb, Rgba::rgba(20, 40, 80, 255));
+    assert_eq!(from_rgba, Rgba::rgba(20, 40, 80, 160));
+    assert_eq!(from_new, Rgba::rgba(10, 20, 30, 40));
+    assert_eq!(from_array_rgb, Rgba::rgba(255, 128, 0, 255));
+    assert_eq!(from_array_rgba, Rgba::rgba(255, 128, 0, 96));
+    assert_eq!(mixed, Rgba::rgba(239, 32, 64, 0));
+    assert_eq!(dim_u8, Rgba::rgba(119, 16, 32, 0));
+    assert_eq!(dim_f32, Rgba::rgba(119, 16, 32, 0));
+    assert_eq!(scaled2, Vector2f { x: 24.0, y: 22.0 });
+    assert_eq!(
+        scaled3,
+        Vector3f {
+            x: 1.0,
+            y: 1.5,
+            z: 2.0,
+        }
     );
-    println!("Rgba ops: mixed={mixed:?} dim_u8={dim_u8:?} dim_f32={dim_f32:?}");
-    println!("Vector2f ops: p2={p2:?} scaled2={scaled2:?}");
-    println!("Vector3f ops: p3={p3:?} scaled3={scaled3:?}");
-    println!("Sorted Vertex2D: {vertices2:?}");
-    println!("Sorted Vertex3D: {vertices3:?}");
+    assert_eq!(vertices2[0].position, Vector2f { x: 1.0, y: 0.0 });
+    assert_eq!(
+        vertices3[0].position,
+        Vector3f {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
+    );
+
+    let input = Input::new();
+    assert!(!input.keyboard().is_down(Key::Escape));
+    assert!(!input.mouse().is_down(MouseButton::Left));
+    assert!(!input.keyboard().is_one_used());
+    assert!(!input.mouse().is_one_used());
+    assert_eq!(PresentMode::default(), PresentMode::Auto);
+    assert_eq!(RenderMode::default(), RenderMode::PerObject);
+    assert_eq!(
+        raw::Pipeline::<Vertex2D>::builder().topology_value(),
+        raw::PrimitiveTopology::TriangleList
+    );
+    assert_eq!(
+        Camera::default().position,
+        Vector3f {
+            x: 0.0,
+            y: 0.0,
+            z: 1.0
+        }
+    );
+    assert!(matches!(
+        Window::builder().size_limit(Some(2), None, Some(1), None),
+        Err(error) if matches!(error.kind(), VMNLErrorKind::InvalidWindowSize)
+    ));
+
+    println!("vmnl smoke test passed");
     Ok(())
 }

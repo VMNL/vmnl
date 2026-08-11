@@ -5,13 +5,48 @@ use vmnl::{
     common::{BufferMemoryPreference, Rgba},
     d2::{LineCap, Shape, Vector2f, Vertex2D},
     d3::{Mesh, Vector3f, Vertex3D},
-    raw, Context, VMNLError, VMNLErrorKind, VMNLResult,
+    raw, Context, PresentMode, VMNLError, VMNLErrorKind, VMNLResult, Window,
 };
+use vmnl_gpu_tests::gpu_test_guard;
 
 #[repr(C)]
 #[derive(Clone, Copy, raw::Pod, raw::Zeroable)]
 struct RawValidationVertex {
     position: [f32; 2],
+}
+
+const COMPOSITION_VERT: &str = r#"
+#version 460
+
+layout(location = 0) in vec2 position;
+layout(location = 1) in vec4 color;
+
+layout(location = 0) out vec4 out_color;
+
+void main() {
+    gl_Position = vec4(position, 0.0, 1.0);
+    out_color = color;
+}
+"#;
+
+const COMPOSITION_FRAG: &str = r#"
+#version 460
+
+layout(location = 0) in vec4 in_color;
+layout(location = 0) out vec4 out_color;
+
+void main() {
+    out_color = in_color;
+}
+"#;
+
+#[repr(C)]
+#[derive(Clone, Copy, raw::Vertex, raw::Pod, raw::Zeroable)]
+struct RawCompositionVertex {
+    #[format(R32G32_SFLOAT)]
+    position: [f32; 2],
+    #[format(R32G32B32A32_SFLOAT)]
+    color: [f32; 4],
 }
 
 fn v2(x: f32, y: f32) -> Vector2f {
@@ -54,6 +89,7 @@ fn assert_invalid_state<T>(result: VMNLResult<T>, expected: &str) -> VMNLResult<
 #[test]
 #[ignore = "Requires Vulkan + GLFW display."]
 fn d2_d3_and_raw_builders_create_valid_gpu_resources() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
     let context = Context::new()?;
 
     let _rect = Shape::rect(100.0, 80.0)
@@ -105,7 +141,51 @@ fn d2_d3_and_raw_builders_create_valid_gpu_resources() -> VMNLResult<()> {
 
 #[test]
 #[ignore = "Requires Vulkan + GLFW display."]
+fn d2_then_raw_passes_submit() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut window = Window::builder()
+        .title("VMNL gpu D2/raw composition")
+        .size(800, 600)
+        .present_mode(PresentMode::Auto)
+        .build(&context)?;
+    let rectangle = Shape::rect(300.0, 220.0)
+        .position(250.0, 180.0)
+        .color(Rgba::BLUE)
+        .build(&context)?;
+    let pipeline = raw::Pipeline::<RawCompositionVertex>::builder()
+        .vertex_shader(raw::ShaderSource::Src(COMPOSITION_VERT.into()))
+        .fragment_shader(raw::ShaderSource::Src(COMPOSITION_FRAG.into()))
+        .topology(raw::PrimitiveTopology::TriangleList)
+        .blend_mode(raw::BlendMode::Alpha)
+        .build(&window)?;
+    let triangle = raw::Geometry::builder([
+        RawCompositionVertex {
+            position: [-0.5, -0.5],
+            color: [1.0, 0.0, 0.0, 0.65],
+        },
+        RawCompositionVertex {
+            position: [0.5, -0.5],
+            color: [0.0, 1.0, 0.0, 0.65],
+        },
+        RawCompositionVertex {
+            position: [0.0, 0.5],
+            color: [0.0, 0.0, 1.0, 0.65],
+        },
+    ])
+    .build(&context)?;
+
+    window
+        .render()
+        .draw2d([&rectangle])
+        .draw_raw(&pipeline, [&triangle])
+        .submit()
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
 fn gpu_resource_builders_report_expected_invalid_states() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
     let context = Context::new()?;
 
     assert_invalid_state(
