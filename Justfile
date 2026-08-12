@@ -381,11 +381,18 @@ docs-api-check:
     @JUST_TEMPDIR="${TMPDIR:-/tmp}" just docs
     @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _docs-api-check
 
+# Install pinned API documentation tools under target/.
+[no-exit-message]
+docs-api-tools:
+    ./tools/api_docs_tools.sh
+
 # Internal API book checks; Rustdoc must already have been built.
 [no-exit-message]
 _docs-api-check:
     #!/usr/bin/env bash
     set -euo pipefail
+    just docs-api-tools
+    export PATH="$PWD/target/api-tools/bin:$PATH"
     [[ $(mdbook --version) == 'mdbook v0.5.4' ]]
     [[ $(cargo public-api --version) == *'0.52.0'* ]]
     [[ $(lychee --version) == *'0.24.2'* ]]
@@ -405,7 +412,7 @@ _docs-api-check:
     ln -sf "$PWD/target/debug/libvmnl.rlib" "$api_lib_dir/libvmnl.rlib"
     CARGO_MANIFEST_DIR="$PWD/examples/raw/triangle" mdbook test docs/api -L "$api_lib_dir"
     mdbook build docs/api
-    CC="${CC:-/usr/bin/cc}" CXX="${CXX:-/usr/bin/c++}" python3 tools/api_docs.py check
+    python3 tools/api_docs.py check
     mapfile -t markdown_files < <(rg --files docs -g '*.md')
     lychee --offline --include-fragments=full "${markdown_files[@]}" CONTRIBUTING.md CHANGELOG.md README.md
 
@@ -414,9 +421,11 @@ _docs-api-check:
 docs-api-update:
     #!/usr/bin/env bash
     set -euo pipefail
+    just docs-api-tools
+    export PATH="$PWD/target/api-tools/bin:$PATH"
     [[ $(cargo public-api --version) == *'0.52.0'* ]]
     rustc +nightly-2026-03-12 --version >/dev/null
-    CC="${CC:-/usr/bin/cc}" CXX="${CXX:-/usr/bin/c++}" python3 tools/api_docs.py update
+    python3 tools/api_docs.py update
 
 # Run the complete non-GPU validation sequence.
 [no-exit-message]
