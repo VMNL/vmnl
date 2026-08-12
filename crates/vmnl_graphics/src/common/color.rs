@@ -17,6 +17,9 @@ macro_rules! rgba_color_constants {
 }
 
 /// RGBA color represented as 8-bit components.
+///
+/// `Default` is transparent black (`0, 0, 0, 0`). Named color constants are
+/// opaque except for [`Rgba::TRANSPARENT`].
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, Pod, Zeroable, PartialEq)]
 pub struct Rgba {

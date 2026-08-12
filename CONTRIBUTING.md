@@ -12,6 +12,7 @@ just check-fmt
 just check-clippy
 just doctest
 just docs
+just docs-api-check
 just test-unit
 just test-api
 just test-smoke
@@ -22,6 +23,9 @@ just test-gpu         # when the environment supports it
 Do not reorder applicable completion checks without documenting the technical reason. Run `just test-gpu` only on a machine with a Vulkan-capable GPU and a display server. `just test` is the combined headless suite, not an additional suite.
 
 - Public API changes update Rustdoc and API tests.
+- Public API changes follow the [API change protocol](docs/api/maintenance/api_change_protocol.md),
+  update the coverage matrix, then run and review `just docs-api-update` before the non-mutating
+  `just docs-api-check`.
 - Bug fixes include a regression test.
 - Visual workflows belong in `examples/`; headless checks belong in `tests/`.
 - Every feature or fix must assess Rustdoc, technical and user documentation, examples, `CHANGELOG.md`, and documentation navigation. Do not create artificial documentation changes; explain in the final report when no update is required.

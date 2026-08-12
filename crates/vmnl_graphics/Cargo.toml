@@ -14,7 +14,6 @@ categories = ["graphics", "rendering", "game-development"]
 
 [lib]
 name = "vmnl_graphics"
-doctest = false
 
 [dependencies]
 vulkano         = "0.35.2"

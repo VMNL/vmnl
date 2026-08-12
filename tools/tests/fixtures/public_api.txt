@@ -1,0 +1,14 @@
+Public API for vmnl
+pub mod vmnl::d2
+pub use vmnl::Context
+pub struct vmnl::Context
+impl vmnl::Context
+pub fn vmnl::Context::new() -> vmnl::VMNLResult<vmnl::Context>
+pub enum vmnl::Event
+pub vmnl::Event::Closed
+pub struct vmnl::raw::Geometry<TVertex>
+impl<TVertex> vmnl::raw::Geometry<TVertex>
+pub fn vmnl::raw::Geometry<TVertex>::builder<V>(vertices: V) -> vmnl::raw::GeometryBuilder<TVertex>
+pub trait vmnl::raw::Vertex
+pub macro vmnl::raw::Vertex
+pub type vmnl::VMNLResult<T> = core::result::Result<T, vmnl::VMNLError>

@@ -168,6 +168,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
         with:
           toolchain: 1.87.0
+      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          toolchain: nightly-2026-03-12
+          profile: minimal
       - name: Restore Cargo cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -184,9 +188,36 @@ jobs:
             libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
             libvulkan-dev vulkan-tools libglfw3-dev \
             libwayland-dev libxkbcommon-dev xorg-dev
-      - name: Build documentation
+      - name: Install pinned API documentation tools
+        run: |
+          tools_dir="$RUNNER_TEMP/vmnl-api-tools"
+          mkdir -p "$tools_dir"
+
+          mdbook_archive="$RUNNER_TEMP/mdbook.tar.gz"
+          curl --fail --location --silent --show-error \
+            --output "$mdbook_archive" \
+            https://github.com/rust-lang/mdBook/releases/download/v0.5.4/mdbook-v0.5.4-x86_64-unknown-linux-gnu.tar.gz
+          echo '3f28de05dafca9d0f2eab99c662116b0e37b89b1d96a08f8f430b9eeae958cd7  '"$mdbook_archive" | sha256sum --check
+          tar -xzf "$mdbook_archive" -C "$tools_dir"
+
+          lychee_archive="$RUNNER_TEMP/lychee.tar.gz"
+          curl --fail --location --silent --show-error \
+            --output "$lychee_archive" \
+            https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-musl.tar.gz
+          echo '73657a111819a30c47c08352896796f23d64e4eb2b3ed39b6d32149241566fc5  '"$lychee_archive" | sha256sum --check
+          tar -xzf "$lychee_archive" -C "$tools_dir" --strip-components=1
+
+          echo "$tools_dir" >> "$GITHUB_PATH"
+          cargo +nightly-2026-03-12 install cargo-public-api --version 0.52.0 --locked
+      - name: Build Rustdoc
         env:
           RUSTDOCFLAGS: "-D warnings"
-        run: cargo doc --workspace --no-deps --locked
+        run: cargo +1.87.0 doc --workspace --no-deps --locked
       - name: Run doctests
-        run: cargo test --workspace --all-features --doc --locked
+        run: cargo +1.87.0 test --workspace --all-features --doc --locked
+      - name: Build public facade
+        run: cargo +1.87.0 build -p vmnl --locked
+      - name: Check API documentation
+        env:
+          RUSTUP_TOOLCHAIN: 1.87.0
+        run: just _docs-api-check

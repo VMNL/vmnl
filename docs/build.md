@@ -45,6 +45,8 @@ just doctest               Rustdoc examples
 just check                 formatting and strict Clippy checks
 just lint                  mutating format/fix pass
 just docs                  Rustdoc build with warnings denied
+just docs-api-check        non-mutating API book, inventory, snippet, and link checks
+just docs-api-update       regenerate reviewed API snapshot and indexes (mutating)
 just bootstrap             install Linux system dependencies
 ```
 
@@ -92,3 +94,25 @@ Decision:
 - If `pkg-config` finds shaderc, retry the smallest failing Just recipe.
 - If `pkg-config` does not find shaderc, run `just bootstrap` or install the system shaderc development package.
 - If Vulkan fails at runtime, inspect loader/driver state separately from shaderc.
+
+## API Documentation Tooling
+
+The public API book requires these exact tools in `PATH`:
+
+- precompiled `mdbook 0.5.4` (keeps VMNL source validation on Rust 1.87);
+- `cargo-public-api 0.52.0` plus `nightly-2026-03-12`;
+- `lychee 0.24.2`.
+
+Install mdBook from its versioned release archive, and install the nightly with the minimal
+rustup profile. `docs-api-check` runs lychee offline with fragment validation: it checks local
+paths/anchors without making network requests. Public surface extraction omits blanket
+implementations only.
+
+The earlier `nightly-2025-08-02` candidate emits rustdoc JSON format 55 without
+`external_crates.*.path`; the currently published `cargo-public-api 0.52.0` parser expects that
+field and fails before producing an inventory. The pinned 2026-03-12 nightly emits the compatible
+format 57 while stable VMNL compilation remains on Rust 1.87.
+
+`just docs-api-check` is non-mutating. `just docs-api-update` rewrites only
+`public_api_snapshot.md`, `public_symbol_index.md`, and `method_index.md`; review their diff.
+See the [API change protocol](api/maintenance/api_change_protocol.md).

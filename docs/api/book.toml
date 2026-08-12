@@ -1,0 +1,16 @@
+[book]
+title = "VMNL Public API"
+description = "Concepts, workflows, and cross-cutting reference for the VMNL facade"
+authors = ["VMNL contributors"]
+language = "en"
+src = "."
+
+[build]
+build-dir = "../../target/api-book"
+create-missing = false
+
+[rust]
+edition = "2021"
+
+[output.html]
+git-repository-url = "https://github.com/VMNL/vmnl"

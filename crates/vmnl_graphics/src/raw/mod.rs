@@ -50,21 +50,34 @@ pub mod __private {
 }
 
 /// Marker trait for raw buffer contents.
+///
+/// This is a facade adapter for Vulkano's buffer-content contract. Incorrect
+/// unsafe implementations of the underlying trait can make byte transfers
+/// unsound; prefer VMNL's marker derives where applicable.
 pub trait BufferContents: VulkanoBufferContents {}
 
 impl<T> BufferContents for T where T: VulkanoBufferContents {}
 
 /// Marker trait for raw vertex layouts.
+///
+/// The layout must match the vertex shader interface. Pipeline construction
+/// validates the generated definition and returns an error on a mismatch.
 pub trait Vertex: VulkanoVertex {}
 
 impl<T> Vertex for T where T: VulkanoVertex {}
 
 /// Marker trait for plain-old-data raw values.
+///
+/// This inherits bytemuck's safety contract: all bit patterns are valid and
+/// the representation contains no uninitialized padding. Prefer `#[derive(Pod)]`.
 pub trait Pod: bytemuck::Pod {}
 
 impl<T> Pod for T where T: bytemuck::Pod {}
 
 /// Marker trait for zero-initializable raw values.
+///
+/// This inherits bytemuck's requirement that the all-zero byte pattern is
+/// valid. It does not by itself prove the stronger `Pod` contract.
 pub trait Zeroable: bytemuck::Zeroable {}
 
 impl<T> Zeroable for T where T: bytemuck::Zeroable {}

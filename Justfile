@@ -223,7 +223,7 @@ _test-total report:
         validate)
             report_name='VALIDATION'
             report_unit='steps'
-            recipes=(build-workspace check-fmt check-clippy doctest docs test-unit test-api test-smoke)
+            recipes=(build-workspace check-fmt check-clippy doctest docs _docs-api-check test-unit test-api test-smoke)
             ;;
         *)
             printf 'unknown VMNL aggregate report: %s\n' '{{ report }}' >&2
@@ -290,6 +290,10 @@ _test-total report:
             docs)
                 stage_name='DOCS'
                 stage_detail='Rustdoc built'
+                ;;
+            _docs-api-check)
+                stage_name='DOCS-API'
+                stage_detail='mdBook, inventory, snippets, and links checked'
                 ;;
             doctest)
                 stage_name='RUSTDOC'
@@ -370,6 +374,49 @@ lint:
 # Build Rustdoc with warnings denied.
 docs:
     RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+
+# Check the complete API book without changing tracked files.
+[no-exit-message]
+docs-api-check:
+    @JUST_TEMPDIR="${TMPDIR:-/tmp}" just docs
+    @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _docs-api-check
+
+# Internal API book checks; Rustdoc must already have been built.
+[no-exit-message]
+_docs-api-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    [[ $(mdbook --version) == 'mdbook v0.5.4' ]]
+    [[ $(cargo public-api --version) == *'0.52.0'* ]]
+    [[ $(lychee --version) == *'0.24.2'* ]]
+    rustc +nightly-2026-03-12 --version >/dev/null
+    cargo build -p vmnl
+    python3 -m unittest discover -s tools/tests
+    api_lib_dir="$PWD/target/api-book-libs"
+    api_deps_dir="$PWD/target/debug/deps"
+    mkdir -p "$api_lib_dir"
+    for artifact in "$api_deps_dir"/*; do
+        artifact_name=${artifact##*/}
+        case "$artifact_name" in
+            libvmnl-[0-9a-f]*.rlib|libvmnl-[0-9a-f]*.rmeta) continue ;;
+        esac
+        ln -sf "$artifact" "$api_lib_dir/$artifact_name"
+    done
+    ln -sf "$PWD/target/debug/libvmnl.rlib" "$api_lib_dir/libvmnl.rlib"
+    CARGO_MANIFEST_DIR="$PWD/examples/raw/triangle" mdbook test docs/api -L "$api_lib_dir"
+    mdbook build docs/api
+    CC="${CC:-/usr/bin/cc}" CXX="${CXX:-/usr/bin/c++}" python3 tools/api_docs.py check
+    mapfile -t markdown_files < <(rg --files docs -g '*.md')
+    lychee --offline --include-fragments=full "${markdown_files[@]}" CONTRIBUTING.md CHANGELOG.md README.md
+
+# Regenerate the reviewed public API snapshot and indexes.
+[no-exit-message]
+docs-api-update:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    [[ $(cargo public-api --version) == *'0.52.0'* ]]
+    rustc +nightly-2026-03-12 --version >/dev/null
+    CC="${CC:-/usr/bin/cc}" CXX="${CXX:-/usr/bin/c++}" python3 tools/api_docs.py update
 
 # Run the complete non-GPU validation sequence.
 [no-exit-message]
