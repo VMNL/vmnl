@@ -4,6 +4,8 @@ set -euo pipefail
 
 readonly MDBOOK_VERSION='0.5.4'
 readonly MDBOOK_SHA256='3f28de05dafca9d0f2eab99c662116b0e37b89b1d96a08f8f430b9eeae958cd7'
+readonly JUST_VERSION='1.57.0'
+readonly JUST_SHA256='45b548094283cb9739af8f13273b8cddeee869f5b4ef2bb631b1f311cb566155'
 readonly LYCHEE_VERSION='0.24.2'
 readonly LYCHEE_SHA256='73657a111819a30c47c08352896796f23d64e4eb2b3ed39b6d32149241566fc5'
 readonly PUBLIC_API_VERSION='0.52.0'
@@ -76,7 +78,7 @@ case "$(uname -s)-$(uname -m)" in
     *) die 'automatic installation currently supports Linux x86_64 only; install the pinned tools from docs/build.md' ;;
 esac
 
-for command_name in curl find grep install mktemp sha256sum tar uname; do
+for command_name in curl find grep gzip install mktemp sha256sum tar uname; do
     require_command "$command_name"
 done
 
@@ -85,6 +87,12 @@ rustc "+$PUBLIC_API_NIGHTLY" --version >/dev/null 2>&1 \
 
 mkdir -p "$BIN_DIR" "$DOWNLOAD_DIR"
 export PATH="$BIN_DIR:$PATH"
+
+install_archive_tool \
+    just \
+    "$JUST_VERSION" \
+    "https://github.com/casey/just/releases/download/$JUST_VERSION/just-$JUST_VERSION-x86_64-unknown-linux-musl.tar.gz" \
+    "$JUST_SHA256"
 
 install_archive_tool \
     mdbook \

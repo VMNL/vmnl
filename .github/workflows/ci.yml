@@ -189,7 +189,9 @@ jobs:
             libvulkan-dev vulkan-tools libglfw3-dev \
             libwayland-dev libxkbcommon-dev xorg-dev
       - name: Install pinned API documentation tools
-        run: just docs-api-tools
+        run: |
+          ./tools/api_docs_tools.sh
+          echo "$GITHUB_WORKSPACE/target/api-tools/bin" >> "$GITHUB_PATH"
       - name: Build Rustdoc
         env:
           RUSTDOCFLAGS: "-D warnings"

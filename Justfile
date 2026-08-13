@@ -393,6 +393,7 @@ _docs-api-check:
     set -euo pipefail
     just docs-api-tools
     export PATH="$PWD/target/api-tools/bin:$PATH"
+    [[ $(just --version) == 'just 1.57.0' ]]
     [[ $(mdbook --version) == 'mdbook v0.5.4' ]]
     [[ $(cargo public-api --version) == *'0.52.0'* ]]
     [[ $(lychee --version) == *'0.24.2'* ]]
