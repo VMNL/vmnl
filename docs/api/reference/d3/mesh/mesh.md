@@ -39,4 +39,3 @@ Build needs Vulkan. No operational Vulkan 3D/display path.
 ## Example and related types
 
 The compile-only construction example is in [`MeshBuilder`](mesh_builder.md). No successful render example exists.
-

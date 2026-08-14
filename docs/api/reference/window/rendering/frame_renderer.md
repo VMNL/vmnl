@@ -62,4 +62,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`RenderMode`](render_mode.md), [`Drawable2D`](../../d2/drawable_2d.md), and [raw pipelines](../../raw/pipeline/README.md).
-

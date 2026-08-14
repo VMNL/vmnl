@@ -54,4 +54,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`WindowBuilder`](window/window_builder.md), [`BufferMemoryPreference`](common/buffer_memory_preference.md), and [`VMNLResult`](errors/vmnl_result.md).
-

@@ -49,4 +49,3 @@ assert!(reject().is_err());
 ```
 
 Related: [`VMNLError`](vmnl_error.md) and [`VMNLErrorKind`](vmnl_error_kind.md).
-

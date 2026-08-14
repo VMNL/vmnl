@@ -6,4 +6,3 @@
 | [`PipelineSpec<TVertex>`](pipeline_spec.md) | Pipeline builder and defaults |
 | [`PrimitiveTopology`](primitive_topology.md) | Input assembly topology |
 | [`BlendMode`](blend_mode.md) | Color attachment blending |
-

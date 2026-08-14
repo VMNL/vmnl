@@ -67,4 +67,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Window`](window.md), [`PresentMode`](present_mode.md), and [`ShaderSource`](../common/shader_source.md).
-

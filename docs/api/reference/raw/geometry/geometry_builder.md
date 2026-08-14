@@ -57,4 +57,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Geometry`](geometry.md) and [`BufferMemoryPreference`](../../common/buffer_memory_preference.md).
-

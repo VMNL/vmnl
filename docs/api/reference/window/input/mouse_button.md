@@ -46,4 +46,3 @@ assert_ne!(MouseButton::Left, MouseButton::Right);
 ```
 
 Related: [`MouseState`](mouse_state.md) and [`Event`](../events/event.md).
-

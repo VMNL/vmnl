@@ -51,4 +51,3 @@ assert_eq!(mode.width, 1920);
 ```
 
 Related: [`MonitorInfo`](monitor_info.md).
-

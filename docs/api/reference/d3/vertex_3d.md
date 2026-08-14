@@ -48,4 +48,3 @@ assert_eq!(vertex.color.a, 255);
 ```
 
 Related: [`Vector3f`](vector_3f.md) and [`MeshBuilder`](mesh/mesh_builder.md).
-

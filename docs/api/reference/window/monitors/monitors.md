@@ -53,4 +53,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`MonitorInfo`](monitor_info.md) and [`Window::monitor`](../configuration.md).
-

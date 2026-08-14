@@ -15,4 +15,3 @@
 | 3D frame rendering | Not implemented | `submit` returns explicit `InvalidState` |
 
 Compilation, doctests, and headless tests do not prove Vulkan execution or correct pixels. No performance/synchronization claim beyond documented behavior is specified.
-

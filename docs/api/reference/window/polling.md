@@ -56,4 +56,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Event`](events/event.md), [`Input`](input/input.md), and [event processing](events/event_processing_and_timers.md).
-

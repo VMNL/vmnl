@@ -11,4 +11,3 @@ Consumers depend on `vmnl`; `vmnl_graphics` is the implementation crate. The fac
 | `vmnl::raw` | Typed custom pipelines, geometry, uniforms | Operational, experimental |
 
 `pub(crate)`, `pub(super)`, implementation-only re-exports, and `vmnl::raw::__private` are not client API. `__private` exists only so derive macro expansions can name dependencies.
-

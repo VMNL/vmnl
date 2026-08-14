@@ -55,4 +55,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`LineCap`](line_cap.md), [`Shape`](shape.md), and [`Vector2f`](../vector_2f.md).
-

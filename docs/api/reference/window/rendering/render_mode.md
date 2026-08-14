@@ -46,4 +46,3 @@ assert_eq!(RenderMode::default(), RenderMode::PerObject);
 ```
 
 Related: [`FrameRenderer`](frame_renderer.md).
-

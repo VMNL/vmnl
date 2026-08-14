@@ -56,4 +56,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Shape`](shape.md), [`Vertex2D`](../vertex_2d.md), and [`Rgba`](../../common/rgba.md).
-

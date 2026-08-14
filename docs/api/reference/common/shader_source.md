@@ -47,4 +47,3 @@ assert!(matches!(source, ShaderSource::Src(_)));
 ```
 
 Related: [`WindowBuilder`](../window/window_builder.md) and [`PipelineSpec`](../raw/pipeline/pipeline_spec.md).
-

@@ -58,4 +58,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Mesh`](mesh.md), [`Vertex3D`](../vertex_3d.md), and [`BufferMemoryPreference`](../../common/buffer_memory_preference.md).
-

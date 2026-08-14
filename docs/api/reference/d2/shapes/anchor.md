@@ -46,4 +46,3 @@ assert_eq!(Anchor::default(), Anchor::TopLeft);
 ```
 
 Related: [`RectBuilder`](rect_builder.md).
-

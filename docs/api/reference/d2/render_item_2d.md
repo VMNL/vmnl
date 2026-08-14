@@ -54,4 +54,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Drawable2D`](drawable_2d.md).
-

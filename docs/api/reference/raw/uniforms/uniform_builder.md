@@ -39,4 +39,3 @@ Depends on device memory and uniform-buffer layout/size limits.
 ## Example and related types
 
 See [`Uniform`](uniform.md) and the existing [`examples/raw/uniform`](../../../../../examples/raw/uniform/src/main.rs).
-

@@ -47,4 +47,3 @@ assert_eq!(scaled.z, 6.0);
 ```
 
 Related: [`Camera`](camera.md) and [`Vertex3D`](vertex_3d.md).
-

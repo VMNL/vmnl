@@ -8,4 +8,3 @@
 | [Errors matrix](errors_matrix.md) | Failure families and recovery |
 | [Feature status](feature_status.md) | Operational/scaffolded boundaries |
 | [Glossary](glossary.md) | Project terminology |
-

@@ -52,4 +52,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Drawable2D`](../drawable_2d.md) and the [draw-2D workflow](../../../workflows/draw_2d.md).
-

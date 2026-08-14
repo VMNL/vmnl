@@ -47,4 +47,3 @@ assert!(!state.is_down(MouseButton::Left));
 ```
 
 Related: [`MouseButton`](mouse_button.md), [`Input`](input.md), and [`Event`](../events/event.md).
-

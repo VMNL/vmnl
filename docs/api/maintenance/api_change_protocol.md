@@ -11,4 +11,3 @@ For every public API change:
 7. Run `just docs-api-check`, then the repository validation sequence in [validation](validation.md).
 
 `docs-api-update` is intentionally mutating. `docs-api-check` is non-mutating and fails on a missing/duplicate symbol, unknown inventory syntax, missing page or method anchor, or stale generated file.
-

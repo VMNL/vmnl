@@ -12,4 +12,3 @@
 | [Rendering](rendering/README.md) | Frame construction and submission |
 | [Input](input/README.md) | Keyboard and mouse snapshots |
 | [Monitors](monitors/README.md) | Display inventory snapshots |
-

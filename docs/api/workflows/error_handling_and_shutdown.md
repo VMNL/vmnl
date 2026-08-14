@@ -20,4 +20,3 @@ fn submit(window: &mut Window) -> VMNLResult<()> {
 ```
 
 See [`VMNLErrorKind`](../reference/errors/vmnl_error_kind.md), the [errors matrix](../appendices/errors_matrix.md), and canonical environment troubleshooting in [`docs/troubleshooting.md`](../../troubleshooting.md).
-

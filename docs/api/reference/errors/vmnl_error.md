@@ -52,4 +52,3 @@ assert!(error.report().contains("invalid window size"));
 ```
 
 Related: [`VMNLErrorKind`](vmnl_error_kind.md), [`VMNLErrorLocation`](vmnl_error_location.md), and [`VMNLResult`](vmnl_result.md).
-

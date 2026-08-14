@@ -9,4 +9,3 @@
 | [`Pod`, `Vertex`, `Zeroable`](derive_macros.md) | Macro | Proc-macro derives for underlying contracts |
 
 Traits and macros intentionally share names but occupy separate Rust namespaces. The generic blanket adapters are described but omitted from generated API inventory as required by the snapshot policy.
-

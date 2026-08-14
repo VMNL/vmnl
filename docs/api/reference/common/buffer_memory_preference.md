@@ -46,4 +46,3 @@ assert_eq!(BufferMemoryPreference::default(), BufferMemoryPreference::Device);
 ```
 
 Related: [`GeometryBuilder`](../raw/geometry/geometry_builder.md) and [`UniformBuilder`](../raw/uniforms/uniform_builder.md).
-

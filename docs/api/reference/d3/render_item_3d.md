@@ -39,4 +39,3 @@ No operational Vulkan 3D backend.
 ## Example and related types
 
 Values are only obtainable from a `Drawable3D`; see [`Drawable3D`](drawable_3d.md). No executable rendering example exists because the backend is scaffolded.
-

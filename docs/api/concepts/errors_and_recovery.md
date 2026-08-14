@@ -7,4 +7,3 @@ Recoverable runtime conditions include swapchain out-of-date/surface changes and
 VMNL documents no public method as intentionally panicking. Rust allocation failures, poisoned synchronization primitives, platform/library bugs, and violated unsafe trait contracts remain outside the typed error model.
 
 See the [errors matrix](../appendices/errors_matrix.md).
-

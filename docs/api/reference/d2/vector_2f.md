@@ -48,4 +48,3 @@ assert_eq!(value, Vector2f { x: 4.0, y: 6.0 });
 ```
 
 Related: [`Vertex2D`](vertex_2d.md) and [`Shape`](shapes/shape.md).
-

@@ -55,4 +55,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Anchor`](anchor.md), [`Shape`](shape.md), and [`BufferMemoryPreference`](../../common/buffer_memory_preference.md).
-

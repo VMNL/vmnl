@@ -49,4 +49,3 @@ assert!(!state.is_any_used(&[Key::A, Key::Escape]));
 ```
 
 Related: [`Key`](key.md), [`Input`](input.md), and [`Event`](../events/event.md).
-

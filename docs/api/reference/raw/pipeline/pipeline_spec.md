@@ -60,4 +60,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Pipeline`](pipeline.md), [`PrimitiveTopology`](primitive_topology.md), and [`BlendMode`](blend_mode.md).
-

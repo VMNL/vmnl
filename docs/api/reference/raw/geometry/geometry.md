@@ -53,4 +53,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`GeometryBuilder`](geometry_builder.md), [`Pipeline`](../pipeline/pipeline.md), and [`BufferContents`](../traits/buffer_contents.md).
-

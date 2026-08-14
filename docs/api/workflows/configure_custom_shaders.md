@@ -20,4 +20,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Use the canonical [`custom_shaders`](../../../examples/window/custom_shaders/src/main.rs) program and its shader files. See [`ShaderSource`](../reference/common/shader_source.md).
-

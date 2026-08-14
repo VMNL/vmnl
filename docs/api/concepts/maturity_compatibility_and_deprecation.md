@@ -10,4 +10,3 @@ The entire public API is experimental. Minor releases may change contracts while
 | 3D types/resources | Scaffolded; frame submission unavailable |
 
 Deprecations should first appear in Rustdoc, this book, the snapshot review, and `CHANGELOG.md`. Removal requires an explicit reviewed API change; undocumented compatibility is not guaranteed.
-

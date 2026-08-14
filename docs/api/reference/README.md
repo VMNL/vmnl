@@ -7,4 +7,3 @@
 | Shared values | [Common](common/README.md) |
 | Windowing | [Window](window/README.md) |
 | Rendering | [2D](d2/README.md), [3D scaffolding](d3/README.md), [raw](raw/README.md) |
-

@@ -58,4 +58,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Vertex2D`](../vertex_2d.md) and [`BufferMemoryPreference`](../../common/buffer_memory_preference.md).
-

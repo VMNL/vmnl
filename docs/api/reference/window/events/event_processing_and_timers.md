@@ -63,4 +63,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Event`](event.md), [`Input`](../input/input.md), and [polling configuration](../polling.md).
-

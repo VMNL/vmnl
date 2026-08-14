@@ -9,4 +9,3 @@
 The canonical implementation is [`examples/raw/pipeline`](../../../examples/raw/pipeline/src/main.rs); do not copy its full shaders into documentation. Review [`PipelineSpec`](../reference/raw/pipeline/pipeline_spec.md) and [shader/layout safety](../concepts/shaders_vertex_layouts_and_safety.md).
 
 Current layout limits: only descriptor-count-one uniform buffers, no descriptor arrays, no other descriptor types, and no push constants.
-

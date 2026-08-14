@@ -48,4 +48,3 @@ assert!(location.line() > 0);
 ```
 
 Related: [`VMNLError`](vmnl_error.md).
-

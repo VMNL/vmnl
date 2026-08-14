@@ -39,4 +39,3 @@ Current surface supports single uniform-buffer descriptors only; no arrays, text
 ## Example and related types
 
 See [`ResourcesBuilder`](resources_builder.md) and the [uniform-binding workflow](../../../workflows/bind_raw_uniforms.md).
-

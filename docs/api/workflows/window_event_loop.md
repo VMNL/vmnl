@@ -27,4 +27,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Runnable variants: [`events_input`](../../../examples/window/events_input/src/main.rs) and [`wait_events`](../../../examples/window/wait_events/src/main.rs). See [event processing](../reference/window/events/event_processing_and_timers.md).
-

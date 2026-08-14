@@ -56,4 +56,3 @@ assert!(retryable(&VMNLErrorKind::VulkanOutOfDate));
 ```
 
 Related: [`VMNLError`](vmnl_error.md) and the [errors matrix](../../appendices/errors_matrix.md).
-

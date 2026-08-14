@@ -63,4 +63,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Rgba`](../common/rgba.md) and [monitors](monitors/README.md).
-

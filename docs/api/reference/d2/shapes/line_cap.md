@@ -46,4 +46,3 @@ assert_eq!(LineCap::default(), LineCap::Butt);
 ```
 
 Related: [`LineBuilder`](line_builder.md).
-

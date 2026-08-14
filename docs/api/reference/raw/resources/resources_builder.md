@@ -65,4 +65,3 @@ let resources = Resources::builder(&pipeline)
 ```
 
 Related: [`Resources`](resources.md), [`Uniform`](../uniforms/uniform.md), and [`Pipeline`](../pipeline/pipeline.md).
-

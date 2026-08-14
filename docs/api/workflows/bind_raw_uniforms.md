@@ -9,4 +9,3 @@
 The current API uploads only an initial uniform value; it has no public in-place update method. Descriptor arrays, non-uniform resources, and push constants are unsupported.
 
 Use the complete [`examples/raw/uniform`](../../../examples/raw/uniform/src/main.rs). See [`UniformBuilder`](../reference/raw/uniforms/uniform_builder.md) and [`ResourcesBuilder`](../reference/raw/resources/resources_builder.md).
-

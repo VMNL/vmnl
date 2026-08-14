@@ -56,4 +56,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`RenderItem2D`](render_item_2d.md), [`Shape`](shapes/shape.md), and [`FrameRenderer`](../window/rendering/frame_renderer.md).
-

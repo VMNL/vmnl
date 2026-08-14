@@ -18,4 +18,3 @@
 | Indexed shape / mesh / raw geometry / uniform | device memory preference |
 | `PipelineSpec` | shaders missing, `TriangleList`, `Opaque` |
 | `GeometryBuilder` | no indices |
-

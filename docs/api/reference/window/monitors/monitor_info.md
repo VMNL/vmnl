@@ -48,4 +48,3 @@ fn label(info: &MonitorInfo) -> &str {
 ```
 
 Related: [`Monitors`](monitors.md) and [`VideoMode`](video_mode.md).
-

@@ -47,4 +47,3 @@ assert!(!input.keyboard().is_down(Key::Escape));
 ```
 
 Related: [`KeyboardState`](keyboard_state.md), [`MouseState`](mouse_state.md), and [`Window::input`](../events/event_processing_and_timers.md).
-

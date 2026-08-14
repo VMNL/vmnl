@@ -9,4 +9,3 @@
 - GPU/display snippets use `no_run`, not `ignore`.
 - Workflows link existing examples instead of copying them.
 - `just docs-api-check` and applicable repository checks pass.
-

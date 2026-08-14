@@ -47,4 +47,3 @@ assert_eq!(spec.topology_value(), PrimitiveTopology::LineList);
 ```
 
 Related: [`PipelineSpec`](pipeline_spec.md).
-

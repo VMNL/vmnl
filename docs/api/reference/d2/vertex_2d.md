@@ -51,4 +51,3 @@ assert_eq!(vertex.color.a, 255);
 ```
 
 Related: [`Vector2f`](vector_2f.md), [`Rgba`](../common/rgba.md), and [`IndexedShapeBuilder`](shapes/indexed_shape_builder.md).
-

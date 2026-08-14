@@ -58,4 +58,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`RenderItem3D`](render_item_3d.md) and [`Mesh`](mesh/mesh.md).
-

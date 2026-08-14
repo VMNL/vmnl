@@ -22,4 +22,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 `Context` chooses the device automatically; equal-ranked selection is not deterministic. See [`Context`](../reference/context.md), [`WindowBuilder`](../reference/window/window_builder.md), and [`PresentMode`](../reference/window/present_mode.md).
-

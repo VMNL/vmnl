@@ -8,4 +8,3 @@ These pages connect public items without duplicating the complete runnable progr
 | 2D | [Draw in 2D](draw_2d.md), [custom shaders](configure_custom_shaders.md) | [`shapes`](../../../examples/d2/shapes/src/main.rs) |
 | Raw | [Pipeline](create_raw_pipeline.md), [geometry](create_raw_geometry.md), [uniforms](bind_raw_uniforms.md), [composition](compose_2d_and_raw.md) | [`raw`](../../../examples/raw/) |
 | Failure | [Errors and shutdown](error_handling_and_shutdown.md) | Existing examples plus reference contracts |
-

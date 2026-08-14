@@ -54,4 +54,3 @@ struct VertexData {
 ```
 
 Related: [`BufferContents`](buffer_contents.md), [`Vertex` trait](vertex.md), and [shader/layout safety](../../../concepts/shaders_vertex_layouts_and_safety.md).
-

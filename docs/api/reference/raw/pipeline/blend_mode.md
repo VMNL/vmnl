@@ -47,4 +47,3 @@ assert_eq!(spec.blend_mode_value(), BlendMode::Alpha);
 ```
 
 Related: [`PipelineSpec`](pipeline_spec.md).
-

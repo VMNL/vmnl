@@ -51,4 +51,3 @@ struct VertexData {
 ```
 
 Related: [`Vertex` derive](derive_macros.md), [`PipelineSpec`](../pipeline/pipeline_spec.md), and [`Geometry`](../geometry/geometry.md).
-

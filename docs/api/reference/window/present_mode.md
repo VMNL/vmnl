@@ -46,4 +46,3 @@ assert_eq!(PresentMode::default(), PresentMode::Auto);
 ```
 
 Related: [`WindowBuilder`](window_builder.md).
-

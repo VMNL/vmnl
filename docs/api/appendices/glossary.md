@@ -15,4 +15,3 @@
 | Present mode | Swapchain image presentation/pacing policy. |
 | Scaffolded | Public data/API wiring exists, but successful rendering is intentionally unavailable. |
 | Headless evidence | Compile/test evidence that does not create a window or validate pixels. |
-

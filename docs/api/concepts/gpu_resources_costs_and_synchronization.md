@@ -5,4 +5,3 @@
 Pipeline construction compiles shaders and creates Vulkan shader modules, layouts, and a graphics pipeline. Window creation builds surface/swapchain/render-pass state. Frame submission records commands, submits work, and presents through VMNL-owned synchronization.
 
 No latency, throughput, allocation-count, batching, cache, queue-overlap, or synchronization-performance guarantee is specified. Resource destruction timing follows Rust ownership plus the underlying shared Vulkan objects; precise reclamation timing is not specified.
-

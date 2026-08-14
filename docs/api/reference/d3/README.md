@@ -12,4 +12,3 @@ All types in this section exist, and meshes can allocate GPU buffers, but 3D ren
 | [Meshes](mesh/README.md) | GPU-backed indexed mesh scaffolding |
 
 This status is part of every 3D item contract below; no operational 3D workflow is provided.
-

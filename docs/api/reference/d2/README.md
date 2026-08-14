@@ -9,4 +9,3 @@ The experimental 2D path is operational. Builders validate CPU geometry, allocat
 | [`Vector2f`](vector_2f.md) | 2D scalar pair |
 | [`Vertex2D`](vertex_2d.md) | Public position/color vertex |
 | [Shapes](shapes/README.md) | GPU-backed shape and builders |
-

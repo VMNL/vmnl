@@ -14,4 +14,3 @@ Every item page uses these headings, retaining “Not applicable” or “Not sp
 10. `Example and related types`
 
 Exact signatures and local contracts belong in Rustdoc. The page must name every public field, variant, inherent method, and relevant explicit implementation. Generic blanket implementations are omitted.
-

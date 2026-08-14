@@ -47,4 +47,3 @@ assert!(matches!(event, Event::KeyPressed { key: Key::A, repeat: false }));
 ```
 
 Related: [`Key`](../input/key.md), [`MouseButton`](../input/mouse_button.md), and [event processing](event_processing_and_timers.md).
-

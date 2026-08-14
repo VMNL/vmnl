@@ -18,4 +18,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Topology-specific primitive counts are not validated by `GeometryBuilder`; align the data with `PipelineSpec::topology`. Use [`examples/raw/triangle`](../../../examples/raw/triangle/src/main.rs) and [`GeometryBuilder`](../reference/raw/geometry/geometry_builder.md).
-

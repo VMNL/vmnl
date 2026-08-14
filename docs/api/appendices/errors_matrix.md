@@ -13,4 +13,3 @@
 | GLFW callbacks/infallible setters | No typed result; routed through callback/default backend handling | Log/classify callback and reconcile observed state |
 
 `VMNLErrorKind` is non-exhaustive. This table groups public behavior; exact per-item variants remain in Rustdoc/reference pages.
-

@@ -56,4 +56,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`UniformBuilder`](uniform_builder.md) and [`ResourcesBuilder`](../resources/resources_builder.md).
-

@@ -51,4 +51,3 @@ assert_eq!(camera.position.z, 5.0);
 ```
 
 Related: [`FrameRenderer::draw3d`](../window/rendering/frame_renderer.md) and [`Vector3f`](vector_3f.md).
-

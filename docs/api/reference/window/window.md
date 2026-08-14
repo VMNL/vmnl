@@ -54,4 +54,3 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`Context`](../context.md), [`WindowBuilder`](window_builder.md), and [`FrameRenderer`](rendering/frame_renderer.md).
-
