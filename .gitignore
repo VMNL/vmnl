@@ -3,3 +3,5 @@ target
 sandbox/
 .env
 *.log
+__pycache__/
+*.py[cod]

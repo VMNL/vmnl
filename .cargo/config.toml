@@ -1,2 +1,0 @@
-[env]
-SHADERC_LIB_DIR = { value = ".cargo/shaderc_lib", relative = true }

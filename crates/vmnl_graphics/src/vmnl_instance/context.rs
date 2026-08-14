@@ -14,6 +14,14 @@ use std::rc::Rc;
 ///
 /// It is responsible for initializing and managing the Vulkan resources required for rendering operations
 /// and provides a high-level interface for the graphical part of the library.
+///
+/// Device and queue selection are automatic. VMNL ranks supported physical
+/// devices, but does not expose a client override. When multiple candidates
+/// have equal rank, the selected device follows backend enumeration order and
+/// is therefore not deterministic across equal-ranked devices.
+///
+/// Clones share the same internal Vulkan state through `Rc`; they do not create
+/// another device. Consequently `Context` is intentionally single-threaded.
 #[derive(Clone)]
 pub struct Context {
     /// Inner `VMNLInstance` containing the Vulkan context and resources.
@@ -30,6 +38,9 @@ impl Context {
     /// # Errors
     /// Returns a `VMNLResult::Err` if any step of the Vulkan initialization process
     /// fails, such as instance creation, physical device selection, or logical device creation.
+    ///
+    /// This call creates Vulkan instance/device/queue and allocator state. Its
+    /// allocation count and initialization latency are not specified.
     ///
     /// # Example
     /// ```rust,no_run

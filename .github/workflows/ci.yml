@@ -168,6 +168,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
         with:
           toolchain: 1.87.0
+      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          toolchain: nightly-2026-03-12
+          profile: minimal
       - name: Restore Cargo cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -184,9 +188,19 @@ jobs:
             libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
             libvulkan-dev vulkan-tools libglfw3-dev \
             libwayland-dev libxkbcommon-dev xorg-dev
-      - name: Build documentation
+      - name: Install pinned API documentation tools
+        run: |
+          ./tools/api_docs_tools.sh
+          echo "$GITHUB_WORKSPACE/target/api-tools/bin" >> "$GITHUB_PATH"
+      - name: Build Rustdoc
         env:
           RUSTDOCFLAGS: "-D warnings"
-        run: cargo doc --workspace --no-deps --locked
+        run: cargo +1.87.0 doc --workspace --no-deps --locked
       - name: Run doctests
-        run: cargo test --workspace --all-features --doc --locked
+        run: cargo +1.87.0 test --workspace --all-features --doc --locked
+      - name: Build public facade
+        run: cargo +1.87.0 build -p vmnl --locked
+      - name: Check API documentation
+        env:
+          RUSTUP_TOOLCHAIN: 1.87.0
+        run: just _docs-api-check
