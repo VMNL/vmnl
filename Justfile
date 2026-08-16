@@ -34,6 +34,29 @@ test-api:
 test-smoke:
     @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report smoke
 
+# Run portable GLFW error conversion and Null-backend tests.
+[no-exit-message]
+test-platform:
+    @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report platform
+
+# Compile all platform probes without running a native backend.
+[no-exit-message]
+test-platform-compile:
+    @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report platform-compile
+
+# Run only the isolated GLFW Null-backend probe.
+[no-exit-message]
+test-platform-null:
+    @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report platform-null
+
+# Run the Wayland contract against the caller-provided compositor.
+test-platform-wayland:
+    VMNL_PLATFORM_TEST_BACKEND=wayland cargo test -p vmnl-platform-tests --test backend_contract -- --ignored --nocapture
+
+# Run the X11 contract against the caller-provided X server and EWMH window manager.
+test-platform-x11:
+    VMNL_PLATFORM_TEST_BACKEND=x11 cargo test -p vmnl-platform-tests --test backend_contract -- --ignored --nocapture
+
 # Compile GPU tests without running them.
 [no-exit-message]
 test-gpu-compile:
@@ -103,6 +126,24 @@ _test-report suite:
             suite_kind='compile'
             test_command=(cargo "${color_args[@]}" test -p vmnl-gpu-tests --no-run)
             ;;
+        platform)
+            suite_name='PLATFORM'
+            suite_scope='error conversion + GLFW Null backend'
+            suite_kind='tests'
+            test_command=(cargo "${color_args[@]}" test -p vmnl-platform-tests)
+            ;;
+        platform-compile)
+            suite_name='PLATFORM'
+            suite_scope='compile only; no native backend is executed'
+            suite_kind='compile'
+            test_command=(cargo "${color_args[@]}" test -p vmnl-platform-tests --no-run)
+            ;;
+        platform-null)
+            suite_name='PLATFORM'
+            suite_scope='GLFW Null backend'
+            suite_kind='tests'
+            test_command=(cargo "${color_args[@]}" test -p vmnl-platform-tests --test native_window)
+            ;;
         smoke)
             suite_name='SMOKE'
             suite_scope='windowless executable startup'
@@ -113,7 +154,7 @@ _test-report suite:
             suite_name='UNIT'
             suite_scope='workspace libraries'
             suite_kind='tests'
-            test_command=(cargo "${color_args[@]}" test --workspace --lib --exclude vmnl-api-tests --exclude vmnl-gpu-tests --exclude vmnl-smoke-tests)
+            test_command=(cargo "${color_args[@]}" test --workspace --lib --exclude vmnl-api-tests --exclude vmnl-gpu-tests --exclude vmnl-platform-tests --exclude vmnl-smoke-tests)
             ;;
         *)
             printf 'unknown VMNL test suite: %s\n' '{{ suite }}' >&2
@@ -223,7 +264,7 @@ _test-total report:
         validate)
             report_name='VALIDATION'
             report_unit='steps'
-            recipes=(build-workspace check-fmt check-clippy doctest docs _docs-api-check test-unit test-api test-smoke)
+            recipes=(build-workspace check-fmt check-clippy doctest docs _docs-api-check test-unit test-api test-smoke test-platform)
             ;;
         *)
             printf 'unknown VMNL aggregate report: %s\n' '{{ report }}' >&2
@@ -310,6 +351,10 @@ _test-total report:
             test-unit)
                 stage_name='UNIT'
                 record_suite='unit'
+                ;;
+            test-platform)
+                stage_name='PLATFORM'
+                record_suite='platform'
                 ;;
         esac
 

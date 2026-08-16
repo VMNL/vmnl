@@ -700,6 +700,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "vmnl-platform-tests"
+version = "0.1.0"
+dependencies = [
+ "glfw",
+ "serde_json",
+]
+
+[[package]]
 name = "vmnl-smoke-tests"
 version = "0.1.0"
 dependencies = [

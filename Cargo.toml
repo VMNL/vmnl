@@ -14,6 +14,7 @@ members = [
     "examples/window/wait_events",
     "tests/api",
     "tests/gpu",
+    "tests/platform",
     "tests/smoke",
 ]
 default-members = ["crates/vmnl_graphics", "crates/vmnl"]
