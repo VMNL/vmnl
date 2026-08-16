@@ -459,6 +459,7 @@ _docs-api-check:
     CARGO_MANIFEST_DIR="$PWD/examples/raw/triangle" mdbook test docs/api -L "$api_lib_dir"
     mdbook build docs/api
     python3 tools/api_docs.py check
+    python3 tools/glfw_portability.py check
     mapfile -t markdown_files < <(rg --files docs -g '*.md')
     lychee --offline --include-fragments=full "${markdown_files[@]}" CONTRIBUTING.md CHANGELOG.md README.md
 
@@ -472,6 +473,7 @@ docs-api-update:
     [[ $(cargo public-api --version) == *'0.52.0'* ]]
     rustc +nightly-2026-03-12 --version >/dev/null
     python3 tools/api_docs.py update
+    python3 tools/glfw_portability.py update
 
 # Run the complete non-GPU validation sequence.
 [no-exit-message]
