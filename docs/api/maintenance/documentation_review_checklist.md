@@ -8,4 +8,7 @@
 - 3D pages state that rendering is scaffolded.
 - GPU/display snippets use `no_run`, not `ignore`.
 - Workflows link existing examples instead of copying them.
+- Every GLFW call used by VMNL has an inventory entry. New limitations follow the
+  [GLFW portability protocol](glfw_portability_protocol.md).
+- Callback errors, no-ops, sentinel values, and best-effort requests are not conflated.
 - `just docs-api-check` and applicable repository checks pass.

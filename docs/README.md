@@ -11,6 +11,7 @@ Local `README.md` files are only navigation aids for their directory. Public API
 - [Build](build.md): toolchain, system dependencies, shaderc/Vulkan discovery, Justfile usage.
 - [Coding Instructions](INSTRUCTIONS.md): project coding and documentation standards.
 - [Contributing](../CONTRIBUTING.md): contribution workflow and commit convention.
+- [Deployment](deployment.md): manual release protocol and current publication blockers.
 - [Examples](examples.md): visual example rules and command conventions.
 - [Getting Started](getting_started.md): clone, build, test, and run the first visual example.
 - [Platform Support](platform_support.md): validated platforms and local environment scope.

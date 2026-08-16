@@ -35,7 +35,11 @@ Processing requires `&mut Window` and resets transition snapshots before applyin
 
 ## Errors, panics, and failure conditions
 
-These methods expose no typed result. GLFW failures are routed to the callback/default handling. User callback panics propagate as normal Rust panics.
+These methods expose no typed result. Known API, cursor, feature, and platform availability errors
+map to `GlfwUnsupportedPlatform`; unknown raw codes map to `GlfwUnknownError` and remain in the
+message. Total error conversion prevents an unknown GLFW code from being transmuted into an
+invalid Rust enum. A user callback that panics crosses GLFW's C callback boundary and may abort the
+process; callbacks must not unwind.
 
 ## Allocation, transfers, synchronization, and GPU cost
 

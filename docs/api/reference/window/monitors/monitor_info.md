@@ -18,7 +18,9 @@ Fields are public so manual construction is allowed. VMNL-populated values are c
 
 ## Units, coordinates, and valid ranges
 
-Position/work area use virtual-screen pixels; work area is `(x, y, width, height)`. Physical size is millimetres. Content scale is a dimensionless `(x, y)` pair.
+Position/work area use GLFW screen coordinates, not necessarily physical pixels; work area is
+`(x, y, width, height)`. Physical size is millimetres. Content scale is a dimensionless `(x, y)`
+pair.
 
 ## Ownership, lifecycle, and threading
 

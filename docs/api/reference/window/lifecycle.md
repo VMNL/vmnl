@@ -26,7 +26,9 @@ Mutating operations require `&mut Window`. `is_open` also requires mutable acces
 
 ## Errors, panics, and failure conditions
 
-These methods expose no typed error. Platform refusal or asynchronous window-manager behavior may mean an observed state changes later than the call.
+These methods expose no typed result. Unsupported features are reported through the configured
+error callback and have no effect. Platform refusal or asynchronous window-manager behavior may
+mean an observed state changes later than the call.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
@@ -34,7 +36,10 @@ No promised GPU work. Restoring/resizing can cause later swapchain recreation. E
 
 ## Platform, Vulkan, and display constraints
 
-Visibility, focus, iconification, and maximization are requests to the platform/window manager and may be constrained or ignored.
+Visibility, focus, iconification, and maximization are requests to the platform/window manager and
+may be constrained or ignored. Focus is never guaranteed. Wayland iconification/restoration is
+compositor-dependent; X11 focus and maximization depend on the EWMH window manager. See
+[platform compatibility](platform_compatibility.md).
 
 ## Example and related types
 
