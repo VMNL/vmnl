@@ -231,6 +231,7 @@ jobs:
         env:
           VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
         run: |
+          mkdir -p target/platform-artifacts
           runtime_dir="$RUNNER_TEMP/vmnl-weston-runtime"
           mkdir -p "$runtime_dir"
           chmod 700 "$runtime_dir"
@@ -253,6 +254,7 @@ jobs:
         env:
           VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
         run: |
+          mkdir -p target/platform-artifacts
           export DISPLAY=:99
           Xvfb "$DISPLAY" -screen 0 1280x720x24 -nolisten tcp >target/xvfb.log 2>&1 &
           xvfb_pid=$!
