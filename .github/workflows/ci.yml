@@ -227,26 +227,49 @@ jobs:
             pkg-config cmake git python3 ninja-build build-essential \
             libwayland-dev libxkbcommon-dev wayland-protocols xorg-dev \
             weston xvfb openbox x11-utils
-      - name: Test Wayland under Weston headless with Pixman
+      - name: Test Wayland under Weston/Xvfb with Pixman
         env:
           VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
         run: |
           mkdir -p target/platform-artifacts
+          export DISPLAY=:98
+          Xvfb "$DISPLAY" -screen 0 1280x720x24 -nolisten tcp \
+            >target/wayland-xvfb.log 2>&1 &
+          wayland_xvfb_pid=$!
+          trap 'kill "$wayland_xvfb_pid" 2>/dev/null || true' EXIT
+          for _ in {1..40}; do
+            xdpyinfo -display "$DISPLAY" >/dev/null 2>&1 && break
+            if ! kill -0 "$wayland_xvfb_pid"; then
+              cat target/wayland-xvfb.log
+              exit 1
+            fi
+            sleep 0.25
+          done
+          if ! xdpyinfo -display "$DISPLAY" >/dev/null; then
+            cat target/wayland-xvfb.log
+            exit 1
+          fi
           runtime_dir="$RUNNER_TEMP/vmnl-weston-runtime"
           mkdir -p "$runtime_dir"
           chmod 700 "$runtime_dir"
           export XDG_RUNTIME_DIR="$runtime_dir"
           export WAYLAND_DISPLAY=wayland-vmnl
-          weston --backend=headless --renderer=pixman --fake-seat \
+          weston --backend=x11 --renderer=pixman --no-config \
             --socket="$WAYLAND_DISPLAY" --idle-time=0 >target/weston.log 2>&1 &
           weston_pid=$!
-          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          trap 'kill "$weston_pid" "$wayland_xvfb_pid" 2>/dev/null || true' EXIT
           for _ in {1..40}; do
             [[ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]] && break
-            kill -0 "$weston_pid"
+            if ! kill -0 "$weston_pid"; then
+              cat target/weston.log
+              exit 1
+            fi
             sleep 0.25
           done
-          [[ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]]
+          if [[ ! -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]]; then
+            cat target/weston.log
+            exit 1
+          fi
           VMNL_PLATFORM_TEST_BACKEND=wayland \
             cargo test -p vmnl-platform-tests --locked \
               --test backend_contract -- --ignored --nocapture
@@ -284,6 +307,7 @@ jobs:
           name: platform-linux-${{ github.run_attempt }}
           path: |
             target/platform-artifacts/*.jsonl
+            target/wayland-xvfb.log
             target/weston.log
             target/xvfb.log
             target/openbox.log

@@ -54,8 +54,8 @@ format -> Clippy -> build -> headless tests -> documentation
 ```
 
 Build, headless, and portable platform stages run on Linux, macOS, and Windows. The Linux native
-job forces Wayland under Weston headless with Pixman and a fake input seat, and X11 under Xvfb
-with Openbox. Win32 and
+job forces the GLFW Wayland backend under Weston with Pixman nested on Xvfb, then tests the GLFW
+X11 backend under Xvfb with Openbox. Win32 and
 Cocoa hidden-window probes remain visible but non-blocking until ten consecutive successful runs
 use the same runner image, GLFW revision, and probe schema; any of those changes resets the count.
 

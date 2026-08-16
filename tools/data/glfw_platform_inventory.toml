@@ -26,8 +26,8 @@ rust_wrappers = ["glfw::init_hint", "glfw::ffi::glfwInitHint"]
 category = "initialization"
 introduced = "3.3"
 vmnl_usage = []
-backends = [{ name = "wayland", status = "conditional", conditions = "Hint is set before initialization; the probe disables libdecor and Weston supplies a fake input seat.", behavior = "Selects the Wayland backend and decoration strategy used by the next initialization.", errors = ["GLFW_INVALID_ENUM", "GLFW_INVALID_VALUE"], sentinel = "No-op for invalid hint", source = "https://www.glfw.org/docs/3.4/group__init.html" }, { name = "x11-win32-cocoa-null", status = "supported", conditions = "A valid platform hint is set before initialization.", behavior = "Selects the requested compiled backend.", errors = ["GLFW_INVALID_ENUM", "GLFW_INVALID_VALUE"], sentinel = "No-op for invalid hint", source = "https://www.glfw.org/docs/3.4/group__init.html" }]
-proofs = ["test:platform_probe backend_requested/backend_actual", "justification:Wayland headless requires a fake wl_seat for GLFW 3.4.0 initialization"]
+backends = [{ name = "wayland", status = "conditional", conditions = "Hint is set before initialization; the probe disables libdecor and Weston is nested under Xvfb to supply an input seat.", behavior = "Selects the Wayland backend and decoration strategy used by the next initialization.", errors = ["GLFW_INVALID_ENUM", "GLFW_INVALID_VALUE"], sentinel = "No-op for invalid hint", source = "https://www.glfw.org/docs/3.4/group__init.html" }, { name = "x11-win32-cocoa-null", status = "supported", conditions = "A valid platform hint is set before initialization.", behavior = "Selects the requested compiled backend.", errors = ["GLFW_INVALID_ENUM", "GLFW_INVALID_VALUE"], sentinel = "No-op for invalid hint", source = "https://www.glfw.org/docs/3.4/group__init.html" }]
+proofs = ["test:platform_probe backend_requested/backend_actual", "justification:Weston is nested under Xvfb because GLFW 3.4.0 initialization requires wl_seat"]
 
 [[function]]
 c_symbol = "glfwGetPlatform"
