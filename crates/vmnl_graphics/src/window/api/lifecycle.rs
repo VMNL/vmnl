@@ -6,7 +6,10 @@
 use crate::window::Window;
 
 impl Window {
-    /// Iconifies (minimizes) the window.
+    /// Requests that the window be iconified (minimized).
+    ///
+    /// Some platforms do not support programmatic iconification. GLFW reports this through the
+    /// configured error callback and the request has no effect.
     ///
     /// # Example
     /// ```rust,no_run
@@ -145,7 +148,9 @@ impl Window {
         self.inner.is_visible()
     }
 
-    /// Focuses the window, bringing it to the foreground and giving it input focus.
+    /// Requests input focus for the window.
+    ///
+    /// Window-system policy may deny the request, so a normal return does not guarantee focus.
     ///
     /// # Example
     /// ```rust,no_run

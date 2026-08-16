@@ -4,7 +4,6 @@
 use crate::{
     window::inner::VMNLWindow, window::monitors::Monitors, VMNLError, VMNLErrorKind, VMNLResult,
 };
-use glfw::Context as _;
 use std::ffi::c_int;
 
 /// Represents the parameter configuration of the window instance.
@@ -99,15 +98,7 @@ impl VMNLWindow {
             None => (glfw::ffi::GLFW_DONT_CARE, glfw::ffi::GLFW_DONT_CARE),
         };
 
-        // SAFETY: `context` owns a live GLFW window for the duration of this exclusive borrow,
-        // and the validated terms satisfy GLFW's aspect-ratio preconditions.
-        unsafe {
-            glfw::ffi::glfwSetWindowAspectRatio(
-                self.handle.context.window_ptr(),
-                numerator,
-                denominator,
-            );
-        }
+        crate::glfw_backend::set_aspect_ratio(&mut self.handle.context, numerator, denominator);
         Ok(())
     }
 

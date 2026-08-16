@@ -187,7 +187,11 @@ impl Window {
         self.inner.set_aspect_ratio(aspect_ratio)
     }
 
-    /// Sets the position of the window on the screen.
+    /// Requests a position for the window in screen coordinates.
+    ///
+    /// These coordinates are not necessarily physical pixels. Some platforms, including
+    /// Wayland, do not support application-controlled window positioning; GLFW reports the
+    /// limitation through the configured error callback and this request has no effect.
     ///
     /// # Arguments
     /// - `x`: X position in virtual screen coordinates.
@@ -208,7 +212,10 @@ impl Window {
         self.inner.set_position(x, y);
     }
 
-    /// Returns the current position of the window on the screen as a tuple of x and y coordinates in pixels.
+    /// Returns the current position in screen coordinates.
+    ///
+    /// The coordinates are not necessarily physical pixels. A platform that cannot provide a
+    /// position may report an error and return GLFW's sentinel `(0, 0)`.
     ///
     /// # Example
     /// ```rust,no_run
@@ -226,7 +233,10 @@ impl Window {
         self.inner.get_position()
     }
 
-    /// Sets the opacity of the window.
+    /// Requests the opacity of the window.
+    ///
+    /// Unsupported platforms report the limitation through the configured error callback and
+    /// leave the window unchanged.
     ///
     /// # Arguments
     /// - `opacity`: Opacity value where `1.0` is fully opaque and `0.0` is fully transparent.
@@ -246,7 +256,9 @@ impl Window {
         self.inner.opacity(opacity);
     }
 
-    /// Returns the current opacity of the window, where 1.0 is fully opaque and 0.0 is fully transparent.
+    /// Returns the current opacity, where `1.0` is fully opaque and `0.0` is fully transparent.
+    ///
+    /// Unsupported platforms may report an error and return GLFW's sentinel `1.0`.
     ///
     /// # Example
     /// ```rust,no_run

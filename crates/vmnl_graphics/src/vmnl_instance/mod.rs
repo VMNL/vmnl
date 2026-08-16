@@ -76,10 +76,14 @@ impl VMNLInstance {
                 "GLFW initialization lock is poisoned".into(),
             ))
         })?;
-        let glfw: glfw::Glfw = glfw::init(|error, description| {
+        let glfw: glfw::Glfw = crate::glfw_backend::init(|error, description| {
             log::error!("GLFW error {error:?}: {description}");
         })
         .map_err(|_| VMNLError::new(VMNLErrorKind::GlfwInitFailed))?;
+        log::debug!(
+            "initialized GLFW {} backend",
+            crate::glfw_backend::backend_name(&glfw)
+        );
         let instance: Arc<Instance> = Self::create_instance(&glfw)?;
         let device_extensions: DeviceExtensions = DeviceExtensions {
             khr_swapchain: true,

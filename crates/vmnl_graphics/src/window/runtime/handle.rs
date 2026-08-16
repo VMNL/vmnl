@@ -121,11 +121,9 @@ impl VMNLWindow {
         &mut self,
         mut callback: impl FnMut(VMNLErrorKind, String) + 'static,
     ) {
-        self.handle
-            .instance
-            .set_error_callback(move |_error, description| {
-                callback(VMNLErrorKind::GlfwUnknownError, description);
-            });
+        crate::glfw_backend::set_error_callback(&mut self.handle.instance, move |kind, message| {
+            callback(kind, message);
+        });
     }
 
     /// Internal implementation backing `Window::unset_error_callback`.

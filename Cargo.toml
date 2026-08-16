@@ -28,6 +28,9 @@ repository = "https://github.com/VMNL/vmnl"
 homepage = "https://github.com/VMNL/vmnl"
 documentation = "https://docs.rs/vmnl"
 
+[workspace.dependencies]
+glfw = { version = "0.62.0", git = "https://github.com/VMNL/glfw-rs", rev = "eee570b6f0881d49a678ebe8ec32b50c3dcea4de", default-features = false, features = ["raw-window-handle-v0-6", "src-build", "vulkan", "wayland", "x11"] }
+
 [profile.dev]
 opt-level = 3
 

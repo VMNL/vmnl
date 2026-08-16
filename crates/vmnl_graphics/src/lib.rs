@@ -12,6 +12,7 @@ pub mod d2;
 #[path = "3d/mod.rs"]
 pub mod d3;
 mod exception;
+mod glfw_backend;
 /// Low-level raw graphics resources and public types.
 pub mod raw;
 mod vmnl_instance;

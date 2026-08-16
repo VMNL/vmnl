@@ -26,6 +26,10 @@ fn print_monitor_summary(window: &Window) {
 }
 
 fn configure_runtime_window(window: &mut Window) -> VMNLResult<()> {
+    window.set_error_callback(|kind, message| {
+        eprintln!("[glfw] {kind:?}: {message}");
+    });
+
     window.set_title("VMNL window_events_input");
     window.set_size(960, 540)?;
     window.set_size_limits(Some(320), Some(240), Some(1920), Some(1080))?;
@@ -43,10 +47,6 @@ fn configure_runtime_window(window: &mut Window) -> VMNLResult<()> {
     window.set_content_scale_polling(true);
     window.set_drag_and_drop_polling(true);
     window.set_refresh_polling(true);
-
-    window.set_error_callback(|kind, message| {
-        eprintln!("[glfw] {kind:?}: {message}");
-    });
 
     Ok(())
 }
