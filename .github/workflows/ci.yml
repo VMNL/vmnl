@@ -17,24 +17,8 @@ env:
   CARGO_INCREMENTAL: "0"
 
 jobs:
-  fmt:
-    name: "Formatting"
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
-        with:
-          toolchain: 1.87.0
-          components: rustfmt
-      - name: Check formatting
-        run: cargo fmt --all --check
-
-  clippy:
-    name: "Clippy"
-    needs: fmt
+  quality:
+    name: "Quality"
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -44,7 +28,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
         with:
           toolchain: 1.87.0
-          components: clippy
+          components: rustfmt, clippy
+      - name: Check formatting
+        run: cargo fmt --all --check
       - name: Restore Cargo cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -64,9 +50,9 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 
-  build:
-    name: "Build: ${{ matrix.name }}"
-    needs: clippy
+  validation:
+    name: "Validation: ${{ matrix.name }}"
+    needs: quality
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     strategy:
@@ -76,10 +62,13 @@ jobs:
         include:
           - name: Linux
             runner: ubuntu-24.04
+            backend: ""
           - name: macOS
             runner: macos-14
+            backend: cocoa
           - name: Windows
             runner: windows-2022
+            backend: win32
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -96,57 +85,17 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-cargo-
-      - name: Install Linux dependencies
+      - name: Install Linux dependencies and display servers
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
             libvulkan-dev vulkan-tools wayland-protocols \
-            libwayland-dev libxkbcommon-dev xorg-dev
+            libwayland-dev libxkbcommon-dev xorg-dev \
+            weston xvfb openbox x11-utils
       - name: Build workspace
         run: cargo build --workspace --all-targets --locked
-
-  headless_tests:
-    name: "Headless Tests: ${{ matrix.name }}"
-    needs: build
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix:
-        include:
-          - name: Linux
-            runner: ubuntu-24.04
-          - name: macOS
-            runner: macos-14
-          - name: Windows
-            runner: windows-2022
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
-        with:
-          toolchain: 1.87.0
-      - name: Restore Cargo cache
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: |
-            ~/.cargo/git
-            ~/.cargo/registry
-          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-cargo-
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
-            libvulkan-dev vulkan-tools wayland-protocols \
-            libwayland-dev libxkbcommon-dev xorg-dev
       - name: Run Unit Tests
         run: >-
           cargo test --workspace --lib --exclude vmnl-api-tests --exclude vmnl-gpu-tests
@@ -155,79 +104,12 @@ jobs:
         run: cargo test -p vmnl-api-tests --locked
       - name: Run Smoke Tests
         run: cargo run -p vmnl-smoke-tests --locked
-
-  platform_portable:
-    name: "Platform Portable: ${{ matrix.name }}"
-    needs: build
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Linux
-            runner: ubuntu-24.04
-          - name: macOS
-            runner: macos-14
-          - name: Windows
-            runner: windows-2022
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
-        with:
-          toolchain: 1.87.0
-      - name: Restore Cargo cache
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: |
-            ~/.cargo/git
-            ~/.cargo/registry
-          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-cargo-
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            pkg-config cmake git python3 ninja-build build-essential \
-            libwayland-dev libxkbcommon-dev wayland-protocols xorg-dev
       - name: Test total error conversion and Null backend
         run: >-
           cargo test -p vmnl-platform-tests --locked
           --test error_codes --test native_window
-
-  platform_linux:
-    name: "Platform Native: Linux"
-    needs: platform_portable
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
-        with:
-          toolchain: 1.87.0
-      - name: Restore Cargo cache
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: |
-            ~/.cargo/git
-            ~/.cargo/registry
-          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-cargo-
-      - name: Install qualified display servers
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            pkg-config cmake git python3 ninja-build build-essential \
-            libwayland-dev libxkbcommon-dev wayland-protocols xorg-dev \
-            weston xvfb openbox x11-utils
       - name: Test Wayland under Weston/Xvfb with Pixman
+        if: runner.os == 'Linux'
         env:
           VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
         run: |
@@ -274,6 +156,7 @@ jobs:
             cargo test -p vmnl-platform-tests --locked \
               --test backend_contract -- --ignored --nocapture
       - name: Test X11 under Xvfb with Openbox
+        if: runner.os == 'Linux'
         env:
           VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
         run: |
@@ -300,8 +183,17 @@ jobs:
           VMNL_PLATFORM_TEST_BACKEND=x11 \
             cargo test -p vmnl-platform-tests --locked \
               --test backend_contract -- --ignored --nocapture
+      - name: Run native hidden-window probe experimentally
+        if: runner.os != 'Linux'
+        continue-on-error: true
+        env:
+          VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
+          VMNL_PLATFORM_TEST_BACKEND: ${{ matrix.backend }}
+        run: >-
+          cargo test -p vmnl-platform-tests --locked
+          --test backend_contract -- --ignored --nocapture
       - name: Upload Linux platform records
-        if: always()
+        if: always() && runner.os == 'Linux'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
         with:
           name: platform-linux-${{ github.run_attempt }}
@@ -312,39 +204,8 @@ jobs:
             target/xvfb.log
             target/openbox.log
           if-no-files-found: error
-
-  platform_native_experimental:
-    name: "Platform Experimental: ${{ matrix.name }}"
-    needs: platform_portable
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 20
-    continue-on-error: true
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: macOS Cocoa
-            runner: macos-14
-            backend: cocoa
-          - name: Windows Win32
-            runner: windows-2022
-            backend: win32
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
-        with:
-          toolchain: 1.87.0
-      - name: Run native hidden-window probe experimentally
-        env:
-          VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
-          VMNL_PLATFORM_TEST_BACKEND: ${{ matrix.backend }}
-        run: >-
-          cargo test -p vmnl-platform-tests --locked
-          --test backend_contract -- --ignored --nocapture
       - name: Upload experimental platform records
-        if: always()
+        if: always() && runner.os != 'Linux'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
         with:
           name: platform-${{ matrix.backend }}-${{ github.run_attempt }}
@@ -353,7 +214,7 @@ jobs:
 
   documentation:
     name: "Documentation"
-    needs: headless_tests
+    needs: validation
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -376,6 +237,11 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-cargo-
+      - name: Restore API documentation tools
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: target/api-tools
+          key: ${{ runner.os }}-${{ runner.arch }}-api-doc-tools-${{ hashFiles('tools/api_docs_tools.sh') }}
       - name: Install Linux dependencies
         run: |
           sudo apt-get update

@@ -47,17 +47,24 @@ the portable error-conversion and GLFW Null-backend suite after smoke tests.
 The CI workflow invokes Cargo directly. The Justfile is a local development helper and is never
 invoked in CI.
 
-Its strict order is:
+Its strict job order is:
 
 ```text
-format -> Clippy -> build -> headless tests -> documentation
+Quality (format -> Clippy)
+  -> Validation per OS (build -> unit -> API -> smoke -> platform)
+  -> Documentation
 ```
 
-Build, headless, and portable platform stages run on Linux, macOS, and Windows. The Linux native
-job forces the GLFW Wayland backend under Weston with Pixman nested on Xvfb, then tests the GLFW
-X11 backend under Xvfb with Openbox. Win32 and
-Cocoa hidden-window probes remain visible but non-blocking until ten consecutive successful runs
-use the same runner image, GLFW revision, and probe schema; any of those changes resets the count.
+Each OS validation job reuses one Cargo target directory for compilation and every test stage; no
+target directory is cached or transferred between runners. Linux then forces the GLFW Wayland
+backend under Weston with Pixman nested on Xvfb and tests the GLFW X11 backend under Xvfb with
+Openbox. Win32 and Cocoa hidden-window probes remain visible but non-blocking until ten consecutive
+successful runs use the same runner image, GLFW revision, and probe schema; any of those changes
+resets the count.
+
+The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
+platform, architecture, and installer-script hash, and the installer still verifies every restored
+tool version before use.
 
 CI sets `CARGO_INCREMENTAL=0` because GitHub-hosted jobs use fresh workspaces. This avoids
 producing incremental artifacts that cannot be reused by later jobs.
