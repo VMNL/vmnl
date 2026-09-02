@@ -85,13 +85,24 @@ Every VMNL pull request description uses exactly this structure:
 Format:
 
 ```text
-type(optionnal scope): description
+<type>[optional scope][!]: <description>
 ```
 
-- Use imperative mood, lowercase, at most 72 characters, and no trailing period.
+- Use imperative mood, start the description lowercase, keep the subject at most 72 characters,
+  and do not add a trailing period.
 - Use an optional body after a blank line; each line stays under 80 characters.
 - Do not use gitmoji or legacy project scopes.
 - Add `BREAKING CHANGE:` in the body when a public contract is incompatible.
 - For more information, see [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
 Allowed types are defined in [docs/INSTRUCTIONS.md](docs/INSTRUCTIONS.md#commit-type-usage-guidelines).
+
+Install the repository-owned `commit-msg` hook once per clone:
+
+```bash
+just hooks-install
+```
+
+The hook provides immediate local feedback. CI validates every commit added by a pull request;
+configure the GitHub `Commit messages` check as required on `main` to prevent a failing pull
+request from being merged.

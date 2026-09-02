@@ -17,6 +17,24 @@ env:
   CARGO_INCREMENTAL: "0"
 
 jobs:
+  commit-messages:
+    name: "Commit messages"
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Test commit message validator
+        run: python3 -m unittest discover -s tools/tests -p 'test_commit_message.py'
+      - name: Check pull request commits
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 tools/commit_message.py range "$BASE_SHA" "$HEAD_SHA"
+
   quality:
     name: "Quality"
     runs-on: ubuntu-24.04
