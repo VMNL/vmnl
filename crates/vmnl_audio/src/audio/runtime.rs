@@ -109,41 +109,65 @@ impl AudioRuntime {
                 AudioCommand::UnmuteBus(BusKind::Music) => self.music_bus.unmute(),
                 AudioCommand::UnmuteBus(BusKind::Sfx) => self.sfx_bus.unmute(),
                 AudioCommand::PauseAll => {
-                    if let Ok(voices) = self.active_sound_voices.read() {
-                        for voice in voices.iter() {
-                            voice.pause();
-                        }
+                    let voices = self
+                        .active_sound_voices
+                        .read()
+                        .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
+
+                    for voice in voices.iter() {
+                        voice.pause();
                     }
-                    if let Ok(streams) = self.active_music_streams.read() {
-                        for stream in streams.iter() {
-                            stream.pause();
-                        }
+
+                    let streams = self
+                        .active_music_streams
+                        .read()
+                        .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
+
+                    for stream in streams.iter() {
+                        stream.pause();
                     }
                 }
+
                 AudioCommand::ResumeAll => {
-                    if let Ok(voices) = self.active_sound_voices.read() {
-                        for voice in voices.iter() {
-                            voice.resume();
-                        }
+                    let voices = self
+                        .active_sound_voices
+                        .read()
+                        .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
+
+                    for voice in voices.iter() {
+                        voice.resume();
                     }
-                    if let Ok(streams) = self.active_music_streams.read() {
-                        for stream in streams.iter() {
-                            stream.resume();
-                        }
+
+                    let streams = self
+                        .active_music_streams
+                        .read()
+                        .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
+
+                    for stream in streams.iter() {
+                        stream.resume();
                     }
                 }
+
                 AudioCommand::StopAll => {
-                    if let Ok(voices) = self.active_sound_voices.read() {
-                        for voice in voices.iter() {
-                            voice.stop();
-                        }
+                    let voices = self
+                        .active_sound_voices
+                        .read()
+                        .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
+
+                    for voice in voices.iter() {
+                        voice.stop();
                     }
-                    if let Ok(streams) = self.active_music_streams.read() {
-                        for stream in streams.iter() {
-                            stream.stop();
-                        }
+
+                    let streams = self
+                        .active_music_streams
+                        .read()
+                        .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
+
+                    for stream in streams.iter() {
+                        stream.stop();
                     }
                 }
+
                 AudioCommand::SetMaxVoices(max) => self.set_max_sound_voices(max),
             }
         }

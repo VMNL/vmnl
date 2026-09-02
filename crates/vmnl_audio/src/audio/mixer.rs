@@ -3,36 +3,42 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-use crate::audio::{AudioRuntime, BusKind, MusicStream, PlaybackState, SoundVoice};
+use crate::audio::{
+    AudioError, AudioResult, AudioRuntime, BusKind, MusicStream, PlaybackState, SoundVoice,
+};
 
 use std::sync::Arc;
 
 pub struct AudioMixer;
 
 impl AudioMixer {
-    pub fn mix(runtime: &AudioRuntime, output: &mut [f32]) {
+    pub fn mix(runtime: &AudioRuntime, output: &mut [f32]) -> AudioResult<()> {
         output.fill(0.0);
 
         let master_gain = runtime.master_bus.gain();
+
         if master_gain <= 0.0 {
-            return;
+            return Ok(());
         }
 
         let voices: Vec<Arc<SoundVoice>> = runtime
             .active_sound_voices
             .read()
-            .ok()
-            .map(|voices| voices.iter().cloned().collect())
-            .unwrap_or_default();
+            .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?
+            .iter()
+            .cloned()
+            .collect();
 
         let streams: Vec<Arc<MusicStream>> = runtime
             .active_music_streams
             .read()
-            .ok()
-            .map(|streams| streams.iter().cloned().collect())
-            .unwrap_or_default();
+            .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?
+            .iter()
+            .cloned()
+            .collect();
 
         let sfx_gain = runtime.bus_gain(BusKind::Sfx);
+
         if sfx_gain > 0.0 {
             for voice in voices {
                 if voice.state() == PlaybackState::Playing {
@@ -42,6 +48,7 @@ impl AudioMixer {
         }
 
         let music_gain = runtime.bus_gain(BusKind::Music);
+
         if music_gain > 0.0 {
             for stream in streams {
                 if stream.state() == PlaybackState::Playing {
@@ -53,5 +60,7 @@ impl AudioMixer {
         for sample in output.iter_mut() {
             *sample = sample.clamp(-1.0, 1.0);
         }
+
+        Ok(())
     }
 }
