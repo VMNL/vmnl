@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use crate::audio::bus::AudioBus;
 use crate::audio::decoder::DecodedAudio;
-use crate::audio::error::AudioError;
+use crate::audio::error::{AudioError, AudioResult};
 use crate::audio::music::Music;
 use crate::audio::runtime::{AudioCommand, AudioRuntime};
 use crate::audio::sound::Sound;
@@ -38,7 +38,7 @@ pub struct AudioDevice {
 }
 
 impl AudioDevice {
-    pub fn new(config: AudioConfig) -> Result<Self, AudioError> {
+    pub fn new(config: AudioConfig) -> AudioResult<Self> {
         if config.channels == 0 {
             return Err(AudioError::InvalidState(
                 "channels must be greater than zero".to_string(),
@@ -75,23 +75,25 @@ impl AudioDevice {
         self.channels
     }
 
-    pub fn load_sound<P>(&self, path: P) -> Result<Sound, AudioError>
+    pub fn load_sound<P>(&self, path: P) -> AudioResult<Sound>
     where
         P: AsRef<Path>,
     {
         Sound::from_file(self.clone(), path)
     }
 
-    pub fn load_music<P>(&self, path: P) -> Result<Music, AudioError>
+    pub fn load_music<P>(&self, path: P) -> AudioResult<Music>
     where
         P: AsRef<Path>,
     {
         Music::from_file(self.clone(), path)
     }
 
-    pub fn set_master_volume(&self, volume: f32) {
-        self.runtime.enqueue(AudioCommand::SetMasterVolume(volume));
-        self.update();
+    pub fn set_master_volume(&self, volume: f32) -> AudioResult<()> {
+        self.runtime
+            .enqueue(AudioCommand::SetMasterVolume(volume))?;
+        self.update()?;
+        Ok(())
     }
 
     #[must_use]
@@ -109,41 +111,47 @@ impl AudioDevice {
         self.runtime.sfx_bus.clone()
     }
 
-    pub fn get_or_decode_audio<P>(&self, path: P) -> Result<Arc<DecodedAudio>, AudioError>
+    pub fn get_or_decode_audio<P>(&self, path: P) -> AudioResult<Arc<DecodedAudio>>
     where
         P: AsRef<Path>,
     {
         self.runtime.get_or_decode_audio(path)
     }
 
-    pub fn update(&self) {
-        self.runtime.apply_commands();
+    pub fn update(&self) -> AudioResult<()> {
+        self.runtime.apply_commands()?;
         self.runtime.pump_music_streams();
         self.runtime.cleanup();
+        Ok(())
     }
 
-    pub fn render_into(&self, output: &mut [f32]) {
-        self.update();
+    pub fn render_into(&self, output: &mut [f32]) -> AudioResult<()> {
+        self.update()?;
         self.runtime.mix_into(output);
+        Ok(())
     }
 
-    pub fn stop_all(&self) {
-        self.runtime.force_stop_all();
-        self.update();
+    pub fn stop_all(&self) -> AudioResult<()> {
+        self.runtime.force_stop_all()?;
+        self.update()?;
+        Ok(())
     }
 
-    pub fn pause_all(&self) {
-        self.runtime.force_pause_all();
-        self.update();
+    pub fn pause_all(&self) -> AudioResult<()> {
+        self.runtime.force_pause_all()?;
+        self.update()?;
+        Ok(())
     }
 
-    pub fn resume_all(&self) {
-        self.runtime.force_resume_all();
-        self.update();
+    pub fn resume_all(&self) -> AudioResult<()> {
+        self.runtime.force_resume_all()?;
+        self.update()?;
+        Ok(())
     }
 
-    pub fn set_max_sound_voices(&self, max: usize) {
-        self.runtime.enqueue(AudioCommand::SetMaxVoices(max));
-        self.update();
+    pub fn set_max_sound_voices(&self, max: usize) -> AudioResult<()> {
+        self.runtime.enqueue(AudioCommand::SetMaxVoices(max))?;
+        self.update()?;
+        Ok(())
     }
 }

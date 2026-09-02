@@ -9,7 +9,7 @@ mod voice;
 use crate::audio::bus::BusKind;
 use crate::audio::decoder::DecodedAudio;
 use crate::audio::device::AudioDevice;
-use crate::audio::error::AudioError;
+use crate::audio::error::AudioResult;
 use crate::audio::runtime::AudioRuntime;
 
 use std::path::{Path, PathBuf};
@@ -26,7 +26,7 @@ pub struct Sound {
 }
 
 impl Sound {
-    pub(crate) fn from_file<P>(device: AudioDevice, path: P) -> Result<Self, AudioError>
+    pub(crate) fn from_file<P>(device: AudioDevice, path: P) -> AudioResult<Self>
     where
         P: AsRef<Path>,
     {
@@ -41,14 +41,16 @@ impl Sound {
         })
     }
 
-    pub fn play(&self) -> Result<SoundHandle, AudioError> {
+    pub fn play(&self) -> AudioResult<SoundHandle> {
         let id = self.runtime.next_voice_id();
         let voice = Arc::new(SoundVoice::new(
             id,
             self.decoded_audio.clone(),
             BusKind::Sfx,
         ));
-        self.runtime.register_sound_voice(voice.clone());
+
+        self.runtime.register_sound_voice(voice.clone())?;
+
         Ok(SoundHandle::new(voice))
     }
 
