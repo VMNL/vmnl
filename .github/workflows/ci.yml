@@ -17,24 +17,8 @@ env:
   CARGO_INCREMENTAL: "0"
 
 jobs:
-  fmt:
-    name: "Formatting"
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
-        with:
-          toolchain: 1.87.0
-          components: rustfmt
-      - name: Check formatting
-        run: cargo fmt --all --check
-
-  clippy:
-    name: "Clippy"
-    needs: fmt
+  quality:
+    name: "Quality"
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -44,7 +28,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
         with:
           toolchain: 1.87.0
-          components: clippy
+          components: rustfmt, clippy
+      - name: Check formatting
+        run: cargo fmt --all --check
       - name: Restore Cargo cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -59,14 +45,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
-            libvulkan-dev vulkan-tools libglfw3-dev \
+            libvulkan-dev vulkan-tools wayland-protocols \
             libwayland-dev libxkbcommon-dev xorg-dev
       - name: Run Clippy
         run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 
-  build:
-    name: "Build: ${{ matrix.name }}"
-    needs: clippy
+  validation:
+    name: "Validation: ${{ matrix.name }}"
+    needs: quality
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     strategy:
@@ -76,10 +62,13 @@ jobs:
         include:
           - name: Linux
             runner: ubuntu-24.04
+            backend: ""
           - name: macOS
             runner: macos-14
+            backend: cocoa
           - name: Windows
             runner: windows-2022
+            backend: win32
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -96,69 +85,136 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-cargo-
-      - name: Install Linux dependencies
+      - name: Install Linux dependencies and display servers
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
-            libvulkan-dev vulkan-tools libglfw3-dev \
-            libwayland-dev libxkbcommon-dev xorg-dev
+            libvulkan-dev vulkan-tools wayland-protocols \
+            libwayland-dev libxkbcommon-dev xorg-dev \
+            weston xvfb openbox x11-utils
       - name: Build workspace
         run: cargo build --workspace --all-targets --locked
-
-  headless_tests:
-    name: "Headless Tests: ${{ matrix.name }}"
-    needs: build
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix:
-        include:
-          - name: Linux
-            runner: ubuntu-24.04
-          - name: macOS
-            runner: macos-14
-          - name: Windows
-            runner: windows-2022
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
-        with:
-          toolchain: 1.87.0
-      - name: Restore Cargo cache
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: |
-            ~/.cargo/git
-            ~/.cargo/registry
-          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-cargo-
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
-            libvulkan-dev vulkan-tools libglfw3-dev \
-            libwayland-dev libxkbcommon-dev xorg-dev
       - name: Run Unit Tests
         run: >-
           cargo test --workspace --lib --exclude vmnl-api-tests --exclude vmnl-gpu-tests
-          --exclude vmnl-smoke-tests --locked
+          --exclude vmnl-platform-tests --exclude vmnl-smoke-tests --locked
       - name: Run API Tests
         run: cargo test -p vmnl-api-tests --locked
       - name: Run Smoke Tests
         run: cargo run -p vmnl-smoke-tests --locked
+      - name: Test total error conversion and Null backend
+        run: >-
+          cargo test -p vmnl-platform-tests --locked
+          --test error_codes --test native_window
+      - name: Test Wayland under Weston/Xvfb with Pixman
+        if: runner.os == 'Linux'
+        env:
+          VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
+        run: |
+          mkdir -p target/platform-artifacts
+          export DISPLAY=:98
+          Xvfb "$DISPLAY" -screen 0 1280x720x24 -nolisten tcp \
+            >target/wayland-xvfb.log 2>&1 &
+          wayland_xvfb_pid=$!
+          trap 'kill "$wayland_xvfb_pid" 2>/dev/null || true' EXIT
+          for _ in {1..40}; do
+            xdpyinfo -display "$DISPLAY" >/dev/null 2>&1 && break
+            if ! kill -0 "$wayland_xvfb_pid"; then
+              cat target/wayland-xvfb.log
+              exit 1
+            fi
+            sleep 0.25
+          done
+          if ! xdpyinfo -display "$DISPLAY" >/dev/null; then
+            cat target/wayland-xvfb.log
+            exit 1
+          fi
+          runtime_dir="$RUNNER_TEMP/vmnl-weston-runtime"
+          mkdir -p "$runtime_dir"
+          chmod 700 "$runtime_dir"
+          export XDG_RUNTIME_DIR="$runtime_dir"
+          export WAYLAND_DISPLAY=wayland-vmnl
+          weston --backend=x11 --renderer=pixman --no-config \
+            --socket="$WAYLAND_DISPLAY" --idle-time=0 >target/weston.log 2>&1 &
+          weston_pid=$!
+          trap 'kill "$weston_pid" "$wayland_xvfb_pid" 2>/dev/null || true' EXIT
+          for _ in {1..40}; do
+            [[ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]] && break
+            if ! kill -0 "$weston_pid"; then
+              cat target/weston.log
+              exit 1
+            fi
+            sleep 0.25
+          done
+          if [[ ! -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]]; then
+            cat target/weston.log
+            exit 1
+          fi
+          VMNL_PLATFORM_TEST_BACKEND=wayland \
+            cargo test -p vmnl-platform-tests --locked \
+              --test backend_contract -- --ignored --nocapture
+      - name: Test X11 under Xvfb with Openbox
+        if: runner.os == 'Linux'
+        env:
+          VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
+        run: |
+          mkdir -p target/platform-artifacts
+          export DISPLAY=:99
+          Xvfb "$DISPLAY" -screen 0 1280x720x24 -nolisten tcp >target/xvfb.log 2>&1 &
+          xvfb_pid=$!
+          trap 'kill "$xvfb_pid" 2>/dev/null || true' EXIT
+          for _ in {1..40}; do
+            xdpyinfo -display "$DISPLAY" >/dev/null 2>&1 && break
+            kill -0 "$xvfb_pid"
+            sleep 0.25
+          done
+          xdpyinfo -display "$DISPLAY" >/dev/null
+          openbox >target/openbox.log 2>&1 &
+          openbox_pid=$!
+          trap 'kill "$openbox_pid" "$xvfb_pid" 2>/dev/null || true' EXIT
+          for _ in {1..40}; do
+            xprop -root _NET_SUPPORTING_WM_CHECK 2>/dev/null | grep -q 'window id' && break
+            kill -0 "$openbox_pid"
+            sleep 0.25
+          done
+          xprop -root _NET_SUPPORTING_WM_CHECK | grep -q 'window id'
+          VMNL_PLATFORM_TEST_BACKEND=x11 \
+            cargo test -p vmnl-platform-tests --locked \
+              --test backend_contract -- --ignored --nocapture
+      - name: Run native hidden-window probe experimentally
+        if: runner.os != 'Linux'
+        continue-on-error: true
+        env:
+          VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
+          VMNL_PLATFORM_TEST_BACKEND: ${{ matrix.backend }}
+        run: >-
+          cargo test -p vmnl-platform-tests --locked
+          --test backend_contract -- --ignored --nocapture
+      - name: Upload Linux platform records
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
+        with:
+          name: platform-linux-${{ github.run_attempt }}
+          path: |
+            target/platform-artifacts/*.jsonl
+            target/wayland-xvfb.log
+            target/weston.log
+            target/xvfb.log
+            target/openbox.log
+          if-no-files-found: error
+      - name: Upload experimental platform records
+        if: always() && runner.os != 'Linux'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
+        with:
+          name: platform-${{ matrix.backend }}-${{ github.run_attempt }}
+          path: target/platform-artifacts/*.jsonl
+          if-no-files-found: warn
 
   documentation:
     name: "Documentation"
-    needs: headless_tests
+    needs: validation
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -181,12 +237,17 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-cargo-
+      - name: Restore API documentation tools
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: target/api-tools
+          key: ${{ runner.os }}-${{ runner.arch }}-api-doc-tools-${{ hashFiles('tools/api_docs_tools.sh') }}
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
-            libvulkan-dev vulkan-tools libglfw3-dev \
+            libvulkan-dev vulkan-tools wayland-protocols \
             libwayland-dev libxkbcommon-dev xorg-dev
       - name: Install pinned API documentation tools
         run: |

@@ -9,7 +9,7 @@
 - CMake, Git, Python 3.
 - `pkg-config`.
 - Vulkan loader and headers.
-- GLFW.
+- X11 and Wayland development headers used to build the bundled GLFW C sources.
 - shaderc.
 
 Install Just on the development machine and verify it with `just --version`. The Justfile runs
@@ -39,6 +39,11 @@ just test                  unit + API + smoke tests
 just test-unit             unit tests
 just test-api              API tests
 just test-smoke            smoke tests
+just test-platform         portable error conversion + GLFW Null backend
+just test-platform-compile compile every platform probe without running it
+just test-platform-null    isolated GLFW Null-backend probe
+just test-platform-wayland Wayland contract; caller supplies Weston/compositor
+just test-platform-x11     X11 contract; caller supplies X server/window manager
 just test-gpu-compile      compile GPU tests without running them
 just test-gpu              GPU/display tests
 just doctest               Rustdoc examples
@@ -120,5 +125,24 @@ format 57 while stable VMNL compilation remains on Rust 1.87.
 
 `just docs-api-check` does not change tracked files, but may populate `target/api-tools`.
 `just docs-api-update` rewrites only
-`public_api_snapshot.md`, `public_symbol_index.md`, and `method_index.md`; review their diff.
+`public_api_snapshot.md`, `public_symbol_index.md`, `method_index.md`,
+`glfw_platform_inventory.md`, and `platform_compatibility.md`; review their diff.
 See the [API change protocol](api/maintenance/api_change_protocol.md).
+
+## GLFW platform prerequisites
+
+Platform recipes never install system packages. `test-platform-null` requires no display server.
+`test-platform-wayland` requires an already running Wayland compositor and a matching
+`WAYLAND_DISPLAY`; CI uses Weston with Pixman, nested under a dedicated Xvfb server whose X11
+input seat satisfies the `wl_seat` requirement in GLFW 3.4.
+`test-platform-x11` requires `DISPLAY` and
+an EWMH-capable window manager; CI uses Xvfb with Openbox. These probes do not initialize Vulkan.
+
+VMNL enables `glfw/src-build` so Linux does not silently substitute an arbitrary system GLFW 3.4
+library for the audited bundled GLFW C 3.4.0 sources. CMake and the X11/Wayland development headers
+therefore remain build prerequisites; installing `libglfw3-dev` does not change the selected C
+implementation.
+
+When adding or changing a GLFW call, follow the
+[GLFW portability protocol](api/maintenance/glfw_portability_protocol.md) before running
+`docs-api-update` and `docs-api-check`.

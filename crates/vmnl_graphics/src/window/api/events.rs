@@ -158,6 +158,11 @@ impl Window {
 
     /// Sets a custom error callback function for GLFW errors.
     ///
+    /// Platform limitations map to [`VMNLErrorKind::GlfwUnsupportedPlatform`] and the affected
+    /// operation has no effect. Unknown GLFW codes map to [`VMNLErrorKind::GlfwUnknownError`] and
+    /// remain present in the message. A panic inside this callback crosses a foreign-function
+    /// boundary and may abort the process.
+    ///
     /// # Arguments
     /// - `callback`: Function called with the mapped VMNL error kind and message.
     ///

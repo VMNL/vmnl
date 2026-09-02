@@ -16,6 +16,10 @@ just docs-api-check
 just test-unit
 just test-api
 just test-smoke
+just test-platform         # GLFW error conversion and Null backend
+just test-platform-compile # every OS for GLFW-facing changes
+just test-platform-wayland # when a qualified Wayland compositor is available
+just test-platform-x11     # when a qualified X11 + EWMH environment is available
 just test-gpu-compile # GPU-facing changes
 just test-gpu         # when the environment supports it
 ```
@@ -27,6 +31,9 @@ Do not reorder applicable completion checks without documenting the technical re
   update the coverage matrix, then run and review `just docs-api-update` before the non-mutating
   `just docs-api-check`.
 - Bug fixes include a regression test.
+- New or changed GLFW calls follow the
+  [GLFW portability protocol](docs/api/maintenance/glfw_portability_protocol.md), update the
+  canonical TOML inventory, and add a backend test or explicit justification.
 - Visual workflows belong in `examples/`; headless checks belong in `tests/`.
 - Every feature or fix must assess Rustdoc, technical and user documentation, examples, `CHANGELOG.md`, and documentation navigation. Do not create artificial documentation changes; explain in the final report when no update is required.
 

@@ -146,13 +146,19 @@ pub enum VMNLErrorKind {
     GlfwWindowCreationFailed,
     /// GLFW context creation failed.
     GlfwContextCreationFailed,
-    /// GLFW unsupported platform.
+    /// A GLFW API, cursor, feature, implementation, or platform is unavailable.
+    ///
+    /// For infallible window setters, the operation has no effect and the configured callback
+    /// receives this category.
     GlfwUnsupportedPlatform,
     /// GLFW version mismatch.
     GlfwVersionMismatch,
     /// Platform-specific GLFW error.
     GlfwPlatformError,
-    /// Unknown GLFW error.
+    /// Invalid input, allocation/format failure, unexpected no-error, or unknown GLFW error code.
+    ///
+    /// When GLFW supplies an unknown raw code, the numeric value is preserved in the error
+    /// callback message.
     GlfwUnknownError,
     /// Invalid window size specified.
     InvalidWindowSize,
