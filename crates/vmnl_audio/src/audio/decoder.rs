@@ -3,7 +3,7 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-use crate::audio::error::AudioError;
+use crate::audio::error::{AudioError, AudioResult};
 
 use std::fs::File;
 use std::io::BufReader;
@@ -35,7 +35,7 @@ impl DecodedAudio {
 pub struct AudioDecoder;
 
 impl AudioDecoder {
-    pub fn decode_file<P>(path: P) -> Result<DecodedAudio, AudioError>
+    pub fn decode_file<P>(path: P) -> AudioResult<DecodedAudio>
     where
         P: AsRef<Path>,
     {
@@ -55,7 +55,7 @@ impl AudioDecoder {
         }
     }
 
-    fn decode_wav(path: &Path) -> Result<DecodedAudio, AudioError> {
+    fn decode_wav(path: &Path) -> AudioResult<DecodedAudio> {
         let mut reader =
             hound::WavReader::open(path).map_err(|e| AudioError::DecoderFailed(e.to_string()))?;
         let spec = reader.spec();
@@ -101,7 +101,7 @@ impl AudioDecoder {
         })
     }
 
-    fn decode_mp3(path: &Path) -> Result<DecodedAudio, AudioError> {
+    fn decode_mp3(path: &Path) -> AudioResult<DecodedAudio> {
         let file = File::open(path)?;
         let mut decoder = minimp3::Decoder::new(BufReader::new(file));
         let mut samples = Vec::new();
@@ -132,7 +132,7 @@ impl AudioDecoder {
         })
     }
 
-    fn decode_ogg(path: &Path) -> Result<DecodedAudio, AudioError> {
+    fn decode_ogg(path: &Path) -> AudioResult<DecodedAudio> {
         let file = File::open(path)?;
         let mut reader = lewton::inside_ogg::OggStreamReader::new(BufReader::new(file))
             .map_err(|e| AudioError::DecoderFailed(e.to_string()))?;
@@ -158,7 +158,7 @@ impl AudioDecoder {
         })
     }
 
-    fn decode_flac(path: &Path) -> Result<DecodedAudio, AudioError> {
+    fn decode_flac(path: &Path) -> AudioResult<DecodedAudio> {
         let mut reader =
             claxon::FlacReader::open(path).map_err(|e| AudioError::DecoderFailed(e.to_string()))?;
         let info = reader.streaminfo();

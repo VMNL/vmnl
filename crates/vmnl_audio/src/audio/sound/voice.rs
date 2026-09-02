@@ -42,14 +42,17 @@ impl SoundVoice {
         }
     }
 
+    #[must_use]
     pub fn id(&self) -> u64 {
         self.id
     }
 
+    #[must_use]
     pub fn bus(&self) -> BusKind {
         self.bus
     }
 
+    #[must_use]
     pub fn decoded_audio(&self) -> &Arc<DecodedAudio> {
         &self.decoded_audio
     }
@@ -83,14 +86,17 @@ impl SoundVoice {
         }
     }
 
+    #[must_use]
     pub fn is_playing(&self) -> bool {
         self.state() == PlaybackState::Playing
     }
 
+    #[must_use]
     pub fn is_paused(&self) -> bool {
         self.state() == PlaybackState::Paused
     }
 
+    #[must_use]
     pub fn is_stopped(&self) -> bool {
         self.state() == PlaybackState::Stopped
     }
@@ -110,6 +116,7 @@ impl SoundVoice {
         }
     }
 
+    #[must_use]
     pub fn cursor_frames(&self) -> usize {
         self.cursor_frames.load(Ordering::Relaxed)
     }

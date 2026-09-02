@@ -9,7 +9,7 @@ mod stream;
 use crate::audio::bus::BusKind;
 use crate::audio::decoder::DecodedAudio;
 use crate::audio::device::AudioDevice;
-use crate::audio::error::AudioError;
+use crate::audio::error::AudioResult;
 use crate::audio::runtime::AudioRuntime;
 
 use std::path::{Path, PathBuf};
@@ -26,7 +26,7 @@ pub struct Music {
 }
 
 impl Music {
-    pub(crate) fn from_file<P>(device: AudioDevice, path: P) -> Result<Self, AudioError>
+    pub(crate) fn from_file<P>(device: AudioDevice, path: P) -> AudioResult<Self>
     where
         P: AsRef<Path>,
     {
@@ -41,7 +41,7 @@ impl Music {
         })
     }
 
-    pub fn play(&self) -> Result<MusicHandle, AudioError> {
+    pub fn play(&self) -> AudioResult<MusicHandle> {
         let id = self.runtime.next_stream_id();
         let stream = Arc::new(MusicStream::new(
             id,

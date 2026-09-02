@@ -40,14 +40,17 @@ impl MusicStream {
         }
     }
 
+    #[must_use]
     pub fn id(&self) -> u64 {
         self.id
     }
 
+    #[must_use]
     pub fn path(&self) -> &Path {
         &self.path
     }
 
+    #[must_use]
     pub fn bus(&self) -> BusKind {
         self.bus
     }
@@ -56,6 +59,7 @@ impl MusicStream {
         self.looping.store(looping, Ordering::Relaxed);
     }
 
+    #[must_use]
     pub fn looping(&self) -> bool {
         self.looping.load(Ordering::Relaxed)
     }
@@ -113,6 +117,7 @@ impl MusicStream {
         }
     }
 
+    #[must_use]
     pub fn cursor_frames(&self) -> usize {
         self.cursor_frames.load(Ordering::Relaxed)
     }
