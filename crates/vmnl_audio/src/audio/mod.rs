@@ -14,7 +14,7 @@ pub mod sound;
 
 pub use bus::{AudioBus, BusKind};
 pub use device::{AudioConfig, AudioDevice};
-pub use error::AudioError;
+pub use error::{AudioError, AudioResult};
 pub use mixer::AudioMixer;
 pub use music::{Music, MusicHandle, MusicStream};
 pub use runtime::{AudioCommand, AudioRuntime};
