@@ -49,7 +49,7 @@ impl Music {
             self.decoded_audio.clone(),
             BusKind::Music,
         ));
-        self.runtime.register_music_stream(stream.clone());
+        self.runtime.register_music_stream(stream.clone())?;
         Ok(MusicHandle::new(stream))
     }
 
