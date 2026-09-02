@@ -29,8 +29,8 @@ impl Display for AudioError {
             Self::UnsupportedFormat(message) => write!(f, "Unsupported audio format: {message}"),
             Self::CommandQueuePoisoned => write!(f, "Audio command queue lock was poisoned"),
             Self::SoundCachePoisoned => write!(f, "Audio sound cache lock was poisoned"),
-            Self::ActiveSoundVoicesPoisoned => write!(f, "currently in test"),
-            Self::ActiveMusicStreamsPoisoned => write!(f, "currently in test"),
+            Self::ActiveSoundVoicesPoisoned => write!(f, "Active sound voices lock was poisoned"),
+            Self::ActiveMusicStreamsPoisoned => write!(f, "Active music streams lock was poisoned"),
             Self::Io(error) => write!(f, "IO error: {error}"),
         }
     }
