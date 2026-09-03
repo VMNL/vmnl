@@ -70,14 +70,18 @@ fn main() -> VMNLResult<()> {
         .blend_mode(raw::BlendMode::Alpha)
         .build(&window)?;
 
-    let uniform = raw::Uniform::builder(RawUniform {
-        tint: [1.0, 0.85, 0.45, 0.95],
-        offset: [0.15, 0.05, 0.0, 0.0],
+    let mut uniform = raw::Uniform::builder(RawUniform {
+        tint: [0.35, 0.35, 0.35, 0.95],
+        offset: [0.0, 0.0, 0.0, 0.0],
     })
     .build(&context)?;
     let resources = raw::Resources::builder(&pipeline)
         .uniform(0, 0, &uniform)
         .build(&context)?;
+    uniform.write(RawUniform {
+        tint: [1.0, 0.85, 0.45, 0.95],
+        offset: [0.15, 0.05, 0.0, 0.0],
+    })?;
 
     let geometry = raw::Geometry::builder([
         RawVertex {

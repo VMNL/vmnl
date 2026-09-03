@@ -36,6 +36,7 @@ use vulkano::pipeline::{
 };
 use vulkano::render_pass::{RenderPass, Subpass};
 use vulkano::shader::{ShaderModule, ShaderModuleCreateInfo};
+use vulkano::sync::HostAccessError;
 
 use crate::common::{
     checked_draw_counts, BufferMemoryPreference, GraphicsResourceFactory, IndexBuffer, VertexBuffer,
@@ -442,6 +443,31 @@ impl<TData> Uniform<TData> {
         }
     }
 
+    /// Writes a new value into the existing uniform buffer.
+    ///
+    /// This updates the same buffer object that already-built [`Resources`]
+    /// reference. It does not recreate descriptor sets, submit GPU work, or wait
+    /// for in-flight GPU access.
+    ///
+    /// # Errors
+    /// Returns `InvalidState` if the buffer is currently locked or still used by
+    /// the GPU. Returns a Vulkan validation error for other backend write
+    /// failures.
+    pub fn write(&mut self, data: TData) -> VMNLResult<()>
+    where
+        TData: BufferContents,
+    {
+        {
+            let mut guard = self
+                .buffer
+                .write()
+                .map_err(|error| map_uniform_write_error(&error))?;
+            *guard = data;
+        }
+
+        Ok(())
+    }
+
     fn buffer_bytes(&self) -> Subbuffer<[u8]> {
         self.buffer.clone().into_bytes()
     }
@@ -652,6 +678,15 @@ fn validate_resources_context(context: &Context, expected_device: &Arc<Device>) 
     Ok(())
 }
 
+fn map_uniform_write_error(error: &HostAccessError) -> VMNLError {
+    match error {
+        HostAccessError::AccessConflict(_) => VMNLError::new(VMNLErrorKind::InvalidState(
+            "raw uniform write conflicts with active CPU or GPU access".into(),
+        )),
+        _ => VMNLError::new(VMNLErrorKind::VulkanValidationFailed),
+    }
+}
+
 fn validate_supplied_resource_bindings(
     set_layouts: &[Arc<DescriptorSetLayout>],
     supplied_sets: &BTreeMap<u32, BTreeMap<u32, ResourceBinding>>,
@@ -829,6 +864,7 @@ mod tests {
     use vulkano::descriptor_set::layout::DescriptorSetLayoutBinding;
     use vulkano::pipeline::layout::{PipelineLayoutCreateFlags, PushConstantRange};
     use vulkano::shader::ShaderStages;
+    use vulkano::sync::AccessConflict;
 
     #[repr(C)]
     #[derive(Clone, Copy)]
@@ -907,6 +943,28 @@ mod tests {
         };
 
         assert!(validate_raw_pipeline_layout(&layout_info).is_err());
+    }
+
+    #[test]
+    fn uniform_write_conflict_maps_to_invalid_state() {
+        let error =
+            map_uniform_write_error(&HostAccessError::AccessConflict(AccessConflict::DeviceRead));
+
+        assert!(matches!(
+            error.kind(),
+            VMNLErrorKind::InvalidState(message)
+                if message == "raw uniform write conflicts with active CPU or GPU access"
+        ));
+    }
+
+    #[test]
+    fn uniform_write_backend_error_maps_to_vulkan_validation() {
+        let error = map_uniform_write_error(&HostAccessError::NotHostMapped);
+
+        assert!(matches!(
+            error.kind(),
+            VMNLErrorKind::VulkanValidationFailed
+        ));
     }
 
     fn pipeline_layout_info(

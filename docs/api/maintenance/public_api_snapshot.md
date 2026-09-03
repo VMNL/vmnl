@@ -747,6 +747,7 @@ impl !core::panic::unwind_safe::UnwindSafe for vmnl::raw::ResourcesBuilder
 pub struct vmnl::raw::Uniform<TData>
 impl<TData> vmnl::raw::Uniform<TData>
 pub fn vmnl::raw::Uniform<TData>::builder(TData) -> vmnl::raw::UniformBuilder<TData>
+pub fn vmnl::raw::Uniform<TData>::write(&mut self, TData) -> vmnl::VMNLResult<()> where TData: vmnl::raw::BufferContents
 impl<TData> core::marker::Freeze for vmnl::raw::Uniform<TData>
 impl<TData> core::marker::Send for vmnl::raw::Uniform<TData> where TData: core::marker::Sync + core::marker::Send
 impl<TData> core::marker::Sync for vmnl::raw::Uniform<TData> where TData: core::marker::Sync + core::marker::Send

@@ -27,3 +27,11 @@ fn raw_derive_traits_are_usable_from_vmnl() -> VMNLResult<()> {
     assert_uniform::<PublicRawUniform>();
     Ok(())
 }
+
+#[test]
+fn raw_uniform_write_is_public_from_vmnl() -> VMNLResult<()> {
+    let _write: fn(&mut raw::Uniform<PublicRawUniform>, PublicRawUniform) -> VMNLResult<()> =
+        raw::Uniform::<PublicRawUniform>::write;
+
+    Ok(())
+}
