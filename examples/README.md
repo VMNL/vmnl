@@ -18,5 +18,5 @@ just build <example>
 | `window_wait_events` | `just run window_wait_events` | explicit blocking event wait and event-driven redraw |
 | `raw_triangle` | `just run raw_triangle` | minimal raw pipeline triangle |
 | `raw_pipeline` | `just run raw_pipeline` | raw shader paths, topology variants, blend modes, indexed/non-indexed geometry |
-| `raw_uniform` | `just run raw_uniform` | raw pipeline resources backed by a uniform buffer |
+| `raw_uniform` | `just run raw_uniform` | raw pipeline resources backed by a directly written uniform buffer |
 | `raw_d2_composition` | `just run raw_d2_composition` | ordered 2D and alpha-blended raw passes in one frame |

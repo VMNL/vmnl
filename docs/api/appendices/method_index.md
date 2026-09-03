@@ -302,5 +302,6 @@
 | `vmnl::raw::ResourcesBuilder` | `build` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [`build`](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html#method.build) |
 | `vmnl::raw::ResourcesBuilder` | `uniform` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [`uniform`](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html#method.uniform) |
 | `vmnl::raw::Uniform` | `builder` | [Uniform](../reference/raw/uniforms/uniform.md) | [`builder`](../../../target/doc/vmnl/raw/struct.Uniform.html#method.builder) |
+| `vmnl::raw::Uniform` | `write` | [Uniform](../reference/raw/uniforms/uniform.md) | [`write`](../../../target/doc/vmnl/raw/struct.Uniform.html#method.write) |
 | `vmnl::raw::UniformBuilder` | `buffer_memory_preference` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/raw/struct.UniformBuilder.html#method.buffer_memory_preference) |
 | `vmnl::raw::UniformBuilder` | `build` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [`build`](../../../target/doc/vmnl/raw/struct.UniformBuilder.html#method.build) |

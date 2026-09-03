@@ -123,13 +123,16 @@ fn raw_uniform_resources_submit() -> VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
     let pipeline = uniform_pipeline(&window)?;
-    let uniform = raw::Uniform::builder(Tint {
-        tint: [1.0, 0.75, 0.5, 1.0],
+    let mut uniform = raw::Uniform::builder(Tint {
+        tint: [0.25, 0.25, 0.25, 1.0],
     })
     .build(&context)?;
     let resources = raw::Resources::builder(&pipeline)
         .uniform(0, 0, &uniform)
         .build(&context)?;
+    uniform.write(Tint {
+        tint: [1.0, 0.75, 0.5, 1.0],
+    })?;
     let geometry = triangle(&context)?;
 
     window
