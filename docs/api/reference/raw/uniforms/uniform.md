@@ -6,7 +6,7 @@ Import path: `vmnl::raw::Uniform<TData>`. Status: experimental, operational dire
 
 ## Purpose and use cases
 
-Owns typed uniform-buffer data later bound through `ResourcesBuilder`.
+Owns one typed uniform-buffer value later bound through `ResourcesBuilder`. Use it for stable data or explicit one-off updates. Use [`FrameUniform`](frame_uniform.md) for values that change every frame.
 
 ## Public API
 
@@ -33,7 +33,7 @@ Builder creation is infallible; buffer build/resource compatibility can fail. `w
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-Build allocates and writes one uniform buffer. `write` maps and writes the existing buffer; it does not recreate the buffer, rebuild descriptor sets, submit GPU work, or wait for in-flight GPU access. Exact cost is unspecified.
+Build allocates and writes one uniform buffer. `write` maps and writes the existing buffer; it does not recreate the buffer, rebuild descriptor sets, submit GPU work, or wait for in-flight GPU access. It can therefore fail if the same buffer is still in use by an in-flight frame. Exact cost is unspecified.
 
 ## Platform, Vulkan, and display constraints
 
@@ -59,4 +59,4 @@ fn main() -> vmnl::VMNLResult<()> {
 }
 ```
 
-Related: [`UniformBuilder`](uniform_builder.md) and [`ResourcesBuilder`](../resources/resources_builder.md).
+Related: [`UniformBuilder`](uniform_builder.md), [`FrameUniform`](frame_uniform.md), and [`ResourcesBuilder`](../resources/resources_builder.md).

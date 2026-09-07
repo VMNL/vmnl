@@ -11,7 +11,8 @@
 | Buffer contents | Type whose bytes can be copied into a Vulkano buffer. |
 | Vertex layout | Mapping between Rust fields and shader vertex inputs/formats. |
 | Uniform | Typed uniform-buffer value that can be updated through a direct, fallible write. |
-| Resources | Descriptor sets built for one raw pipeline layout. |
+| FrameUniform | Typed uniform-buffer state with one current slot per swapchain image for frame-varying raw shader data. |
+| Resources | Descriptor resources built for one raw pipeline layout. |
 | Present mode | Swapchain image presentation/pacing policy. |
 | Scaffolded | Public data/API wiring exists, but successful rendering is intentionally unavailable. |
 | Headless evidence | Compile/test evidence that does not create a window or validate pixels. |

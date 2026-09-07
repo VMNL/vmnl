@@ -17,13 +17,14 @@ Records ordered logical passes for one frame and submits them through the borrow
 | `draw3d(&Camera, [&D; N])` | Append scaffolded `Drawable3D` pass. |
 | `draw_raw(&Pipeline<T>, [&Geometry<T>; N])` | Append raw pass without descriptors. |
 | `draw_raw_with(&Pipeline<T>, &Resources, [&Geometry<T>; N])` | Append raw pass with descriptors. |
+| `write_frame_uniform(&mut FrameUniform<T>, data)` | Queue one frame-uniform write for the acquired swapchain image. |
 | `submit()` | Consume the builder, acquire/record/submit/present, optionally poll events. |
 
 Passes execute in append order. Empty arrays create empty logical passes; a frame with no pass still clears and presents.
 
 ## Construction, defaults, and validation
 
-`Window::render()` starts with `RenderMode::PerObject` and no passes. Compatibility of raw pipeline, geometry, resources, window render pass, and device is checked during submission/build paths. Any recorded 3D pass causes `submit` to return `InvalidState("3D rendering is not implemented yet")` before swapchain acquisition.
+`Window::render()` starts with `RenderMode::PerObject`, no passes, and no queued frame-uniform writes. Compatibility of raw pipeline, geometry, resources, window render pass, swapchain image count, and device is checked during submission/build paths. Any recorded 3D pass causes `submit` to return `InvalidState("3D rendering is not implemented yet")` before swapchain acquisition.
 
 ## Units, coordinates, and valid ranges
 
@@ -35,11 +36,11 @@ The builder mutably borrows `Window` and borrows draw resources for `'g`; those 
 
 ## Errors, panics, and failure conditions
 
-`submit` can fail for 3D use, incompatible devices/layouts/render passes, zero-size/out-of-date swapchains, command recording, acquisition, device loss, queue submission, or presentation.
+`submit` can fail for 3D use, incompatible devices/layouts/render passes, incompatible frame-uniform image counts, frame-uniform allocation/write/binding, zero-size/out-of-date swapchains, command recording, acquisition, device loss, queue submission, or presentation.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-Recording passes allocates CPU vectors and clones shared GPU handles. `submit` performs swapchain acquisition, command recording, queue submission, synchronization, and presentation. Exact batching/performance guarantees are not specified.
+Recording passes allocates CPU vectors and clones shared GPU handles. Queued frame-uniform writes are applied during `submit` after swapchain image acquisition and before command recording; they are not ordered between draw passes. Frame-uniform resources allocate descriptor sets during command recording. `submit` performs swapchain acquisition, command recording, queue submission, synchronization, and presentation. Exact batching/performance guarantees are not specified.
 
 ## Platform, Vulkan, and display constraints
 
@@ -61,4 +62,4 @@ fn main() -> vmnl::VMNLResult<()> {
 }
 ```
 
-Related: [`RenderMode`](render_mode.md), [`Drawable2D`](../../d2/drawable_2d.md), and [raw pipelines](../../raw/pipeline/README.md).
+Related: [`RenderMode`](render_mode.md), [`Drawable2D`](../../d2/drawable_2d.md), [`FrameUniform`](../../raw/uniforms/frame_uniform.md), and [raw pipelines](../../raw/pipeline/README.md).

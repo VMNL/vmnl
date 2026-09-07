@@ -89,6 +89,8 @@
     - [Uniforms](reference/raw/uniforms/README.md)
       - [Uniform](reference/raw/uniforms/uniform.md)
       - [UniformBuilder](reference/raw/uniforms/uniform_builder.md)
+      - [FrameUniform](reference/raw/uniforms/frame_uniform.md)
+      - [FrameUniformBuilder](reference/raw/uniforms/frame_uniform_builder.md)
     - [Resources](reference/raw/resources/README.md)
       - [Resources](reference/raw/resources/resources.md)
       - [ResourcesBuilder](reference/raw/resources/resources_builder.md)

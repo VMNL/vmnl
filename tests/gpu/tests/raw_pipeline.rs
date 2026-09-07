@@ -143,6 +143,59 @@ fn raw_uniform_resources_submit() -> VMNLResult<()> {
 
 #[test]
 #[ignore = "Requires Vulkan + GLFW display."]
+fn raw_frame_uniform_resources_submit_repeated_frames() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut window = Window::new(&context)?;
+    let pipeline = uniform_pipeline(&window)?;
+    let mut uniform = raw::FrameUniform::builder(Tint {
+        tint: [0.25, 0.25, 0.25, 1.0],
+    })
+    .build(&window)?;
+    let resources = raw::Resources::builder(&pipeline)
+        .frame_uniform(0, 0, &uniform)
+        .build(&context)?;
+    let geometry = triangle(&context)?;
+    let tints = [
+        Tint {
+            tint: [1.0, 0.75, 0.5, 1.0],
+        },
+        Tint {
+            tint: [0.5, 0.85, 1.0, 1.0],
+        },
+        Tint {
+            tint: [0.9, 0.4, 0.7, 1.0],
+        },
+        Tint {
+            tint: [0.4, 1.0, 0.7, 1.0],
+        },
+        Tint {
+            tint: [0.75, 0.6, 1.0, 1.0],
+        },
+        Tint {
+            tint: [1.0, 0.9, 0.35, 1.0],
+        },
+        Tint {
+            tint: [0.6, 1.0, 0.45, 1.0],
+        },
+        Tint {
+            tint: [0.45, 0.7, 1.0, 1.0],
+        },
+    ];
+
+    for tint in tints {
+        window
+            .render()
+            .write_frame_uniform(&mut uniform, tint)
+            .draw_raw_with(&pipeline, &resources, [&geometry])
+            .submit()?;
+    }
+
+    Ok(())
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
 fn raw_resources_reject_missing_or_duplicate_uniform_binding() -> VMNLResult<()> {
     let _guard = gpu_test_guard();
     let context = Context::new()?;

@@ -6,7 +6,8 @@
 use crate::d2::{Drawable2D, RenderItem2D};
 use crate::d3::{Camera, Drawable3D, RenderItem3D};
 use crate::raw::{
-    Geometry as RawGeometry, Pipeline as RawPipeline, RenderItemRaw, Resources as RawResources,
+    BufferContents as RawBufferContents, FrameUniform as RawFrameUniform, Geometry as RawGeometry,
+    PendingFrameUniformWrite, Pipeline as RawPipeline, RenderItemRaw, Resources as RawResources,
 };
 use crate::window::render::RenderPassCommand;
 use crate::window::Window;
@@ -50,6 +51,7 @@ enum FramePass<'g> {
 pub struct FrameRenderer<'w, 'g> {
     window: &'w mut Window,
     mode: RenderMode,
+    frame_uniform_writes: Vec<PendingFrameUniformWrite<'g>>,
     passes: Vec<FramePass<'g>>,
 }
 
@@ -58,6 +60,7 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
         Self {
             window,
             mode: RenderMode::default(),
+            frame_uniform_writes: Vec::new(),
             passes: Vec::new(),
         }
     }
@@ -214,6 +217,38 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
         self
     }
 
+    /// Queue a write to a frame-uniform for this frame submission.
+    ///
+    /// The write is applied during [`FrameRenderer::submit`], after VMNL
+    /// acquires the swapchain image and before it records the command buffer.
+    /// This replaces the uniform buffer slot matching the acquired image with
+    /// a freshly allocated or reused subbuffer, then descriptor sets for
+    /// frame-uniform resources are created during command recording.
+    /// Frame-uniform writes are not ordered between draw passes; all queued
+    /// writes are applied before any pass is recorded.
+    ///
+    /// # Arguments
+    /// - `uniform`: Frame-uniform to update for the acquired swapchain image.
+    /// - `data`: New shader-visible value for this frame.
+    ///
+    /// # Errors
+    /// Errors are reported by [`FrameRenderer::submit`] if the current
+    /// swapchain image count no longer matches the uniform, or if the backend
+    /// allocation or buffer write fails.
+    #[must_use]
+    pub fn write_frame_uniform<TData>(
+        mut self,
+        uniform: &'g mut RawFrameUniform<TData>,
+        data: TData,
+    ) -> Self
+    where
+        TData: RawBufferContents + 'g,
+    {
+        self.frame_uniform_writes
+            .push(PendingFrameUniformWrite::new(uniform, data));
+        self
+    }
+
     /// Submit the frame to the GPU.
     ///
     /// The recorded passes are consumed by this call. A frame with no draw pass
@@ -274,7 +309,9 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
             }
         }
 
-        self.window.inner.render_commands(self.mode, &commands)
+        self.window
+            .inner
+            .render_commands(self.mode, &commands, self.frame_uniform_writes)
     }
 }
 

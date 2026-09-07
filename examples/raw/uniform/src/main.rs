@@ -70,18 +70,14 @@ fn main() -> VMNLResult<()> {
         .blend_mode(raw::BlendMode::Alpha)
         .build(&window)?;
 
-    let mut uniform = raw::Uniform::builder(RawUniform {
+    let mut uniform = raw::FrameUniform::builder(RawUniform {
         tint: [0.35, 0.35, 0.35, 0.95],
         offset: [0.0, 0.0, 0.0, 0.0],
     })
-    .build(&context)?;
+    .build(&window)?;
     let resources = raw::Resources::builder(&pipeline)
-        .uniform(0, 0, &uniform)
+        .frame_uniform(0, 0, &uniform)
         .build(&context)?;
-    uniform.write(RawUniform {
-        tint: [1.0, 0.85, 0.45, 0.95],
-        offset: [0.15, 0.05, 0.0, 0.0],
-    })?;
 
     let geometry = raw::Geometry::builder([
         RawVertex {
@@ -99,10 +95,17 @@ fn main() -> VMNLResult<()> {
     ])
     .build(&context)?;
 
+    let mut phase = 0.0_f32;
     while window.is_open() {
         for _ in window.poll_events() {}
+        phase = (phase + 0.025) % std::f32::consts::TAU;
+        let pulse = phase.sin().mul_add(0.5, 0.5);
+        let offset = [phase.sin() * 0.22, (phase * 0.7).cos() * 0.12, 0.0, 0.0];
+        let tint = [0.35 + 0.65 * pulse, 0.55 + 0.30 * pulse, 1.0, 0.92];
+
         window
             .render()
+            .write_frame_uniform(&mut uniform, RawUniform { tint, offset })
             .draw_raw_with(&pipeline, &resources, [&geometry])
             .submit()?;
     }
