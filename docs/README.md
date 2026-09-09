@@ -7,16 +7,18 @@ Local `README.md` files are only navigation aids for their directory. Public API
 ## Index
 
 - [API](API.md): portal to the exhaustive client-facing API book.
-- [Architecture](architecture.md): workspace layout, crates, public facade, internal layers.
+- [Architecture](architecture.md): project direction, control model, domain scope, boundaries, and
+  current workspace layout.
 - [Build](build.md): toolchain, system dependencies, shaderc/Vulkan discovery, Justfile usage.
 - [Coding Instructions](INSTRUCTIONS.md): project coding and documentation standards.
 - [Contributing](../CONTRIBUTING.md): contribution workflow and commit convention.
-- [Deployment](deployment.md): manual release protocol and current publication blockers.
+- [Deployment](deployment.md): compatibility, milestones, distribution, manual releases, and
+  current publication blockers.
 - [Examples](examples.md): visual example rules and command conventions.
 - [Getting Started](getting_started.md): clone, build, test, and run the first visual example.
 - [Platform Support](platform_support.md): validated platforms and local environment scope.
 - [Rust Instructions](RUST.md): rust coding guidelines.
-- [Testing](testing.md): unit, API, smoke, GPU, and doctest conventions.
+- [Testing](testing.md): unit, API, smoke, platform, GPU, and doctest conventions.
 - [Troubleshooting](troubleshooting.md): shaderc, Vulkan, GLFW, and display diagnostics.
 
 ## Documentation Rules

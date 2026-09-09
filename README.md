@@ -4,7 +4,8 @@
 
 **Vulkan Multimedia Networking Library**
 
-A low-level, explicit, and modular Rust foundation for graphics, audio, and networking - built directly on Vulkan.
+A modular Rust foundation for Vulkan graphics, audio, and networking, from useful defaults to
+explicit low-level control.
 
 <br>
 
@@ -26,7 +27,8 @@ A low-level, explicit, and modular Rust foundation for graphics, audio, and netw
 ---
 
 > [!WARNING]
-> **Experimental.** The API is unstable, modules are incomplete, and breaking changes are expected on every release. Do not use in production.
+> **Experimental and not yet released.** The API may change while the initial `0.1.0` contract is
+> prepared. Do not use in production.
 
 ## Table of Contents
 
@@ -46,30 +48,38 @@ A low-level, explicit, and modular Rust foundation for graphics, audio, and netw
 
 ## Overview
 
-**VMNL** is a Rust library built directly on the Vulkan API. It provides a predictable, high-performance, and modular base for game engines, real-time applications, and rendering systems.
+**VMNL** is a modular Rust library for building a game engine, a real-time application, or a game
+without first implementing a complete engine. Its graphics domain uses Vulkan; audio and networking
+are planned as independent domains with their own backends.
 
-It unifies three domains under a single, coherent surface:
+It is designed to compose three domains behind one facade:
 
 | Domain        | Purpose                                  |
 | ------------- | ---------------------------------------- |
 | **Graphics**  | Explicit Vulkan rendering pipeline       |
 | **Audio**     | Real-time audio (planned)                |
-| **Network**   | Multiplayer / streaming transport (planned) |
+| **Network**   | Transport, framing, and reliable/unreliable channels (planned) |
 
-The guiding constraint is simple: **no hidden complexity, only structured complexity.**
+The guiding constraint is progressive control: start with documented defaults, replace only the
+policies that matter, and descend to explicit raw control without changing the conceptual model.
 
 ---
 
 ## Design Principles
 
-VMNL is a thin abstraction over Vulkan. Its design principles double as the guarantees the library upholds - each one is meant to be observable and testable:
+VMNL applies these principles to every stable public contract:
 
-- **Explicit control** - GPU resources, synchronization, pipelines, queues, and device selection are chosen by the caller, never inferred.
-- **No hidden cost** - no implicit allocation, no implicit state mutation.
-- **Deterministic behavior** - identical inputs produce identical execution paths.
-- **No global state** - nothing lives in a static singleton; ownership is explicit.
-- **Modular** - `graphics`, `audio`, and `network` are independent and composable.
-- **Reproducible architecture** - explicit device / queue selection makes runs comparable across machines.
+- **Progressive control** - every observable default remains inspectable and replaceable.
+- **Predictable costs** - allocations, uploads, synchronization, waits, and managed work are
+  documented where they occur.
+- **Explicit ownership** - resources, lifetimes, thread affinity, and application-visible state have
+  identifiable owners.
+- **Scoped determinism** - VMNL claims deterministic behavior only for decisions it controls;
+  backend and platform choices are reported explicitly.
+- **Modularity** - graphics, audio, network, and optional high-level layers remain independently
+  selectable and composable.
+- **Safe defaults** - defaults simplify common use without removing lower-level control or accepting
+  invalid public combinations silently.
 
 ---
 
@@ -85,10 +95,17 @@ flowchart TD
     G --> D3["d3 - mesh / camera · scaffolding"]
 ```
 
-VMNL exposes two layers:
+VMNL exposes a control ladder:
 
-- **Low-level** - a thin, clear abstraction over Vulkan with full control over memory, pipelines, synchronization, and shader compilation.
-- **High-level** - ergonomic helpers for windows, textures, text, and a scene system, plus utilities such as bounds queries (`get_global_bounds`, `intersects`, `contains`, `compute_aabb`), upload helpers (`upload_buffer`, `upload_texture_with_staging`, `generate_mipmaps`), batched drawing, 2D/3D camera creation, and debug primitives.
+- **High-level** - documented defaults and optional helpers for common game/application workflows.
+- **Explicit configuration** - callers replace each observable policy relevant to their use case.
+- **Raw VMNL** - low-level pipeline, geometry, resource, and synchronization control without making
+  Vulkano part of the stable public API.
+- **Backend interoperability** - an explicitly unstable escape hatch when raw VMNL is insufficient.
+
+Textures, text, batching, an operational 3D backend, and scene helpers are planned rather than
+current capabilities. The canonical direction and boundaries are documented in
+[Architecture](docs/architecture.md).
 
 ---
 
@@ -108,6 +125,7 @@ VMNL exposes two layers:
 - Frame synchronization
 - 2D shape primitives (`vmnl_graphics::d2`)
 - Render API with explicit 2D / 3D pass separation
+- Raw typed pipelines, geometry, and uniform resources within documented limits
 
 ### Graphics - scaffolding only
 
@@ -134,17 +152,9 @@ VMNL exposes two layers:
 
 ## Installation
 
-```bash
-cargo add vmnl
-```
-
-Minimal entry point:
-
-```rust
-use vmnl::*;
-```
-
-> The public API is unstable. Pin an exact version (`vmnl = "=x.y.z"`) until a freeze is announced. Runnable examples live in the repository.
+VMNL has no public release and cannot currently be installed from crates.io. The first publication
+will establish the `0.1.0` compatibility baseline. Until then, use a development checkout and
+expect public contracts to change.
 
 ### Requirements
 
@@ -178,27 +188,17 @@ Technical documentation starts at [docs/README.md](docs/README.md).
 
 ## Roadmap
 
-**Short-term**
-- Instance / device stabilization
-- Window / renderer stabilization
-- Input system
-- Resource management
-- Audio module
+1. **`0.1.0`** - stable window/input, 2D shapes, minimal raw graphics, and an operational audio
+   contract.
+2. **`0.2.0`** - textures without breaking `0.1.0`; text, batching, and networking begin in
+   parallel.
+3. **Later `0.x`** - scene helpers, operational 3D, broader networking, and reference
+   applications.
+4. **`1.0.0`** - complete stable Rust domains, qualified platform support, stable C ABI, priority
+   C++ wrapper, and demonstrated high-level game and low-level engine paths.
 
-**Mid-term**
-- Texture rendering + system (staging, batching, mipmaps)
-- Text rendering
-- Real batched 2D renderer
-- 3D Vulkan backend (depth, pipelines, transforms)
-- Scene system
-- High-level API utilities
-
-**Long-term**
-- Networking
-- Cross-platform robustness
-- API freeze
-- ECS
-- C / C++ bindings
+VMNL preserves published `0.x` Rust contracts after `0.1.0`; deprecated APIs remain until `1.0.0`.
+See [Deployment](docs/deployment.md) for the exact compatibility, release, and distribution policy.
 
 ---
 

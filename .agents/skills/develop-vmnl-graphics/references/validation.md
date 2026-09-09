@@ -9,11 +9,14 @@ Use the lowest test level that proves the behavior:
 | Private or local headless behavior | Unit test next to the implementation |
 | Public headless behavior | API test through `vmnl` under `tests/api` |
 | Executable startup without a window | Smoke test under `tests/smoke` |
-| Vulkan, device, queue, pipeline, window, or display behavior | GPU test under `tests/gpu` |
+| GLFW `NoApi` behavior without Vulkan | Platform test under `tests/platform` |
+| Vulkan, device, queue, pipeline, surface, presentation, or display behavior | GPU test under `tests/gpu` |
 | Stable public Rustdoc contract | Doctest; use `no_run` for unavailable runtime requirements |
 | User-facing visual workflow | Example plus a separate automated invariant |
 
-Keep API tests headless and smoke tests windowless. Never use an example as the only correctness oracle. `just test` combines unit, API, and smoke suites.
+Keep API tests headless and smoke tests windowless. Platform tests must not create a Vulkan instance
+or surface. Never use an example as the only correctness oracle. `just test` combines unit, API,
+and smoke suites.
 
 For a feature, test every new or changed observable behavior with a deterministic, maintainable oracle. If that is impossible, automate the nearest invariant and justify the remaining GPU or visual check.
 
@@ -43,25 +46,16 @@ For documentation-only work, run relevant structure, link, and consistency check
 
 ## Complete Graphics Changes
 
-After maintained Rust source changes, attempt every applicable check in this exact order:
-
-1. `just build-workspace`
-2. `just check-fmt`
-3. `just check-clippy`
-4. `just doctest`
-5. `just docs`
-6. `just test-unit`
-7. `just test-api`
-8. `just test-smoke`
-9. For GPU-facing changes, `just test-gpu-compile`, followed by `just test-gpu` when the environment supports execution.
-
-Do not substitute `cargo check` for compilation. A successful build alone is insufficient. Do not reorder applicable completion checks without an explicit technical justification.
+After maintained Rust, test, example, tooling, or dependency changes, follow the applicable
+completion sequence in [`CONTRIBUTING.md`](../../../../CONTRIBUTING.md#before-submission). It is the
+single command and ordering contract. Do not substitute `cargo check` for compilation, reorder
+applicable checks without justification, or copy the sequence into this reference.
 
 Add checks by impact:
 
 | Impact | Additional evidence |
 | --- | --- |
-| Public API | Headless API tests through `vmnl` and relevant Rustdoc/documentation |
+| Public API | Headless API tests through `vmnl`, relevant Rustdoc, API-book update, and API-book check |
 | Example workflow | `just build <example>` |
 | Relevant visual diagnosis and supported environment | Codex may run `just run <example>` after defining the expected observation, but this does not count as human manual validation |
 | Tooling/build script | Targeted syntax or behavior check; Rust suite if behavior changed |

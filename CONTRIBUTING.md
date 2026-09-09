@@ -27,6 +27,8 @@ just test-gpu         # when the environment supports it
 Do not reorder applicable completion checks without documenting the technical reason. Run `just test-gpu` only on a machine with a Vulkan-capable GPU and a display server. `just test` is the combined headless suite, not an additional suite.
 
 - Public API changes update Rustdoc and API tests.
+- Feature, public API, and architecture changes preserve the project direction, control model, and
+  domain boundaries in [docs/architecture.md](docs/architecture.md).
 - Public API changes follow the [API change protocol](docs/api/maintenance/api_change_protocol.md),
   update the coverage matrix, then run and review `just docs-api-update` before the non-mutating
   `just docs-api-check`.
@@ -35,7 +37,11 @@ Do not reorder applicable completion checks without documenting the technical re
   [GLFW portability protocol](docs/api/maintenance/glfw_portability_protocol.md), update the
   canonical TOML inventory, and add a backend test or explicit justification.
 - Visual workflows belong in `examples/`; headless checks belong in `tests/`.
-- Every feature or fix must assess Rustdoc, technical and user documentation, examples, `CHANGELOG.md`, and documentation navigation. Do not create artificial documentation changes; explain in the final report when no update is required.
+- Every feature or fix must assess Rustdoc, technical and user documentation, examples,
+  documentation navigation, and release-note impact. Follow the concise changelog policy in
+  [docs/deployment.md](docs/deployment.md#release-notes); do not create per-change entries before
+  the first public release or entries without user-visible impact. Explain in the final report when
+  no update is required.
 
 ## Manual Graphics Validation
 
