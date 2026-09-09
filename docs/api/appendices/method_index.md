@@ -196,6 +196,10 @@
 | `vmnl::d2::Anchor` | `eq` | [Anchor](../reference/d2/shapes/anchor.md) | [`eq`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.eq) |
 | `vmnl::d2::Anchor` | `fmt` | [Anchor](../reference/d2/shapes/anchor.md) | [`fmt`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.fmt) |
 | `vmnl::d2::Anchor` | `hash` | [Anchor](../reference/d2/shapes/anchor.md) | [`hash`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.hash) |
+| `vmnl::d2::CircleBuilder` | `buffer_memory_preference` | [CircleBuilder](../reference/d2/shapes/circle_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.CircleBuilder.html#method.buffer_memory_preference) |
+| `vmnl::d2::CircleBuilder` | `build` | [CircleBuilder](../reference/d2/shapes/circle_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.CircleBuilder.html#method.build) |
+| `vmnl::d2::CircleBuilder` | `color` | [CircleBuilder](../reference/d2/shapes/circle_builder.md) | [`color`](../../../target/doc/vmnl/d2/struct.CircleBuilder.html#method.color) |
+| `vmnl::d2::CircleBuilder` | `position` | [CircleBuilder](../reference/d2/shapes/circle_builder.md) | [`position`](../../../target/doc/vmnl/d2/struct.CircleBuilder.html#method.position) |
 | `vmnl::d2::Drawable2D` | `render_item_2d` | [Drawable2D](../reference/d2/drawable_2d.md) | [`render_item_2d`](../../../target/doc/vmnl/d2/trait.Drawable2D.html#tymethod.render_item_2d) |
 | `vmnl::d2::IndexedShapeBuilder` | `buffer_memory_preference` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html#method.buffer_memory_preference) |
 | `vmnl::d2::IndexedShapeBuilder` | `build` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html#method.build) |
@@ -218,6 +222,7 @@
 | `vmnl::d2::RectBuilder` | `rotation` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`rotation`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.rotation) |
 | `vmnl::d2::RenderItem2D` | `clone` | [RenderItem2D](../reference/d2/render_item_2d.md) | [`clone`](../../../target/doc/vmnl/d2/struct.RenderItem2D.html#method.clone) |
 | `vmnl::d2::Shape` | `as_ref` | [Shape](../reference/d2/shapes/shape.md) | [`as_ref`](../../../target/doc/vmnl/d2/struct.Shape.html#method.as_ref) |
+| `vmnl::d2::Shape` | `circle` | [Shape](../reference/d2/shapes/shape.md) | [`circle`](../../../target/doc/vmnl/d2/struct.Shape.html#method.circle) |
 | `vmnl::d2::Shape` | `drop` | [Shape](../reference/d2/shapes/shape.md) | [`drop`](../../../target/doc/vmnl/d2/struct.Shape.html#method.drop) |
 | `vmnl::d2::Shape` | `indexed` | [Shape](../reference/d2/shapes/shape.md) | [`indexed`](../../../target/doc/vmnl/d2/struct.Shape.html#method.indexed) |
 | `vmnl::d2::Shape` | `line` | [Shape](../reference/d2/shapes/shape.md) | [`line`](../../../target/doc/vmnl/d2/struct.Shape.html#method.line) |

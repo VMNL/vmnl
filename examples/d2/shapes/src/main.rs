@@ -22,6 +22,10 @@ fn main() -> VMNLResult<()> {
         .position(110.0, 220.0)
         .color(Rgba::rgba(50, 170, 255, 255))
         .build(&context)?;
+    let circle = Shape::circle(65.0)
+        .position(440.0, 125.0)
+        .color(Rgba::rgba(0, 0, 255, 255))
+        .build(&context)?;
     let triangle = Shape::triangle(
         Vector2f { x: 560.0, y: 170.0 },
         Vector2f { x: 790.0, y: 430.0 },
@@ -36,7 +40,10 @@ fn main() -> VMNLResult<()> {
         if window.input().keyboard().is_pressed(Key::Escape) {
             window.close();
         }
-        window.render().draw2d([&rectangle, &triangle]).submit()?;
+        window
+            .render()
+            .draw2d([&rectangle, &circle, &triangle])
+            .submit()?;
     }
 
     Ok(())
