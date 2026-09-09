@@ -12,9 +12,10 @@ Before editing:
 
 1. Inspect the worktree and preserve unrelated user changes.
 2. Read `docs/README.md`, `docs/INSTRUCTIONS.md`, and only the canonical documentation relevant to the task.
-3. Classify the task as `Feature`, `Fix`, `Maintenance`, or `Read-only`; a read-only request does not authorize writes.
-4. Identify applicable impacts: public API, headless behavior, GPU/window/display, visual examples, tooling/build, dependencies/releases, and performance.
-5. Inspect affected tests and only the implementation needed to establish current behavior.
+3. For a feature, public API, architecture, module, or roadmap decision, read `docs/architecture.md` and preserve its project direction, control model, domain scope, and non-goals.
+4. Classify the task as `Feature`, `Fix`, `Maintenance`, or `Read-only`; a read-only request does not authorize writes.
+5. Identify applicable impacts: public API, headless behavior, GPU/window/display, visual examples, threading, tooling/build, dependencies/releases, FFI, domain independence, and performance.
+6. Inspect affected tests and only the implementation needed to establish current behavior.
 
 Resolve disagreements using this priority:
 
@@ -47,12 +48,15 @@ Make the smallest coherent patch. Avoid unrelated refactors, renames, formatting
 - `crates/vmnl_macros` owns internal procedural macros used by VMNL crates.
 - `tests/api` validates headless public behavior through the facade.
 - `tests/smoke` validates executable startup without a window.
-- `tests/gpu` isolates Vulkan, display, and window-dependent behavior.
+- `tests/platform` isolates GLFW backend behavior without Vulkan.
+- `tests/gpu` isolates Vulkan, surface, presentation, GPU, and display-dependent behavior.
 - `examples` contains user-facing visual workflows.
+
+New audio, network, scene, or interoperability surfaces must preserve the modular target in `docs/architecture.md`. Headless audio and network clients must not acquire graphics dependencies through the facade.
 
 Keep stable architecture, contracts, procedures, and status in `docs/`; public contracts in Rustdoc; and local `README.md` files as navigation.
 
-For every feature or fix, assess public Rustdoc, technical and user documentation, examples and inventories, the `Unreleased` section of `CHANGELOG.md`, and documentation navigation. Update only surfaces whose contract, behavior, workflow, capability, limitation, or navigation changed. In the final report, state why no documentation update was required when none was made.
+For every feature or fix, assess public Rustdoc, technical and user documentation, examples and inventories, documentation navigation, and user-visible release-note impact under `docs/deployment.md`. Before the first public release, do not create per-change changelog entries. After it, record only user-visible additions, changes, fixes, and deprecations. Update only surfaces whose contract, behavior, workflow, capability, limitation, or navigation changed. In the final report, state why no documentation update was required when none was made.
 
 ## Protect Workspace and External State
 
@@ -70,23 +74,11 @@ All VMNL releases are performed manually. The repository MUST NOT contain an aut
 
 Never run a non-dry-run publication, create or push a release tag, create a GitHub release, or use release credentials without explicit authorization. Do not claim publishability until the documented blockers are resolved and the required dry-runs succeed.
 
-## Automated Validation Order
+## Validate With Evidence
 
-Execute every applicable automatic check in this order:
+For maintained Rust, test, example, tooling, or dependency changes, execute the applicable completion checks in the exact order defined by [`CONTRIBUTING.md`](CONTRIBUTING.md#before-submission). That section is the single command and ordering contract; do not duplicate it in agent references. `just test` combines unit, API, and smoke tests and is not a separate suite.
 
-1. compilation: `cargo build --workspace --all-targets`;
-2. formatting: `cargo fmt --all --check`;
-3. Clippy with warnings denied: `cargo clippy --workspace --all-targets --all-features -- -D warnings`;
-4. doctests: `just doctest`;
-5. documentation build: `just docs`;
-6. unit tests: `just test-unit`;
-7. API tests: `just test-api`;
-8. smoke tests: `just test-smoke`;
-9. when the task affects GPU-facing behavior, GPU test compilation with `just test-gpu-compile`, followed by `just test-gpu` when the environment supports execution.
-
-`just test` combines unit, API, and smoke tests; do not report it as separate suites.
-
-Do not change the order of applicable completion checks without an explicit technical justification. A blocked check does not authorize silently skipping later checks; report the blocker and continue only when doing so is safe and meaningful. Documentation-only work requires only applicable document, link, structure, and consistency checks.
+Do not change the order of applicable completion checks without an explicit technical justification. A blocked check does not authorize silently skipping later checks; report the blocker and continue only when doing so is safe and meaningful. Documentation-only work requires only applicable document, generated-file, snippet, link, structure, and consistency checks. Run doctests or documentation builds only when Rustdoc or embedded Rust examples change.
 
 ## Report and Prepare PR Descriptions
 

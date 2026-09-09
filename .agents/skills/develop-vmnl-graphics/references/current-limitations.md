@@ -11,7 +11,10 @@ Consequences:
 - selection is not caller-controlled;
 - equal-rank selection is not strictly deterministic across backends or machines;
 - new APIs must not describe this path as fully explicit or deterministic;
-- preserve the behavior unless the task intentionally changes its documented contract.
+- this automatic-only path does not yet satisfy the target replaceability contract in
+  `docs/architecture.md`;
+- preserve current behavior unless the task intentionally adds an explicit selection path while
+  retaining the documented default.
 
 ## GLFW Initialization Lock
 
@@ -28,13 +31,9 @@ The public 3D types remain scaffolding without an operational rendering backend.
 
 ## GPU Test Routing
 
-`just test-gpu` runs ignored tests only in `vmnl-gpu-tests`. It does not execute ignored library tests.
+`just test-gpu` runs ignored tests only in `vmnl-gpu-tests`. New Vulkan, surface, presentation, or
+GPU/display tests under `tests/gpu` must stay ignored because this recipe selects them with
+`--ignored`.
 
-Two legacy GPU-oriented ignored tests still live outside `tests/gpu`:
-
-- `crates/vmnl_graphics/src/vmnl_instance/tests.rs`;
-- `crates/vmnl_graphics/src/2d/shape/mod.rs`.
-
-Do not count them as executed by `just test-gpu`. When modifying their behavior, prefer migrating durable GPU coverage to `tests/gpu` rather than adding more out-of-suite tests.
-
-New GPU/display tests under `tests/gpu` must stay ignored because `just test-gpu` selects them with `--ignored`.
+GLFW `NoApi` behavior without Vulkan belongs in `tests/platform` and is validated separately with
+the applicable platform recipes.
