@@ -10,8 +10,8 @@
 | `vmnl::Event` | `fmt` | [Event](../reference/window/events/event.md) | [`fmt`](../../../target/doc/vmnl/enum.Event.html#method.fmt) |
 | `vmnl::FrameRenderer` | `draw2d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw2d`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw2d) |
 | `vmnl::FrameRenderer` | `draw3d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw3d`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw3d) |
-| `vmnl::FrameRenderer` | `draw_raw` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw_raw) |
-| `vmnl::FrameRenderer` | `draw_raw_with` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw_with`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw_raw_with) |
+| `vmnl::FrameRenderer` | `draw_raw_2d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw_2d`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw_raw_2d) |
+| `vmnl::FrameRenderer` | `draw_raw_2d_with` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw_2d_with`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw_raw_2d_with) |
 | `vmnl::FrameRenderer` | `mode` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`mode`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.mode) |
 | `vmnl::FrameRenderer` | `submit` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`submit`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.submit) |
 | `vmnl::FrameRenderer` | `write_frame_uniform` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`write_frame_uniform`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.write_frame_uniform) |

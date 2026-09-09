@@ -113,7 +113,7 @@ fn raw_pipeline_from_shader_paths_submits() -> VMNLResult<()> {
         .build(&window)?;
     let geometry = triangle(&context)?;
 
-    window.render().draw_raw(&pipeline, [&geometry]).submit()
+    window.render().draw_raw_2d(&pipeline, [&geometry]).submit()
 }
 
 #[test]
@@ -137,7 +137,7 @@ fn raw_uniform_resources_submit() -> VMNLResult<()> {
 
     window
         .render()
-        .draw_raw_with(&pipeline, &resources, [&geometry])
+        .draw_raw_2d_with(&pipeline, &resources, [&geometry])
         .submit()
 }
 
@@ -187,7 +187,7 @@ fn raw_frame_uniform_resources_submit_repeated_frames() -> VMNLResult<()> {
         window
             .render()
             .write_frame_uniform(&mut uniform, tint)
-            .draw_raw_with(&pipeline, &resources, [&geometry])
+            .draw_raw_2d_with(&pipeline, &resources, [&geometry])
             .submit()?;
     }
 
@@ -229,7 +229,7 @@ fn raw_descriptor_pipeline_requires_resources_at_submit() -> VMNLResult<()> {
     let geometry = triangle(&context)?;
 
     assert_invalid_state(
-        window.render().draw_raw(&pipeline, [&geometry]).submit(),
+        window.render().draw_raw_2d(&pipeline, [&geometry]).submit(),
         "raw pipeline requires descriptor resources",
     )
 }
@@ -248,7 +248,7 @@ fn raw_pipeline_rejects_geometry_from_another_context() -> VMNLResult<()> {
     let geometry = triangle(&other)?;
 
     assert_invalid_state(
-        window.render().draw_raw(&pipeline, [&geometry]).submit(),
+        window.render().draw_raw_2d(&pipeline, [&geometry]).submit(),
         "raw pipeline and geometry must belong to this window context",
     )
 }

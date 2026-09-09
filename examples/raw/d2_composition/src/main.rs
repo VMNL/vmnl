@@ -83,7 +83,7 @@ fn main() -> VMNLResult<()> {
         window
             .render()
             .draw2d([&background])
-            .draw_raw(&pipeline, [&triangle])
+            .draw_raw_2d(&pipeline, [&triangle])
             .submit()?;
     }
 

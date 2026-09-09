@@ -17,7 +17,7 @@ use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 ///
 /// The mode may change how objects are submitted inside one pass, but it must
 /// not reorder calls to [`FrameRenderer::draw2d`], [`FrameRenderer::draw3d`],
-/// [`FrameRenderer::draw_raw`], or [`FrameRenderer::draw_raw_with`].
+/// [`FrameRenderer::draw_raw_2d`], or [`FrameRenderer::draw_raw_2d_with`].
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub enum RenderMode {
     /// Submit each object independently.
@@ -69,8 +69,8 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
     ///
     /// The mode applies to the objects inside each pass. It does not change the
     /// order of the passes added with [`FrameRenderer::draw2d`],
-    /// [`FrameRenderer::draw3d`], [`FrameRenderer::draw_raw`], or
-    /// [`FrameRenderer::draw_raw_with`].
+    /// [`FrameRenderer::draw3d`], [`FrameRenderer::draw_raw_2d`], or
+    /// [`FrameRenderer::draw_raw_2d_with`].
     ///
     /// # Arguments
     /// - `mode`: Submission strategy used for objects inside each pass.
@@ -186,7 +186,7 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
 
     /// Add a raw render pass to the pending frame.
     #[must_use]
-    pub fn draw_raw<TVertex, const N: usize>(
+    pub fn draw_raw_2d<TVertex, const N: usize>(
         mut self,
         pipeline: &'g RawPipeline<TVertex>,
         geometries: [&'g RawGeometry<TVertex>; N],
@@ -202,7 +202,7 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
 
     /// Add a raw render pass with descriptor resources to the pending frame.
     #[must_use]
-    pub fn draw_raw_with<TVertex, const N: usize>(
+    pub fn draw_raw_2d_with<TVertex, const N: usize>(
         mut self,
         pipeline: &'g RawPipeline<TVertex>,
         resources: &'g RawResources,

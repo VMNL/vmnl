@@ -178,7 +178,7 @@ fn d2_then_raw_passes_submit() -> VMNLResult<()> {
     window
         .render()
         .draw2d([&rectangle])
-        .draw_raw(&pipeline, [&triangle])
+        .draw_raw_2d(&pipeline, [&triangle])
         .submit()
 }
 

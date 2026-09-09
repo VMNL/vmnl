@@ -1084,8 +1084,8 @@ pub struct vmnl::FrameRenderer<'w, 'g>
 impl<'w, 'g> vmnl::FrameRenderer<'w, 'g>
 pub fn vmnl::FrameRenderer<'w, 'g>::draw2d<D, const N: usize>(self, [&'g D; N]) -> Self where D: vmnl::d2::Drawable2D + ?core::marker::Sized
 pub fn vmnl::FrameRenderer<'w, 'g>::draw3d<D, const N: usize>(self, &'g vmnl::d3::Camera, [&'g D; N]) -> Self where D: vmnl::d3::Drawable3D + ?core::marker::Sized
-pub fn vmnl::FrameRenderer<'w, 'g>::draw_raw<TVertex, const N: usize>(self, &'g vmnl::raw::Pipeline<TVertex>, [&'g vmnl::raw::Geometry<TVertex>; N]) -> Self
-pub fn vmnl::FrameRenderer<'w, 'g>::draw_raw_with<TVertex, const N: usize>(self, &'g vmnl::raw::Pipeline<TVertex>, &'g vmnl::raw::Resources, [&'g vmnl::raw::Geometry<TVertex>; N]) -> Self
+pub fn vmnl::FrameRenderer<'w, 'g>::draw_raw_2d<TVertex, const N: usize>(self, &'g vmnl::raw::Pipeline<TVertex>, [&'g vmnl::raw::Geometry<TVertex>; N]) -> Self
+pub fn vmnl::FrameRenderer<'w, 'g>::draw_raw_2d_with<TVertex, const N: usize>(self, &'g vmnl::raw::Pipeline<TVertex>, &'g vmnl::raw::Resources, [&'g vmnl::raw::Geometry<TVertex>; N]) -> Self
 pub fn vmnl::FrameRenderer<'w, 'g>::mode(self, vmnl::RenderMode) -> Self
 pub fn vmnl::FrameRenderer<'w, 'g>::submit(self) -> vmnl::VMNLResult<()>
 pub fn vmnl::FrameRenderer<'w, 'g>::write_frame_uniform<TData>(self, &'g mut vmnl::raw::FrameUniform<TData>, TData) -> Self where TData: vmnl::raw::BufferContents + 'g

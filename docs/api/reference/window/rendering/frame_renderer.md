@@ -15,8 +15,8 @@ Records ordered logical passes for one frame and submits them through the borrow
 | `mode(RenderMode)` | Select object submission strategy. |
 | `draw2d([&D; N])` | Append a pass from `Drawable2D` values. |
 | `draw3d(&Camera, [&D; N])` | Append scaffolded `Drawable3D` pass. |
-| `draw_raw(&Pipeline<T>, [&Geometry<T>; N])` | Append raw pass without descriptors. |
-| `draw_raw_with(&Pipeline<T>, &Resources, [&Geometry<T>; N])` | Append raw pass with descriptors. |
+| `draw_raw_2d(&Pipeline<T>, [&Geometry<T>; N])` | Append raw pass without descriptors. |
+| `draw_raw_2d_with(&Pipeline<T>, &Resources, [&Geometry<T>; N])` | Append raw pass with descriptors. |
 | `write_frame_uniform(&mut FrameUniform<T>, data)` | Queue one frame-uniform write for the acquired swapchain image. |
 | `submit()` | Consume the builder, acquire/record/submit/present, optionally poll events. |
 

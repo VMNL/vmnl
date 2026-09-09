@@ -6,7 +6,7 @@ Import path: `vmnl::raw::Resources`. Status: experimental, operational for unifo
 
 ## Purpose and use cases
 
-Owns descriptor resources compatible with one raw pipeline layout for `draw_raw_with`. Resources can be static, or frame-varying when they bind a `FrameUniform`.
+Owns descriptor resources compatible with one raw pipeline layout for `draw_raw_2d_with`. Resources can be static, or frame-varying when they bind a `FrameUniform`.
 
 ## Public API
 

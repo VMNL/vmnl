@@ -106,7 +106,7 @@ fn main() -> VMNLResult<()> {
         window
             .render()
             .write_frame_uniform(&mut uniform, RawUniform { tint, offset })
-            .draw_raw_with(&pipeline, &resources, [&geometry])
+            .draw_raw_2d_with(&pipeline, &resources, [&geometry])
             .submit()?;
     }
 
