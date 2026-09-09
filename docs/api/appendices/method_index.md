@@ -10,10 +10,11 @@
 | `vmnl::Event` | `fmt` | [Event](../reference/window/events/event.md) | [`fmt`](../../../target/doc/vmnl/enum.Event.html#method.fmt) |
 | `vmnl::FrameRenderer` | `draw2d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw2d`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw2d) |
 | `vmnl::FrameRenderer` | `draw3d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw3d`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw3d) |
-| `vmnl::FrameRenderer` | `draw_raw` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw_raw) |
-| `vmnl::FrameRenderer` | `draw_raw_with` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw_with`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw_raw_with) |
+| `vmnl::FrameRenderer` | `draw_raw_2d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw_2d`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw_raw_2d) |
+| `vmnl::FrameRenderer` | `draw_raw_2d_with` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw_2d_with`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw_raw_2d_with) |
 | `vmnl::FrameRenderer` | `mode` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`mode`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.mode) |
 | `vmnl::FrameRenderer` | `submit` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`submit`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.submit) |
+| `vmnl::FrameRenderer` | `write_frame_uniform` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`write_frame_uniform`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.write_frame_uniform) |
 | `vmnl::Input` | `default` | [Input](../reference/window/input/input.md) | [`default`](../../../target/doc/vmnl/struct.Input.html#method.default) |
 | `vmnl::Input` | `keyboard` | [Input](../reference/window/input/input.md) | [`keyboard`](../../../target/doc/vmnl/struct.Input.html#method.keyboard) |
 | `vmnl::Input` | `mouse` | [Input](../reference/window/input/input.md) | [`mouse`](../../../target/doc/vmnl/struct.Input.html#method.mouse) |
@@ -280,6 +281,9 @@
 | `vmnl::raw::BlendMode` | `clone` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [`clone`](../../../target/doc/vmnl/raw/enum.BlendMode.html#method.clone) |
 | `vmnl::raw::BlendMode` | `eq` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [`eq`](../../../target/doc/vmnl/raw/enum.BlendMode.html#method.eq) |
 | `vmnl::raw::BlendMode` | `fmt` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.BlendMode.html#method.fmt) |
+| `vmnl::raw::FrameUniform` | `builder` | [FrameUniform](../reference/raw/uniforms/frame_uniform.md) | [`builder`](../../../target/doc/vmnl/raw/struct.FrameUniform.html#method.builder) |
+| `vmnl::raw::FrameUniformBuilder` | `buffer_memory_preference` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/raw/struct.FrameUniformBuilder.html#method.buffer_memory_preference) |
+| `vmnl::raw::FrameUniformBuilder` | `build` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [`build`](../../../target/doc/vmnl/raw/struct.FrameUniformBuilder.html#method.build) |
 | `vmnl::raw::Geometry` | `builder` | [Geometry](../reference/raw/geometry/geometry.md) | [`builder`](../../../target/doc/vmnl/raw/struct.Geometry.html#method.builder) |
 | `vmnl::raw::GeometryBuilder` | `buffer_memory_preference` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/raw/struct.GeometryBuilder.html#method.buffer_memory_preference) |
 | `vmnl::raw::GeometryBuilder` | `build` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [`build`](../../../target/doc/vmnl/raw/struct.GeometryBuilder.html#method.build) |
@@ -300,7 +304,9 @@
 | `vmnl::raw::PrimitiveTopology` | `fmt` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html#method.fmt) |
 | `vmnl::raw::Resources` | `builder` | [Resources](../reference/raw/resources/resources.md) | [`builder`](../../../target/doc/vmnl/raw/struct.Resources.html#method.builder) |
 | `vmnl::raw::ResourcesBuilder` | `build` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [`build`](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html#method.build) |
+| `vmnl::raw::ResourcesBuilder` | `frame_uniform` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [`frame_uniform`](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html#method.frame_uniform) |
 | `vmnl::raw::ResourcesBuilder` | `uniform` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [`uniform`](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html#method.uniform) |
 | `vmnl::raw::Uniform` | `builder` | [Uniform](../reference/raw/uniforms/uniform.md) | [`builder`](../../../target/doc/vmnl/raw/struct.Uniform.html#method.builder) |
+| `vmnl::raw::Uniform` | `write` | [Uniform](../reference/raw/uniforms/uniform.md) | [`write`](../../../target/doc/vmnl/raw/struct.Uniform.html#method.write) |
 | `vmnl::raw::UniformBuilder` | `buffer_memory_preference` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/raw/struct.UniformBuilder.html#method.buffer_memory_preference) |
 | `vmnl::raw::UniformBuilder` | `build` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [`build`](../../../target/doc/vmnl/raw/struct.UniformBuilder.html#method.build) |

@@ -6,7 +6,7 @@ Import path: `vmnl::raw::UniformBuilder<TData>`. Status: experimental, operation
 
 ## Purpose and use cases
 
-Selects memory preference and uploads one typed initial uniform value.
+Selects memory preference and uploads one typed initial uniform value. Use [`FrameUniformBuilder`](frame_uniform_builder.md) for frame-varying uniform slots.
 
 ## Public API
 
@@ -38,4 +38,4 @@ Depends on device memory and uniform-buffer layout/size limits.
 
 ## Example and related types
 
-See [`Uniform`](uniform.md) and the existing [`examples/raw/uniform`](../../../../../examples/raw/uniform/src/main.rs).
+See [`Uniform`](uniform.md), [`FrameUniformBuilder`](frame_uniform_builder.md), and the existing [`examples/raw/uniform`](../../../../../examples/raw/uniform/src/main.rs).

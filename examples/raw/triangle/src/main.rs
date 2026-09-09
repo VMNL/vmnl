@@ -71,7 +71,10 @@ fn main() -> VMNLResult<()> {
 
     while window.is_open() {
         for _ in window.poll_events() {}
-        window.render().draw_raw(&pipeline, [&geometry]).submit()?;
+        window
+            .render()
+            .draw_raw_2d(&pipeline, [&geometry])
+            .submit()?;
     }
 
     Ok(())

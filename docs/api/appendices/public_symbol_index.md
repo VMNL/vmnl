@@ -45,6 +45,8 @@
 | struct | `vmnl::d3::Vertex3D` | [Vertex3D](../reference/d3/vertex_3d.md) | [Rustdoc](../../../target/doc/vmnl/d3/struct.Vertex3D.html) |
 | enum | `vmnl::raw::BlendMode` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.BlendMode.html) |
 | trait | `vmnl::raw::BufferContents` | [BufferContents](../reference/raw/traits/buffer_contents.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.BufferContents.html) |
+| struct | `vmnl::raw::FrameUniform` | [FrameUniform](../reference/raw/uniforms/frame_uniform.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.FrameUniform.html) |
+| struct | `vmnl::raw::FrameUniformBuilder` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.FrameUniformBuilder.html) |
 | struct | `vmnl::raw::Geometry` | [Geometry](../reference/raw/geometry/geometry.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Geometry.html) |
 | struct | `vmnl::raw::GeometryBuilder` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.GeometryBuilder.html) |
 | struct | `vmnl::raw::Pipeline` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Pipeline.html) |
