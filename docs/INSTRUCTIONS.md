@@ -54,11 +54,16 @@
 
 ## Commit Messages
 
-Format: `<type>: <description>` — imperative mood, lowercase, under 72 characters, no trailing period.
+Format: `<type>[optional scope][!]: <description>` — imperative mood, description starting
+lowercase, subject at most 72 characters, no trailing period.
 
-Optional body: blank line after subject, then a dash list of the most important changes, each under 80 characters.
+Optional body: blank line after the subject, then free-form text with each line at most 80
+characters.
 
 For more information, see [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+
+Run `just hooks-install` once per clone to enable immediate local validation. Pull request commits
+are validated independently by the `Commit messages` CI check.
 
 ## Commit Type usage guidelines
 

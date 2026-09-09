@@ -22,6 +22,7 @@ just --list
 just build
 just build raw_pipeline
 just build-workspace
+just hooks-install
 just run
 just run d2_shapes
 just test
@@ -53,11 +54,16 @@ just docs                  Rustdoc build with warnings denied
 just docs-api-check        non-mutating API book, inventory, snippet, and link checks
 just docs-api-tools        install pinned API documentation tools under target/
 just docs-api-update       regenerate reviewed API snapshot and indexes (mutating)
+just hooks-install         enable repository-owned Git hooks for this clone
 just bootstrap             install Linux system dependencies
 ```
 
 `just lint` applies formatting and automatic fixes across the workspace. Inspect the worktree
 first and use it only when those modifications are intended.
+
+`just hooks-install` sets this clone's `core.hooksPath` to `.githooks`. The `commit-msg` hook
+validates the subject, allowed type, optional scope, line lengths, and body separation before Git
+creates a commit. It does not modify commit messages.
 
 ## Test Summaries
 
