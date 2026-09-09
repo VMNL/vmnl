@@ -29,7 +29,7 @@ Owns Vulkan subbuffers tied to the window/context device. `Resources` stores sha
 
 ## Errors, panics, and failure conditions
 
-Builder creation is infallible. Build can fail if the window has no swapchain image or if allocation fails. Submission can fail if the swapchain image count no longer matches the `FrameUniform`, or if the selected frame slot cannot be allocated, written, or bound.
+Builder creation is infallible. Build can fail if the window has no swapchain image, if an initial slot allocation fails, or if an initial slot write fails. Submission can fail if the swapchain image count no longer matches the `FrameUniform`, or if the selected frame slot cannot be allocated, written, or bound.
 
 ## Allocation, transfers, synchronization, and GPU cost
 

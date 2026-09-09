@@ -26,7 +26,7 @@ Owns shared descriptor/device/layout state; borrowed during frame recording. It 
 
 ## Errors, panics, and failure conditions
 
-Builder entry is infallible; resource build/submission can reject device, layout, binding, or swapchain image-count mismatches.
+Builder entry is infallible; resource build/submission can reject device, layout, binding, descriptor allocation, or swapchain image-count mismatches.
 
 ## Allocation, transfers, synchronization, and GPU cost
 

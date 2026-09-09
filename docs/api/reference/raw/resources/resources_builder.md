@@ -26,7 +26,7 @@ Builder stores cloned buffer handles or shared frame-uniform slots and is consum
 
 ## Errors, panics, and failure conditions
 
-Returns `InvalidState` with set/binding detail for contract mismatches, `VulkanValidationFailed` for conversion/internal validation, or `VulkanDescriptorSetCreationFailed` for allocation.
+Returns `InvalidState` with set/binding detail for contract mismatches, `VulkanValidationFailed` for conversion/internal validation, or `VulkanDescriptorSetCreationFailed` for static descriptor set allocation. `FrameUniform` descriptor set allocation happens later during frame recording.
 
 ## Allocation, transfers, synchronization, and GPU cost
 

@@ -234,7 +234,7 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
     /// # Errors
     /// Errors are reported by [`FrameRenderer::submit`] if the current
     /// swapchain image count no longer matches the uniform, or if the backend
-    /// allocation or buffer write fails.
+    /// buffer allocation, descriptor set allocation, or buffer write fails.
     #[must_use]
     pub fn write_frame_uniform<TData>(
         mut self,
@@ -291,8 +291,8 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
     ///
     /// # Errors
     /// Returns `InvalidState` if a 3D pass is present. Otherwise returns an
-    /// error if frame acquisition, command recording, submission, or
-    /// presentation fails.
+    /// error if frame-uniform allocation/write/binding, frame acquisition,
+    /// command recording, submission, or presentation fails.
     pub fn submit(self) -> VMNLResult<()> {
         let mut commands: Vec<RenderPassCommand> = Vec::new();
 

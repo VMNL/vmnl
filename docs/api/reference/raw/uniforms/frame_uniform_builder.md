@@ -26,11 +26,11 @@ Owns/moves the data and is consumed by build; result is tied to the window conte
 
 ## Errors, panics, and failure conditions
 
-Returns `InvalidState` if the window has no swapchain image, or `VulkanFrameUboBufferCreationFailed` if initial allocation/upload fails.
+Returns `InvalidState` if the window has no swapchain image or if an initial write conflicts with active access, `VulkanFrameUboBufferCreationFailed` if initial allocation fails, or `VulkanValidationFailed` for other backend write failures.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-Initializes one uniform slot per current swapchain image. Later frame writes may allocate or reuse additional subbuffers. Placement is a preference; exact cost is unspecified.
+Initializes one uniform slot per current swapchain image by allocating and writing initial data. Later frame writes may allocate or reuse additional subbuffers. Placement is a preference; exact cost is unspecified.
 
 ## Platform, Vulkan, and display constraints
 

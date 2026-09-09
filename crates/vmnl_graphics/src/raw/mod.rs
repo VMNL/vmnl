@@ -604,8 +604,8 @@ impl<TData> FrameUniformBuilder<TData> {
     /// Builds initial GPU uniform slots for the current swapchain images.
     ///
     /// # Errors
-    /// Returns an error if the window has no swapchain images or if any GPU
-    /// buffer allocation fails.
+    /// Returns an error if the window has no swapchain images, if any GPU
+    /// buffer allocation fails, or if an initial slot write fails.
     pub fn build(self, window: &Window) -> VMNLResult<FrameUniform<TData>>
     where
         TData: BufferContents + Clone,
@@ -691,7 +691,7 @@ pub struct ResourcesBuilder {
 }
 
 impl ResourcesBuilder {
-    /// Binds a frame-uniform buffer group to a shader descriptor binding.
+    /// Binds frame-uniform slots to a shader descriptor binding.
     #[must_use]
     pub fn frame_uniform<TData>(
         mut self,
@@ -745,7 +745,8 @@ impl ResourcesBuilder {
     ///
     /// # Errors
     /// Returns an error if a required binding is missing, unsupported, duplicated,
-    /// or if descriptor set allocation fails.
+    /// or if static descriptor set allocation fails. Descriptor sets for
+    /// `FrameUniform` bindings are allocated later during frame recording.
     pub fn build(self, context: &Context) -> VMNLResult<Resources> {
         let Self {
             pipeline_device,
