@@ -308,6 +308,19 @@ impl core::marker::Unpin for vmnl::d2::LineCap
 impl core::marker::UnsafeUnpin for vmnl::d2::LineCap
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::LineCap
 impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::LineCap
+pub struct vmnl::d2::CircleBuilder
+impl vmnl::d2::CircleBuilder
+pub const fn vmnl::d2::CircleBuilder::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
+pub fn vmnl::d2::CircleBuilder::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::d2::Shape>
+pub fn vmnl::d2::CircleBuilder::color<C>(self, C) -> Self where C: core::convert::Into<vmnl::common::Rgba>
+pub fn vmnl::d2::CircleBuilder::position(self, f32, f32) -> Self
+impl core::marker::Freeze for vmnl::d2::CircleBuilder
+impl core::marker::Send for vmnl::d2::CircleBuilder
+impl core::marker::Sync for vmnl::d2::CircleBuilder
+impl core::marker::Unpin for vmnl::d2::CircleBuilder
+impl core::marker::UnsafeUnpin for vmnl::d2::CircleBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::CircleBuilder
+impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::CircleBuilder
 pub struct vmnl::d2::IndexedShapeBuilder
 impl vmnl::d2::IndexedShapeBuilder
 pub fn vmnl::d2::IndexedShapeBuilder::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
@@ -361,6 +374,7 @@ impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::RenderItem2D
 impl !core::panic::unwind_safe::UnwindSafe for vmnl::d2::RenderItem2D
 pub struct vmnl::d2::Shape
 impl vmnl::d2::Shape
+pub fn vmnl::d2::Shape::circle(f32) -> vmnl::d2::CircleBuilder
 pub fn vmnl::d2::Shape::indexed<V, I>(V, I) -> vmnl::d2::IndexedShapeBuilder where V: core::convert::Into<alloc::vec::Vec<vmnl::d2::Vertex2D>>, I: core::convert::Into<alloc::vec::Vec<u32>>
 pub fn vmnl::d2::Shape::line(vmnl::d2::Vector2f, vmnl::d2::Vector2f) -> vmnl::d2::LineBuilder
 pub fn vmnl::d2::Shape::rect(f32, f32) -> vmnl::d2::RectBuilder

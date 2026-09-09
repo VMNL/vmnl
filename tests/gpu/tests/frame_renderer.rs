@@ -59,6 +59,10 @@ fn advanced_d2_geometry_submits_per_object_and_batched() -> VMNLResult<()> {
         .rotation(-18.0)
         .color(Rgba::MAGENTA)
         .build(&context)?;
+    let circle = Shape::circle(60.0)
+        .position(390.0, 300.0)
+        .color(Rgba::rgba(255, 120, 0, 200))
+        .build(&context)?;
     let round_cap = Shape::line(vector(80.0, 450.0), vector(310.0, 450.0))
         .width(18.0)
         .cap(LineCap::Round)
@@ -73,11 +77,25 @@ fn advanced_d2_geometry_submits_per_object_and_batched() -> VMNLResult<()> {
     window
         .render()
         .mode(RenderMode::PerObject)
-        .draw2d([&indexed, &anchored, &custom_origin, &round_cap, &square_cap])
+        .draw2d([
+            &indexed,
+            &anchored,
+            &custom_origin,
+            &circle,
+            &round_cap,
+            &square_cap,
+        ])
         .submit()?;
     window
         .render()
         .mode(RenderMode::Batched)
-        .draw2d([&indexed, &anchored, &custom_origin, &round_cap, &square_cap])
+        .draw2d([
+            &indexed,
+            &anchored,
+            &custom_origin,
+            &circle,
+            &round_cap,
+            &square_cap,
+        ])
         .submit()
 }
