@@ -178,13 +178,6 @@ impl VMNLWindow {
                                         "raw pipeline requires descriptor resources".into(),
                                     )));
                                 };
-                                if render_item.descriptor_sets.len()
-                                    != render_item.required_descriptor_set_count
-                                {
-                                    return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                                        "raw pipeline descriptor resources are incomplete".into(),
-                                    )));
-                                }
                                 if !Arc::ptr_eq(
                                     resources_pipeline_layout,
                                     render_item.pipeline.layout(),
@@ -194,19 +187,33 @@ impl VMNLWindow {
                                     )));
                                 }
                             }
+                            let descriptor_sets = render_item.descriptor_sets_for_image(
+                                framebuffer_index,
+                                self.handle.framebuffers.len(),
+                                &self.handle.vmnl_instance.descriptor_set_allocator,
+                                &self.handle.vmnl_instance.device,
+                            )?;
+                            if render_item.required_descriptor_set_count > 0
+                                && descriptor_sets.len()
+                                    != render_item.required_descriptor_set_count
+                            {
+                                return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                                    "raw pipeline descriptor resources are incomplete".into(),
+                                )));
+                            }
 
                             builder
                                 .bind_pipeline_graphics(render_item.pipeline.clone())
                                 .map_err(|_| {
                                     VMNLError::new(VMNLErrorKind::VulkanPipelineCreationFailed)
                                 })?;
-                            if !render_item.descriptor_sets.is_empty() {
+                            if !descriptor_sets.is_empty() {
                                 builder
                                     .bind_descriptor_sets(
                                         PipelineBindPoint::Graphics,
                                         render_item.pipeline.layout().clone(),
                                         0,
-                                        render_item.descriptor_sets.clone(),
+                                        descriptor_sets,
                                     )
                                     .map_err(|_| {
                                         VMNLError::new(VMNLErrorKind::VulkanValidationFailed)

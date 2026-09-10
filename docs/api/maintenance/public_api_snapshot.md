@@ -308,6 +308,19 @@ impl core::marker::Unpin for vmnl::d2::LineCap
 impl core::marker::UnsafeUnpin for vmnl::d2::LineCap
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::LineCap
 impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::LineCap
+pub struct vmnl::d2::CircleBuilder
+impl vmnl::d2::CircleBuilder
+pub const fn vmnl::d2::CircleBuilder::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
+pub fn vmnl::d2::CircleBuilder::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::d2::Shape>
+pub fn vmnl::d2::CircleBuilder::color<C>(self, C) -> Self where C: core::convert::Into<vmnl::common::Rgba>
+pub fn vmnl::d2::CircleBuilder::position(self, f32, f32) -> Self
+impl core::marker::Freeze for vmnl::d2::CircleBuilder
+impl core::marker::Send for vmnl::d2::CircleBuilder
+impl core::marker::Sync for vmnl::d2::CircleBuilder
+impl core::marker::Unpin for vmnl::d2::CircleBuilder
+impl core::marker::UnsafeUnpin for vmnl::d2::CircleBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::CircleBuilder
+impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::CircleBuilder
 pub struct vmnl::d2::IndexedShapeBuilder
 impl vmnl::d2::IndexedShapeBuilder
 pub fn vmnl::d2::IndexedShapeBuilder::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
@@ -361,6 +374,7 @@ impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::RenderItem2D
 impl !core::panic::unwind_safe::UnwindSafe for vmnl::d2::RenderItem2D
 pub struct vmnl::d2::Shape
 impl vmnl::d2::Shape
+pub fn vmnl::d2::Shape::circle(f32) -> vmnl::d2::CircleBuilder
 pub fn vmnl::d2::Shape::indexed<V, I>(V, I) -> vmnl::d2::IndexedShapeBuilder where V: core::convert::Into<alloc::vec::Vec<vmnl::d2::Vertex2D>>, I: core::convert::Into<alloc::vec::Vec<u32>>
 pub fn vmnl::d2::Shape::line(vmnl::d2::Vector2f, vmnl::d2::Vector2f) -> vmnl::d2::LineBuilder
 pub fn vmnl::d2::Shape::rect(f32, f32) -> vmnl::d2::RectBuilder
@@ -669,6 +683,27 @@ impl core::marker::Unpin for vmnl::ShaderSource
 impl core::marker::UnsafeUnpin for vmnl::ShaderSource
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::ShaderSource
 impl core::panic::unwind_safe::UnwindSafe for vmnl::ShaderSource
+pub struct vmnl::raw::FrameUniform<TData>
+impl<TData> vmnl::raw::FrameUniform<TData>
+pub fn vmnl::raw::FrameUniform<TData>::builder(TData) -> vmnl::raw::FrameUniformBuilder<TData>
+impl<TData> core::marker::Freeze for vmnl::raw::FrameUniform<TData>
+impl<TData> core::marker::Send for vmnl::raw::FrameUniform<TData> where TData: core::marker::Send
+impl<TData> core::marker::Sync for vmnl::raw::FrameUniform<TData> where TData: core::marker::Sync
+impl<TData> core::marker::Unpin for vmnl::raw::FrameUniform<TData> where TData: core::marker::Unpin
+impl<TData> core::marker::UnsafeUnpin for vmnl::raw::FrameUniform<TData>
+impl<TData> !core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::FrameUniform<TData>
+impl<TData> !core::panic::unwind_safe::UnwindSafe for vmnl::raw::FrameUniform<TData>
+pub struct vmnl::raw::FrameUniformBuilder<TData>
+impl<TData> vmnl::raw::FrameUniformBuilder<TData>
+pub fn vmnl::raw::FrameUniformBuilder<TData>::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
+pub fn vmnl::raw::FrameUniformBuilder<TData>::build(self, &vmnl::Window) -> vmnl::VMNLResult<vmnl::raw::FrameUniform<TData>> where TData: vmnl::raw::BufferContents + core::clone::Clone
+impl<TData> core::marker::Freeze for vmnl::raw::FrameUniformBuilder<TData> where TData: core::marker::Freeze
+impl<TData> core::marker::Send for vmnl::raw::FrameUniformBuilder<TData> where TData: core::marker::Send
+impl<TData> core::marker::Sync for vmnl::raw::FrameUniformBuilder<TData> where TData: core::marker::Sync
+impl<TData> core::marker::Unpin for vmnl::raw::FrameUniformBuilder<TData> where TData: core::marker::Unpin
+impl<TData> core::marker::UnsafeUnpin for vmnl::raw::FrameUniformBuilder<TData> where TData: core::marker::UnsafeUnpin
+impl<TData> core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::FrameUniformBuilder<TData> where TData: core::panic::unwind_safe::RefUnwindSafe
+impl<TData> core::panic::unwind_safe::UnwindSafe for vmnl::raw::FrameUniformBuilder<TData> where TData: core::panic::unwind_safe::UnwindSafe
 pub struct vmnl::raw::Geometry<TVertex>
 impl<TVertex> vmnl::raw::Geometry<TVertex>
 pub fn vmnl::raw::Geometry<TVertex>::builder<V>(V) -> vmnl::raw::GeometryBuilder<TVertex> where V: core::convert::Into<alloc::vec::Vec<TVertex>>
@@ -736,6 +771,7 @@ impl !core::panic::unwind_safe::UnwindSafe for vmnl::raw::Resources
 pub struct vmnl::raw::ResourcesBuilder
 impl vmnl::raw::ResourcesBuilder
 pub fn vmnl::raw::ResourcesBuilder::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::raw::Resources>
+pub fn vmnl::raw::ResourcesBuilder::frame_uniform<TData>(self, u32, u32, &vmnl::raw::FrameUniform<TData>) -> Self
 pub fn vmnl::raw::ResourcesBuilder::uniform<TData>(self, u32, u32, &vmnl::raw::Uniform<TData>) -> Self
 impl core::marker::Freeze for vmnl::raw::ResourcesBuilder
 impl core::marker::Send for vmnl::raw::ResourcesBuilder
@@ -747,6 +783,7 @@ impl !core::panic::unwind_safe::UnwindSafe for vmnl::raw::ResourcesBuilder
 pub struct vmnl::raw::Uniform<TData>
 impl<TData> vmnl::raw::Uniform<TData>
 pub fn vmnl::raw::Uniform<TData>::builder(TData) -> vmnl::raw::UniformBuilder<TData>
+pub fn vmnl::raw::Uniform<TData>::write(&mut self, TData) -> vmnl::VMNLResult<()> where TData: vmnl::raw::BufferContents
 impl<TData> core::marker::Freeze for vmnl::raw::Uniform<TData>
 impl<TData> core::marker::Send for vmnl::raw::Uniform<TData> where TData: core::marker::Sync + core::marker::Send
 impl<TData> core::marker::Sync for vmnl::raw::Uniform<TData> where TData: core::marker::Sync + core::marker::Send
@@ -1061,10 +1098,11 @@ pub struct vmnl::FrameRenderer<'w, 'g>
 impl<'w, 'g> vmnl::FrameRenderer<'w, 'g>
 pub fn vmnl::FrameRenderer<'w, 'g>::draw2d<D, const N: usize>(self, [&'g D; N]) -> Self where D: vmnl::d2::Drawable2D + ?core::marker::Sized
 pub fn vmnl::FrameRenderer<'w, 'g>::draw3d<D, const N: usize>(self, &'g vmnl::d3::Camera, [&'g D; N]) -> Self where D: vmnl::d3::Drawable3D + ?core::marker::Sized
-pub fn vmnl::FrameRenderer<'w, 'g>::draw_raw<TVertex, const N: usize>(self, &'g vmnl::raw::Pipeline<TVertex>, [&'g vmnl::raw::Geometry<TVertex>; N]) -> Self
-pub fn vmnl::FrameRenderer<'w, 'g>::draw_raw_with<TVertex, const N: usize>(self, &'g vmnl::raw::Pipeline<TVertex>, &'g vmnl::raw::Resources, [&'g vmnl::raw::Geometry<TVertex>; N]) -> Self
+pub fn vmnl::FrameRenderer<'w, 'g>::draw_raw_2d<TVertex, const N: usize>(self, &'g vmnl::raw::Pipeline<TVertex>, [&'g vmnl::raw::Geometry<TVertex>; N]) -> Self
+pub fn vmnl::FrameRenderer<'w, 'g>::draw_raw_2d_with<TVertex, const N: usize>(self, &'g vmnl::raw::Pipeline<TVertex>, &'g vmnl::raw::Resources, [&'g vmnl::raw::Geometry<TVertex>; N]) -> Self
 pub fn vmnl::FrameRenderer<'w, 'g>::mode(self, vmnl::RenderMode) -> Self
 pub fn vmnl::FrameRenderer<'w, 'g>::submit(self) -> vmnl::VMNLResult<()>
+pub fn vmnl::FrameRenderer<'w, 'g>::write_frame_uniform<TData>(self, &'g mut vmnl::raw::FrameUniform<TData>, TData) -> Self where TData: vmnl::raw::BufferContents + 'g
 impl<'w, 'g> core::marker::Freeze for vmnl::FrameRenderer<'w, 'g>
 impl<'w, 'g> !core::marker::Send for vmnl::FrameRenderer<'w, 'g>
 impl<'w, 'g> !core::marker::Sync for vmnl::FrameRenderer<'w, 'g>

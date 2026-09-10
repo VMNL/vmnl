@@ -24,7 +24,9 @@ pub use input::{
     Input, Joystick, JoystickState, Key, KeyboardState, MouseButton, MouseState, StickState,
 };
 pub use monitors::{MonitorInfo, Monitors, VideoMode};
-use vulkano::{device::Device, render_pass::RenderPass};
+use vulkano::{
+    device::Device, memory::allocator::StandardMemoryAllocator, render_pass::RenderPass,
+};
 
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
@@ -117,7 +119,15 @@ impl Window {
         self.inner.handle.vmnl_instance.device.clone()
     }
 
+    pub(crate) fn memory_allocator(&self) -> Arc<StandardMemoryAllocator> {
+        self.inner.handle.vmnl_instance.memory_allocator.clone()
+    }
+
     pub(crate) fn render_pass(&self) -> Arc<RenderPass> {
         self.inner.handle.render_pass.clone()
+    }
+
+    pub(crate) fn swapchain_image_count(&self) -> usize {
+        self.inner.handle.framebuffers.len()
     }
 }

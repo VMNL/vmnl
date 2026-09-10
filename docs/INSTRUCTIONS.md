@@ -42,15 +42,10 @@
 
 ## Code organization and structure
 
-- Maintain alphabetical order when adding new entries
+- Maintain alphabetical order only in inventories, manifests, or tables that already use it
 - Keep related methods adjacent to each other
 - Group code by purpose using blank lines to separate logical blocks
 - Add blank lines after guard statements to separate validation from business logic
-
-## Resource Management and Localization
-
-- Check for existing resource tags before creating new ones
-- Use generic resource as much as possible
 
 ## Commit Messages
 
@@ -75,12 +70,11 @@ For more information, see [Conventional Commits](https://www.conventionalcommits
 | `style` | formatting, whitespace, missing semicolons |
 | `test` | adding or correcting tests |
 
-## Vulkan Rules
+## Graphics Contracts
 
-- Never hide expensive GPU operations behind simple-looking APIs.
-- Avoid implicit GPU synchronization.
-- Track resource ownership explicitly.
-- Do not recreate Vulkan resources unnecessarily.
-- Prefer resource reuse and caching.
-- Avoid GPU stalls.
-- Keep Vulkan lifetime management explicit.
+- Follow the control model and invariants in [Architecture](architecture.md).
+- Document allocations, uploads, pipeline creation, synchronization, waits, and other expensive
+  operations at their public boundary.
+- Keep GPU ownership, lifetimes, and synchronization explicit.
+- Make cache ownership and invalidation explicit; do not add hidden caches.
+- Measure performance claims under a reproducible workload.

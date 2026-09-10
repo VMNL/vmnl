@@ -132,11 +132,11 @@ fn main() -> VMNLResult<()> {
         }
         window
             .render()
-            .draw_raw(&points_pipeline, [&points])
-            .draw_raw(&line_list_pipeline, [&line_list])
-            .draw_raw(&line_strip_pipeline, [&line_strip])
-            .draw_raw(&triangle_list_pipeline, [&triangle_list])
-            .draw_raw(&triangle_strip_pipeline, [&triangle_strip])
+            .draw_raw_2d(&points_pipeline, [&points])
+            .draw_raw_2d(&line_list_pipeline, [&line_list])
+            .draw_raw_2d(&line_strip_pipeline, [&line_strip])
+            .draw_raw_2d(&triangle_list_pipeline, [&triangle_list])
+            .draw_raw_2d(&triangle_strip_pipeline, [&triangle_strip])
             .submit()?;
     }
 

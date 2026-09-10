@@ -11,7 +11,7 @@ mod command_buffer;
 mod sync;
 
 use crate::d2::RenderItem2D;
-use crate::raw::RenderItemRaw;
+use crate::raw::{PendingFrameUniformWrite, RenderItemRaw};
 use crate::window::{inner::VMNLWindow, RenderMode};
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;
@@ -27,13 +27,20 @@ impl VMNLWindow {
         &mut self,
         mode: RenderMode,
         commands: &[RenderPassCommand],
+        frame_uniform_writes: Vec<PendingFrameUniformWrite<'_>>,
     ) -> VMNLResult<()> {
         match mode {
-            RenderMode::PerObject | RenderMode::Batched => self.render_per_object(commands),
+            RenderMode::PerObject | RenderMode::Batched => {
+                self.render_per_object(commands, frame_uniform_writes)
+            }
         }
     }
 
-    fn render_per_object(&mut self, commands: &[RenderPassCommand]) -> VMNLResult<()> {
+    fn render_per_object(
+        &mut self,
+        commands: &[RenderPassCommand],
+        frame_uniform_writes: Vec<PendingFrameUniformWrite<'_>>,
+    ) -> VMNLResult<()> {
         if self.state.swapchain_recreation_requested {
             self.recreate_swapchain()?;
         }
@@ -54,6 +61,13 @@ impl VMNLWindow {
             );
             self.state.swapchain_recreation_requested = true;
         }
+        let framebuffer_index: usize = usize::try_from(image_index)
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+        let current_image_count = self.handle.framebuffers.len();
+        for write in frame_uniform_writes {
+            write.write(framebuffer_index, current_image_count)?;
+        }
+
         let command_buffer: Arc<PrimaryAutoCommandBuffer> =
             self.build_command_buffer(image_index, commands)?;
         let frame_sync = Self::frame_sync(

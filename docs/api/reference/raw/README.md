@@ -1,6 +1,6 @@
 # Raw rendering API
 
-The experimental raw layer is operational within documented limits. It provides typed custom graphics pipelines, vertex/index geometry, uniform buffers, descriptor resources, and ordered composition with 2D passes. VMNL still owns swapchains, render passes, command buffers, submission, and presentation.
+The experimental raw layer is operational within documented limits. It provides typed custom graphics pipelines, vertex/index geometry, direct and frame-varying uniform buffers, descriptor resources, and ordered composition with 2D passes. VMNL still owns swapchains, render passes, command buffers, submission, and presentation.
 
 | Area | Pages |
 |---|---|

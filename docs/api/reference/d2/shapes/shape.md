@@ -10,7 +10,7 @@ Owns GPU-backed 2D geometry accepted by `FrameRenderer::draw2d`.
 
 ## Public API
 
-Builder entry points: `rect(w, h)`, `indexed(vertices, indices)`, `triangle(a, b, c)`, `triangle_from_vertices([Vertex2D; 3])`, and `line(from, to)`. Implements `Drawable2D` and `AsRef<Shape>`; fields and direct construction are private.
+Builder entry points: `circle(radius)`, `rect(w, h)`, `indexed(vertices, indices)`, `triangle(a, b, c)`, `triangle_from_vertices([Vertex2D; 3])`, and `line(from, to)`. Implements `Drawable2D` and `AsRef<Shape>`; fields and direct construction are private.
 
 ## Construction, defaults, and validation
 
