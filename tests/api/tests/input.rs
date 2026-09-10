@@ -3,7 +3,7 @@
 
 //! Headless public input-state contracts.
 
-use vmnl::{Input, Key, MouseButton, VMNLResult};
+use vmnl::{Input, Joystick, JoystickState, Key, MouseButton, StickState, VMNLResult};
 
 fn assert_empty(input: &Input) {
     let keyboard = input.keyboard();
@@ -14,6 +14,24 @@ fn assert_empty(input: &Input) {
     assert!(!keyboard.is_any_down(&[Key::Escape, Key::Left]));
     assert!(!keyboard.is_one_down());
     assert!(!keyboard.is_one_used());
+
+    let joystick: &JoystickState = input.joystick();
+    for stick in [joystick.left(), joystick.right()] {
+        let stick: &StickState = stick;
+        assert_eq!(stick.degrees(), None);
+        assert!(!stick.is_clicked());
+    }
+    for control in [
+        Joystick::JoystickLeft { degrees: None },
+        Joystick::JoystickLeftButton,
+        Joystick::JoystickRight { degrees: None },
+        Joystick::JoystickRightButton,
+    ] {
+        assert!(!joystick.is_down(control));
+        assert!(!joystick.is_pressed(control));
+        assert!(!joystick.is_released(control));
+    }
+    assert!(!joystick.is_one_used());
 
     let mouse = input.mouse();
     assert!(!mouse.is_down(MouseButton::Left));

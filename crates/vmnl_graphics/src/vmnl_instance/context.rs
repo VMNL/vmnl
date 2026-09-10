@@ -36,6 +36,12 @@ impl Context {
     /// A `VMNLResult<Self>` containing the initialized `Context` on success.
     ///
     /// # Errors
+    /// If `VMNL_GAMEPAD_MAPPINGS` is set, its file is read once as ASCII SDL gamepad
+    /// mappings after GLFW initialization. Relative paths use the working directory.
+    /// Unreadable files, NUL/non-ASCII text, or GLFW rejection return `InvalidState`.
+    /// Mappings affect all contexts sharing GLFW and persist until GLFW terminates.
+    /// Acceptance does not guarantee a matching device or platform.
+    ///
     /// Returns a `VMNLResult::Err` if any step of the Vulkan initialization process
     /// fails, such as instance creation, physical device selection, or logical device creation.
     ///

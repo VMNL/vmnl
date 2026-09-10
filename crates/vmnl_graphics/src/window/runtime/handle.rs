@@ -63,7 +63,8 @@ impl VMNLWindow {
     pub(crate) fn poll_events(&mut self) -> Vec<Event> {
         self.handle.instance.poll_events();
         self.handle.input.update(&self.handle.context);
-        let events: Vec<Event> = self.handle.events.poll_events();
+        let mut events: Vec<Event> = self.handle.events.poll_events();
+        self.handle.input.joystick().append_events(&mut events);
         if events.iter().any(|event| {
             matches!(
                 event,

@@ -6,6 +6,7 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 |---|---|---|---|---|
 | alias | `vmnl::VMNLResult` | [VMNLResult](../reference/errors/vmnl_result.md) | [Rustdoc](../../../target/doc/vmnl/type.VMNLResult.html) | [API errors](../../../tests/api/tests/errors.rs) |
 | enum | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/enum.Event.html) | [event input example](../../../examples/window/events_input/src/main.rs) |
+| enum | `vmnl::Joystick` | [Joystick](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.Joystick.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl/enum.Key.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::MouseButton` | [MouseButton](../reference/window/input/mouse_button.md) | [Rustdoc](../../../target/doc/vmnl/enum.MouseButton.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::PresentMode` | [PresentMode](../reference/window/present_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.PresentMode.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
@@ -23,6 +24,8 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | struct | `vmnl::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.Context.html) | [GPU context](../../../tests/gpu/tests/context.rs) |
 | struct | `vmnl::FrameRenderer` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [Rustdoc](../../../target/doc/vmnl/struct.FrameRenderer.html) | [GPU frame renderer](../../../tests/gpu/tests/frame_renderer.rs) |
 | struct | `vmnl::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl/struct.Input.html) | [API input](../../../tests/api/tests/input.rs) |
+| struct | `vmnl::JoystickState` | [JoystickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickState.html) | [API input](../../../tests/api/tests/input.rs) |
+| struct | `vmnl::StickState` | [StickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickState.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::KeyboardState` | [KeyboardState](../reference/window/input/keyboard_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.KeyboardState.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::MonitorInfo` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [Rustdoc](../../../target/doc/vmnl/struct.MonitorInfo.html) | [GPU window runtime](../../../tests/gpu/tests/window_runtime.rs) |
 | struct | `vmnl::Monitors` | [Monitors](../reference/window/monitors/monitors.md) | [Rustdoc](../../../target/doc/vmnl/struct.Monitors.html) | [GPU window runtime](../../../tests/gpu/tests/window_runtime.rs) |

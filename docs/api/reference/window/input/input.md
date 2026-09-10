@@ -6,19 +6,22 @@ Import path: `vmnl::Input`. Status: experimental, operational.
 
 ## Purpose and use cases
 
-Groups keyboard and mouse state updated by window event processing.
+Groups keyboard, mouse, and slot-1 joystick state updated by `Window::poll_events`.
 
 ## Public API
 
-`new()`, `keyboard() -> &KeyboardState`, and `mouse() -> &MouseState`. `Default` delegates to `new`.
+`new()`, `keyboard() -> &KeyboardState`, `mouse() -> &MouseState`, and
+`joystick() -> &JoystickState`. `Default` delegates to `new`.
 
 ## Construction, defaults, and validation
 
-New/default state has every key and button up, with no pressed/released transitions.
+New/default state has every key and button up, centered sticks, and no
+pressed/released transitions. Joystick presence initially assumes an absent device.
 
 ## Units, coordinates, and valid ranges
 
-Not applicable; cursor positions and scroll deltas are represented by `Event`, not stored here.
+Joystick directions are degrees in `[0, 360)` or `None` when centered; see
+[joystick input](joysticks.md). Cursor positions and scroll deltas are represented by `Event`.
 
 ## Ownership, lifecycle, and threading
 
@@ -34,7 +37,10 @@ Fixed-size CPU state; no heap allocation or GPU work.
 
 ## Platform, Vulkan, and display constraints
 
-Observed state depends on enabled polling, platform focus, and processed events.
+Keyboard/mouse state depends on enabled polling, platform focus, and processed events.
+Joystick sampling is independent of those polling flags. Only GLFW slot 1 is
+tracked; sticks require a gamepad mapping. Presence does not require a mapping.
+Other gamepad buttons, triggers, magnitude, and additional device slots are not exposed.
 
 ## Example and related types
 

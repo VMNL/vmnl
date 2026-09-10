@@ -7,7 +7,10 @@
 //! such as resizing, key presses, mouse movements, and more. The `EventQueue` struct
 //! polls events from GLFW and translates them into VMNL-specific events.
 
-use super::{Key as VMNLKey, KeyboardState, MouseButton as VMNLMouseButton, MouseState};
+use super::{
+    Joystick as VMNLJoystick, Key as VMNLKey, KeyboardState, MouseButton as VMNLMouseButton,
+    MouseState,
+};
 
 /// The `Event` enum represents the different types of events that can occur in the VMNL application.
 ///
@@ -73,6 +76,66 @@ pub enum Event {
         dx: f64,
         /// Scroll offset in the y-direction.
         dy: f64,
+    },
+    /// GLFW slot 1 changed from absent to present, whether mapped as a gamepad or not.
+    ///
+    /// A device already present on the first poll also emits this event. Presence
+    /// is sampled during `Window::poll_events`; changes between polls can be missed.
+    JoystickConnected,
+    /// GLFW slot 1 changed from present to absent.
+    ///
+    /// Emitted before click releases and stick centering for the same poll.
+    /// Losing only the gamepad mapping does not emit this event.
+    JoystickDisconnected,
+    /// A stick click button was pressed.
+    ///
+    /// Emitted by `Window::poll_events` for the mapped gamepad in GLFW slot 1.
+    JoystickButtonPressed {
+        /// The pressed control: `JoystickLeftButton` or `JoystickRightButton`.
+        /// Direction variants are not button controls; construction does not enforce this.
+        joystick: VMNLJoystick,
+    },
+    /// A stick click button was released.
+    ///
+    /// Emitted by `Window::poll_events` for the mapped gamepad in GLFW slot 1.
+    JoystickButtonReleased {
+        /// The released control: `JoystickLeftButton` or `JoystickRightButton`.
+        /// Direction variants are not button controls; construction does not enforce this.
+        joystick: VMNLJoystick,
+    },
+    /// A stick direction changed, including a return to the center.
+    ///
+    /// Consecutive computed angles are compared exactly. An unchanged direction emits
+    /// no event; tilt magnitude alone is not tracked. Losing the mapped gamepad
+    /// returns active sticks to the center (`None`).
+    ///
+    /// Emitted by `Window::poll_events` for the mapped gamepad in GLFW slot 1.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::{Event, Joystick};
+    ///
+    /// let moved = Event::JoystickMoved {
+    ///     joystick: Joystick::JoystickLeft { degrees: Some(90.0) },
+    /// };
+    /// let centered = Event::JoystickMoved {
+    ///     joystick: Joystick::JoystickRight { degrees: None },
+    /// };
+    /// if let Event::JoystickMoved {
+    ///     joystick: Joystick::JoystickLeft { degrees },
+    /// } = moved {
+    ///     assert_eq!(degrees, Some(90.0));
+    /// }
+    /// assert!(matches!(centered, Event::JoystickMoved {
+    ///     joystick: Joystick::JoystickRight { degrees: None },
+    /// }));
+    /// ```
+    JoystickMoved {
+        /// The left or right direction variant carrying the new angle in `[0, 360)`.
+        /// Right is 0 degrees, up is 90, left is 180, and down is 270.
+        /// `None` means centered inside the input dead zone. Tilt magnitude is not stored.
+        /// Button variants and invalid angles are not rejected by construction.
+        joystick: VMNLJoystick,
     },
     /// Text input event containing the input character.
     Text(char),

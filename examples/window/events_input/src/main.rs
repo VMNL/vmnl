@@ -1,10 +1,26 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-use vmnl::{Context, Event, Key, MouseButton, PresentMode, VMNLResult, Window};
+//! Window events, keyboard, mouse, and slot-1 gamepad input demonstration.
+
+use vmnl::{Context, Event, Joystick, Key, MouseButton, PresentMode, VMNLResult, Window};
 
 fn print_event(event: &Event) {
-    println!("[event] {event:?}");
+    match event {
+        Event::JoystickMoved { joystick } => {
+            let (side, degrees) = match joystick {
+                Joystick::JoystickLeft { degrees } => ("left", degrees),
+                Joystick::JoystickRight { degrees } => ("right", degrees),
+                _ => return,
+            };
+            if let Some(angle) = degrees {
+                println!("[gamepad slot 1] {side} stick: {angle:.1} degrees");
+            } else {
+                println!("[gamepad slot 1] {side} stick: centered");
+            }
+        }
+        _ => println!("[event] {event:?}"),
+    }
 }
 
 fn print_monitor_summary(window: &Window) {
@@ -146,6 +162,13 @@ fn main() -> VMNLResult<()> {
         window.is_focused()
     );
     println!("keys: Escape close, F focus, I iconify, M maximize, R restore, H hide/show, C clear aspect");
+
+    println!(
+        "gamepad slot 1: move each stick, return to center, click L3/R3, then unplug/reconnect"
+    );
+    println!(
+        "angles: right 0, up 90, left 180, down 270; stick input requires a GLFW gamepad mapping"
+    );
 
     while window.is_open() {
         for event in window.poll_events() {

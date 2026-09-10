@@ -56,3 +56,50 @@ Hypothesis: GLFW cannot initialize a window or the display server is unavailable
 - Run `just test-gpu` only in a graphical session with Vulkan available.
 
 If headless tests pass and GPU tests cannot create a window, the failure is environmental rather than an API contract regression.
+
+## Joystick Connected but Sticks Do Not Respond
+
+If GLFW reports joystick presence and changing raw axes but `is_gamepad()` is
+false, the device lacks a matching gamepad mapping. Set `VMNL_GAMEPAD_MAPPINGS`
+to an ASCII SDL mapping file before creating `Context`. VMNL reads it once during
+context creation, using the process working directory for relative paths. It
+performs no automatic download. Mappings affect GLFW globally until termination.
+An unreadable file, NUL/non-ASCII text, or parser rejection returns `InvalidState`.
+A successfully parsed file may still lack a mapping for the device's GUID/platform.
+
+For the Linux Xbox 360 device reporting GUID `030000005e0400008e02000045050000`,
+run from the repository root:
+
+```bash
+VMNL_GAMEPAD_MAPPINGS=examples/window/events_input/gamecontrollerdb.txt just run window_events_input
+```
+
+The supplied mapping adapts the SDL_GameControllerDB Linux Xbox 360 layout:
+left axes 0/1, right axes 3/4, and stick clicks 9/10. The user's raw samples confirm
+left-axis movement; right-stick axes and click buttons remain to be verified on
+the physical device. The mapping deliberately covers only VMNL's current stick
+and click inputs. It is not a universal mapping for all controllers.
+
+Test both sticks through the cardinal directions, centering, and both clicks.
+If a control is incorrect, compare raw axes/buttons before changing the mapping;
+do not infer a generic layout from the number of axes alone.
+
+### Inspect a Mapping That Still Produces No Stick Events
+
+Enable diagnostics explicitly and press P in the example window:
+
+```bash
+VMNL_GAMEPAD_DIAGNOSTICS=1 VMNL_GAMEPAD_MAPPINGS=examples/window/events_input/gamecontrollerdb.txt just run window_events_input
+```
+
+Each press prints to stderr: the configured file, present slots, names, GUIDs,
+mapping availability, raw axes/buttons, hat count, and mapped state. Capture
+one sample centered, then samples while holding each stick or click. This mode
+only reads state and does not change mappings. Without the environment variable,
+P produces no extra diagnostic output.
+
+GLFW can parse a mapping file successfully yet reject its application to a device
+if its GUID/platform differs or referenced controls exceed that device's axes or
+buttons. The raw button array may include synthesized hat directions. Compare
+raw and mapped samples before changing any mapping indices. VMNL still consumes
+only slot 1 even though this diagnostic reports all present slots.

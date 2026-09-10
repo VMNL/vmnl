@@ -2,21 +2,25 @@
 // SPDX-License-Identifier: MIT
 
 //! Input handling for the VMNL library, defining the `Input` struct and related methods
-//! for managing keyboard and mouse input states.
+//! for managing keyboard, mouse, and joystick input states.
 
+mod joysticks;
 mod keyboard;
 mod mouse;
+pub use joysticks::{Joystick, JoystickState, StickState};
 pub use keyboard::{Key, KeyboardState};
 pub use mouse::{MouseButton, MouseState};
 
-/// Represents the input state for the application, consisting of keyboard and mouse states.
+/// Represents the input state for the application, consisting of keyboard, mouse, and joystick states.
 ///
-/// Used to manage keyboard and mouse input and to provide convenient accessors for each sub-state.
+/// Provides shared access to each input snapshot, including the joystick in GLFW slot 1.
 pub struct Input {
     /// The current state of the keyboard.
     keyboard: KeyboardState,
     /// The current state of the mouse.
     mouse: MouseState,
+    /// The current state of the joystick.
+    joystick: JoystickState,
 }
 
 impl Default for Input {
@@ -72,16 +76,56 @@ impl Input {
         &self.mouse
     }
 
-    /// Updates both keyboard and mouse states from the given GLFW window.
+    /// Returns a reference to the current `JoystickState` for GLFW slot 1.
+    ///
+    /// Stick directions and click buttons require a GLFW gamepad mapping. Presence
+    /// is tracked even without one. `Window::poll_events` refreshes this snapshot;
+    /// a manually constructed `Input` remains disconnected from GLFW.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::{Input, Joystick};
+    ///
+    /// let input = Input::new();
+    /// if input.joystick().is_pressed(Joystick::JoystickLeftButton) {
+    ///     println!("Left joystick button was pressed!");
+    /// }
+    /// if input.joystick().is_any_down(&[
+    ///     Joystick::JoystickLeftButton,
+    ///     Joystick::JoystickRightButton,
+    /// ]) {
+    ///     println!("A joystick button is held down!");
+    /// }
+    /// if input.joystick().is_one_used() {
+    ///     println!("A joystick control was used!");
+    /// }
+    /// ```
+    #[inline]
+    #[must_use]
+    pub const fn joystick(&self) -> &JoystickState {
+        &self.joystick
+    }
+
+    /// Updates keyboard, mouse, and joystick states from the given GLFW window.
     ///
     /// # Arguments
-    /// - `window`: The GLFW window to read input from. Call once per frame.
+    /// - `window`: The GLFW window providing access to input and GLFW. Call once per frame.
     pub(crate) fn update(&mut self, window: &glfw::PWindow) {
         self.keyboard.update(window);
         self.mouse.update(window);
+
+        if self.keyboard.is_pressed(Key::P) {
+            crate::glfw_backend::print_gamepad_diagnostics(&window.glfw);
+        }
+
+        let joystick = window.glfw.get_joystick(glfw::JoystickId::Joystick1);
+        let gamepad = joystick.get_gamepad_state();
+        let connected = joystick.is_present();
+
+        self.joystick.update(connected, gamepad.as_ref());
     }
 
-    /// Creates a new `Input` with fresh keyboard and mouse states.
+    /// Creates a new `Input` with fresh keyboard, mouse, and joystick states.
     ///
     /// # Example
     /// ```rust
@@ -96,6 +140,7 @@ impl Input {
         Self {
             keyboard: KeyboardState::default(),
             mouse: MouseState::default(),
+            joystick: JoystickState::default(),
         }
     }
 }
@@ -105,11 +150,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn new_input_starts_with_clear_keyboard_and_mouse_states() {
+    fn new_input_starts_with_clear_keyboard_mouse_joystick_states() {
         let input: Input = Input::new();
 
         assert!(!input.keyboard().is_one_used());
         assert!(!input.mouse().is_one_used());
+        assert!(!input.joystick().is_one_used());
     }
 
     #[test]
@@ -118,5 +164,6 @@ mod tests {
 
         assert!(!input.keyboard().is_one_down());
         assert!(!input.mouse().is_one_down());
+        assert!(!input.joystick().is_one_down());
     }
 }

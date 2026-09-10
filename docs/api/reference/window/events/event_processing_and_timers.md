@@ -21,6 +21,13 @@ Drives the native event queue, updates input snapshots, controls GLFW time, wake
 | `set_error_callback(callback)`, `unset_error_callback()` | Replace/remove the GLFW error callback. |
 | `input()` | Borrow the updated `Input` snapshot. |
 
+Presence transitions for GLFW slot 1, followed by stick click and direction
+transitions when a gamepad mapping is available, are
+appended after native window events by `poll_events()`. See [`Event`](event.md)
+for ordering, angle comparison, dead-zone, and unavailable-device behavior.
+`wait_events()` and `wait_events_timeout()` do not update joystick snapshots;
+call `poll_events()` afterward. Continuous stick input should be sampled regularly.
+
 ## Construction, defaults, and validation
 
 Window creation configures common event sources by default. Timeout/time values are forwarded as `f64`; VMNL adds no validation beyond the backend contract. The callback is `'static` and receives `(VMNLErrorKind, String)`.
