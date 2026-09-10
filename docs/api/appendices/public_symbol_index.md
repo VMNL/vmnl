@@ -29,6 +29,7 @@
 | struct | `vmnl::common::Rgba` | [Rgba](../reference/common/rgba.md) | [Rustdoc](../../../target/doc/vmnl/common/struct.Rgba.html) |
 | enum | `vmnl::common::ShaderSource` | [ShaderSource](../reference/common/shader_source.md) | [Rustdoc](../../../target/doc/vmnl/common/enum.ShaderSource.html) |
 | enum | `vmnl::d2::Anchor` | [Anchor](../reference/d2/shapes/anchor.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.Anchor.html) |
+| struct | `vmnl::d2::CircleBuilder` | [CircleBuilder](../reference/d2/shapes/circle_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.CircleBuilder.html) |
 | trait | `vmnl::d2::Drawable2D` | [Drawable2D](../reference/d2/drawable_2d.md) | [Rustdoc](../../../target/doc/vmnl/d2/trait.Drawable2D.html) |
 | struct | `vmnl::d2::IndexedShapeBuilder` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html) |
 | struct | `vmnl::d2::LineBuilder` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.LineBuilder.html) |
@@ -48,6 +49,8 @@
 | struct | `vmnl::d3::Vertex3D` | [Vertex3D](../reference/d3/vertex_3d.md) | [Rustdoc](../../../target/doc/vmnl/d3/struct.Vertex3D.html) |
 | enum | `vmnl::raw::BlendMode` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.BlendMode.html) |
 | trait | `vmnl::raw::BufferContents` | [BufferContents](../reference/raw/traits/buffer_contents.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.BufferContents.html) |
+| struct | `vmnl::raw::FrameUniform` | [FrameUniform](../reference/raw/uniforms/frame_uniform.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.FrameUniform.html) |
+| struct | `vmnl::raw::FrameUniformBuilder` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.FrameUniformBuilder.html) |
 | struct | `vmnl::raw::Geometry` | [Geometry](../reference/raw/geometry/geometry.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Geometry.html) |
 | struct | `vmnl::raw::GeometryBuilder` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.GeometryBuilder.html) |
 | struct | `vmnl::raw::Pipeline` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Pipeline.html) |

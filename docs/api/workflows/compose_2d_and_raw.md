@@ -1,6 +1,6 @@
 # Compose 2D and raw passes
 
-Append `draw2d`, `draw_raw`, and `draw_raw_with` calls in the required logical order on one `FrameRenderer`; `RenderMode` does not reorder passes. Submit once.
+Append `draw2d`, `draw_raw_2d`, and `draw_raw_2d_with` calls in the required logical order on one `FrameRenderer`; `RenderMode` does not reorder passes. Submit once.
 
 ```rust,no_run
 # extern crate vmnl;
@@ -10,7 +10,7 @@ Append `draw2d`, `draw_raw`, and `draw_raw_with` calls in the required logical o
 # fn render<T>(window: &mut Window, shape: &Shape, pipeline: &Pipeline<T>, geometry: &Geometry<T>) -> vmnl::VMNLResult<()> {
 window.render()
     .draw2d([shape])
-    .draw_raw(pipeline, [geometry])
+    .draw_raw_2d(pipeline, [geometry])
     .draw2d([shape])
     .submit()?;
 # Ok(())

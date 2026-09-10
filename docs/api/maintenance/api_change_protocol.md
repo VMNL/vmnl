@@ -9,8 +9,11 @@ For every public API change:
 5. If the change adds or modifies a GLFW operation, complete the
    [GLFW portability protocol](glfw_portability_protocol.md).
 6. Run `just docs-api-update`; review all generated files and the coverage matrix.
-7. Add an `Unreleased` changelog entry.
-8. Run `just docs-api-check`, then the repository validation sequence in [validation](validation.md).
+7. Assess release-note impact under [`docs/deployment.md`](../../deployment.md). Before the first
+   public release, do not create a per-change entry; afterward, record only a user-visible addition,
+   change, fix, or deprecation.
+8. Run the repository completion sequence in [validation](validation.md); it invokes
+   `just docs-api-check` at the required position.
 
 `docs-api-update` is intentionally mutating. `docs-api-check` is non-mutating and fails on a
 missing/duplicate symbol, unknown status or inventory syntax, missing source/proof/page/method

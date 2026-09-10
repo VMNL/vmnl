@@ -10,7 +10,7 @@ description: Develop, fix, review, document, and validate VMNL graphics work acr
 1. Follow the root `AGENTS.md`; classify the task and its impacts before editing.
 2. Read only the canonical documentation and agent references routed below.
 3. Inspect the affected contract, tests, and minimal implementation path.
-4. Implement the smallest coherent patch while preserving explicit control, predictable costs, deterministic behavior, ownership, and layer separation.
+4. Implement the smallest coherent patch while preserving the progressive control model, predictable costs, scoped determinism, ownership, and layer separation in `docs/architecture.md`.
 5. Run a targeted check during development, then the applicable completion and graphics-specific checks.
 6. Report only directly observed automatic evidence and operator-reported manual evidence.
 
@@ -29,13 +29,14 @@ Treat `docs/` as the canonical home for stable architecture, contracts, and proc
 
 ## Route Agent References
 
-- Read [`references/current-limitations.md`](references/current-limitations.md) before changing context/device selection, GLFW initialization, 3D status, Rustdoc examples, GPU tests, or the Justfile.
+- Read [`references/current-limitations.md`](references/current-limitations.md) before changing context/device selection, GLFW initialization, 3D status, or GPU test routing.
 - Read [`references/graphics-correctness.md`](references/graphics-correctness.md) for Vulkan, synchronization, swapchain, window, resource, shader, pipeline, unsafe, platform, or performance work.
 - Read [`references/validation.md`](references/validation.md) for every feature, fix, Rust source change, test/example change, tooling change, dependency change, or validation claim.
 
 ## Preserve Graphics Contracts
 
 - Keep explicit low-level pipeline and geometry control in `raw`.
+- Keep every observable high-level default inspectable and replaceable without requiring the raw API.
 - Do not expose backend types as stable public contracts without an explicit raw-API decision.
 - Do not present 3D rendering as operational while its backend remains scaffolding.
 - For a public graphics change, decide facade exposure and document applicable units, coordinates, defaults, valid ranges, ownership, lifecycle, costs, synchronization, errors, panic/safety conditions, and platform/GPU requirements.

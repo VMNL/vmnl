@@ -21,3 +21,4 @@ All notable changes to this project will be documented in this file.
 
 - Add opt-in `VMNL_GAMEPAD_DIAGNOSTICS` output on P to inspect raw and mapped
   controller state without changing mappings or the normal example output.
+- Add the experimental filled 2D circle shape builder.

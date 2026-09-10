@@ -8,4 +8,10 @@ VMNL exposes a progression of control:
 
 The layers share a `Context`. Resources and pipelines must be used with the compatible context/window/device from which they were created. The raw layer is not a direct Vulkan handle API: VMNL still owns render passes, swapchains, command buffers, submission, and presentation.
 
-The `d3` layer currently provides data/resource scaffolding only. Calling `draw3d(...).submit()` fails explicitly; no operational 3D workflow is documented.
+The current experimental `raw::BufferContents` and `raw::Vertex` adapters inherit Vulkano traits.
+This coupling describes current behavior, not accepted stable backend interoperability; it must be
+removed or isolated behind an explicitly unstable boundary before the first compatibility
+baseline.
+
+The `d3` layer currently provides data/resource scaffolding only. Calling
+`draw3d(...).submit()` fails explicitly; no operational 3D workflow is documented.

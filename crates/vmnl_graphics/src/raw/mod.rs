@@ -5,18 +5,21 @@
 
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, MutexGuard};
 
 pub use vmnl_macros::{Pod, Vertex, Zeroable};
 
+use vulkano::buffer::allocator::{SubbufferAllocator, SubbufferAllocatorCreateInfo};
 use vulkano::buffer::BufferContents as VulkanoBufferContents;
 use vulkano::buffer::BufferUsage;
 use vulkano::buffer::Subbuffer;
+use vulkano::descriptor_set::allocator::StandardDescriptorSetAllocator;
 use vulkano::descriptor_set::layout::{
     DescriptorSetLayout, DescriptorSetLayoutCreateInfo, DescriptorType,
 };
 use vulkano::descriptor_set::{DescriptorSet, WriteDescriptorSet};
 use vulkano::device::Device;
+use vulkano::memory::allocator::StandardMemoryAllocator;
 use vulkano::pipeline::graphics::color_blend::{
     AttachmentBlend, ColorBlendAttachmentState, ColorBlendState,
 };
@@ -36,12 +39,19 @@ use vulkano::pipeline::{
 };
 use vulkano::render_pass::{RenderPass, Subpass};
 use vulkano::shader::{ShaderModule, ShaderModuleCreateInfo};
+use vulkano::sync::HostAccessError;
 
 use crate::common::{
     checked_draw_counts, BufferMemoryPreference, GraphicsResourceFactory, IndexBuffer, VertexBuffer,
 };
 use crate::exception::{VMNLError, VMNLErrorKind, VMNLResult};
 use crate::{Context, Window};
+
+const FRAME_UNIFORM_IMAGE_COUNT_MISMATCH: &str =
+    "raw frame uniform image count is incompatible with current swapchain image count";
+
+type FrameUniformAllocator = SubbufferAllocator<StandardMemoryAllocator>;
+type SharedFrameUniformSlots = Arc<Mutex<FrameUniformSlots>>;
 
 #[doc(hidden)]
 pub mod __private {
@@ -311,7 +321,8 @@ impl<TVertex> Pipeline<TVertex> {
             geometry_device: geometry.device.clone(),
             resources_device: resources.map(|resources| resources.device.clone()),
             resources_pipeline_layout: resources.map(|resources| resources.pipeline_layout.clone()),
-            descriptor_sets: resources.map_or_else(Vec::new, Resources::descriptor_sets),
+            descriptor_sets: resources
+                .map_or_else(RawDescriptorSets::empty, Resources::descriptor_sets),
             required_descriptor_set_count: required_descriptor_set_count(self.inner.layout()),
             vertex_buffer: geometry.vertex_buffer_bytes(),
             index_buffer: geometry.index_buffer(),
@@ -442,6 +453,31 @@ impl<TData> Uniform<TData> {
         }
     }
 
+    /// Writes a new value into the existing uniform buffer.
+    ///
+    /// This updates the same buffer object that already-built [`Resources`]
+    /// reference. It does not recreate descriptor sets, submit GPU work, or wait
+    /// for in-flight GPU access.
+    ///
+    /// # Errors
+    /// Returns `InvalidState` if the buffer is currently locked or still used by
+    /// the GPU. Returns a Vulkan validation error for other backend write
+    /// failures.
+    pub fn write(&mut self, data: TData) -> VMNLResult<()>
+    where
+        TData: BufferContents,
+    {
+        {
+            let mut guard = self
+                .buffer
+                .write()
+                .map_err(|error| map_uniform_write_error(&error))?;
+            *guard = data;
+        }
+
+        Ok(())
+    }
+
     fn buffer_bytes(&self) -> Subbuffer<[u8]> {
         self.buffer.clone().into_bytes()
     }
@@ -486,11 +522,140 @@ impl<TData> UniformBuilder<TData> {
 
 impl<TData> GraphicsResourceFactory for UniformBuilder<TData> {}
 
+/// Typed raw uniform buffers for data that can change every frame.
+///
+/// Use `FrameUniform` for data that changes every frame, such as time, camera
+/// matrices, transforms, tint, or offsets. The value is written through
+/// [`FrameRenderer::write_frame_uniform`](crate::FrameRenderer::write_frame_uniform)
+/// during frame submission so VMNL can target the acquired swapchain image
+/// without exposing the image index to client code. Each write allocates or
+/// reuses a fresh subbuffer for that frame slot, so it does not overwrite a
+/// buffer that may still be read by queued GPU work.
+pub struct FrameUniform<TData> {
+    allocator: Arc<Mutex<FrameUniformAllocator>>,
+    device: Arc<Device>,
+    image_count: usize,
+    slots: SharedFrameUniformSlots,
+    _data: PhantomData<TData>,
+}
+
+impl<TData> FrameUniform<TData> {
+    /// Starts a raw frame-uniform builder.
+    #[must_use]
+    pub fn builder(data: TData) -> FrameUniformBuilder<TData> {
+        FrameUniformBuilder {
+            data,
+            memory_preference: BufferMemoryPreference::default(),
+        }
+    }
+
+    fn buffer_slots(&self) -> SharedFrameUniformSlots {
+        self.slots.clone()
+    }
+
+    fn image_count(&self) -> usize {
+        self.image_count
+    }
+
+    fn write_slot(&mut self, image_index: usize, data: TData) -> VMNLResult<()>
+    where
+        TData: BufferContents,
+    {
+        if image_index >= self.image_count {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "raw frame uniform image index is out of bounds".into(),
+            )));
+        }
+
+        let buffer = {
+            let allocator = lock_frame_uniform_allocator(&self.allocator)?;
+            allocate_frame_uniform_buffer(&allocator, data)?.into_bytes()
+        };
+        let mut slots = lock_frame_uniform_slots(&self.slots)?;
+        let slot = slots.buffers.get_mut(image_index).ok_or_else(|| {
+            VMNLError::new(VMNLErrorKind::InvalidState(
+                "raw frame uniform image index is out of bounds".into(),
+            ))
+        })?;
+        *slot = buffer;
+
+        Ok(())
+    }
+}
+
+struct FrameUniformSlots {
+    buffers: Vec<Subbuffer<[u8]>>,
+}
+
+/// Builder for typed raw frame-uniform buffers.
+pub struct FrameUniformBuilder<TData> {
+    data: TData,
+    memory_preference: BufferMemoryPreference,
+}
+
+impl<TData> FrameUniformBuilder<TData> {
+    /// Sets the buffer memory preference.
+    #[must_use]
+    pub fn buffer_memory_preference(mut self, preference: BufferMemoryPreference) -> Self {
+        self.memory_preference = preference;
+        self
+    }
+
+    /// Builds initial GPU uniform slots for the current swapchain images.
+    ///
+    /// # Errors
+    /// Returns an error if the window has no swapchain images, if any GPU
+    /// buffer allocation fails, or if an initial slot write fails.
+    pub fn build(self, window: &Window) -> VMNLResult<FrameUniform<TData>>
+    where
+        TData: BufferContents + Clone,
+    {
+        let image_count = window.swapchain_image_count();
+        if image_count == 0 {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "raw frame uniform requires at least one swapchain image".into(),
+            )));
+        }
+
+        let memory_allocator = window.memory_allocator();
+        let allocator = Arc::new(Mutex::new(FrameUniformAllocator::new(
+            memory_allocator,
+            SubbufferAllocatorCreateInfo {
+                buffer_usage: BufferUsage::UNIFORM_BUFFER,
+                memory_type_filter: self.memory_preference.memory_type_filter(),
+                ..Default::default()
+            },
+        )));
+        let mut buffers = Vec::with_capacity(image_count);
+        {
+            let allocator = lock_frame_uniform_allocator(&allocator)?;
+            for _ in 0..image_count {
+                buffers.push(allocate_frame_uniform_buffer(
+                    &allocator,
+                    self.data.clone(),
+                )?);
+            }
+        }
+
+        Ok(FrameUniform {
+            allocator,
+            device: window.device(),
+            image_count,
+            slots: Arc::new(Mutex::new(FrameUniformSlots {
+                buffers: buffers.into_iter().map(Subbuffer::into_bytes).collect(),
+            })),
+            _data: PhantomData,
+        })
+    }
+}
+
+impl<TData> GraphicsResourceFactory for FrameUniformBuilder<TData> {}
+
 /// Descriptor resources bound by a raw draw call.
 pub struct Resources {
     device: Arc<Device>,
     pipeline_layout: Arc<PipelineLayout>,
-    descriptor_sets: Vec<Arc<DescriptorSet>>,
+    descriptor_sets: RawDescriptorSets,
 }
 
 impl Resources {
@@ -504,10 +669,12 @@ impl Resources {
             set_layouts: pipeline_layout.set_layouts().to_vec(),
             bindings: BTreeMap::new(),
             duplicate_binding: None,
+            frame_uniform_image_count: None,
+            incompatible_frame_uniform_image_count: None,
         }
     }
 
-    fn descriptor_sets(&self) -> Vec<Arc<DescriptorSet>> {
+    fn descriptor_sets(&self) -> RawDescriptorSets {
         self.descriptor_sets.clone()
     }
 }
@@ -519,9 +686,45 @@ pub struct ResourcesBuilder {
     set_layouts: Vec<Arc<DescriptorSetLayout>>,
     bindings: BTreeMap<u32, BTreeMap<u32, ResourceBinding>>,
     duplicate_binding: Option<(u32, u32)>,
+    frame_uniform_image_count: Option<usize>,
+    incompatible_frame_uniform_image_count: Option<(usize, usize, u32, u32)>,
 }
 
 impl ResourcesBuilder {
+    /// Binds frame-uniform slots to a shader descriptor binding.
+    #[must_use]
+    pub fn frame_uniform<TData>(
+        mut self,
+        set: u32,
+        binding: u32,
+        uniform: &FrameUniform<TData>,
+    ) -> Self {
+        let image_count = uniform.image_count();
+        if let Some(mismatch) = next_frame_uniform_image_count_mismatch(
+            &mut self.frame_uniform_image_count,
+            image_count,
+            set,
+            binding,
+        ) {
+            if self.incompatible_frame_uniform_image_count.is_none() {
+                self.incompatible_frame_uniform_image_count = Some(mismatch);
+            }
+        }
+
+        let old = self.bindings.entry(set).or_default().insert(
+            binding,
+            ResourceBinding::FrameUniformBuffer {
+                slots: uniform.buffer_slots(),
+                device: uniform.device.clone(),
+                image_count,
+            },
+        );
+        if old.is_some() && self.duplicate_binding.is_none() {
+            self.duplicate_binding = Some((set, binding));
+        }
+        self
+    }
+
     /// Binds a uniform buffer to a shader descriptor binding.
     #[must_use]
     pub fn uniform<TData>(mut self, set: u32, binding: u32, uniform: &Uniform<TData>) -> Self {
@@ -538,52 +741,57 @@ impl ResourcesBuilder {
         self
     }
 
-    /// Builds descriptor sets compatible with the pipeline used by this builder.
+    /// Builds descriptor resources compatible with the pipeline used by this builder.
     ///
     /// # Errors
     /// Returns an error if a required binding is missing, unsupported, duplicated,
-    /// or if descriptor set allocation fails.
-    pub fn build(mut self, context: &Context) -> VMNLResult<Resources> {
-        validate_resources_context(context, &self.pipeline_device)?;
-        if let Some((set, binding)) = self.duplicate_binding {
+    /// or if static descriptor set allocation fails. Descriptor sets for
+    /// `FrameUniform` bindings are allocated later during frame recording.
+    pub fn build(self, context: &Context) -> VMNLResult<Resources> {
+        let Self {
+            pipeline_device,
+            pipeline_layout,
+            set_layouts,
+            bindings,
+            duplicate_binding,
+            frame_uniform_image_count,
+            incompatible_frame_uniform_image_count,
+        } = self;
+
+        validate_resources_context(context, &pipeline_device)?;
+        if let Some((set, binding)) = duplicate_binding {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
                 "raw resources duplicate binding set {set} binding {binding}"
             ))));
         }
-
-        validate_supplied_resource_bindings(&self.set_layouts, &self.bindings)?;
-        let required_set_count = required_descriptor_set_count_from_layouts(&self.set_layouts);
-        let mut descriptor_sets = Vec::with_capacity(required_set_count);
-
-        for set_index in 0..required_set_count {
-            let set = u32::try_from(set_index)
-                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
-            let set_layout = self
-                .set_layouts
-                .get(set_index)
-                .cloned()
-                .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
-            let supplied_bindings = self.bindings.remove(&set).unwrap_or_default();
-            let writes = descriptor_writes_for_set(context, set, &set_layout, &supplied_bindings)?;
-            let descriptor_set = DescriptorSet::new(
-                context.inner.descriptor_set_allocator.clone(),
-                set_layout,
-                writes,
-                Vec::new(),
-            )
-            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanDescriptorSetCreationFailed))?;
-            descriptor_sets.push(descriptor_set);
-        }
-
-        if let Some((&set, _)) = self.bindings.iter().next() {
+        if let Some((expected, actual, set, binding)) = incompatible_frame_uniform_image_count {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
-                "raw resources set {set} is not declared by the pipeline"
+                "raw resources frame uniform at set {set} binding {binding} has {actual} images, expected {expected}"
             ))));
         }
 
+        validate_supplied_resource_bindings(&set_layouts, &bindings)?;
+        let required_set_count = required_descriptor_set_count_from_layouts(&set_layouts);
+        let descriptor_sets = match frame_uniform_image_count {
+            Some(image_count) => RawDescriptorSets::FrameUniforms {
+                image_count,
+                set_layouts,
+                bindings,
+                required_set_count,
+            },
+            None => RawDescriptorSets::Static(build_descriptor_sets(
+                &context.inner.descriptor_set_allocator,
+                &context.inner.device,
+                &set_layouts,
+                &bindings,
+                required_set_count,
+                None,
+            )?),
+        };
+
         Ok(Resources {
             device: context.inner.device.clone(),
-            pipeline_layout: self.pipeline_layout,
+            pipeline_layout,
             descriptor_sets,
         })
     }
@@ -591,10 +799,84 @@ impl ResourcesBuilder {
 
 #[derive(Clone)]
 enum ResourceBinding {
+    FrameUniformBuffer {
+        slots: SharedFrameUniformSlots,
+        device: Arc<Device>,
+        image_count: usize,
+    },
     UniformBuffer {
         buffer: Subbuffer<[u8]>,
         device: Arc<Device>,
     },
+}
+
+#[derive(Clone)]
+enum RawDescriptorSets {
+    FrameUniforms {
+        image_count: usize,
+        set_layouts: Vec<Arc<DescriptorSetLayout>>,
+        bindings: BTreeMap<u32, BTreeMap<u32, ResourceBinding>>,
+        required_set_count: usize,
+    },
+    Static(Vec<Arc<DescriptorSet>>),
+}
+
+impl RawDescriptorSets {
+    fn empty() -> Self {
+        Self::Static(Vec::new())
+    }
+
+    fn for_image(
+        &self,
+        image_index: usize,
+        current_image_count: usize,
+        descriptor_set_allocator: &Arc<StandardDescriptorSetAllocator>,
+        expected_device: &Arc<Device>,
+    ) -> VMNLResult<Vec<Arc<DescriptorSet>>> {
+        match self {
+            Self::Static(sets) => Ok(sets.clone()),
+            Self::FrameUniforms {
+                image_count,
+                set_layouts,
+                bindings,
+                required_set_count,
+            } => {
+                validate_frame_uniform_image_count(*image_count, current_image_count)?;
+                build_descriptor_sets(
+                    descriptor_set_allocator,
+                    expected_device,
+                    set_layouts,
+                    bindings,
+                    *required_set_count,
+                    Some(image_index),
+                )
+            }
+        }
+    }
+}
+
+pub(crate) struct PendingFrameUniformWrite<'a> {
+    image_count: usize,
+    write: Box<dyn FnOnce(usize) -> VMNLResult<()> + 'a>,
+}
+
+impl<'a> PendingFrameUniformWrite<'a> {
+    pub(crate) fn new<TData>(uniform: &'a mut FrameUniform<TData>, data: TData) -> Self
+    where
+        TData: BufferContents + 'a,
+    {
+        let image_count = uniform.image_count();
+
+        Self {
+            image_count,
+            write: Box::new(move |image_index| uniform.write_slot(image_index, data)),
+        }
+    }
+
+    pub(crate) fn write(self, image_index: usize, current_image_count: usize) -> VMNLResult<()> {
+        validate_frame_uniform_image_count(self.image_count, current_image_count)?;
+        (self.write)(image_index)
+    }
 }
 
 #[derive(Clone)]
@@ -605,12 +887,29 @@ pub(crate) struct RenderItemRaw {
     pub(crate) geometry_device: Arc<Device>,
     pub(crate) resources_device: Option<Arc<Device>>,
     pub(crate) resources_pipeline_layout: Option<Arc<PipelineLayout>>,
-    pub(crate) descriptor_sets: Vec<Arc<DescriptorSet>>,
+    descriptor_sets: RawDescriptorSets,
     pub(crate) required_descriptor_set_count: usize,
     pub(crate) vertex_buffer: Subbuffer<[u8]>,
     pub(crate) index_buffer: Option<Subbuffer<[u32]>>,
     pub(crate) vertex_count: u32,
     pub(crate) index_count: u32,
+}
+
+impl RenderItemRaw {
+    pub(crate) fn descriptor_sets_for_image(
+        &self,
+        image_index: usize,
+        current_image_count: usize,
+        descriptor_set_allocator: &Arc<StandardDescriptorSetAllocator>,
+        expected_device: &Arc<Device>,
+    ) -> VMNLResult<Vec<Arc<DescriptorSet>>> {
+        self.descriptor_sets.for_image(
+            image_index,
+            current_image_count,
+            descriptor_set_allocator,
+            expected_device,
+        )
+    }
 }
 
 fn validate_geometry_inputs(vertex_count: usize, indices: Option<&[u32]>) -> VMNLResult<()> {
@@ -652,6 +951,101 @@ fn validate_resources_context(context: &Context, expected_device: &Arc<Device>) 
     Ok(())
 }
 
+fn allocate_frame_uniform_buffer<TData>(
+    allocator: &FrameUniformAllocator,
+    data: TData,
+) -> VMNLResult<Subbuffer<TData>>
+where
+    TData: BufferContents,
+{
+    let buffer = allocator
+        .allocate_sized()
+        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanFrameUboBufferCreationFailed))?;
+
+    {
+        let mut guard = buffer
+            .write()
+            .map_err(|error| map_frame_uniform_write_error(&error))?;
+        *guard = data;
+    }
+
+    Ok(buffer)
+}
+
+fn lock_frame_uniform_allocator(
+    allocator: &Arc<Mutex<FrameUniformAllocator>>,
+) -> VMNLResult<MutexGuard<'_, FrameUniformAllocator>> {
+    allocator.lock().map_err(|_| {
+        VMNLError::new(VMNLErrorKind::InvalidState(
+            "raw frame uniform allocator lock is poisoned".into(),
+        ))
+    })
+}
+
+fn lock_frame_uniform_slots(
+    slots: &SharedFrameUniformSlots,
+) -> VMNLResult<MutexGuard<'_, FrameUniformSlots>> {
+    slots.lock().map_err(|_| {
+        VMNLError::new(VMNLErrorKind::InvalidState(
+            "raw frame uniform resource state lock is poisoned".into(),
+        ))
+    })
+}
+
+fn map_uniform_write_error(error: &HostAccessError) -> VMNLError {
+    map_host_access_write_error(
+        error,
+        "raw uniform write conflicts with active CPU or GPU access",
+    )
+}
+
+fn map_frame_uniform_write_error(error: &HostAccessError) -> VMNLError {
+    map_host_access_write_error(
+        error,
+        "raw frame uniform write conflicts with active CPU or GPU access",
+    )
+}
+
+fn map_host_access_write_error(error: &HostAccessError, conflict_message: &str) -> VMNLError {
+    match error {
+        HostAccessError::AccessConflict(_) => {
+            VMNLError::new(VMNLErrorKind::InvalidState(conflict_message.into()))
+        }
+        _ => VMNLError::new(VMNLErrorKind::VulkanValidationFailed),
+    }
+}
+
+fn validate_frame_uniform_image_count(
+    expected_image_count: usize,
+    current_image_count: usize,
+) -> VMNLResult<()> {
+    if expected_image_count != current_image_count {
+        return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+            FRAME_UNIFORM_IMAGE_COUNT_MISMATCH.into(),
+        )));
+    }
+
+    Ok(())
+}
+
+fn next_frame_uniform_image_count_mismatch(
+    expected_image_count: &mut Option<usize>,
+    actual_image_count: usize,
+    set: u32,
+    binding: u32,
+) -> Option<(usize, usize, u32, u32)> {
+    match *expected_image_count {
+        Some(expected) if expected != actual_image_count => {
+            Some((expected, actual_image_count, set, binding))
+        }
+        Some(_) => None,
+        None => {
+            *expected_image_count = Some(actual_image_count);
+            None
+        }
+    }
+}
+
 fn validate_supplied_resource_bindings(
     set_layouts: &[Arc<DescriptorSetLayout>],
     supplied_sets: &BTreeMap<u32, BTreeMap<u32, ResourceBinding>>,
@@ -681,12 +1075,13 @@ fn validate_supplied_resource_bindings(
 }
 
 fn descriptor_writes_for_set(
-    context: &Context,
+    expected_device: &Arc<Device>,
     set: u32,
     set_layout: &Arc<DescriptorSetLayout>,
-    supplied_bindings: &BTreeMap<u32, ResourceBinding>,
+    supplied_bindings: Option<&BTreeMap<u32, ResourceBinding>>,
+    frame_image_index: Option<usize>,
 ) -> VMNLResult<Vec<WriteDescriptorSet>> {
-    let mut writes = Vec::with_capacity(supplied_bindings.len());
+    let mut writes = Vec::with_capacity(supplied_bindings.map_or(0, BTreeMap::len));
 
     for (&binding, binding_layout) in set_layout.bindings() {
         validate_raw_descriptor_binding(set, binding, binding_layout.descriptor_type)?;
@@ -696,15 +1091,33 @@ fn descriptor_writes_for_set(
             ))));
         }
 
-        let resource = supplied_bindings.get(&binding).ok_or_else(|| {
-            VMNLError::new(VMNLErrorKind::InvalidState(format!(
-                "raw resources missing set {set} binding {binding}"
-            )))
-        })?;
+        let resource = supplied_bindings
+            .and_then(|bindings| bindings.get(&binding))
+            .ok_or_else(|| {
+                VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                    "raw resources missing set {set} binding {binding}"
+                )))
+            })?;
 
         match resource {
+            ResourceBinding::FrameUniformBuffer {
+                slots,
+                device,
+                image_count,
+            } => {
+                if !Arc::ptr_eq(device, expected_device) {
+                    return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                        "raw resources set {set} binding {binding} must belong to this context"
+                    ))));
+                }
+
+                let image_index =
+                    descriptor_frame_image_index(frame_image_index, *image_count, set, binding)?;
+                let buffer = frame_uniform_binding_buffer(slots, image_index, set, binding)?;
+                writes.push(WriteDescriptorSet::buffer(binding, buffer));
+            }
             ResourceBinding::UniformBuffer { buffer, device } => {
-                if !Arc::ptr_eq(device, &context.inner.device) {
+                if !Arc::ptr_eq(device, expected_device) {
                     return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
                         "raw resources set {set} binding {binding} must belong to this context"
                     ))));
@@ -715,6 +1128,76 @@ fn descriptor_writes_for_set(
     }
 
     Ok(writes)
+}
+
+fn frame_uniform_binding_buffer(
+    slots: &SharedFrameUniformSlots,
+    image_index: usize,
+    set: u32,
+    binding: u32,
+) -> VMNLResult<Subbuffer<[u8]>> {
+    let slots = lock_frame_uniform_slots(slots)?;
+    slots.buffers.get(image_index).cloned().ok_or_else(|| {
+        VMNLError::new(VMNLErrorKind::InvalidState(format!(
+            "raw resources set {set} binding {binding} frame uniform image index is out of bounds"
+        )))
+    })
+}
+
+fn descriptor_frame_image_index(
+    frame_image_index: Option<usize>,
+    image_count: usize,
+    set: u32,
+    binding: u32,
+) -> VMNLResult<usize> {
+    let Some(image_index) = frame_image_index else {
+        return Err(VMNLError::new(VMNLErrorKind::VulkanValidationFailed));
+    };
+
+    if image_index >= image_count {
+        return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+            "raw resources set {set} binding {binding} frame uniform image index is out of bounds"
+        ))));
+    }
+
+    Ok(image_index)
+}
+
+fn build_descriptor_sets(
+    descriptor_set_allocator: &Arc<StandardDescriptorSetAllocator>,
+    expected_device: &Arc<Device>,
+    set_layouts: &[Arc<DescriptorSetLayout>],
+    supplied_sets: &BTreeMap<u32, BTreeMap<u32, ResourceBinding>>,
+    required_set_count: usize,
+    frame_image_index: Option<usize>,
+) -> VMNLResult<Vec<Arc<DescriptorSet>>> {
+    let mut descriptor_sets = Vec::with_capacity(required_set_count);
+
+    for set_index in 0..required_set_count {
+        let set = u32::try_from(set_index)
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+        let set_layout = set_layouts
+            .get(set_index)
+            .cloned()
+            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+        let writes = descriptor_writes_for_set(
+            expected_device,
+            set,
+            &set_layout,
+            supplied_sets.get(&set),
+            frame_image_index,
+        )?;
+        let descriptor_set = DescriptorSet::new(
+            descriptor_set_allocator.clone(),
+            set_layout,
+            writes,
+            Vec::new(),
+        )
+        .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanDescriptorSetCreationFailed))?;
+        descriptor_sets.push(descriptor_set);
+    }
+
+    Ok(descriptor_sets)
 }
 
 fn validate_raw_pipeline_layout(
@@ -829,6 +1312,7 @@ mod tests {
     use vulkano::descriptor_set::layout::DescriptorSetLayoutBinding;
     use vulkano::pipeline::layout::{PipelineLayoutCreateFlags, PushConstantRange};
     use vulkano::shader::ShaderStages;
+    use vulkano::sync::AccessConflict;
 
     #[repr(C)]
     #[derive(Clone, Copy)]
@@ -907,6 +1391,105 @@ mod tests {
         };
 
         assert!(validate_raw_pipeline_layout(&layout_info).is_err());
+    }
+
+    #[test]
+    fn uniform_write_conflict_maps_to_invalid_state() {
+        let error =
+            map_uniform_write_error(&HostAccessError::AccessConflict(AccessConflict::DeviceRead));
+
+        assert!(matches!(
+            error.kind(),
+            VMNLErrorKind::InvalidState(message)
+                if message == "raw uniform write conflicts with active CPU or GPU access"
+        ));
+    }
+
+    #[test]
+    fn uniform_write_backend_error_maps_to_vulkan_validation() {
+        let error = map_uniform_write_error(&HostAccessError::NotHostMapped);
+
+        assert!(matches!(
+            error.kind(),
+            VMNLErrorKind::VulkanValidationFailed
+        ));
+    }
+
+    #[test]
+    fn frame_uniform_write_conflict_maps_to_invalid_state() {
+        let error = map_frame_uniform_write_error(&HostAccessError::AccessConflict(
+            AccessConflict::DeviceRead,
+        ));
+
+        assert!(matches!(
+            error.kind(),
+            VMNLErrorKind::InvalidState(message)
+                if message == "raw frame uniform write conflicts with active CPU or GPU access"
+        ));
+    }
+
+    #[test]
+    fn frame_uniform_write_backend_error_maps_to_vulkan_validation() {
+        let error = map_frame_uniform_write_error(&HostAccessError::NotHostMapped);
+
+        assert!(matches!(
+            error.kind(),
+            VMNLErrorKind::VulkanValidationFailed
+        ));
+    }
+
+    #[test]
+    fn frame_uniform_image_count_mismatch_is_invalid_state() {
+        let result = validate_frame_uniform_image_count(2, 3);
+
+        assert!(matches!(
+            result,
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    VMNLErrorKind::InvalidState(message)
+                        if message == FRAME_UNIFORM_IMAGE_COUNT_MISMATCH
+                )
+        ));
+    }
+
+    #[test]
+    fn frame_uniform_resource_image_count_mismatch_is_detected() {
+        let mut expected_image_count = None;
+
+        assert_eq!(
+            next_frame_uniform_image_count_mismatch(&mut expected_image_count, 2, 0, 0),
+            None
+        );
+        assert_eq!(expected_image_count, Some(2));
+        assert_eq!(
+            next_frame_uniform_image_count_mismatch(&mut expected_image_count, 3, 1, 0),
+            Some((2, 3, 1, 0))
+        );
+    }
+
+    #[test]
+    fn raw_descriptor_sets_select_static_and_frame_uniform_modes() {
+        let static_sets = RawDescriptorSets::Static(Vec::new());
+        let frame_uniform_sets = RawDescriptorSets::FrameUniforms {
+            image_count: 2,
+            set_layouts: Vec::new(),
+            bindings: BTreeMap::new(),
+            required_set_count: 0,
+        };
+
+        assert!(matches!(
+            static_sets,
+            RawDescriptorSets::Static(ref sets) if sets.is_empty()
+        ));
+        assert!(matches!(
+            frame_uniform_sets,
+            RawDescriptorSets::FrameUniforms {
+                image_count: 2,
+                required_set_count: 0,
+                ..
+            }
+        ));
     }
 
     fn pipeline_layout_info(

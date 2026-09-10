@@ -3,6 +3,7 @@
 | Item | Role |
 |---|---|
 | [`Shape`](shape.md) | GPU-backed drawable and builder entry points |
+| [`CircleBuilder`](circle_builder.md) | Filled circle |
 | [`IndexedShapeBuilder`](indexed_shape_builder.md) | Arbitrary triangle-indexed geometry |
 | [`TriangleBuilder`](triangle_builder.md) | Three-vertex triangle |
 | [`RectBuilder`](rect_builder.md) | Positioned/rotated rectangle |

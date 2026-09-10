@@ -1,24 +1,18 @@
 # Validation
 
-Prerequisites and exact versions are listed in [`docs/build.md`](../../build.md). Documentation-only edits require structure, generated-file, snippet, and local-link checks. Source or tooling edits require the repository completion sequence.
+Prerequisites and exact versions are listed in [`docs/build.md`](../../build.md). Documentation-only
+edits require structure, generated-file, snippet, and local-link checks. Source or tooling edits
+follow the single ordered completion sequence in [`CONTRIBUTING.md`](../../../CONTRIBUTING.md#before-submission).
 
-Run:
+Before completion, regenerate and review the API book only when the public surface intentionally
+changes:
 
 ```bash
-cargo build --workspace --all-targets
-cargo fmt --all --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-just doctest
-just docs
-just docs-api-check
-just test-unit
-just test-api
-just test-smoke
-just test-platform
-just test-platform-compile
-just test-platform-wayland # qualified environment only
-just test-platform-x11     # qualified environment only
-just test-gpu-compile      # GLFW/Vulkan-facing changes
+just docs-api-update # reviewed public API changes only; inspect the generated diff
 ```
 
-The order is intentional. GPU execution and human visual validation are required only when GPU-facing behavior changes; documentation compilation is not runtime or visual evidence.
+For an API-book-only change, run `just docs-api-check`. For source or tooling changes, execute the
+full applicable sequence from `CONTRIBUTING.md` from the beginning; it already includes
+`just docs-api-check` at the required position. Platform/GPU execution and human visual validation
+remain impact- and environment-dependent; documentation compilation is not runtime or visual
+evidence.

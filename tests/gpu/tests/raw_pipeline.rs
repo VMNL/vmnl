@@ -113,7 +113,7 @@ fn raw_pipeline_from_shader_paths_submits() -> VMNLResult<()> {
         .build(&window)?;
     let geometry = triangle(&context)?;
 
-    window.render().draw_raw(&pipeline, [&geometry]).submit()
+    window.render().draw_raw_2d(&pipeline, [&geometry]).submit()
 }
 
 #[test]
@@ -123,19 +123,75 @@ fn raw_uniform_resources_submit() -> VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
     let pipeline = uniform_pipeline(&window)?;
-    let uniform = raw::Uniform::builder(Tint {
-        tint: [1.0, 0.75, 0.5, 1.0],
+    let mut uniform = raw::Uniform::builder(Tint {
+        tint: [0.25, 0.25, 0.25, 1.0],
     })
     .build(&context)?;
     let resources = raw::Resources::builder(&pipeline)
         .uniform(0, 0, &uniform)
         .build(&context)?;
+    uniform.write(Tint {
+        tint: [1.0, 0.75, 0.5, 1.0],
+    })?;
     let geometry = triangle(&context)?;
 
     window
         .render()
-        .draw_raw_with(&pipeline, &resources, [&geometry])
+        .draw_raw_2d_with(&pipeline, &resources, [&geometry])
         .submit()
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn raw_frame_uniform_resources_submit_repeated_frames() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut window = Window::new(&context)?;
+    let pipeline = uniform_pipeline(&window)?;
+    let mut uniform = raw::FrameUniform::builder(Tint {
+        tint: [0.25, 0.25, 0.25, 1.0],
+    })
+    .build(&window)?;
+    let resources = raw::Resources::builder(&pipeline)
+        .frame_uniform(0, 0, &uniform)
+        .build(&context)?;
+    let geometry = triangle(&context)?;
+    let tints = [
+        Tint {
+            tint: [1.0, 0.75, 0.5, 1.0],
+        },
+        Tint {
+            tint: [0.5, 0.85, 1.0, 1.0],
+        },
+        Tint {
+            tint: [0.9, 0.4, 0.7, 1.0],
+        },
+        Tint {
+            tint: [0.4, 1.0, 0.7, 1.0],
+        },
+        Tint {
+            tint: [0.75, 0.6, 1.0, 1.0],
+        },
+        Tint {
+            tint: [1.0, 0.9, 0.35, 1.0],
+        },
+        Tint {
+            tint: [0.6, 1.0, 0.45, 1.0],
+        },
+        Tint {
+            tint: [0.45, 0.7, 1.0, 1.0],
+        },
+    ];
+
+    for tint in tints {
+        window
+            .render()
+            .write_frame_uniform(&mut uniform, tint)
+            .draw_raw_2d_with(&pipeline, &resources, [&geometry])
+            .submit()?;
+    }
+
+    Ok(())
 }
 
 #[test]
@@ -173,7 +229,7 @@ fn raw_descriptor_pipeline_requires_resources_at_submit() -> VMNLResult<()> {
     let geometry = triangle(&context)?;
 
     assert_invalid_state(
-        window.render().draw_raw(&pipeline, [&geometry]).submit(),
+        window.render().draw_raw_2d(&pipeline, [&geometry]).submit(),
         "raw pipeline requires descriptor resources",
     )
 }
@@ -192,7 +248,7 @@ fn raw_pipeline_rejects_geometry_from_another_context() -> VMNLResult<()> {
     let geometry = triangle(&other)?;
 
     assert_invalid_state(
-        window.render().draw_raw(&pipeline, [&geometry]).submit(),
+        window.render().draw_raw_2d(&pipeline, [&geometry]).submit(),
         "raw pipeline and geometry must belong to this window context",
     )
 }

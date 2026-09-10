@@ -1,5 +1,14 @@
 # Platform Support
 
+## Support policy
+
+- Linux is the tier-1 target. Ubuntu is the current blocking CI environment; other distributions
+  require environment-specific evidence.
+- Windows and macOS are tier-2 targets until their native probes and release artifacts are
+  qualified.
+- Mobile and Web are outside the VMNL scope.
+- Platform support applies only to the domains and backends explicitly exercised on that platform.
+
 ## Validation Matrix
 
 | Platform | CI validation | Local Justfile | Status |

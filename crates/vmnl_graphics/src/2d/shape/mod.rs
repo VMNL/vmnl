@@ -3,6 +3,7 @@
 
 //! Shape utilities for the VMNL library.
 
+mod circle;
 mod indexed;
 mod line;
 mod rect;
@@ -10,6 +11,7 @@ mod triangle;
 
 use super::{Drawable2D, GpuVertex2D, RenderItem2D, Vector2f, Vertex2D};
 use crate::common::{BlendMode, GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey};
+pub use circle::CircleBuilder;
 pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
 pub use rect::{Anchor, RectBuilder};
@@ -18,6 +20,8 @@ pub use triangle::TriangleBuilder;
 /// Types of shape data that can be rendered in VMNL.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub(crate) enum ShapeKind {
+    /// Filled circle shape.
+    Circle,
     /// Raw vertex data without indices.
     RawVertices,
     /// Indexed geometry using vertex and index buffers.
@@ -27,7 +31,6 @@ pub(crate) enum ShapeKind {
     /// Line shape defined by two vertices.
     #[allow(dead_code)]
     Line,
-    // Circle,
 }
 
 /// Shape resource container holding vertex/index buffers and counts.
@@ -65,6 +68,29 @@ impl Drawable2D for Shape {
 impl GraphicsResourceFactory for Shape {}
 
 impl Shape {
+    /// Create a filled circle builder with a required radius.
+    ///
+    /// The circle center defaults to `(0, 0)` and its color defaults to white.
+    ///
+    /// # Arguments
+    /// - `radius`: Circle radius in pixel-like 2D coordinates.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::Shape;
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let circle = Shape::circle(50.0).position(100.0, 120.0).build(&context)?;
+    /// # drop(circle);
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[must_use]
+    pub fn circle(radius: f32) -> CircleBuilder {
+        CircleBuilder::new(radius)
+    }
+
     pub(crate) fn blend_mode_from_vertices(vertices: &[Vertex2D]) -> BlendMode {
         if vertices.iter().all(|vertex| vertex.color.a == 255) {
             BlendMode::Opaque
