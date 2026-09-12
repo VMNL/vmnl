@@ -824,6 +824,7 @@ pub vmnl::Event::JoystickButtonReleased::joystick: vmnl::Joystick
 pub vmnl::Event::JoystickConnected
 pub vmnl::Event::JoystickDisconnected
 pub vmnl::Event::JoystickMoved
+pub vmnl::Event::JoystickMoved::axes: [f32; 2]
 pub vmnl::Event::JoystickMoved::joystick: vmnl::Joystick
 pub vmnl::Event::KeyPressed
 pub vmnl::Event::KeyPressed::key: vmnl::Key
@@ -1146,6 +1147,7 @@ pub const fn vmnl::Input::joystick(&self) -> &vmnl::JoystickState
 pub const fn vmnl::Input::keyboard(&self) -> &vmnl::KeyboardState
 pub const fn vmnl::Input::mouse(&self) -> &vmnl::MouseState
 pub fn vmnl::Input::new() -> Self
+pub fn vmnl::Input::set_stick_settings(&mut self, vmnl::Joystick, vmnl::StickSettings) -> vmnl::VMNLResult<()>
 impl core::default::Default for vmnl::Input
 pub fn vmnl::Input::default() -> Self
 impl core::marker::Freeze for vmnl::Input
@@ -1172,6 +1174,8 @@ pub const fn vmnl::JoystickState::left(&self) -> &vmnl::StickState
 pub fn vmnl::JoystickState::new() -> Self
 pub fn vmnl::JoystickState::reset(&mut self)
 pub const fn vmnl::JoystickState::right(&self) -> &vmnl::StickState
+pub fn vmnl::JoystickState::set_settings(&mut self, vmnl::Joystick, vmnl::StickSettings) -> vmnl::VMNLResult<()>
+pub const fn vmnl::JoystickState::settings(&self, vmnl::Joystick) -> vmnl::StickSettings
 impl core::default::Default for vmnl::JoystickState
 pub fn vmnl::JoystickState::default() -> vmnl::JoystickState
 impl core::fmt::Debug for vmnl::JoystickState
@@ -1267,10 +1271,34 @@ impl core::marker::Unpin for vmnl::MouseState
 impl core::marker::UnsafeUnpin for vmnl::MouseState
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::MouseState
 impl core::panic::unwind_safe::UnwindSafe for vmnl::MouseState
+pub struct vmnl::StickSettings
+pub vmnl::StickSettings::clockwise: bool
+pub vmnl::StickSettings::dead_zone: f32
+pub vmnl::StickSettings::zero_degrees: f32
+impl core::clone::Clone for vmnl::StickSettings
+pub fn vmnl::StickSettings::clone(&self) -> vmnl::StickSettings
+impl core::cmp::PartialEq for vmnl::StickSettings
+pub fn vmnl::StickSettings::eq(&self, &vmnl::StickSettings) -> bool
+impl core::default::Default for vmnl::StickSettings
+pub fn vmnl::StickSettings::default() -> Self
+impl core::fmt::Debug for vmnl::StickSettings
+pub fn vmnl::StickSettings::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::StickSettings
+impl core::marker::StructuralPartialEq for vmnl::StickSettings
+impl core::marker::Freeze for vmnl::StickSettings
+impl core::marker::Send for vmnl::StickSettings
+impl core::marker::Sync for vmnl::StickSettings
+impl core::marker::Unpin for vmnl::StickSettings
+impl core::marker::UnsafeUnpin for vmnl::StickSettings
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::StickSettings
+impl core::panic::unwind_safe::UnwindSafe for vmnl::StickSettings
 pub struct vmnl::StickState
 impl vmnl::StickState
+pub const fn vmnl::StickState::axes(&self) -> [f32; 2]
 pub const fn vmnl::StickState::degrees(&self) -> core::option::Option<f32>
 pub const fn vmnl::StickState::is_clicked(&self) -> bool
+pub fn vmnl::StickState::magnitude(&self) -> f32
+pub fn vmnl::StickState::with_axes([f32; 2], bool, vmnl::StickSettings) -> vmnl::VMNLResult<Self>
 impl core::clone::Clone for vmnl::StickState
 pub fn vmnl::StickState::clone(&self) -> vmnl::StickState
 impl core::cmp::PartialEq for vmnl::StickState
@@ -1418,6 +1446,7 @@ pub const fn vmnl::Window::input(&self) -> &vmnl::Input
 pub fn vmnl::Window::poll_events(&mut self) -> alloc::vec::Vec<vmnl::Event>
 pub fn vmnl::Window::post_empty_event(&mut self)
 pub fn vmnl::Window::set_error_callback(&mut self, impl core::ops::function::FnMut(vmnl::VMNLErrorKind, alloc::string::String) + 'static)
+pub fn vmnl::Window::set_stick_settings(&mut self, vmnl::Joystick, vmnl::StickSettings) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_time(&mut self, f64)
 pub fn vmnl::Window::unset_error_callback(&mut self)
 pub fn vmnl::Window::wait_events(&mut self)

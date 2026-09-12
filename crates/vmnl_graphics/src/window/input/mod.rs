@@ -7,7 +7,7 @@
 mod joysticks;
 mod keyboard;
 mod mouse;
-pub use joysticks::{Joystick, JoystickState, StickState};
+pub use joysticks::{Joystick, JoystickState, StickSettings, StickState};
 pub use keyboard::{Key, KeyboardState};
 pub use mouse::{MouseButton, MouseState};
 
@@ -104,6 +104,19 @@ impl Input {
     #[must_use]
     pub const fn joystick(&self) -> &JoystickState {
         &self.joystick
+    }
+
+    /// Configures one stick without polling hardware. See [`JoystickState::set_settings`]
+    /// for validation and snapshot reinterpretation semantics.
+    ///
+    /// # Errors
+    /// Returns `InvalidState` for invalid settings, leaving input unchanged.
+    pub fn set_stick_settings(
+        &mut self,
+        joystick: Joystick,
+        settings: StickSettings,
+    ) -> crate::VMNLResult<()> {
+        self.joystick.set_settings(joystick, settings)
     }
 
     /// Updates keyboard, mouse, and joystick states from the given GLFW window.

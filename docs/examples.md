@@ -45,6 +45,6 @@ just build raw_pipeline
 ## Gamepad input check
 
 `just run window_events_input` prints slot-1 controller presence, stick click, and
-direction events. Follow the [joystick input procedure](api/reference/window/input/joysticks.md)
+movement events with original axes and magnitude. Follow the [joystick input procedure](api/reference/window/input/joysticks.md)
 for a manual check. The example requires a working display, Vulkan, and a mapped
 controller for stick input; it does not automatically validate controller behavior.

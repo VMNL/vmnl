@@ -17,6 +17,7 @@
 | struct | `vmnl::MouseState` | [MouseState](../reference/window/input/mouse_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.MouseState.html) |
 | enum | `vmnl::PresentMode` | [PresentMode](../reference/window/present_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.PresentMode.html) |
 | enum | `vmnl::RenderMode` | [RenderMode](../reference/window/rendering/render_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.RenderMode.html) |
+| struct | `vmnl::StickSettings` | [StickSettings](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickSettings.html) |
 | struct | `vmnl::StickState` | [StickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickState.html) |
 | struct | `vmnl::VMNLError` | [VMNLError](../reference/errors/vmnl_error.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLError.html) |
 | enum | `vmnl::VMNLErrorKind` | [VMNLErrorKind](../reference/errors/vmnl_error_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.VMNLErrorKind.html) |

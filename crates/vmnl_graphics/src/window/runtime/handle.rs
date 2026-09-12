@@ -82,6 +82,14 @@ impl VMNLWindow {
         &self.handle.input
     }
 
+    pub(crate) fn set_stick_settings(
+        &mut self,
+        joystick: crate::Joystick,
+        settings: crate::StickSettings,
+    ) -> crate::VMNLResult<()> {
+        self.handle.input.set_stick_settings(joystick, settings)
+    }
+
     /// Internal implementation backing `Window::wait_events`.
     pub(crate) fn wait_events(&mut self) {
         self.handle.instance.wait_events();

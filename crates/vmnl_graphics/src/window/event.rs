@@ -103,11 +103,11 @@ pub enum Event {
         /// Direction variants are not button controls; construction does not enforce this.
         joystick: VMNLJoystick,
     },
-    /// A stick direction changed, including a return to the center.
+    /// A stick axis sample changed, including magnitude changes and dead-zone motion.
     ///
-    /// Consecutive computed angles are compared exactly. An unchanged direction emits
-    /// no event; tilt magnitude alone is not tracked. Losing the mapped gamepad
-    /// returns active sticks to the center (`None`).
+    /// Consecutive axis samples are compared bitwise, including signed zero and NaN
+    /// payloads. Identical samples emit no event. Losing the mapped gamepad returns
+    /// axes to zero and direction to `None`. Applications can filter these events.
     ///
     /// Emitted by `Window::poll_events` for the mapped gamepad in GLFW slot 1.
     ///
@@ -116,26 +116,33 @@ pub enum Event {
     /// use vmnl_graphics::{Event, Joystick};
     ///
     /// let moved = Event::JoystickMoved {
+    ///     axes: [0.0, -1.0],
     ///     joystick: Joystick::JoystickLeft { degrees: Some(90.0) },
     /// };
     /// let centered = Event::JoystickMoved {
+    ///     axes: [0.0, 0.0],
     ///     joystick: Joystick::JoystickRight { degrees: None },
     /// };
     /// if let Event::JoystickMoved {
     ///     joystick: Joystick::JoystickLeft { degrees },
+    ///     ..
     /// } = moved {
     ///     assert_eq!(degrees, Some(90.0));
     /// }
     /// assert!(matches!(centered, Event::JoystickMoved {
     ///     joystick: Joystick::JoystickRight { degrees: None },
+    ///     ..
     /// }));
     /// ```
     JoystickMoved {
         /// The left or right direction variant carrying the new angle in `[0, 360)`.
-        /// Right is 0 degrees, up is 90, left is 180, and down is 270.
-        /// `None` means centered inside the input dead zone. Tilt magnitude is not stored.
+        /// Uses the selected stick's configured zero direction and rotation sense.
+        /// `None` means inside the configured dead zone or a non-finite axis sample.
         /// Button variants and invalid angles are not rejected by construction.
         joystick: VMNLJoystick,
+        /// Original mapped X/Y axes: right/down positive, normally in `[-1, 1]` each.
+        /// Preserved without filtering or clamping, including non-finite samples.
+        axes: [f32; 2],
     },
     /// Text input event containing the input character.
     Text(char),

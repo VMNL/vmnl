@@ -17,7 +17,7 @@ impl Window {
     /// precede stick transitions. A device present on the first poll emits a
     /// connection event. Presence changes entirely between polls can be missed.
     ///
-    /// Directions use a radial dead zone of 0.15 and exact computed angle comparisons.
+    /// Directions use configurable stick settings. Movement events preserve unfiltered axes.
     /// Changes entirely between polls can be missed. Joystick polling is independent
     /// of keyboard and mouse polling flags.
     ///
@@ -230,5 +230,21 @@ impl Window {
     #[must_use]
     pub const fn input(&self) -> &Input {
         self.inner.input()
+    }
+
+    /// Configures one stick's dead zone and angle convention without polling hardware.
+    ///
+    /// Settings are inspectable through `input().joystick().settings(joystick)`.
+    /// See [`crate::JoystickState::set_settings`] for validation and transition semantics.
+    /// This performs no GPU work.
+    ///
+    /// # Errors
+    /// Returns `InvalidState` for invalid settings, leaving input unchanged.
+    pub fn set_stick_settings(
+        &mut self,
+        joystick: crate::Joystick,
+        settings: crate::StickSettings,
+    ) -> crate::VMNLResult<()> {
+        self.inner.set_stick_settings(joystick, settings)
     }
 }

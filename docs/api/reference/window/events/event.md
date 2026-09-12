@@ -14,7 +14,7 @@ Variants: `Closed`, `FocusGained`, `FocusLost`, `Resized { width, height }`, `Fr
 
 Joystick integration also declares `JoystickConnected`, `JoystickDisconnected`,
 `JoystickButtonPressed { joystick }`, `JoystickButtonReleased { joystick }`, and
-`JoystickMoved { joystick }`.
+`JoystickMoved { joystick, axes }`.
 `Window::poll_events` emits click and movement transitions for the mapped gamepad
 in GLFW slot 1 after native window events. Left stick transitions precede right
 stick transitions, with a click transition before a movement transition per stick.
@@ -27,12 +27,14 @@ Button payloads designate `Joystick::JoystickLeftButton` or `Joystick::JoystickR
 the type also permits direction variants, so construction does not enforce this restriction.
 The connection variants do not yet carry a device identifier.
 Movement payloads use `Joystick::JoystickLeft { degrees }` or
-`Joystick::JoystickRight { degrees }`: `Some(angle)` is a counterclockwise angle
-in `[0, 360)` (right 0, up 90, left 180, down 270), and `None` means centered.
-Tilt magnitude is not represented. Construction does not validate the payload.
-Movement events compare consecutive computed angles exactly, including a change
-to `None` when returning inside the radial dead zone of 0.15. Unchanged angles
-do not repeat events. An unavailable or unmapped gamepad releases held clicks and
+`Joystick::JoystickRight { degrees }`: `Some(angle)` is in `[0, 360)` using the
+configured zero direction and rotation sense; `None` means inside the configured
+dead zone or non-finite axes. Defaults are counterclockwise from right with a 0.15
+radial threshold. `axes` preserves original mapped X/Y samples, right/down positive,
+normally in `[-1, 1]` each, even inside the dead zone. Construction does not validate
+the payload. Movement events compare consecutive axis bits, including magnitude-only
+changes, signed zero, and NaN payload changes. Identical samples do not repeat events.
+An unavailable or unmapped gamepad releases held clicks and
 centers tilted sticks once. Presence events distinguish reported device absence
 from mapping loss. Changes between samples can be missed.
 

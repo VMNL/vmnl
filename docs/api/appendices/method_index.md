@@ -20,6 +20,7 @@
 | `vmnl::Input` | `keyboard` | [Input](../reference/window/input/input.md) | [`keyboard`](../../../target/doc/vmnl/struct.Input.html#method.keyboard) |
 | `vmnl::Input` | `mouse` | [Input](../reference/window/input/input.md) | [`mouse`](../../../target/doc/vmnl/struct.Input.html#method.mouse) |
 | `vmnl::Input` | `new` | [Input](../reference/window/input/input.md) | [`new`](../../../target/doc/vmnl/struct.Input.html#method.new) |
+| `vmnl::Input` | `set_stick_settings` | [Input](../reference/window/input/input.md) | [`set_stick_settings`](../../../target/doc/vmnl/struct.Input.html#method.set_stick_settings) |
 | `vmnl::Joystick` | `clone` | [Joystick](../reference/window/input/joysticks.md) | [`clone`](../../../target/doc/vmnl/enum.Joystick.html#method.clone) |
 | `vmnl::Joystick` | `eq` | [Joystick](../reference/window/input/joysticks.md) | [`eq`](../../../target/doc/vmnl/enum.Joystick.html#method.eq) |
 | `vmnl::Joystick` | `fmt` | [Joystick](../reference/window/input/joysticks.md) | [`fmt`](../../../target/doc/vmnl/enum.Joystick.html#method.fmt) |
@@ -40,6 +41,8 @@
 | `vmnl::JoystickState` | `new` | [JoystickState](../reference/window/input/joysticks.md) | [`new`](../../../target/doc/vmnl/struct.JoystickState.html#method.new) |
 | `vmnl::JoystickState` | `reset` | [JoystickState](../reference/window/input/joysticks.md) | [`reset`](../../../target/doc/vmnl/struct.JoystickState.html#method.reset) |
 | `vmnl::JoystickState` | `right` | [JoystickState](../reference/window/input/joysticks.md) | [`right`](../../../target/doc/vmnl/struct.JoystickState.html#method.right) |
+| `vmnl::JoystickState` | `set_settings` | [JoystickState](../reference/window/input/joysticks.md) | [`set_settings`](../../../target/doc/vmnl/struct.JoystickState.html#method.set_settings) |
+| `vmnl::JoystickState` | `settings` | [JoystickState](../reference/window/input/joysticks.md) | [`settings`](../../../target/doc/vmnl/struct.JoystickState.html#method.settings) |
 | `vmnl::Key` | `clone` | [Key](../reference/window/input/key.md) | [`clone`](../../../target/doc/vmnl/enum.Key.html#method.clone) |
 | `vmnl::Key` | `eq` | [Key](../reference/window/input/key.md) | [`eq`](../../../target/doc/vmnl/enum.Key.html#method.eq) |
 | `vmnl::Key` | `fmt` | [Key](../reference/window/input/key.md) | [`fmt`](../../../target/doc/vmnl/enum.Key.html#method.fmt) |
@@ -93,12 +96,19 @@
 | `vmnl::RenderMode` | `eq` | [RenderMode](../reference/window/rendering/render_mode.md) | [`eq`](../../../target/doc/vmnl/enum.RenderMode.html#method.eq) |
 | `vmnl::RenderMode` | `fmt` | [RenderMode](../reference/window/rendering/render_mode.md) | [`fmt`](../../../target/doc/vmnl/enum.RenderMode.html#method.fmt) |
 | `vmnl::RenderMode` | `hash` | [RenderMode](../reference/window/rendering/render_mode.md) | [`hash`](../../../target/doc/vmnl/enum.RenderMode.html#method.hash) |
+| `vmnl::StickSettings` | `clone` | [StickSettings](../reference/window/input/joysticks.md) | [`clone`](../../../target/doc/vmnl/struct.StickSettings.html#method.clone) |
+| `vmnl::StickSettings` | `default` | [StickSettings](../reference/window/input/joysticks.md) | [`default`](../../../target/doc/vmnl/struct.StickSettings.html#method.default) |
+| `vmnl::StickSettings` | `eq` | [StickSettings](../reference/window/input/joysticks.md) | [`eq`](../../../target/doc/vmnl/struct.StickSettings.html#method.eq) |
+| `vmnl::StickSettings` | `fmt` | [StickSettings](../reference/window/input/joysticks.md) | [`fmt`](../../../target/doc/vmnl/struct.StickSettings.html#method.fmt) |
+| `vmnl::StickState` | `axes` | [StickState](../reference/window/input/joysticks.md) | [`axes`](../../../target/doc/vmnl/struct.StickState.html#method.axes) |
 | `vmnl::StickState` | `clone` | [StickState](../reference/window/input/joysticks.md) | [`clone`](../../../target/doc/vmnl/struct.StickState.html#method.clone) |
 | `vmnl::StickState` | `default` | [StickState](../reference/window/input/joysticks.md) | [`default`](../../../target/doc/vmnl/struct.StickState.html#method.default) |
 | `vmnl::StickState` | `degrees` | [StickState](../reference/window/input/joysticks.md) | [`degrees`](../../../target/doc/vmnl/struct.StickState.html#method.degrees) |
 | `vmnl::StickState` | `eq` | [StickState](../reference/window/input/joysticks.md) | [`eq`](../../../target/doc/vmnl/struct.StickState.html#method.eq) |
 | `vmnl::StickState` | `fmt` | [StickState](../reference/window/input/joysticks.md) | [`fmt`](../../../target/doc/vmnl/struct.StickState.html#method.fmt) |
 | `vmnl::StickState` | `is_clicked` | [StickState](../reference/window/input/joysticks.md) | [`is_clicked`](../../../target/doc/vmnl/struct.StickState.html#method.is_clicked) |
+| `vmnl::StickState` | `magnitude` | [StickState](../reference/window/input/joysticks.md) | [`magnitude`](../../../target/doc/vmnl/struct.StickState.html#method.magnitude) |
+| `vmnl::StickState` | `with_axes` | [StickState](../reference/window/input/joysticks.md) | [`with_axes`](../../../target/doc/vmnl/struct.StickState.html#method.with_axes) |
 | `vmnl::VMNLError` | `fmt` | [VMNLError](../reference/errors/vmnl_error.md) | [`fmt`](../../../target/doc/vmnl/struct.VMNLError.html#method.fmt) |
 | `vmnl::VMNLError` | `kind` | [VMNLError](../reference/errors/vmnl_error.md) | [`kind`](../../../target/doc/vmnl/struct.VMNLError.html#method.kind) |
 | `vmnl::VMNLError` | `location` | [VMNLError](../reference/errors/vmnl_error.md) | [`location`](../../../target/doc/vmnl/struct.VMNLError.html#method.location) |
@@ -175,6 +185,7 @@
 | `vmnl::Window` | `set_size` | [Window configuration](../reference/window/configuration.md) | [`set_size`](../../../target/doc/vmnl/struct.Window.html#method.set_size) |
 | `vmnl::Window` | `set_size_limits` | [Window configuration](../reference/window/configuration.md) | [`set_size_limits`](../../../target/doc/vmnl/struct.Window.html#method.set_size_limits) |
 | `vmnl::Window` | `set_size_polling` | [Window polling](../reference/window/polling.md) | [`set_size_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_size_polling) |
+| `vmnl::Window` | `set_stick_settings` | [Window](../reference/window/window.md) | [`set_stick_settings`](../../../target/doc/vmnl/struct.Window.html#method.set_stick_settings) |
 | `vmnl::Window` | `set_time` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`set_time`](../../../target/doc/vmnl/struct.Window.html#method.set_time) |
 | `vmnl::Window` | `set_title` | [Window configuration](../reference/window/configuration.md) | [`set_title`](../../../target/doc/vmnl/struct.Window.html#method.set_title) |
 | `vmnl::Window` | `show` | [Window lifecycle](../reference/window/lifecycle.md) | [`show`](../../../target/doc/vmnl/struct.Window.html#method.show) |

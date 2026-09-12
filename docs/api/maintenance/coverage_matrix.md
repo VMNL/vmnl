@@ -26,6 +26,7 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | struct | `vmnl::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl/struct.Input.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::JoystickState` | [JoystickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickState.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::StickState` | [StickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickState.html) | [API input](../../../tests/api/tests/input.rs) |
+| struct | `vmnl::StickSettings` | [StickSettings](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickSettings.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::KeyboardState` | [KeyboardState](../reference/window/input/keyboard_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.KeyboardState.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::MonitorInfo` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [Rustdoc](../../../target/doc/vmnl/struct.MonitorInfo.html) | [GPU window runtime](../../../tests/gpu/tests/window_runtime.rs) |
 | struct | `vmnl::Monitors` | [Monitors](../reference/window/monitors/monitors.md) | [Rustdoc](../../../target/doc/vmnl/struct.Monitors.html) | [GPU window runtime](../../../tests/gpu/tests/window_runtime.rs) |

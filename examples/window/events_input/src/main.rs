@@ -7,7 +7,11 @@ use vmnl::{Context, Event, Joystick, Key, MouseButton, PresentMode, VMNLResult, 
 
 fn print_event(event: &Event) {
     match event {
-        Event::JoystickMoved { joystick } => {
+        Event::JoystickMoved { joystick, axes } => {
+            println!(
+                "[gamepad slot 1] axes: {axes:?}, magnitude: {:.3}",
+                axes[0].hypot(axes[1])
+            );
             let (side, degrees) = match joystick {
                 Joystick::JoystickLeft { degrees } => ("left", degrees),
                 Joystick::JoystickRight { degrees } => ("right", degrees),

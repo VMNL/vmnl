@@ -3,16 +3,17 @@
 
 //! Joystick input states for the two sticks of one mapped GLFW gamepad.
 //!
-//! This module tracks stick directions in degrees and stick click transitions.
+//! This module preserves mapped axes and tracks configurable directions and click transitions.
 //! Presence is tracked even without a gamepad mapping; stick input requires one.
 
-use crate::Event;
+use crate::{Event, VMNLError, VMNLErrorKind, VMNLResult};
 use glfw::{Action, GamepadAxis, GamepadButton, GamepadState};
 
 /// A stick direction in degrees or a stick click button.
 ///
-/// Angles use the range `[0, 360)`, counterclockwise: right is 0 degrees,
-/// up is 90, left is 180, and down is 270. This range is not enforced by
+/// Angles use the range `[0, 360)`. By default they are counterclockwise: right is 0 degrees,
+/// up is 90, left is 180, and down is 270. [`StickSettings`] can change this convention.
+/// This range is not enforced by
 /// construction. A centered stick has no direction and uses `None`.
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Joystick {
@@ -45,12 +46,52 @@ pub(crate) const ALL_JOYSTICK: &[Joystick] = &[
 /// Number of sticks on one controller, not the number of connected controllers.
 pub(crate) const JOYSTICK_COUNT: usize = 2;
 
-/// Radial threshold below which a stick is considered centered.
+/// Default radial threshold at or below which a stick is considered centered.
 const STICK_DEAD_ZONE: f32 = 0.15;
 
-/// Direction and click state of one stick.
+/// Per-stick interpretation; original mapped axes are never filtered or overwritten.
+///
+/// Defaults use a radial dead zone of 0.15 and counterclockwise degrees from right.
+/// Use the original axes for application-defined calibration and response curves.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct StickSettings {
+    /// Radial threshold in mapped axis units. Must be finite and nonnegative.
+    /// Zero disables filtering except at the exact center; values above 1 are allowed.
+    pub dead_zone: f32,
+    /// Direction used as zero, in counterclockwise degrees from right.
+    /// Any finite value is accepted, modulo 360.
+    pub zero_degrees: f32,
+    /// Whether angles increase clockwise from the configured zero direction.
+    pub clockwise: bool,
+}
+
+impl Default for StickSettings {
+    fn default() -> Self {
+        Self {
+            dead_zone: STICK_DEAD_ZONE,
+            zero_degrees: 0.0,
+            clockwise: false,
+        }
+    }
+}
+
+impl StickSettings {
+    fn validate(self) -> VMNLResult<()> {
+        if !self.dead_zone.is_finite() || self.dead_zone < 0.0 || !self.zero_degrees.is_finite() {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "stick settings require a finite nonnegative dead zone and a finite zero direction"
+                    .into(),
+            )));
+        }
+        Ok(())
+    }
+}
+
+/// Original mapped axes, derived direction, and click state of one stick.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct StickState {
+    /// Original mapped X/Y samples, including values inside the dead zone.
+    axes: [f32; 2],
     /// Angle in degrees, or `None` when centered.
     degrees: Option<f32>,
     /// Whether the stick button is held down.
@@ -58,9 +99,39 @@ pub struct StickState {
 }
 
 impl StickState {
+    /// Returns original mapped axes, without VMNL filtering, calibration, or clamping.
+    ///
+    /// X points right and Y points down. GLFW normally supplies each axis in `[-1, 1]`.
+    /// Non-finite samples are retained here but have no derived direction.
+    #[must_use]
+    pub const fn axes(&self) -> [f32; 2] {
+        self.axes
+    }
+
+    /// Returns the unfiltered Euclidean length, without clamping at 1.
+    /// Non-finite samples follow floating-point `hypot` semantics.
+    #[must_use]
+    pub fn magnitude(&self) -> f32 {
+        self.axes[0].hypot(self.axes[1])
+    }
+
+    /// Constructs a CPU-only snapshot from mapped axes using explicit settings.
+    ///
+    /// Axes are preserved exactly. Invalid settings return `InvalidState`; no GLFW
+    /// calls or GPU work occur. Valid construction does not allocate.
+    ///
+    /// # Errors
+    /// Returns `InvalidState` if the dead zone is negative or non-finite, or the
+    /// zero direction is non-finite.
+    pub fn with_axes(axes: [f32; 2], clicked: bool, settings: StickSettings) -> VMNLResult<Self> {
+        settings.validate()?;
+        Ok(Self::interpreted(axes, clicked, settings))
+    }
+
     /// Returns the direction in `[0, 360)`, or `None` inside the dead zone.
     ///
-    /// Right is 0 degrees, up is 90, left is 180, and down is 270.
+    /// Defaults use right as 0 degrees, up as 90, left as 180, and down as 270.
+    /// Explicit settings may change the zero direction and rotation sense.
     #[must_use]
     pub const fn degrees(&self) -> Option<f32> {
         self.degrees
@@ -76,23 +147,35 @@ impl StickState {
     ///
     /// GLFW gamepad Y axes point down, so Y is inverted for counterclockwise angles.
     /// Non-finite coordinates are treated as centered. Clicks remain independent.
+    #[cfg(test)]
     fn from_axes(x: f32, y: f32, clicked: bool) -> Self {
-        let degrees = if !x.is_finite() || !y.is_finite() || x.hypot(y) <= STICK_DEAD_ZONE {
+        Self::interpreted([x, y], clicked, StickSettings::default())
+    }
+
+    fn interpreted(axes: [f32; 2], clicked: bool, settings: StickSettings) -> Self {
+        let [x, y] = axes;
+        let degrees = if !x.is_finite() || !y.is_finite() || x.hypot(y) <= settings.dead_zone {
             None
         } else {
-            let angle = (-y).atan2(x).to_degrees().rem_euclid(360.0);
+            let angle = (-y).atan2(x).to_degrees() - settings.zero_degrees.rem_euclid(360.0);
+            let angle = (if settings.clockwise { -angle } else { angle }).rem_euclid(360.0);
             // Floating-point rounding can produce the excluded upper endpoint.
             Some(if angle >= 360.0 { 0.0 } else { angle })
         };
-        Self { degrees, clicked }
+        Self {
+            axes,
+            degrees,
+            clicked,
+        }
     }
 }
 
 /// Current and previous states of both sticks on one mapped gamepad.
 ///
 /// New states assume an absent device, centered sticks, and released click buttons.
-/// A device already present on the first update produces a connection event. Updates use a fixed
-/// radial dead zone of 0.15 in normalized GLFW axis units. No tilt magnitude is stored.
+/// A device already present on the first update produces a connection event. Updates use a
+/// radial dead zone of 0.15 by default, replaceable per stick with `set_settings`.
+/// Original mapped axes and their magnitude remain accessible inside the dead zone.
 /// Queries select the left or right control; any angle carried by the selector
 /// is ignored. Read the observed angle through `left().degrees()` or `right().degrees()`.
 ///
@@ -100,6 +183,7 @@ impl StickState {
 /// relative to the last update, so changes entirely between samples can be missed.
 #[derive(Debug, Default)]
 pub struct JoystickState {
+    settings: [StickSettings; JOYSTICK_COUNT],
     /// Whether GLFW reported the device present during the current update.
     connected: bool,
     /// Whether GLFW reported the device present during the previous update.
@@ -111,6 +195,31 @@ pub struct JoystickState {
 }
 
 impl JoystickState {
+    /// Returns the resolved settings for the selected stick (button selectors also work).
+    #[must_use]
+    pub const fn settings(&self, joystick: Joystick) -> StickSettings {
+        self.settings[Self::index(joystick)]
+    }
+
+    /// Reinterprets both snapshots using new settings, preserving axes and clicks.
+    ///
+    /// Both samples use the same settings for transition queries. This does not poll
+    /// hardware or enqueue events, and already returned events remain unchanged.
+    ///
+    /// # Errors
+    /// Invalid settings return `InvalidState` without changing any state: the dead
+    /// zone must be finite and nonnegative and the zero direction must be finite.
+    pub fn set_settings(&mut self, joystick: Joystick, settings: StickSettings) -> VMNLResult<()> {
+        settings.validate()?;
+        let index = Self::index(joystick);
+        self.settings[index] = settings;
+        for states in [&mut self.current, &mut self.previous] {
+            let state = states[index];
+            states[index] = StickState::interpreted(state.axes, state.clicked, settings);
+        }
+        Ok(())
+    }
+
     /// Returns the index corresponding to a joystick control.
     ///
     /// # Arguments
@@ -140,15 +249,21 @@ impl JoystickState {
         self.previous = self.current;
         self.current = match (connected, gamepad) {
             (true, Some(gamepad)) => [
-                StickState::from_axes(
-                    gamepad.get_axis(GamepadAxis::AxisLeftX),
-                    gamepad.get_axis(GamepadAxis::AxisLeftY),
+                StickState::interpreted(
+                    [
+                        gamepad.get_axis(GamepadAxis::AxisLeftX),
+                        gamepad.get_axis(GamepadAxis::AxisLeftY),
+                    ],
                     gamepad.get_button_state(GamepadButton::ButtonLeftThumb) == Action::Press,
+                    self.settings[0],
                 ),
-                StickState::from_axes(
-                    gamepad.get_axis(GamepadAxis::AxisRightX),
-                    gamepad.get_axis(GamepadAxis::AxisRightY),
+                StickState::interpreted(
+                    [
+                        gamepad.get_axis(GamepadAxis::AxisRightX),
+                        gamepad.get_axis(GamepadAxis::AxisRightY),
+                    ],
                     gamepad.get_button_state(GamepadButton::ButtonRightThumb) == Action::Press,
+                    self.settings[1],
                 ),
             ],
             _ => [StickState::default(); JOYSTICK_COUNT],
@@ -159,8 +274,9 @@ impl JoystickState {
     ///
     /// Call once after each update. Existing events are preserved, followed by
     /// a presence transition if any, then left stick changes and then right stick changes, with clicks before movement.
-    /// Direction comparisons use exact computed angles; changes in magnitude alone
-    /// do not emit an event. Missing gamepad state releases clicks and centers sticks.
+    /// Axis comparisons use sample bits, including changes inside the dead zone and
+    /// magnitude-only changes. Identical NaN samples do not repeat events. Missing
+    /// gamepad state releases clicks and centers sticks.
     pub(crate) fn append_events(&self, events: &mut Vec<Event>) {
         if self.connected && !self.previous_connected {
             events.push(Event::JoystickConnected);
@@ -179,13 +295,18 @@ impl JoystickState {
             if self.is_released(button) {
                 events.push(Event::JoystickButtonReleased { joystick: button });
             }
-            if self.current[index].degrees != self.previous[index].degrees {
+            if self.current[index].axes.map(f32::to_bits)
+                != self.previous[index].axes.map(f32::to_bits)
+            {
                 let degrees = self.current[index].degrees;
                 let joystick = match button {
                     Joystick::JoystickLeftButton => Joystick::JoystickLeft { degrees },
                     _ => Joystick::JoystickRight { degrees },
                 };
-                events.push(Event::JoystickMoved { joystick });
+                events.push(Event::JoystickMoved {
+                    joystick,
+                    axes: self.current[index].axes,
+                });
             }
         }
     }
@@ -304,13 +425,16 @@ impl JoystickState {
         self.is_any_used(ALL_JOYSTICK)
     }
 
-    /// Clears both snapshots and presence history without producing release transitions.
+    /// Clears both snapshots and presence history, preserving settings and producing no releases.
     ///
     /// A present device produces a connection event on the next update after reset.
     ///
     /// This can be useful when pausing or assigning the snapshot to another device.
     pub fn reset(&mut self) {
-        *self = Self::new();
+        *self = Self {
+            settings: self.settings,
+            ..Self::new()
+        };
     }
 
     /// Creates a snapshot with centered sticks and released click buttons.
@@ -325,6 +449,59 @@ impl JoystickState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn settings_reinterpret_history_and_survive_reset() -> VMNLResult<()> {
+        let mut state = JoystickState::new();
+        let left = Joystick::JoystickLeft { degrees: None };
+        let sample = gamepad([0.1, 0.0, 0.1, 0.0], true, false);
+        state.update(true, Some(&sample));
+        state.update(true, Some(&sample));
+        let settings = StickSettings {
+            dead_zone: 0.0,
+            zero_degrees: 90.0,
+            clockwise: true,
+        };
+        state.set_settings(left, settings)?;
+        assert_eq!(
+            state.left().axes().map(f32::to_bits),
+            [0.1_f32, 0.0].map(f32::to_bits)
+        );
+        assert_eq!(state.left().degrees(), Some(90.0));
+        assert_eq!(state.right().degrees(), None);
+        assert!(state.is_down(left));
+        assert!(!state.is_pressed(left));
+        assert!(!state.is_released(left));
+        assert!(state.left().is_clicked());
+        let mut events = Vec::new();
+        state.append_events(&mut events);
+        assert!(events.is_empty());
+        state.update(true, Some(&sample));
+        assert_eq!(state.left().degrees(), Some(90.0));
+        state.reset();
+        assert_eq!(state.settings(left), settings);
+        assert_eq!(
+            state.left().axes().map(f32::to_bits),
+            [0.0_f32, 0.0].map(f32::to_bits)
+        );
+        assert!(!state.is_one_used());
+        Ok(())
+    }
+
+    #[test]
+    fn non_finite_samples_are_retained_without_repeated_movement() {
+        let mut state = JoystickState::new();
+        let sample = gamepad([f32::NAN, f32::INFINITY, 0.0, 0.0], true, false);
+        state.update(true, Some(&sample));
+        assert!(state.left().axes()[0].is_nan());
+        assert_eq!(state.left().axes()[1].to_bits(), f32::INFINITY.to_bits());
+        assert_eq!(state.left().degrees(), None);
+        assert!(state.left().is_clicked());
+        state.update(true, Some(&sample));
+        let mut events = Vec::new();
+        state.append_events(&mut events);
+        assert!(events.is_empty());
+    }
 
     /// Builds a mapped snapshot without initializing GLFW or accessing a device.
     fn gamepad(axes: [f32; 4], left_click: bool, right_click: bool) -> GamepadState {
@@ -446,12 +623,14 @@ mod tests {
                     joystick: Joystick::JoystickLeftButton
                 },
                 Event::JoystickMoved {
+                    axes: [1.0, 0.0],
                     joystick: Joystick::JoystickLeft { degrees: Some(0.0) }
                 },
                 Event::JoystickButtonPressed {
                     joystick: Joystick::JoystickRightButton
                 },
                 Event::JoystickMoved {
+                    axes: [0.0, -1.0],
                     joystick: Joystick::JoystickRight {
                         degrees: Some(90.0)
                     }
@@ -473,6 +652,7 @@ mod tests {
                     joystick: Joystick::JoystickLeftButton
                 },
                 Event::JoystickMoved {
+                    axes: [0.0, -1.0],
                     joystick: Joystick::JoystickLeft {
                         degrees: Some(90.0)
                     }
@@ -482,26 +662,39 @@ mod tests {
     }
 
     #[test]
-    fn movement_events_include_centering_but_ignore_magnitude_and_dead_zone_noise() {
+    fn movement_events_preserve_magnitude_and_dead_zone_motion() {
         let mut state = JoystickState::new();
         state.update(true, Some(&gamepad([1.0, 0.0, 0.0, 0.0], false, false)));
         state.update(true, Some(&gamepad([0.5, 0.0, 0.0, 0.0], false, false)));
         let mut events = Vec::new();
         state.append_events(&mut events);
-        assert!(events.is_empty());
-
+        assert_eq!(
+            events,
+            vec![Event::JoystickMoved {
+                joystick: Joystick::JoystickLeft { degrees: Some(0.0) },
+                axes: [0.5, 0.0],
+            }]
+        );
+        events.clear();
         state.update(true, Some(&gamepad([0.1, 0.0, 0.0, 0.0], false, false)));
         state.append_events(&mut events);
         assert_eq!(
             events,
             vec![Event::JoystickMoved {
+                axes: [0.1, 0.0],
                 joystick: Joystick::JoystickLeft { degrees: None },
             }]
         );
         events.clear();
         state.update(true, Some(&gamepad([0.0, 0.1, 0.0, 0.0], false, false)));
         state.append_events(&mut events);
-        assert!(events.is_empty());
+        assert_eq!(
+            events,
+            vec![Event::JoystickMoved {
+                joystick: Joystick::JoystickLeft { degrees: None },
+                axes: [0.0, 0.1],
+            }]
+        );
     }
 
     #[test]
@@ -518,12 +711,14 @@ mod tests {
                     joystick: Joystick::JoystickLeftButton
                 },
                 Event::JoystickMoved {
+                    axes: [0.0, 0.0],
                     joystick: Joystick::JoystickLeft { degrees: None }
                 },
                 Event::JoystickButtonReleased {
                     joystick: Joystick::JoystickRightButton
                 },
                 Event::JoystickMoved {
+                    axes: [0.0, 0.0],
                     joystick: Joystick::JoystickRight { degrees: None }
                 },
             ]
@@ -586,6 +781,7 @@ mod tests {
                     joystick: Joystick::JoystickLeftButton
                 },
                 Event::JoystickMoved {
+                    axes: [0.0, 0.0],
                     joystick: Joystick::JoystickLeft { degrees: None }
                 },
             ]
