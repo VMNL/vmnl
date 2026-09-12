@@ -54,3 +54,13 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`WindowBuilder`](window/window_builder.md), [`BufferMemoryPreference`](common/buffer_memory_preference.md), and [`VMNLResult`](errors/vmnl_result.md).
+
+## Optional gamepad mappings
+
+Before constructing a context, set `VMNL_GAMEPAD_MAPPINGS` to an ASCII SDL-format
+mapping file to supplement GLFW's built-in mappings. Relative paths use the working
+directory. Loading happens once per context creation, before Vulkan device setup,
+and can allocate CPU memory and read the filesystem. No environment variable means
+no additional file access. Mappings affect all contexts sharing GLFW until it terminates.
+Unreadable files, NUL/non-ASCII text, and parser rejection return `InvalidState`.
+See [mapping troubleshooting](../../troubleshooting.md#joystick-connected-but-sticks-do-not-respond).

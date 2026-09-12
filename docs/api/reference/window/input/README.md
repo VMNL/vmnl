@@ -2,7 +2,11 @@
 
 | Item | Role |
 |---|---|
-| [`Input`](input.md) | Window-owned keyboard/mouse snapshot |
+| [`Input`](input.md) | Window-owned keyboard/mouse/joystick snapshot |
+| [`Joystick`](joysticks.md) | Stick direction or click selector |
+| [`JoystickState`](joysticks.md) | Current and previous state of slot-1 sticks |
+| [`StickSettings`](joysticks.md) | Per-stick dead zone and angle convention |
+| [`StickState`](joysticks.md) | Original axes, derived angle, magnitude, and click state |
 | [`Key`](key.md) | Supported key identifier |
 | [`KeyboardState`](keyboard_state.md) | Current and transition key queries |
 | [`MouseButton`](mouse_button.md) | Supported mouse-button identifier |

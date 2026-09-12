@@ -63,7 +63,8 @@ impl VMNLWindow {
     pub(crate) fn poll_events(&mut self) -> Vec<Event> {
         self.handle.instance.poll_events();
         self.handle.input.update(&self.handle.context);
-        let events: Vec<Event> = self.handle.events.poll_events();
+        let mut events: Vec<Event> = self.handle.events.poll_events();
+        self.handle.input.joystick().append_events(&mut events);
         if events.iter().any(|event| {
             matches!(
                 event,
@@ -79,6 +80,14 @@ impl VMNLWindow {
     #[inline]
     pub(crate) const fn input(&self) -> &Input {
         &self.handle.input
+    }
+
+    pub(crate) fn set_stick_settings(
+        &mut self,
+        joystick: crate::Joystick,
+        settings: crate::StickSettings,
+    ) -> crate::VMNLResult<()> {
+        self.handle.input.set_stick_settings(joystick, settings)
     }
 
     /// Internal implementation backing `Window::wait_events`.

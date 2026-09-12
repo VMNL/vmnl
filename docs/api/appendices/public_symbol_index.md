@@ -7,6 +7,8 @@
 | enum | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/enum.Event.html) |
 | struct | `vmnl::FrameRenderer` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [Rustdoc](../../../target/doc/vmnl/struct.FrameRenderer.html) |
 | struct | `vmnl::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl/struct.Input.html) |
+| enum | `vmnl::Joystick` | [Joystick](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.Joystick.html) |
+| struct | `vmnl::JoystickState` | [JoystickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickState.html) |
 | enum | `vmnl::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl/enum.Key.html) |
 | struct | `vmnl::KeyboardState` | [KeyboardState](../reference/window/input/keyboard_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.KeyboardState.html) |
 | struct | `vmnl::MonitorInfo` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [Rustdoc](../../../target/doc/vmnl/struct.MonitorInfo.html) |
@@ -15,6 +17,8 @@
 | struct | `vmnl::MouseState` | [MouseState](../reference/window/input/mouse_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.MouseState.html) |
 | enum | `vmnl::PresentMode` | [PresentMode](../reference/window/present_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.PresentMode.html) |
 | enum | `vmnl::RenderMode` | [RenderMode](../reference/window/rendering/render_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.RenderMode.html) |
+| struct | `vmnl::StickSettings` | [StickSettings](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickSettings.html) |
+| struct | `vmnl::StickState` | [StickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickState.html) |
 | struct | `vmnl::VMNLError` | [VMNLError](../reference/errors/vmnl_error.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLError.html) |
 | enum | `vmnl::VMNLErrorKind` | [VMNLErrorKind](../reference/errors/vmnl_error_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.VMNLErrorKind.html) |
 | struct | `vmnl::VMNLErrorLocation` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLErrorLocation.html) |

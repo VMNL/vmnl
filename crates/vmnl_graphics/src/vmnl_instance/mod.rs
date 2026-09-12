@@ -80,6 +80,7 @@ impl VMNLInstance {
             log::error!("GLFW error {error:?}: {description}");
         })
         .map_err(|_| VMNLError::new(VMNLErrorKind::GlfwInitFailed))?;
+        crate::glfw_backend::configure_gamepad_mappings(&glfw)?;
         log::debug!(
             "initialized GLFW {} backend",
             crate::glfw_backend::backend_name(&glfw)

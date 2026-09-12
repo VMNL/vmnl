@@ -30,3 +30,23 @@ fn null_backend_creates_a_no_api_window_without_abort() {
     assert_eq!(record["operation"], "create");
     assert_eq!(record["result"], "ok");
 }
+
+#[test]
+fn null_backend_accepts_xbox360_mapping_without_a_controller() {
+    let output = Command::new(env!("CARGO_BIN_EXE_platform_probe"))
+        .args(["null", "gamepad-mapping"])
+        .output()
+        .expect("mapping probe should start");
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let record: Value = serde_json::from_slice(&output.stdout).expect("valid probe JSON");
+    assert_eq!(record["schema"], PROBE_SCHEMA_VERSION);
+    assert_eq!(record["backend_actual"], "null");
+    assert_eq!(record["operation"], "gamepad-mapping");
+    assert_eq!(record["result"], "ok");
+    assert_eq!(record["value"], true);
+    assert_eq!(record["callbacks"], serde_json::json!([]));
+}

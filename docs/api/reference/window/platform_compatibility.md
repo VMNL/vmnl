@@ -9,6 +9,7 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 |---|---|---|
 | `Context::new` | `glfwGetRequiredInstanceExtensions` | all: conditional — Returns the platform Vulkan instance extension list. |
 | `Context::new` | `glfwInit` | all: conditional — Initializes GLFW or returns failure after invoking the error callback. |
+| `Context::new` | `glfwUpdateGamepadMappings` | all: conditional — Parses SDL gamepad mappings; VMNL optionally reads VMNL_GAMEPAD_MAPPINGS once during context creation. Acceptance alone does not prove device recognition. |
 | `KeyboardState` | `glfwGetKey` | all: supported — Returns cached key state. |
 | `MonitorInfo::available_modes` | `glfwGetVideoModes` | all: conditional — Returns modes reported by the backend. |
 | `MonitorInfo::content_scale` | `glfwGetMonitorContentScale` | wayland: conditional — Fractional scaling may not be represented exactly by GLFW 3.4.; x11-win32-cocoa: supported — Returns content scale reported by the backend. |
@@ -35,6 +36,8 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Window::is_open` | `glfwWindowShouldClose` | all: supported — Reads GLFW's local close flag. |
 | `Window::maximize` | `glfwMaximizeWindow` | all: best-effort — Requests maximization. |
 | `Window::opacity` | `glfwSetWindowOpacity` | wayland: unsupported — Invokes GLFW_FEATURE_UNAVAILABLE and has no effect.; x11-win32-cocoa: conditional — Updates opacity or invokes an error callback. |
+| `Window::poll_events` | `glfwGetGamepadState` | all: unverified — Reads mapped axes and buttons; VMNL samples both sticks and their click buttons in slot 1. |
+| `Window::poll_events` | `glfwJoystickPresent` | all: unverified — Reports joystick presence independently of gamepad mapping; VMNL compares samples for slot 1. |
 | `Window::poll_events` | `glfwPollEvents` | all: supported — Processes pending native events. |
 | `Window::post_empty_event` | `glfwPostEmptyEvent` | all: supported — Wakes an event wait with an empty event. |
 | `Window::restore` | `glfwRestoreWindow` | all: best-effort — Requests restoration; Wayland cannot always restore an iconified window. |

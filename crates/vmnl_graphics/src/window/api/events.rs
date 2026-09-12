@@ -9,6 +9,18 @@ use crate::{Event, Input, VMNLErrorKind};
 impl Window {
     /// Polls for window events and updates the input state accordingly.
     ///
+    /// Appends stick click and direction transitions for the mapped gamepad in
+    /// GLFW slot 1 after native window events. Left stick transitions precede right
+    /// stick transitions, with clicks before movement. Unchanged states emit no
+    /// joystick events. An unavailable gamepad releases clicks and centers sticks;
+    /// presence transitions are sampled independently of the gamepad mapping and
+    /// precede stick transitions. A device present on the first poll emits a
+    /// connection event. Presence changes entirely between polls can be missed.
+    ///
+    /// Directions use configurable stick settings. Movement events preserve unfiltered axes.
+    /// Changes entirely between polls can be missed. Joystick polling is independent
+    /// of keyboard and mouse polling flags.
+    ///
     /// # Example
     /// ```rust,no_run
     /// # use vmnl_graphics::{Context, Window};
@@ -218,5 +230,21 @@ impl Window {
     #[must_use]
     pub const fn input(&self) -> &Input {
         self.inner.input()
+    }
+
+    /// Configures one stick's dead zone and angle convention without polling hardware.
+    ///
+    /// Settings are inspectable through `input().joystick().settings(joystick)`.
+    /// See [`crate::JoystickState::set_settings`] for validation and transition semantics.
+    /// This performs no GPU work.
+    ///
+    /// # Errors
+    /// Returns `InvalidState` for invalid settings, leaving input unchanged.
+    pub fn set_stick_settings(
+        &mut self,
+        joystick: crate::Joystick,
+        settings: crate::StickSettings,
+    ) -> crate::VMNLResult<()> {
+        self.inner.set_stick_settings(joystick, settings)
     }
 }

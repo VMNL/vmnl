@@ -20,6 +20,14 @@ Drives the native event queue, updates input snapshots, controls GLFW time, wake
 | `get_timer_value()`, `get_timer_frequency()` | Read raw monotonic timer ticks/frequency. |
 | `set_error_callback(callback)`, `unset_error_callback()` | Replace/remove the GLFW error callback. |
 | `input()` | Borrow the updated `Input` snapshot. |
+| `set_stick_settings(joystick, settings)` | Configure one stick; inspect through `input().joystick().settings(joystick)`. |
+
+Presence transitions for GLFW slot 1, followed by stick click and direction
+transitions when a gamepad mapping is available, are
+appended after native window events by `poll_events()`. See [`Event`](event.md)
+for ordering, axis comparison, dead-zone, and unavailable-device behavior.
+`wait_events()` and `wait_events_timeout()` do not update joystick snapshots;
+call `poll_events()` afterward. Continuous stick input should be sampled regularly.
 
 ## Construction, defaults, and validation
 
@@ -35,7 +43,9 @@ Processing requires `&mut Window` and resets transition snapshots before applyin
 
 ## Errors, panics, and failure conditions
 
-These methods expose no typed result. Known API, cursor, feature, and platform availability errors
+`set_stick_settings` returns `VMNLResult<()>`, rejecting invalid settings without mutation;
+see [joystick input](../input/joysticks.md). The other methods expose no typed result.
+Known API, cursor, feature, and platform availability errors
 map to `GlfwUnsupportedPlatform`; unknown raw codes map to `GlfwUnknownError` and remain in the
 message. Total error conversion prevents an unknown GLFW code from being transmuted into an
 invalid Rust enum. A user callback that panics crosses GLFW's C callback boundary and may abort the

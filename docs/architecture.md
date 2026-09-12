@@ -134,7 +134,7 @@ in [`deployment.md`](deployment.md) applies.
 
 | Area | Maturity | Scope |
 |------|----------|-------|
-| `window` and input | Available | Window lifecycle, events, monitors, keyboard, and mouse. |
+| `window` and input | Available | Window lifecycle, events, monitors, keyboard, mouse, and slot-1 gamepad sticks/clicks. |
 | `d2` | Available | 2D shapes and rendering primitives. |
 | `d3` | Scaffolded | Public types exist; rendering is not implemented. |
 | `raw` | Experimental | Lower-level pipeline and geometry control. |
