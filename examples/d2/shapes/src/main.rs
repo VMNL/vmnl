@@ -22,6 +22,10 @@ fn main() -> VMNLResult<()> {
         .position(110.0, 220.0)
         .color(Rgba::rgba(50, 170, 255, 255))
         .build(&context)?;
+    let ellipse = Shape::ellipse(11.0, 183.0)
+        .position(440.0, 425.0)
+        .color(Rgba::rgba(0, 0, 255, 255))
+        .build(&context)?;
     let circle = Shape::circle(65.0)
         .position(440.0, 125.0)
         .color(Rgba::rgba(0, 0, 255, 255))
@@ -29,7 +33,7 @@ fn main() -> VMNLResult<()> {
     let triangle = Shape::triangle(
         Vector2f { x: 560.0, y: 170.0 },
         Vector2f { x: 790.0, y: 430.0 },
-        Vector2f { x: 470.0, y: 430.0 },
+        Vector2f { x: 170.0, y: 130.0 },
     )
     .vertex_colors(Rgba::YELLOW, Rgba::MAGENTA, Rgba::CYAN)
     .build(&context)?;
@@ -42,7 +46,7 @@ fn main() -> VMNLResult<()> {
         }
         window
             .render()
-            .draw2d([&rectangle, &circle, &triangle])
+            .draw2d([&rectangle, &circle, &triangle, &ellipse])
             .submit()?;
     }
 
