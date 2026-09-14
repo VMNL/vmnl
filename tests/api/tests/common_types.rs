@@ -3,14 +3,14 @@
 
 use vmnl::{
     common::{BufferMemoryPreference, Rgba},
-    d2::{CircleBuilder, Shape, Vector2f, Vertex2D},
+    d2::{EllipseBuilder, Shape, Vector2f, Vertex2D},
     d3::{Vector3f, Vertex3D},
     VMNLResult,
 };
 
 #[test]
 fn circle_builder_is_available_through_the_public_facade() -> VMNLResult<()> {
-    let _: CircleBuilder = Shape::circle(50.0)
+    let _: EllipseBuilder = Shape::circle(50.0)
         .position(100.0, 120.0)
         .color(Rgba::CYAN)
         .buffer_memory_preference(BufferMemoryPreference::Host);

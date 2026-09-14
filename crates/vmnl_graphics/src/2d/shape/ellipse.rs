@@ -78,7 +78,7 @@ impl EllipseBuilder {
     /// # use vmnl_graphics::d2::Shape;
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
-    /// let ellipse = Shape::ellipse(50.0)
+    /// let ellipse = Shape::ellipse(50.0, 40.0)
     ///     .position(100.0, 120.0)
     ///     .color([0, 200, 255])
     ///     .build(&context)?;
@@ -191,7 +191,7 @@ mod tests {
 
     #[test]
     fn new_uses_expected_defaults() {
-        let builder = EllipseBuilder::new(Vector2f { x: 2.0, y: 1.0});
+        let builder = EllipseBuilder::new(Vector2f { x: 2.0, y: 1.0 });
 
         assert_eq!(builder.position, Vector2f { x: 0.0, y: 0.0 });
         assert_eq!(builder.radiuses.x.to_bits(), 2.0_f32.to_bits());
@@ -205,33 +205,67 @@ mod tests {
 
     #[test]
     fn validate_geometry_accepts_positive_finite_ellipse() {
-        assert!(EllipseBuilder::validate_geometry(Vector2f { x: 1.0, y: 2.0 }, Vector2f { x: 5.0, y: 2.0 }).is_ok());
+        assert!(EllipseBuilder::validate_geometry(
+            Vector2f { x: 1.0, y: 2.0 },
+            Vector2f { x: 5.0, y: 2.0 }
+        )
+        .is_ok());
     }
 
     #[test]
     fn validate_geometry_rejects_invalid_radius() {
         assert_invalid_state(
-            EllipseBuilder::validate_geometry(Vector2f { x: 0.0, y: 0.0 }, Vector2f { x: f32::NAN, y: 2.0 }),
+            EllipseBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f {
+                    x: f32::NAN,
+                    y: 2.0,
+                },
+            ),
             "ellipse radius must not be NaN",
         );
         assert_invalid_state(
-            EllipseBuilder::validate_geometry(Vector2f { x: 0.0, y: 0.0 }, Vector2f { x: 1.0, y: f32::NAN}),
+            EllipseBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f {
+                    x: 1.0,
+                    y: f32::NAN,
+                },
+            ),
+            "ellipse radius must not be NaN",
+        );
+        assert_invalid_state(
+            EllipseBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f {
+                    x: f32::INFINITY,
+                    y: 1.2,
+                },
+            ),
             "ellipse radius must be finite",
         );
         assert_invalid_state(
-            EllipseBuilder::validate_geometry(Vector2f { x: 0.0, y: 0.0 }, Vector2f { x: f32::INFINITY, y: 1.2}),
+            EllipseBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f {
+                    x: 1.0,
+                    y: f32::INFINITY,
+                },
+            ),
             "ellipse radius must be finite",
         );
         assert_invalid_state(
-            EllipseBuilder::validate_geometry(Vector2f { x: 0.0, y: 0.0 }, Vector2f { x: 1.0, y: f32::INFINITY}),
-            "ellipse radius must be finite",
-        );
-        assert_invalid_state(
-            EllipseBuilder::validate_geometry(Vector2f { x: 0.0, y: 0.0 }, Vector2f {x: 0.0, y: 2.4}),
+            EllipseBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f { x: 0.0, y: 2.4 },
+            ),
             "ellipse radius must be strictly positive",
         );
         assert_invalid_state(
-            EllipseBuilder::validate_geometry(Vector2f { x: 0.0, y: 0.0 }, Vector2f {x: 4.0, y: 0.0}),
+            EllipseBuilder::validate_geometry(
+                Vector2f { x: 0.0, y: 0.0 },
+                Vector2f { x: 4.0, y: 0.0 },
+            ),
             "ellipse radius must be strictly positive",
         );
     }
@@ -244,7 +278,7 @@ mod tests {
                     x: f32::NAN,
                     y: 0.0,
                 },
-                Vector2f { x: 1.0, y: 2.5},
+                Vector2f { x: 1.0, y: 2.5 },
             ),
             "ellipse position must not be NaN",
         );
@@ -254,7 +288,7 @@ mod tests {
                     x: f32::INFINITY,
                     y: 0.0,
                 },
-                Vector2f { x: 1.0, y: 2.5},
+                Vector2f { x: 1.0, y: 2.5 },
             ),
             "ellipse position must be finite",
         );
@@ -264,7 +298,10 @@ mod tests {
                     x: f32::MAX,
                     y: 0.0,
                 },
-                Vector2f { x: 1.2, y: f32::MAX},
+                Vector2f {
+                    x: f32::MAX,
+                    y: f32::MAX,
+                },
             ),
             "ellipse bounds must be finite",
         );
@@ -274,7 +311,10 @@ mod tests {
                     x: f32::MAX,
                     y: 0.0,
                 },
-                Vector2f { x: f32::MAX, y: 2.5},
+                Vector2f {
+                    x: f32::MAX,
+                    y: 2.5,
+                },
             ),
             "ellipse bounds must be finite",
         );
@@ -282,13 +322,16 @@ mod tests {
 
     #[test]
     fn geometry_creates_closed_triangle_fan() {
-        let (vertices, indices) =
-            EllipseBuilder::geometry(Vector2f { x: 10.0, y: 20.0 }, Vector2f { x: 1.0, y: 2.5}, Rgba::CYAN);
+        let (vertices, indices) = EllipseBuilder::geometry(
+            Vector2f { x: 10.0, y: 20.0 },
+            Vector2f { x: 1.0, y: 2.5 },
+            Rgba::CYAN,
+        );
 
         assert_eq!(vertices.len(), usize::from(ELLIPSE_SEGMENTS) + 1);
         assert_eq!(indices.len(), usize::from(ELLIPSE_SEGMENTS) * 3);
         assert_eq!(vertices[0].position, Vector2f { x: 10.0, y: 20.0 });
-        assert_eq!(vertices[1].position, Vector2f { x: 15.0, y: 20.0 });
+        assert_eq!(vertices[1].position, Vector2f { x: 11.0, y: 20.0 });
         assert_eq!(vertices[1].color, Rgba::CYAN);
         assert_eq!(indices[..3], [0, 1, 2]);
         assert_eq!(

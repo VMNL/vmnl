@@ -88,7 +88,10 @@ impl Shape {
     /// ```
     #[must_use]
     pub fn circle(radius: f32) -> EllipseBuilder {
-        EllipseBuilder::new(Vector2f { x: radius, y: radius })
+        EllipseBuilder::new(Vector2f {
+            x: radius,
+            y: radius,
+        })
     }
 
     /// Create a filled ellipse builder with a required radius.
@@ -111,7 +114,10 @@ impl Shape {
     /// ```
     #[must_use]
     pub fn ellipse(radius_x: f32, radius_y: f32) -> EllipseBuilder {
-        EllipseBuilder::new(Vector2f { x: radius_x, y: radius_y })
+        EllipseBuilder::new(Vector2f {
+            x: radius_x,
+            y: radius_y,
+        })
     }
 
     pub(crate) fn blend_mode_from_vertices(vertices: &[Vertex2D]) -> BlendMode {
