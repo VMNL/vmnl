@@ -62,8 +62,8 @@ characters.
 
 For more information, see [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-Run `just hooks-install` once per clone to enable immediate local validation. Pull request commits
-are validated independently by the `Commit messages` CI check.
+Run `just hooks-install` once per clone to enable immediate local validation. The GitHub ruleset
+targeting `main` enforces commit metadata independently of local hooks.
 
 ## Commit Type usage guidelines
 

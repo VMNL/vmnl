@@ -103,6 +103,6 @@ Install the repository-owned `commit-msg` hook once per clone:
 just hooks-install
 ```
 
-The hook provides immediate local feedback. CI validates every commit added by a pull request;
-configure the GitHub `Commit messages` check as required on `main` to prevent a failing pull
-request from being merged.
+The hook provides immediate local feedback. The GitHub ruleset targeting `main` is authoritative
+for remote enforcement; keep its commit metadata restrictions aligned with the format and allowed
+types documented above.
