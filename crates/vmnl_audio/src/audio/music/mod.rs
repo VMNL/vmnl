@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub use handle::MusicHandle;
-pub use stream::MusicStream;
+pub(crate) use stream::MusicStream;
 
 #[derive(Clone)]
 pub struct Music {
@@ -26,7 +26,7 @@ pub struct Music {
 }
 
 impl Music {
-    pub(crate) fn from_file<P>(device: AudioDevice, path: P) -> AudioResult<Self>
+    pub(crate) fn from_file<P>(device: &AudioDevice, path: P) -> AudioResult<Self>
     where
         P: AsRef<Path>,
     {

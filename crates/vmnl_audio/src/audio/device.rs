@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use crate::audio::bus::AudioBus;
 use crate::audio::decoder::DecodedAudio;
-use crate::audio::error::{AudioError, AudioResult};
+use crate::audio::error::{validate_gain, AudioError, AudioResult};
 use crate::audio::music::Music;
 use crate::audio::runtime::{AudioCommand, AudioRuntime};
 use crate::audio::sound::Sound;
@@ -15,9 +15,21 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct AudioConfig {
-    pub master_volume: f32,
+    master_volume: f32,
     pub sample_rate: u32,
     pub channels: u32,
+}
+
+impl AudioConfig {
+    #[must_use]
+    pub fn master_volume(&self) -> f32 {
+        self.master_volume
+    }
+
+    pub fn set_master_volume(&mut self, volume: f32) -> AudioResult<()> {
+        self.master_volume = validate_gain(volume)?;
+        Ok(())
+    }
 }
 
 impl Default for AudioConfig {
@@ -30,7 +42,6 @@ impl Default for AudioConfig {
     }
 }
 
-#[derive(Clone)]
 pub struct AudioDevice {
     runtime: Arc<AudioRuntime>,
     sample_rate: u32,
@@ -51,7 +62,7 @@ impl AudioDevice {
         }
 
         let runtime = Arc::new(AudioRuntime::new());
-        runtime.master_bus.set_volume(config.master_volume);
+        runtime.master_bus.set_volume(config.master_volume())?;
 
         Ok(Self {
             runtime,
@@ -79,17 +90,18 @@ impl AudioDevice {
     where
         P: AsRef<Path>,
     {
-        Sound::from_file(self.clone(), path)
+        Sound::from_file(self, path)
     }
 
     pub fn load_music<P>(&self, path: P) -> AudioResult<Music>
     where
         P: AsRef<Path>,
     {
-        Music::from_file(self.clone(), path)
+        Music::from_file(self, path)
     }
 
     pub fn set_master_volume(&self, volume: f32) -> AudioResult<()> {
+        let volume = validate_gain(volume)?;
         self.runtime
             .enqueue(AudioCommand::SetMasterVolume(volume))?;
         self.update()?;
@@ -120,14 +132,14 @@ impl AudioDevice {
 
     pub fn update(&self) -> AudioResult<()> {
         self.runtime.apply_commands()?;
-        self.runtime.pump_music_streams();
-        self.runtime.cleanup();
+        self.runtime.pump_music_streams()?;
+        self.runtime.cleanup()?;
         Ok(())
     }
 
     pub fn render_into(&self, output: &mut [f32]) -> AudioResult<()> {
         self.update()?;
-        self.runtime.mix_into(output);
+        self.runtime.mix_into(output)?;
         Ok(())
     }
 

@@ -1,4 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
+use crate::audio::error::{validate_gain, AudioResult};
 /// SPDX-FileCopyrightText: 2026 Nathan Flachat
 /// SPDX-License-Identifier: MIT
 ///
@@ -45,10 +46,14 @@ impl AudioBus {
         self.kind
     }
 
-    pub fn set_volume(&self, volume: f32) {
+    pub fn set_volume(&self, volume: f32) -> AudioResult<()> {
+        let volume = validate_gain(volume)?;
+
         self.state
             .volume_bits
-            .store(volume.clamp(0.0, 1.0).to_bits(), Ordering::Relaxed);
+            .store(volume.to_bits(), Ordering::Relaxed);
+
+        Ok(())
     }
 
     #[must_use]

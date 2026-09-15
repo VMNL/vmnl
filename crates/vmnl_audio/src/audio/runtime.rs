@@ -4,9 +4,11 @@ use crate::audio::decoder::{AudioDecoder, DecodedAudio};
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-use crate::audio::{
-    AudioBus, AudioError, AudioMixer, AudioResult, BusKind, MusicStream, SoundVoice,
-};
+use crate::audio::{AudioBus, AudioError, AudioResult, BusKind};
+
+use crate::audio::mixer::AudioMixer;
+use crate::audio::music::MusicStream;
+use crate::audio::sound::SoundVoice;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -14,7 +16,7 @@ use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 
 #[derive(Debug, Clone)]
-pub enum AudioCommand {
+pub(crate) enum AudioCommand {
     SetMasterVolume(f32),
     SetBusVolume(BusKind, f32),
     MuteBus(BusKind),
@@ -25,7 +27,7 @@ pub enum AudioCommand {
     SetMaxVoices(usize),
 }
 
-pub struct AudioRuntime {
+pub(crate) struct AudioRuntime {
     pub master_bus: AudioBus,
     pub music_bus: AudioBus,
     pub sfx_bus: AudioBus,
@@ -68,8 +70,17 @@ impl AudioRuntime {
         self.max_sound_voices.load(Ordering::Relaxed)
     }
 
-    pub fn set_max_sound_voices(&self, max: usize) {
+    pub fn set_max_sound_voices(&self, max: usize) -> AudioResult<()> {
         self.max_sound_voices.store(max.max(1), Ordering::Relaxed);
+
+        let mut voices = self
+            .active_sound_voices
+            .write()
+            .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
+
+        self.enforce_voice_limit_locked(&mut voices);
+
+        Ok(())
     }
 
     pub fn enqueue(&self, command: AudioCommand) -> AudioResult<()> {
@@ -94,14 +105,16 @@ impl AudioRuntime {
 
         for command in commands {
             match command {
-                AudioCommand::SetMasterVolume(volume) => self.master_bus.set_volume(volume),
+                AudioCommand::SetMasterVolume(volume) => self.master_bus.set_volume(volume)?,
                 AudioCommand::SetBusVolume(BusKind::Master, volume) => {
-                    self.master_bus.set_volume(volume);
+                    self.master_bus.set_volume(volume)?;
                 }
                 AudioCommand::SetBusVolume(BusKind::Music, volume) => {
-                    self.music_bus.set_volume(volume);
+                    self.music_bus.set_volume(volume)?;
                 }
-                AudioCommand::SetBusVolume(BusKind::Sfx, volume) => self.sfx_bus.set_volume(volume),
+                AudioCommand::SetBusVolume(BusKind::Sfx, volume) => {
+                    self.sfx_bus.set_volume(volume)?;
+                }
                 AudioCommand::MuteBus(BusKind::Master) => self.master_bus.mute(),
                 AudioCommand::MuteBus(BusKind::Music) => self.music_bus.mute(),
                 AudioCommand::MuteBus(BusKind::Sfx) => self.sfx_bus.mute(),
@@ -168,7 +181,7 @@ impl AudioRuntime {
                     }
                 }
 
-                AudioCommand::SetMaxVoices(max) => self.set_max_sound_voices(max),
+                AudioCommand::SetMaxVoices(max) => self.set_max_sound_voices(max)?,
             }
         }
         Ok(())
@@ -250,25 +263,39 @@ impl AudioRuntime {
         }
     }
 
-    pub fn cleanup(&self) {
-        if let Ok(mut voices) = self.active_sound_voices.write() {
-            voices.retain(|voice| !voice.is_stopped());
-        }
-        if let Ok(mut streams) = self.active_music_streams.write() {
-            streams.retain(|stream| !stream.is_stopped() && !stream.is_finished());
-        }
+    pub fn cleanup(&self) -> AudioResult<()> {
+        let mut voices = self
+            .active_sound_voices
+            .write()
+            .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
+
+        voices.retain(|voice| !voice.is_stopped());
+
+        let mut streams = self
+            .active_music_streams
+            .write()
+            .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
+
+        streams.retain(|stream| !stream.is_stopped() && !stream.is_finished());
+
+        Ok(())
     }
 
-    pub fn pump_music_streams(&self) {
-        if let Ok(streams) = self.active_music_streams.read() {
-            for stream in streams.iter() {
-                stream.pump();
-            }
+    pub fn pump_music_streams(&self) -> AudioResult<()> {
+        let streams = self
+            .active_music_streams
+            .read()
+            .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
+
+        for stream in streams.iter() {
+            stream.pump();
         }
+
+        Ok(())
     }
 
-    pub fn mix_into(&self, output: &mut [f32]) {
-        AudioMixer::mix(self, output);
+    pub fn mix_into(&self, output: &mut [f32]) -> AudioResult<()> {
+        AudioMixer::mix(self, output)
     }
 
     #[must_use]
@@ -281,18 +308,24 @@ impl AudioRuntime {
     }
 
     #[must_use]
-    pub fn is_anything_playing(&self) -> bool {
+    pub fn is_anything_playing(&self) -> AudioResult<bool> {
         let voices = self
             .active_sound_voices
             .read()
-            .ok()
-            .is_some_and(|v| v.iter().any(|x| x.is_playing()));
+            .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
+
+        if voices.iter().any(|voice| !voice.is_stopped()) {
+            return Ok(true);
+        }
+
         let streams = self
             .active_music_streams
             .read()
-            .ok()
-            .is_some_and(|s| s.iter().any(|x| x.is_playing()));
-        voices || streams
+            .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
+
+        Ok(streams
+            .iter()
+            .any(|stream| !stream.is_stopped() && !stream.is_finished()))
     }
 
     pub fn force_stop_all(&self) -> AudioResult<()> {
