@@ -3,13 +3,15 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-use crate::audio::{
-    AudioError, AudioResult, AudioRuntime, BusKind, MusicStream, PlaybackState, SoundVoice,
-};
+use crate::audio::{AudioError, AudioResult, BusKind, PlaybackState};
+
+use crate::audio::music::MusicStream;
+use crate::audio::runtime::AudioRuntime;
+use crate::audio::sound::SoundVoice;
 
 use std::sync::Arc;
 
-pub struct AudioMixer;
+pub(crate) struct AudioMixer;
 
 impl AudioMixer {
     pub fn mix(runtime: &AudioRuntime, output: &mut [f32]) -> AudioResult<()> {
