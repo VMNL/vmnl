@@ -5,6 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use crate::audio::bus::BusKind;
 use crate::audio::decoder::DecodedAudio;
+use crate::audio::error::{validate_gain, AudioResult};
 use crate::audio::PlaybackState;
 
 use std::path::{Path, PathBuf};
@@ -12,7 +13,7 @@ use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
 
 #[derive(Debug)]
-pub struct MusicStream {
+pub(crate) struct MusicStream {
     id: u64,
     path: PathBuf,
     decoded_audio: Arc<DecodedAudio>,
@@ -64,9 +65,12 @@ impl MusicStream {
         self.looping.load(Ordering::Relaxed)
     }
 
-    pub fn set_volume(&self, volume: f32) {
-        self.volume_bits
-            .store(volume.clamp(0.0, 1.0).to_bits(), Ordering::Relaxed);
+    pub fn set_volume(&self, volume: f32) -> AudioResult<()> {
+        let volume = validate_gain(volume)?;
+
+        self.volume_bits.store(volume.to_bits(), Ordering::Relaxed);
+
+        Ok(())
     }
 
     pub fn volume(&self) -> f32 {

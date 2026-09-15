@@ -16,7 +16,9 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub use handle::SoundHandle;
-pub use voice::{PlaybackState, SoundVoice};
+pub use voice::PlaybackState;
+
+pub(crate) use voice::SoundVoice;
 
 #[derive(Clone)]
 pub struct Sound {
@@ -26,7 +28,7 @@ pub struct Sound {
 }
 
 impl Sound {
-    pub(crate) fn from_file<P>(device: AudioDevice, path: P) -> AudioResult<Self>
+    pub(crate) fn from_file<P>(device: &AudioDevice, path: P) -> AudioResult<Self>
     where
         P: AsRef<Path>,
     {

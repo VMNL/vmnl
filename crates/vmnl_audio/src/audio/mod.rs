@@ -3,19 +3,17 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-pub mod bus;
-pub mod decoder;
-pub mod device;
-pub mod error;
-pub mod mixer;
-pub mod music;
-pub mod runtime;
-pub mod sound;
+mod bus;
+mod decoder;
+mod device;
+mod error;
+mod mixer;
+mod music;
+mod runtime;
+mod sound;
 
 pub use bus::{AudioBus, BusKind};
 pub use device::{AudioConfig, AudioDevice};
 pub use error::{AudioError, AudioResult};
-pub use mixer::AudioMixer;
-pub use music::{Music, MusicHandle, MusicStream};
-pub use runtime::{AudioCommand, AudioRuntime};
-pub use sound::{PlaybackState, Sound, SoundHandle, SoundVoice};
+pub use music::{Music, MusicHandle};
+pub use sound::{PlaybackState, Sound, SoundHandle};

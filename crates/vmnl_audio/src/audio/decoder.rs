@@ -59,21 +59,49 @@ impl AudioDecoder {
         let mut reader =
             hound::WavReader::open(path).map_err(|e| AudioError::DecoderFailed(e.to_string()))?;
         let spec = reader.spec();
-        let channels = u32::from(spec.channels.max(1));
-        let sample_rate = spec.sample_rate.max(1);
+        let channels = u32::from(spec.channels);
+        let sample_rate = spec.sample_rate;
+
+        if channels == 0 {
+            return Err(AudioError::DecoderFailed(
+                "WAV file has zero channels".to_string(),
+            ));
+        }
+
+        if sample_rate == 0 {
+            return Err(AudioError::DecoderFailed(
+                "WAV file has zero sample rate".to_string(),
+            ));
+        }
 
         let samples = match spec.sample_format {
             hound::SampleFormat::Float => {
                 let mut out = Vec::new();
                 for sample in reader.samples::<f32>() {
-                    out.push(sample.map_err(|e| AudioError::DecoderFailed(e.to_string()))?);
+                    let sample = sample.map_err(|e| AudioError::DecoderFailed(e.to_string()))?;
+
+                    if !sample.is_finite() {
+                        return Err(AudioError::DecoderFailed(
+                            "WAV contains non-finite audio sample".to_string(),
+                        ));
+                    }
+
+                    out.push(sample);
                 }
                 out
             }
             hound::SampleFormat::Int => {
-                let bits = spec.bits_per_sample.max(1);
-                let denom = (1i64 << u32::from(bits.saturating_sub(1))).max(1) as f32;
+                let bits = spec.bits_per_sample;
+
+                if bits == 0 || bits > 32 {
+                    return Err(AudioError::DecoderFailed(format!(
+                        "unsupported WAV bit depth: {bits}"
+                    )));
+                }
+
+                let denom = (1i64 << u32::from(bits - 1)) as f32;
                 let mut out = Vec::new();
+
                 if bits <= 16 {
                     for sample in reader.samples::<i16>() {
                         out.push(
@@ -90,6 +118,7 @@ impl AudioDecoder {
                         );
                     }
                 }
+
                 out
             }
         };
@@ -162,10 +191,29 @@ impl AudioDecoder {
         let mut reader =
             claxon::FlacReader::open(path).map_err(|e| AudioError::DecoderFailed(e.to_string()))?;
         let info = reader.streaminfo();
-        let channels = info.channels.max(1);
-        let sample_rate = info.sample_rate.max(1);
-        let bits = info.bits_per_sample.max(1);
-        let denom = (1i64 << bits.saturating_sub(1)).max(1) as f32;
+        let channels = info.channels;
+        let sample_rate = info.sample_rate;
+        let bits = info.bits_per_sample;
+
+        if channels == 0 {
+            return Err(AudioError::DecoderFailed(
+                "FLAC file has zero channels".to_string(),
+            ));
+        }
+
+        if sample_rate == 0 {
+            return Err(AudioError::DecoderFailed(
+                "FLAC file has zero sample rate".to_string(),
+            ));
+        }
+
+        if bits == 0 || bits > 32 {
+            return Err(AudioError::DecoderFailed(format!(
+                "unsupported FLAC bit depth: {bits}"
+            )));
+        }
+
+        let denom = (1i64 << (bits - 1)) as f32;
         let mut samples = Vec::new();
 
         for sample in reader.samples() {

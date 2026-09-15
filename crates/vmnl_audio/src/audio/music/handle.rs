@@ -3,7 +3,8 @@
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-use crate::audio::{MusicStream, PlaybackState};
+use crate::audio::music::MusicStream;
+use crate::audio::PlaybackState;
 
 use std::sync::Arc;
 

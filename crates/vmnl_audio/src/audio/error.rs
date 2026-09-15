@@ -43,3 +43,13 @@ impl From<std::io::Error> for AudioError {
         Self::Io(error)
     }
 }
+
+pub fn validate_gain(gain: f32) -> AudioResult<f32> {
+    if !gain.is_finite() || !(0.0..=1.0).contains(&gain) {
+        return Err(AudioError::InvalidState(
+            "gain must be finite and between 0.0 and 1.0".to_string(),
+        ));
+    }
+
+    Ok(gain)
+}

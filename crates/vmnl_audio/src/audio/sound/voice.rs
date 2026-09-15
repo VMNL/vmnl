@@ -6,6 +6,7 @@
 use crate::audio::bus::BusKind;
 use crate::audio::decoder::DecodedAudio;
 
+use crate::audio::error::{validate_gain, AudioResult};
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
 
@@ -18,7 +19,7 @@ pub enum PlaybackState {
 }
 
 #[derive(Debug)]
-pub struct SoundVoice {
+pub(crate) struct SoundVoice {
     id: u64,
     decoded_audio: Arc<DecodedAudio>,
     cursor_frames: AtomicUsize,
@@ -65,9 +66,12 @@ impl SoundVoice {
         self.looping.load(Ordering::Relaxed)
     }
 
-    pub fn set_volume(&self, volume: f32) {
-        self.volume_bits
-            .store(volume.clamp(0.0, 1.0).to_bits(), Ordering::Relaxed);
+    pub fn set_volume(&self, volume: f32) -> AudioResult<()> {
+        let volume = validate_gain(volume)?;
+
+        self.volume_bits.store(volume.to_bits(), Ordering::Relaxed);
+
+        Ok(())
     }
 
     pub fn volume(&self) -> f32 {
