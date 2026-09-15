@@ -26,7 +26,9 @@ impl Window {
         self.inner.set_char_polling(enabled);
     }
 
-    /// Enables or disables polling for mouse button events.
+    /// Enables or disables delivery of mouse-button events from [`poll_events`](Self::poll_events).
+    ///
+    /// Internal mouse-button state tracking remains active when delivery is disabled.
     ///
     /// # Arguments
     /// - `enabled`: `true` to receive mouse button events, `false` to stop receiving them.
@@ -46,7 +48,16 @@ impl Window {
         self.inner.set_mouse_button_polling(enabled);
     }
 
-    /// Enables or disables polling for cursor position events.
+    /// Returns whether mouse-button events are delivered by [`poll_events`](Self::poll_events).
+    ///
+    /// Internal button-state tracking remains active when delivery is disabled.
+    #[inline]
+    #[must_use]
+    pub const fn is_mouse_button_polling_enabled(&self) -> bool {
+        self.inner.is_mouse_button_polling_enabled()
+    }
+
+    /// Enables or disables delivery of cursor-position events from [`poll_events`](Self::poll_events).
     ///
     /// # Arguments
     /// - `enabled`: `true` to receive cursor position events, `false` to stop receiving them.
@@ -66,7 +77,14 @@ impl Window {
         self.inner.set_cursor_pos_polling(enabled);
     }
 
-    /// Enables or disables polling for cursor enter/leave events.
+    /// Returns whether cursor-position events are delivered by [`poll_events`](Self::poll_events).
+    #[inline]
+    #[must_use]
+    pub const fn is_cursor_pos_polling_enabled(&self) -> bool {
+        self.inner.is_cursor_pos_polling_enabled()
+    }
+
+    /// Enables or disables delivery of cursor enter/leave events from [`poll_events`](Self::poll_events).
     ///
     /// # Arguments
     /// - `enabled`: `true` to receive cursor enter/leave events, `false` to stop receiving them.
@@ -86,7 +104,15 @@ impl Window {
         self.inner.set_cursor_enter_polling(enabled);
     }
 
-    /// Enables or disables polling for scroll events.
+    /// Returns whether cursor enter/leave events are delivered by
+    /// [`poll_events`](Self::poll_events).
+    #[inline]
+    #[must_use]
+    pub const fn is_cursor_enter_polling_enabled(&self) -> bool {
+        self.inner.is_cursor_enter_polling_enabled()
+    }
+
+    /// Enables or disables delivery of scroll events from [`poll_events`](Self::poll_events).
     ///
     /// # Arguments
     /// - `enabled`: `true` to receive scroll events, `false` to stop receiving them.
@@ -104,6 +130,13 @@ impl Window {
     #[inline]
     pub fn set_scroll_polling(&mut self, enabled: bool) {
         self.inner.set_scroll_polling(enabled);
+    }
+
+    /// Returns whether scroll events are delivered by [`poll_events`](Self::poll_events).
+    #[inline]
+    #[must_use]
+    pub const fn is_scroll_polling_enabled(&self) -> bool {
+        self.inner.is_scroll_polling_enabled()
     }
 
     /// Enables or disables polling for window resize events.
@@ -186,7 +219,9 @@ impl Window {
         self.inner.set_close_polling(enabled);
     }
 
-    /// Enables or disables polling for key events.
+    /// Enables or disables delivery of key events from [`poll_events`](Self::poll_events).
+    ///
+    /// Internal key-state tracking remains active when delivery is disabled.
     ///
     /// # Arguments
     /// - `enabled`: `true` to receive key events, `false` to stop receiving them.
@@ -326,7 +361,7 @@ impl Window {
         self.inner.set_content_scale_polling(enabled);
     }
 
-    /// Enables keyboard-related event polling as a convenience helper.
+    /// Enables delivery of keyboard-related events as a convenience helper.
     ///
     /// # Example
     /// ```rust,no_run
@@ -343,7 +378,9 @@ impl Window {
         self.inner.enable_keyboard_polling();
     }
 
-    /// Disables keyboard-related event polling as a convenience helper.
+    /// Disables delivery of keyboard-related events as a convenience helper.
+    ///
+    /// Internal key-state tracking remains active.
     ///
     /// # Example
     /// ```rust,no_run
@@ -360,7 +397,7 @@ impl Window {
         self.inner.disable_keyboard_polling();
     }
 
-    /// Enables mouse-related event polling as a convenience helper.
+    /// Enables delivery of mouse-related events as a convenience helper.
     ///
     /// # Example
     /// ```rust,no_run
@@ -377,7 +414,9 @@ impl Window {
         self.inner.enable_mouse_polling();
     }
 
-    /// Disables mouse-related event polling as a convenience helper.
+    /// Disables delivery of mouse-related events as a convenience helper.
+    ///
+    /// Internal mouse-button state tracking remains active.
     ///
     /// # Example
     /// ```rust,no_run
@@ -445,7 +484,9 @@ impl Window {
         self.inner.configure_window_polling();
     }
 
-    /// Disables the default polling configuration enabled by `configure_window_polling`.
+    /// Disables the default public event delivery enabled by `configure_window_polling`.
+    ///
+    /// Internal keyboard and mouse-button state tracking remains active.
     ///
     /// # Example
     /// ```rust,no_run

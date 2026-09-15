@@ -4,11 +4,13 @@
 | Kind | Symbol | Canonical page | Rustdoc |
 |---|---|---|---|
 | struct | `vmnl::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.Context.html) |
-| enum | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/enum.Event.html) |
+| struct | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/struct.Event.html) |
+| enum | `vmnl::EventKind` | [EventKind](../reference/window/events/event_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.EventKind.html) |
 | struct | `vmnl::FrameRenderer` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [Rustdoc](../../../target/doc/vmnl/struct.FrameRenderer.html) |
 | struct | `vmnl::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl/struct.Input.html) |
 | enum | `vmnl::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl/enum.Key.html) |
 | struct | `vmnl::KeyboardState` | [KeyboardState](../reference/window/input/keyboard_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.KeyboardState.html) |
+| struct | `vmnl::Modifiers` | [Modifiers](../reference/window/input/modifiers.md) | [Rustdoc](../../../target/doc/vmnl/struct.Modifiers.html) |
 | struct | `vmnl::MonitorInfo` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [Rustdoc](../../../target/doc/vmnl/struct.MonitorInfo.html) |
 | struct | `vmnl::Monitors` | [Monitors](../reference/window/monitors/monitors.md) | [Rustdoc](../../../target/doc/vmnl/struct.Monitors.html) |
 | enum | `vmnl::MouseButton` | [MouseButton](../reference/window/input/mouse_button.md) | [Rustdoc](../../../target/doc/vmnl/enum.MouseButton.html) |

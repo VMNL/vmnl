@@ -57,4 +57,4 @@ fn main() -> vmnl::VMNLResult<()> {
 }
 ```
 
-Related: [`Event::Closed`](events/event.md) and [event loops](../../workflows/window_event_loop.md).
+Related: [`EventKind::Closed`](events/event_kind.md) and [event loops](../../workflows/window_event_loop.md).

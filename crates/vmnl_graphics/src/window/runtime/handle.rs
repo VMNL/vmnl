@@ -6,7 +6,7 @@
 
 use crate::{
     vmnl_instance::VMNLInstance, window::event::EventQueue, window::inner::VMNLWindow, Event,
-    Input, VMNLErrorKind,
+    EventKind, Input, VMNLErrorKind,
 };
 use std::rc::Rc;
 use std::sync::Arc;
@@ -62,12 +62,12 @@ impl VMNLWindow {
     /// Internal implementation backing `Window::poll_events`.
     pub(crate) fn poll_events(&mut self) -> Vec<Event> {
         self.handle.instance.poll_events();
-        self.handle.input.update(&self.handle.context);
-        let events: Vec<Event> = self.handle.events.poll_events();
+        self.handle.input.begin_batch();
+        let events: Vec<Event> = self.handle.events.poll_events(&mut self.handle.input);
         if events.iter().any(|event| {
             matches!(
-                event,
-                Event::Resized { .. } | Event::FramebufferResized { .. }
+                event.kind(),
+                EventKind::Resized { .. } | EventKind::FramebufferResized { .. }
             )
         }) {
             self.state.swapchain_recreation_requested = true;
@@ -79,6 +79,11 @@ impl VMNLWindow {
     #[inline]
     pub(crate) const fn input(&self) -> &Input {
         &self.handle.input
+    }
+
+    /// Internal implementation backing `Window::clear_input_transitions`.
+    pub(crate) const fn clear_input_transitions(&mut self) {
+        self.handle.input.clear_transitions();
     }
 
     /// Internal implementation backing `Window::wait_events`.
@@ -138,22 +143,38 @@ impl VMNLWindow {
 
     /// Internal implementation backing `Window::set_mouse_button_polling`.
     pub(crate) fn set_mouse_button_polling(&mut self, enabled: bool) {
-        self.handle.context.set_mouse_button_polling(enabled);
+        self.handle.events.set_mouse_button_delivery(enabled);
+    }
+
+    pub(crate) const fn is_mouse_button_polling_enabled(&self) -> bool {
+        self.handle.events.is_mouse_button_delivery_enabled()
     }
 
     /// Internal implementation backing `Window::set_cursor_pos_polling`.
     pub(crate) fn set_cursor_pos_polling(&mut self, enabled: bool) {
-        self.handle.context.set_cursor_pos_polling(enabled);
+        self.handle.events.set_cursor_pos_delivery(enabled);
+    }
+
+    pub(crate) const fn is_cursor_pos_polling_enabled(&self) -> bool {
+        self.handle.events.is_cursor_pos_delivery_enabled()
     }
 
     /// Internal implementation backing `Window::set_cursor_enter_polling`.
     pub(crate) fn set_cursor_enter_polling(&mut self, enabled: bool) {
-        self.handle.context.set_cursor_enter_polling(enabled);
+        self.handle.events.set_cursor_enter_delivery(enabled);
+    }
+
+    pub(crate) const fn is_cursor_enter_polling_enabled(&self) -> bool {
+        self.handle.events.is_cursor_enter_delivery_enabled()
     }
 
     /// Internal implementation backing `Window::set_scroll_polling`.
     pub(crate) fn set_scroll_polling(&mut self, enabled: bool) {
-        self.handle.context.set_scroll_polling(enabled);
+        self.handle.events.set_scroll_delivery(enabled);
+    }
+
+    pub(crate) const fn is_scroll_polling_enabled(&self) -> bool {
+        self.handle.events.is_scroll_delivery_enabled()
     }
 
     /// Internal implementation backing `Window::set_size_polling`.
@@ -178,7 +199,7 @@ impl VMNLWindow {
 
     /// Internal implementation backing `Window::set_key_polling`.
     pub(crate) fn set_key_polling(&mut self, enabled: bool) {
-        self.handle.context.set_key_polling(enabled);
+        self.handle.events.set_key_delivery(enabled);
     }
 
     /// Internal implementation backing `Window::set_char_mods_polling`.
@@ -213,32 +234,32 @@ impl VMNLWindow {
 
     /// Internal implementation backing `Window::enable_keyboard_polling`.
     pub(crate) fn enable_keyboard_polling(&mut self) {
-        self.handle.context.set_key_polling(true);
+        self.handle.events.set_key_delivery(true);
         self.handle.context.set_char_polling(true);
         self.handle.context.set_char_mods_polling(true);
     }
 
     /// Internal implementation backing `Window::disable_keyboard_polling`.
     pub(crate) fn disable_keyboard_polling(&mut self) {
-        self.handle.context.set_key_polling(false);
+        self.handle.events.set_key_delivery(false);
         self.handle.context.set_char_polling(false);
         self.handle.context.set_char_mods_polling(false);
     }
 
     /// Internal implementation backing `Window::enable_mouse_polling`.
     pub(crate) fn enable_mouse_polling(&mut self) {
-        self.handle.context.set_mouse_button_polling(true);
-        self.handle.context.set_cursor_pos_polling(true);
-        self.handle.context.set_cursor_enter_polling(true);
-        self.handle.context.set_scroll_polling(true);
+        self.handle.events.set_mouse_button_delivery(true);
+        self.handle.events.set_cursor_pos_delivery(true);
+        self.handle.events.set_cursor_enter_delivery(true);
+        self.handle.events.set_scroll_delivery(true);
     }
 
     /// Internal implementation backing `Window::disable_mouse_polling`.
     pub(crate) fn disable_mouse_polling(&mut self) {
-        self.handle.context.set_mouse_button_polling(false);
-        self.handle.context.set_cursor_pos_polling(false);
-        self.handle.context.set_cursor_enter_polling(false);
-        self.handle.context.set_scroll_polling(false);
+        self.handle.events.set_mouse_button_delivery(false);
+        self.handle.events.set_cursor_pos_delivery(false);
+        self.handle.events.set_cursor_enter_delivery(false);
+        self.handle.events.set_scroll_delivery(false);
     }
 
     /// Internal implementation backing `Window::enable_window_state_polling`.
@@ -284,5 +305,10 @@ impl VMNLWindow {
     /// Internal implementation backing `Window::enable_all_polling`.
     pub(crate) fn enable_all_polling(&mut self) {
         self.handle.context.set_all_polling(true);
+        self.handle.events.set_key_delivery(true);
+        self.handle.events.set_mouse_button_delivery(true);
+        self.handle.events.set_cursor_pos_delivery(true);
+        self.handle.events.set_cursor_enter_delivery(true);
+        self.handle.events.set_scroll_delivery(true);
     }
 }

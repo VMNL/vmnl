@@ -9,7 +9,7 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 |---|---|---|
 | `Context::new` | `glfwGetRequiredInstanceExtensions` | all: conditional — Returns the platform Vulkan instance extension list. |
 | `Context::new` | `glfwInit` | all: conditional — Initializes GLFW or returns failure after invoking the error callback. |
-| `KeyboardState` | `glfwGetKey` | all: supported — Returns cached key state. |
+| `KeyboardState`, `Window::set_key_polling` | `glfwSetKeyCallback` | all: supported — Installs key callback. |
 | `MonitorInfo::available_modes` | `glfwGetVideoModes` | all: conditional — Returns modes reported by the backend. |
 | `MonitorInfo::content_scale` | `glfwGetMonitorContentScale` | wayland: conditional — Fractional scaling may not be represented exactly by GLFW 3.4.; x11-win32-cocoa: supported — Returns content scale reported by the backend. |
 | `MonitorInfo::current_mode` | `glfwGetVideoMode` | all: conditional — Returns the current mode. |
@@ -18,7 +18,7 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `MonitorInfo::position` | `glfwGetMonitorPos` | wayland: unsupported — Global monitor position is unavailable.; x11-win32-cocoa: conditional — Returns virtual-screen coordinates. |
 | `MonitorInfo::workarea` | `glfwGetMonitorWorkarea` | all: conditional — Returns a backend-defined work area. |
 | `Monitors` | `glfwGetMonitors` | all: conditional — Returns currently connected monitors; Null may return none. |
-| `MouseState` | `glfwGetMouseButton` | all: supported — Returns cached mouse-button state. |
+| `MouseState`, `Window::set_mouse_button_polling` | `glfwSetMouseButtonCallback` | all: supported — Installs mouse-button callback. |
 | `Window::close` | `glfwSetWindowShouldClose` | all: supported — Updates GLFW's local close flag. |
 | `Window::configure_window_polling` | `glfwSetWindowPosCallback` | wayland: unsupported — Callback is never invoked because global positions are unavailable.; x11-win32-cocoa: supported — Installs position callback. |
 | `Window::focus` | `glfwFocusWindow` | wayland: best-effort — Compositor will likely ignore unsolicited focus requests.; x11: best-effort — Requests focus; policy may deny it.; win32-cocoa: best-effort — Requests focus. |
@@ -50,9 +50,7 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Window::set_focus_polling` | `glfwSetWindowFocusCallback` | all: supported — Installs focus callback. |
 | `Window::set_framebuffer_size_polling` | `glfwSetFramebufferSizeCallback` | all: supported — Installs framebuffer-size callback. |
 | `Window::set_iconify_polling` | `glfwSetWindowIconifyCallback` | wayland: conditional — Installs callback but event availability is compositor-dependent.; x11-win32-cocoa: supported — Installs iconify callback. |
-| `Window::set_key_polling` | `glfwSetKeyCallback` | all: supported — Installs key callback. |
 | `Window::set_maximize_polling` | `glfwSetWindowMaximizeCallback` | all: conditional — Installs maximize callback. |
-| `Window::set_mouse_button_polling` | `glfwSetMouseButtonCallback` | all: supported — Installs mouse-button callback. |
 | `Window::set_position` | `glfwSetWindowPos` | wayland: unsupported — Invokes GLFW_FEATURE_UNAVAILABLE and has no effect.; x11: best-effort — Requests a position; the window manager may override it.; win32-cocoa: conditional — Requests a position in screen coordinates. |
 | `Window::set_refresh_polling` | `glfwSetWindowRefreshCallback` | all: conditional — Installs refresh callback. |
 | `Window::set_scroll_polling` | `glfwSetScrollCallback` | all: supported — Installs scroll callback. |

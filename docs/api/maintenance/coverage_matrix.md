@@ -5,7 +5,7 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | Kind | Symbol | Canonical page | Rustdoc | Evidence |
 |---|---|---|---|---|
 | alias | `vmnl::VMNLResult` | [VMNLResult](../reference/errors/vmnl_result.md) | [Rustdoc](../../../target/doc/vmnl/type.VMNLResult.html) | [API errors](../../../tests/api/tests/errors.rs) |
-| enum | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/enum.Event.html) | [event input example](../../../examples/window/events_input/src/main.rs) |
+| enum | `vmnl::EventKind` | [EventKind](../reference/window/events/event_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.EventKind.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl/enum.Key.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::MouseButton` | [MouseButton](../reference/window/input/mouse_button.md) | [Rustdoc](../../../target/doc/vmnl/enum.MouseButton.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::PresentMode` | [PresentMode](../reference/window/present_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.PresentMode.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
@@ -21,11 +21,13 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | macro | `vmnl::raw::Vertex` | [Vertex derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Vertex.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
 | macro | `vmnl::raw::Zeroable` | [Zeroable derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Zeroable.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
 | struct | `vmnl::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.Context.html) | [GPU context](../../../tests/gpu/tests/context.rs) |
+| struct | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/struct.Event.html) | [event input example](../../../examples/window/events_input/src/main.rs) |
 | struct | `vmnl::FrameRenderer` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [Rustdoc](../../../target/doc/vmnl/struct.FrameRenderer.html) | [GPU frame renderer](../../../tests/gpu/tests/frame_renderer.rs) |
 | struct | `vmnl::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl/struct.Input.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::KeyboardState` | [KeyboardState](../reference/window/input/keyboard_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.KeyboardState.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::MonitorInfo` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [Rustdoc](../../../target/doc/vmnl/struct.MonitorInfo.html) | [GPU window runtime](../../../tests/gpu/tests/window_runtime.rs) |
 | struct | `vmnl::Monitors` | [Monitors](../reference/window/monitors/monitors.md) | [Rustdoc](../../../target/doc/vmnl/struct.Monitors.html) | [GPU window runtime](../../../tests/gpu/tests/window_runtime.rs) |
+| struct | `vmnl::Modifiers` | [Modifiers](../reference/window/input/modifiers.md) | [Rustdoc](../../../target/doc/vmnl/struct.Modifiers.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::MouseState` | [MouseState](../reference/window/input/mouse_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.MouseState.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::VMNLError` | [VMNLError](../reference/errors/vmnl_error.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLError.html) | [API errors](../../../tests/api/tests/errors.rs) |
 | struct | `vmnl::VMNLErrorLocation` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLErrorLocation.html) | [API errors](../../../tests/api/tests/errors.rs) |

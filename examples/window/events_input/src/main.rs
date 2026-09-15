@@ -4,7 +4,11 @@
 use vmnl::{Context, Event, Key, MouseButton, PresentMode, VMNLResult, Window};
 
 fn print_event(event: &Event) {
-    println!("[event] {event:?}");
+    println!(
+        "[event @ {:.6}s] {:?}",
+        event.timestamp_seconds(),
+        event.kind()
+    );
 }
 
 fn print_monitor_summary(window: &Window) {
@@ -152,12 +156,13 @@ fn main() -> VMNLResult<()> {
             print_event(&event);
         }
         apply_keybinds(&mut window)?;
-        println!(
-            "time={:.3} iconified={} maximized={}",
-            window.get_time(),
-            window.is_iconified(),
-            window.is_maximized()
-        );
+        // println!(
+        //     "time={:.3} iconified={} maximized={} focused={}",
+        //     window.get_time(),
+        //     window.is_iconified(),
+        //     window.is_maximized(),
+        //     window.is_focused()
+        // );
         window.render().submit()?;
     }
 

@@ -6,7 +6,7 @@ Import path: `vmnl::Input`. Status: experimental, operational.
 
 ## Purpose and use cases
 
-Groups keyboard and mouse state updated by window event processing.
+Groups the per-window keyboard and mouse-button snapshot updated by window event processing.
 
 ## Public API
 
@@ -22,7 +22,7 @@ Not applicable; cursor positions and scroll deltas are represented by `Event`, n
 
 ## Ownership, lifecycle, and threading
 
-Owned by `Window`; `Window::input()` returns a shared borrow. Manual `Input::new` creates an independent snapshot not connected to GLFW.
+Owned by `Window`; `Window::input()` returns a shared borrow. One batch is one `Window::poll_events` call. Public event delivery settings do not disable keyboard or mouse-button tracking. Manual `Input::new` creates an independent snapshot not connected to GLFW.
 
 ## Errors, panics, and failure conditions
 
@@ -34,7 +34,7 @@ Fixed-size CPU state; no heap allocation or GPU work.
 
 ## Platform, Vulkan, and display constraints
 
-Observed state depends on enabled polling, platform focus, and processed events.
+Observed state depends on platform focus and processed events. `wait_events` alone does not update it; the next `poll_events` call does.
 
 ## Example and related types
 
