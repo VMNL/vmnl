@@ -111,7 +111,7 @@ pub(crate) struct WindowOptions {
     pub(crate) width: u32,
     /// The height of the window in pixels (minimum 64).
     pub(crate) height: u32,
-    /// Whether to automatically poll events after rendering.
+    /// Whether to configure the default public event delivery sources.
     pub(crate) configure_window_polling: bool,
     /// The minimum width limits for the window in pixels.
     pub(crate) min_width: Option<u32>,
@@ -238,10 +238,10 @@ impl WindowBuilder {
         self
     }
 
-    /// Disable automatic event polling after each rendered frame.
+    /// Disable the default public event delivery configuration.
     ///
-    /// When disabled, the application is responsible for calling
-    /// `poll_events`, `wait_events`, or another event function explicitly.
+    /// Keyboard and mouse-button state tracking remains active. The application must enable each
+    /// public event source it wants returned by [`Window::poll_events`].
     ///
     /// # Example
     /// ```rust,no_run

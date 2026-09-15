@@ -75,10 +75,17 @@ impl VMNLWindow {
         let mut glfw: ::glfw::Glfw = vmnl_instance.glfw.clone();
         glfw.window_hint(::glfw::WindowHint::ClientApi(::glfw::ClientApiHint::NoApi));
         glfw.window_hint(::glfw::WindowHint::TransparentFramebuffer(true));
-        let (window, events_glfw): (
+        let (mut window, events_glfw): (
             ::glfw::PWindow,
             ::glfw::GlfwReceiver<(f64, ::glfw::WindowEvent)>,
         ) = Self::init_window(glfw.clone(), width, height, title)?;
+        // Input callbacks stay registered so batch snapshots remain independent from public event
+        // delivery. EventQueue applies the client-selected delivery filters while draining.
+        window.set_key_polling(true);
+        window.set_mouse_button_polling(true);
+        window.set_cursor_pos_polling(true);
+        window.set_cursor_enter_polling(true);
+        window.set_scroll_polling(true);
         let events: EventQueue = EventQueue::new(events_glfw);
         let surface: Arc<Surface> = Self::create_surface(&vmnl_instance.instance, &window)?;
         let supports_present: bool = vmnl_instance

@@ -810,48 +810,50 @@ pub trait vmnl::raw::Vertex: vulkano::pipeline::graphics::vertex_input::vertex::
 impl<T> vmnl::raw::Vertex for T where T: vulkano::pipeline::graphics::vertex_input::vertex::Vertex
 pub trait vmnl::raw::Zeroable: bytemuck::zeroable::Zeroable
 impl<T> vmnl::raw::Zeroable for T where T: bytemuck::zeroable::Zeroable
-pub enum vmnl::Event
-pub vmnl::Event::Closed
-pub vmnl::Event::FocusGained
-pub vmnl::Event::FocusLost
-pub vmnl::Event::FramebufferResized
-pub vmnl::Event::FramebufferResized::height: u32
-pub vmnl::Event::FramebufferResized::width: u32
-pub vmnl::Event::KeyPressed
-pub vmnl::Event::KeyPressed::key: vmnl::Key
-pub vmnl::Event::KeyPressed::repeat: bool
-pub vmnl::Event::KeyReleased
-pub vmnl::Event::KeyReleased::key: vmnl::Key
-pub vmnl::Event::MouseButtonPressed
-pub vmnl::Event::MouseButtonPressed::button: vmnl::MouseButton
-pub vmnl::Event::MouseButtonReleased
-pub vmnl::Event::MouseButtonReleased::button: vmnl::MouseButton
-pub vmnl::Event::MouseEntered
-pub vmnl::Event::MouseLeft
-pub vmnl::Event::MouseMoved
-pub vmnl::Event::MouseMoved::x: f64
-pub vmnl::Event::MouseMoved::y: f64
-pub vmnl::Event::MouseScrolled
-pub vmnl::Event::MouseScrolled::dx: f64
-pub vmnl::Event::MouseScrolled::dy: f64
-pub vmnl::Event::Resized
-pub vmnl::Event::Resized::height: u32
-pub vmnl::Event::Resized::width: u32
-pub vmnl::Event::Text(char)
-impl core::clone::Clone for vmnl::Event
-pub fn vmnl::Event::clone(&self) -> vmnl::Event
-impl core::cmp::PartialEq for vmnl::Event
-pub fn vmnl::Event::eq(&self, &vmnl::Event) -> bool
-impl core::fmt::Debug for vmnl::Event
-pub fn vmnl::Event::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::StructuralPartialEq for vmnl::Event
-impl core::marker::Freeze for vmnl::Event
-impl core::marker::Send for vmnl::Event
-impl core::marker::Sync for vmnl::Event
-impl core::marker::Unpin for vmnl::Event
-impl core::marker::UnsafeUnpin for vmnl::Event
-impl core::panic::unwind_safe::RefUnwindSafe for vmnl::Event
-impl core::panic::unwind_safe::UnwindSafe for vmnl::Event
+pub enum vmnl::EventKind
+pub vmnl::EventKind::Closed
+pub vmnl::EventKind::FocusGained
+pub vmnl::EventKind::FocusLost
+pub vmnl::EventKind::FramebufferResized
+pub vmnl::EventKind::FramebufferResized::height: u32
+pub vmnl::EventKind::FramebufferResized::width: u32
+pub vmnl::EventKind::KeyPressed
+pub vmnl::EventKind::KeyPressed::key: vmnl::Key
+pub vmnl::EventKind::KeyPressed::repeat: bool
+pub vmnl::EventKind::KeyReleased
+pub vmnl::EventKind::KeyReleased::key: vmnl::Key
+pub vmnl::EventKind::MouseButtonPressed
+pub vmnl::EventKind::MouseButtonPressed::button: vmnl::MouseButton
+pub vmnl::EventKind::MouseButtonPressed::modifiers: vmnl::Modifiers
+pub vmnl::EventKind::MouseButtonReleased
+pub vmnl::EventKind::MouseButtonReleased::button: vmnl::MouseButton
+pub vmnl::EventKind::MouseButtonReleased::modifiers: vmnl::Modifiers
+pub vmnl::EventKind::MouseEntered
+pub vmnl::EventKind::MouseLeft
+pub vmnl::EventKind::MouseMoved
+pub vmnl::EventKind::MouseMoved::x: f64
+pub vmnl::EventKind::MouseMoved::y: f64
+pub vmnl::EventKind::MouseScrolled
+pub vmnl::EventKind::MouseScrolled::dx: f64
+pub vmnl::EventKind::MouseScrolled::dy: f64
+pub vmnl::EventKind::Resized
+pub vmnl::EventKind::Resized::height: u32
+pub vmnl::EventKind::Resized::width: u32
+pub vmnl::EventKind::Text(char)
+impl core::clone::Clone for vmnl::EventKind
+pub fn vmnl::EventKind::clone(&self) -> vmnl::EventKind
+impl core::cmp::PartialEq for vmnl::EventKind
+pub fn vmnl::EventKind::eq(&self, &vmnl::EventKind) -> bool
+impl core::fmt::Debug for vmnl::EventKind
+pub fn vmnl::EventKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for vmnl::EventKind
+impl core::marker::Freeze for vmnl::EventKind
+impl core::marker::Send for vmnl::EventKind
+impl core::marker::Sync for vmnl::EventKind
+impl core::marker::Unpin for vmnl::EventKind
+impl core::marker::UnsafeUnpin for vmnl::EventKind
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::EventKind
+impl core::panic::unwind_safe::UnwindSafe for vmnl::EventKind
 #[repr(usize)] pub enum vmnl::Key
 pub vmnl::Key::A
 pub vmnl::Key::B
@@ -1094,6 +1096,25 @@ impl core::marker::Unpin for vmnl::Context
 impl core::marker::UnsafeUnpin for vmnl::Context
 impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::Context
 impl !core::panic::unwind_safe::UnwindSafe for vmnl::Context
+pub struct vmnl::Event
+impl vmnl::Event
+pub fn vmnl::Event::into_kind(self) -> vmnl::EventKind
+pub const fn vmnl::Event::kind(&self) -> &vmnl::EventKind
+pub const fn vmnl::Event::timestamp_seconds(&self) -> f64
+impl core::clone::Clone for vmnl::Event
+pub fn vmnl::Event::clone(&self) -> vmnl::Event
+impl core::cmp::PartialEq for vmnl::Event
+pub fn vmnl::Event::eq(&self, &vmnl::Event) -> bool
+impl core::fmt::Debug for vmnl::Event
+pub fn vmnl::Event::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for vmnl::Event
+impl core::marker::Freeze for vmnl::Event
+impl core::marker::Send for vmnl::Event
+impl core::marker::Sync for vmnl::Event
+impl core::marker::Unpin for vmnl::Event
+impl core::marker::UnsafeUnpin for vmnl::Event
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::Event
+impl core::panic::unwind_safe::UnwindSafe for vmnl::Event
 pub struct vmnl::FrameRenderer<'w, 'g>
 impl<'w, 'g> vmnl::FrameRenderer<'w, 'g>
 pub fn vmnl::FrameRenderer<'w, 'g>::draw2d<D, const N: usize>(self, [&'g D; N]) -> Self where D: vmnl::d2::Drawable2D + ?core::marker::Sized
@@ -1138,7 +1159,6 @@ pub fn vmnl::KeyboardState::is_one_used(&self) -> bool
 pub const fn vmnl::KeyboardState::is_pressed(&self, vmnl::Key) -> bool
 pub const fn vmnl::KeyboardState::is_released(&self, vmnl::Key) -> bool
 pub const fn vmnl::KeyboardState::new() -> Self
-pub const fn vmnl::KeyboardState::reset(&mut self)
 impl core::default::Default for vmnl::KeyboardState
 pub fn vmnl::KeyboardState::default() -> Self
 impl core::marker::Freeze for vmnl::KeyboardState
@@ -1148,6 +1168,48 @@ impl core::marker::Unpin for vmnl::KeyboardState
 impl core::marker::UnsafeUnpin for vmnl::KeyboardState
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::KeyboardState
 impl core::panic::unwind_safe::UnwindSafe for vmnl::KeyboardState
+#[repr(transparent)] pub struct vmnl::Modifiers(_)
+impl vmnl::Modifiers
+pub const vmnl::Modifiers::ALT: Self
+pub const vmnl::Modifiers::CAPS_LOCK: Self
+pub const vmnl::Modifiers::CONTROL: Self
+pub const vmnl::Modifiers::NONE: Self
+pub const vmnl::Modifiers::NUM_LOCK: Self
+pub const vmnl::Modifiers::SHIFT: Self
+pub const vmnl::Modifiers::SUPER: Self
+pub const fn vmnl::Modifiers::bits(self) -> u8
+pub const fn vmnl::Modifiers::contains(self, Self) -> bool
+pub const fn vmnl::Modifiers::is_empty(self) -> bool
+impl core::clone::Clone for vmnl::Modifiers
+pub fn vmnl::Modifiers::clone(&self) -> vmnl::Modifiers
+impl core::cmp::Eq for vmnl::Modifiers
+impl core::cmp::PartialEq for vmnl::Modifiers
+pub fn vmnl::Modifiers::eq(&self, &vmnl::Modifiers) -> bool
+impl core::default::Default for vmnl::Modifiers
+pub fn vmnl::Modifiers::default() -> vmnl::Modifiers
+impl core::fmt::Debug for vmnl::Modifiers
+pub fn vmnl::Modifiers::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for vmnl::Modifiers
+pub fn vmnl::Modifiers::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for vmnl::Modifiers
+impl core::marker::StructuralPartialEq for vmnl::Modifiers
+impl core::ops::bit::BitAnd for vmnl::Modifiers
+pub type vmnl::Modifiers::Output = vmnl::Modifiers
+pub fn vmnl::Modifiers::bitand(self, Self) -> Self::Output
+impl core::ops::bit::BitAndAssign for vmnl::Modifiers
+pub fn vmnl::Modifiers::bitand_assign(&mut self, Self)
+impl core::ops::bit::BitOr for vmnl::Modifiers
+pub type vmnl::Modifiers::Output = vmnl::Modifiers
+pub fn vmnl::Modifiers::bitor(self, Self) -> Self::Output
+impl core::ops::bit::BitOrAssign for vmnl::Modifiers
+pub fn vmnl::Modifiers::bitor_assign(&mut self, Self)
+impl core::marker::Freeze for vmnl::Modifiers
+impl core::marker::Send for vmnl::Modifiers
+impl core::marker::Sync for vmnl::Modifiers
+impl core::marker::Unpin for vmnl::Modifiers
+impl core::marker::UnsafeUnpin for vmnl::Modifiers
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::Modifiers
+impl core::panic::unwind_safe::UnwindSafe for vmnl::Modifiers
 pub struct vmnl::MonitorInfo
 pub vmnl::MonitorInfo::available_modes: alloc::vec::Vec<vmnl::VideoMode>
 pub vmnl::MonitorInfo::content_scale: (f32, f32)
@@ -1198,7 +1260,6 @@ pub fn vmnl::MouseState::is_one_used(&self) -> bool
 pub const fn vmnl::MouseState::is_pressed(&self, vmnl::MouseButton) -> bool
 pub const fn vmnl::MouseState::is_released(&self, vmnl::MouseButton) -> bool
 pub const fn vmnl::MouseState::new() -> Self
-pub const fn vmnl::MouseState::reset(&mut self)
 impl core::default::Default for vmnl::MouseState
 pub fn vmnl::MouseState::default() -> Self
 impl core::marker::Freeze for vmnl::MouseState
@@ -1274,6 +1335,19 @@ impl vmnl::Window
 pub fn vmnl::Window::builder() -> vmnl::WindowBuilder
 pub fn vmnl::Window::new(&vmnl::Context) -> vmnl::VMNLResult<Self>
 impl vmnl::Window
+pub const fn vmnl::Window::clear_input_transitions(&mut self)
+pub fn vmnl::Window::get_time(&mut self) -> f64
+pub fn vmnl::Window::get_timer_frequency(&self) -> u64
+pub fn vmnl::Window::get_timer_value(&self) -> u64
+pub const fn vmnl::Window::input(&self) -> &vmnl::Input
+pub fn vmnl::Window::poll_events(&mut self) -> alloc::vec::Vec<vmnl::Event>
+pub fn vmnl::Window::post_empty_event(&mut self)
+pub fn vmnl::Window::set_error_callback(&mut self, impl core::ops::function::FnMut(vmnl::VMNLErrorKind, alloc::string::String) + 'static)
+pub fn vmnl::Window::set_time(&mut self, f64)
+pub fn vmnl::Window::unset_error_callback(&mut self)
+pub fn vmnl::Window::wait_events(&mut self)
+pub fn vmnl::Window::wait_events_timeout(&mut self, f64)
+impl vmnl::Window
 pub fn vmnl::Window::close(&mut self)
 pub fn vmnl::Window::focus(&mut self)
 pub fn vmnl::Window::hide(&mut self)
@@ -1296,6 +1370,10 @@ pub fn vmnl::Window::enable_all_polling(&mut self)
 pub fn vmnl::Window::enable_keyboard_polling(&mut self)
 pub fn vmnl::Window::enable_mouse_polling(&mut self)
 pub fn vmnl::Window::enable_window_state_polling(&mut self)
+pub const fn vmnl::Window::is_cursor_enter_polling_enabled(&self) -> bool
+pub const fn vmnl::Window::is_cursor_pos_polling_enabled(&self) -> bool
+pub const fn vmnl::Window::is_mouse_button_polling_enabled(&self) -> bool
+pub const fn vmnl::Window::is_scroll_polling_enabled(&self) -> bool
 pub fn vmnl::Window::set_char_mods_polling(&mut self, bool)
 pub fn vmnl::Window::set_char_polling(&mut self, bool)
 pub fn vmnl::Window::set_close_polling(&mut self, bool)
@@ -1330,18 +1408,6 @@ pub fn vmnl::Window::set_size(&mut self, u32, u32) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_size_limits(&mut self, core::option::Option<u32>, core::option::Option<u32>, core::option::Option<u32>, core::option::Option<u32>) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_title(&mut self, &str)
 pub const fn vmnl::Window::width(&self) -> u32
-impl vmnl::Window
-pub fn vmnl::Window::get_time(&mut self) -> f64
-pub fn vmnl::Window::get_timer_frequency(&self) -> u64
-pub fn vmnl::Window::get_timer_value(&self) -> u64
-pub const fn vmnl::Window::input(&self) -> &vmnl::Input
-pub fn vmnl::Window::poll_events(&mut self) -> alloc::vec::Vec<vmnl::Event>
-pub fn vmnl::Window::post_empty_event(&mut self)
-pub fn vmnl::Window::set_error_callback(&mut self, impl core::ops::function::FnMut(vmnl::VMNLErrorKind, alloc::string::String) + 'static)
-pub fn vmnl::Window::set_time(&mut self, f64)
-pub fn vmnl::Window::unset_error_callback(&mut self)
-pub fn vmnl::Window::wait_events(&mut self)
-pub fn vmnl::Window::wait_events_timeout(&mut self, f64)
 impl vmnl::Window
 pub fn vmnl::Window::render(&mut self) -> vmnl::FrameRenderer<'_, '_>
 impl core::marker::Freeze for vmnl::Window

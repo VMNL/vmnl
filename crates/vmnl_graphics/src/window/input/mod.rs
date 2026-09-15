@@ -5,8 +5,11 @@
 //! for managing keyboard and mouse input states.
 
 mod keyboard;
+mod modifiers;
 mod mouse;
+mod transitions;
 pub use keyboard::{Key, KeyboardState};
+pub use modifiers::Modifiers;
 pub use mouse::{MouseButton, MouseState};
 
 /// Represents the input state for the application, consisting of keyboard and mouse states.
@@ -72,13 +75,27 @@ impl Input {
         &self.mouse
     }
 
-    /// Updates both keyboard and mouse states from the given GLFW window.
-    ///
-    /// # Arguments
-    /// - `window`: The GLFW window to read input from. Call once per frame.
-    pub(crate) fn update(&mut self, window: &glfw::PWindow) {
-        self.keyboard.update(window);
-        self.mouse.update(window);
+    /// Starts a new input batch while retaining held controls.
+    pub(crate) const fn begin_batch(&mut self) {
+        self.keyboard.begin_batch();
+        self.mouse.begin_batch();
+    }
+
+    /// Applies one unfiltered native event to the window-owned snapshot.
+    pub(crate) fn apply_event(&mut self, event: &glfw::WindowEvent) {
+        use glfw::WindowEvent;
+
+        match event {
+            WindowEvent::Key(key, _, action, _) => self.keyboard.apply(*key, *action),
+            WindowEvent::MouseButton(button, action, _) => self.mouse.apply(*button, *action),
+            _ => {}
+        }
+    }
+
+    /// Clears batch-local transitions without changing held controls.
+    pub(crate) const fn clear_transitions(&mut self) {
+        self.keyboard.clear_transitions();
+        self.mouse.clear_transitions();
     }
 
     /// Creates a new `Input` with fresh keyboard and mouse states.

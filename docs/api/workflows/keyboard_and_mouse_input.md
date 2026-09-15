@@ -1,9 +1,11 @@
 # Read keyboard and mouse input
 
-1. Ensure key/mouse polling is enabled (the default grouped configuration does this).
-2. Process events once at the chosen point in the loop.
+1. Process events once at the chosen point in the loop.
+2. Configure key/mouse polling only when their public `EventKind` delivery is needed.
 3. Borrow `window.input()` and query current/transition state.
 4. Use `is_pressed`/`is_released` only as batch transitions; use `is_down` for held state.
+
+One `poll_events` call is one batch. A press and release in that call leave `is_down == false` and both transition queries true. Disabling event delivery does not disable keyboard/mouse-button tracking.
 
 ```rust,no_run
 # extern crate vmnl;

@@ -386,18 +386,18 @@ c_symbol = "glfwGetKey"
 rust_wrappers = ["PWindow::get_key"]
 category = "input"
 introduced = "3.0"
-vmnl_usage = ["KeyboardState"]
+vmnl_usage = []
 backends = [{ name = "all", status = "supported", conditions = "Key token is valid.", behavior = "Returns cached key state.", errors = ["GLFW_INVALID_ENUM"], sentinel = "GLFW_RELEASE on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
-proofs = ["justification:public API tests validate state transitions without a native window"]
+proofs = ["justification:VMNL input snapshots are callback-driven"]
 
 [[function]]
 c_symbol = "glfwGetMouseButton"
 rust_wrappers = ["PWindow::get_mouse_button"]
 category = "input"
 introduced = "3.0"
-vmnl_usage = ["MouseState"]
+vmnl_usage = []
 backends = [{ name = "all", status = "supported", conditions = "Button token is valid.", behavior = "Returns cached mouse-button state.", errors = ["GLFW_INVALID_ENUM"], sentinel = "GLFW_RELEASE on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
-proofs = ["justification:public API tests validate state transitions without a native window"]
+proofs = ["justification:VMNL input snapshots are callback-driven"]
 
 [[function]]
 c_symbol = "glfwSetErrorCallback"
@@ -408,8 +408,8 @@ vmnl_usage = ["Window::set_error_callback", "Window::unset_error_callback"]
 backends = [{ name = "all", status = "supported", conditions = "Callback does not panic across the C ABI boundary.", behavior = "Installs or clears process-wide GLFW error delivery for the calling thread wrapper.", errors = ["GLFW_NO_ERROR"], sentinel = "Previous callback may be null", source = "https://www.glfw.org/docs/3.4/group__init.html" }]
 proofs = ["test:glfw_backend::tests::maps_glfw_errors_to_vmnl_categories", "test:error_codes::arbitrary_raw_codes_never_require_an_enum_transmute"]
 
-# Polling wrappers install native callbacks. All are supported where the corresponding event can
-# exist; a backend may simply never emit an event that its protocol cannot observe.
+# VMNL installs input callbacks when creating a window so state snapshots remain active independently
+# from public event delivery. Other polling wrappers still install the corresponding native callback.
 [[function]]
 c_symbol = "glfwSetCharCallback"
 rust_wrappers = ["PWindow::set_char_polling"]
@@ -433,7 +433,7 @@ c_symbol = "glfwSetKeyCallback"
 rust_wrappers = ["PWindow::set_key_polling"]
 category = "callbacks"
 introduced = "3.0"
-vmnl_usage = ["Window::set_key_polling"]
+vmnl_usage = ["KeyboardState", "Window::set_key_polling"]
 backends = [{ name = "all", status = "supported", conditions = "Live window.", behavior = "Installs key callback.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "null previous callback", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
 proofs = ["justification:callback registration is backend-neutral"]
 
@@ -442,7 +442,7 @@ c_symbol = "glfwSetMouseButtonCallback"
 rust_wrappers = ["PWindow::set_mouse_button_polling"]
 category = "callbacks"
 introduced = "3.0"
-vmnl_usage = ["Window::set_mouse_button_polling"]
+vmnl_usage = ["MouseState", "Window::set_mouse_button_polling"]
 backends = [{ name = "all", status = "supported", conditions = "Live window.", behavior = "Installs mouse-button callback.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "null previous callback", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
 proofs = ["justification:callback registration is backend-neutral"]
 

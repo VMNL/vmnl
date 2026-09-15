@@ -98,6 +98,7 @@ WINDOW_LIFECYCLE_METHODS = {
     "show",
 }
 WINDOW_EVENT_METHODS = {
+    "clear_input_transitions",
     "get_time",
     "get_timer_frequency",
     "get_timer_value",
