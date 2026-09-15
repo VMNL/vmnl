@@ -6,7 +6,7 @@
 | [`WindowBuilder`](window_builder.md) | Creation options and validation |
 | [`PresentMode`](present_mode.md) | Swapchain presentation selection |
 | [Configuration](configuration.md) | Title, size, position, opacity, monitors, clear color |
-| [Cursor controls](cursor.md) | Position, hover, modes, and raw mouse motion |
+| [Cursor controls](cursor.md) | Cursor resources, position, hover, modes, and raw mouse motion |
 | [Lifecycle](lifecycle.md) | Visibility, focus, ready/open state, close |
 | [Polling](polling.md) | GLFW event-source subscriptions |
 | [Platform compatibility](platform_compatibility.md) | Generated backend matrix for public methods |

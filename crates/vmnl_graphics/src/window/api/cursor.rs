@@ -3,9 +3,34 @@
 
 //! Public cursor position and input-mode API.
 
-use crate::{CursorMode, VMNLResult, Window};
+use crate::{Cursor, CursorMode, VMNLResult, Window};
 
 impl Window {
+    /// Returns the custom or standard cursor currently assigned to this window.
+    ///
+    /// `None` means that the backend default cursor is used. The returned borrow remains owned by
+    /// the window and compares equal to clones of the resource passed to [`set_cursor`](Self::set_cursor).
+    #[inline]
+    #[must_use]
+    pub fn cursor(&self) -> Option<&Cursor> {
+        self.inner.cursor()
+    }
+
+    /// Assigns a custom or standard cursor, or restores the backend default with `None`.
+    ///
+    /// The window retains a shared clone of the resource, so the caller may drop its own clone or
+    /// assign the same cursor to other windows. The selected image is visible only in
+    /// [`CursorMode::Normal`] and may additionally require window focus on some platforms.
+    /// This call performs no VMNL allocation and preserves the previous cursor if GLFW rejects the
+    /// request.
+    ///
+    /// # Errors
+    /// Returns the VMNL category produced by this `glfwSetCursor` call.
+    #[inline]
+    pub fn set_cursor(&mut self, cursor: Option<&Cursor>) -> VMNLResult<()> {
+        self.inner.set_cursor(cursor)
+    }
+
     /// Returns the cursor position relative to the upper-left corner of the content area.
     ///
     /// X increases to the right and Y increases downward. Coordinates are `f64` screen

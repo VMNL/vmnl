@@ -10,6 +10,8 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Context::is_raw_mouse_motion_supported`, `Window::set_raw_mouse_motion` | `glfwRawMouseMotionSupported` | x11: conditional — Returns GLFW_TRUE when XInput 2 raw motion is available, otherwise GLFW_FALSE.; win32-wayland-null: supported — Bundled GLFW 3.4 reports raw motion support.; cocoa: unsupported — Bundled GLFW 3.4 reports GLFW_FALSE because raw motion is not implemented. |
 | `Context::new` | `glfwGetRequiredInstanceExtensions` | all: conditional — Returns the platform Vulkan instance extension list. |
 | `Context::new` | `glfwInit` | all: conditional — Initializes GLFW or returns failure after invoking the error callback. |
+| `Cursor::from_rgba8` | `glfwCreateCursor` | all: supported — Copies the supplied non-premultiplied RGBA8 pixels and creates a native cursor resource. |
+| `Cursor::standard` | `glfwCreateStandardCursor` | win32-cocoa-null: supported — Creates a native cursor using the corresponding system cursor shape.; x11-wayland: conditional — Creates the theme cursor when available and otherwise emits GLFW_CURSOR_UNAVAILABLE. |
 | `KeyboardState`, `Window::set_key_polling` | `glfwSetKeyCallback` | all: supported — Installs key callback. |
 | `MonitorInfo::available_modes` | `glfwGetVideoModes` | all: conditional — Returns modes reported by the backend. |
 | `MonitorInfo::content_scale` | `glfwGetMonitorContentScale` | wayland: conditional — Fractional scaling may not be represented exactly by GLFW 3.4.; x11-win32-cocoa: supported — Returns content scale reported by the backend. |
@@ -46,6 +48,7 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Window::set_char_polling` | `glfwSetCharCallback` | all: supported — Installs character callback. |
 | `Window::set_close_polling` | `glfwSetWindowCloseCallback` | all: conditional — Installs close callback; macOS application Quit may invoke it for every window. |
 | `Window::set_content_scale_polling` | `glfwSetWindowContentScaleCallback` | all: conditional — Installs content-scale callback. |
+| `Window::set_cursor` | `glfwSetCursor` | all: conditional — Assigns the cursor to a window or restores the default arrow cursor for null; one cursor may be shared by multiple windows. |
 | `Window::set_cursor_enter_polling` | `glfwSetCursorEnterCallback` | all: supported — Installs cursor-enter callback. |
 | `Window::set_cursor_mode`, `Window::set_raw_mouse_motion` | `glfwSetInputMode` | wayland: conditional — Stores every cursor mode; disabled/captured become effective when the pointer enters. Raw motion affects relative motion only in disabled mode.; x11: conditional — Stores cursor/raw modes and applies disabled/captured confinement while focused; raw motion affects disabled mode only.; win32: conditional — Stores cursor/raw modes; raw motion affects disabled mode only.; cocoa: conditional — Captured mode emits GLFW_FEATURE_UNIMPLEMENTED; raw motion is unsupported.; null: supported — Stores every cursor mode and raw-motion state without a physical cursor. |
 | `Window::set_cursor_pos_polling` | `glfwSetCursorPosCallback` | wayland: conditional — Installs callback; delivery depends on compositor and cursor mode.; x11-win32-cocoa: supported — Installs cursor-position callback. |

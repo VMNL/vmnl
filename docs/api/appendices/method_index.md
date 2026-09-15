@@ -6,6 +6,11 @@
 | `vmnl::Context` | `clone` | [Context](../reference/context.md) | [`clone`](../../../target/doc/vmnl/struct.Context.html#method.clone) |
 | `vmnl::Context` | `is_raw_mouse_motion_supported` | [Context](../reference/context.md) | [`is_raw_mouse_motion_supported`](../../../target/doc/vmnl/struct.Context.html#method.is_raw_mouse_motion_supported) |
 | `vmnl::Context` | `new` | [Context](../reference/context.md) | [`new`](../../../target/doc/vmnl/struct.Context.html#method.new) |
+| `vmnl::Cursor` | `clone` | [Cursor](../reference/window/input/cursor.md) | [`clone`](../../../target/doc/vmnl/struct.Cursor.html#method.clone) |
+| `vmnl::Cursor` | `eq` | [Cursor](../reference/window/input/cursor.md) | [`eq`](../../../target/doc/vmnl/struct.Cursor.html#method.eq) |
+| `vmnl::Cursor` | `fmt` | [Cursor](../reference/window/input/cursor.md) | [`fmt`](../../../target/doc/vmnl/struct.Cursor.html#method.fmt) |
+| `vmnl::Cursor` | `from_rgba8` | [Cursor](../reference/window/input/cursor.md) | [`from_rgba8`](../../../target/doc/vmnl/struct.Cursor.html#method.from_rgba8) |
+| `vmnl::Cursor` | `standard` | [Cursor](../reference/window/input/cursor.md) | [`standard`](../../../target/doc/vmnl/struct.Cursor.html#method.standard) |
 | `vmnl::CursorMode` | `clone` | [CursorMode](../reference/window/input/cursor_mode.md) | [`clone`](../../../target/doc/vmnl/enum.CursorMode.html#method.clone) |
 | `vmnl::CursorMode` | `default` | [CursorMode](../reference/window/input/cursor_mode.md) | [`default`](../../../target/doc/vmnl/enum.CursorMode.html#method.default) |
 | `vmnl::CursorMode` | `eq` | [CursorMode](../reference/window/input/cursor_mode.md) | [`eq`](../../../target/doc/vmnl/enum.CursorMode.html#method.eq) |
@@ -94,6 +99,10 @@
 | `vmnl::RenderMode` | `eq` | [RenderMode](../reference/window/rendering/render_mode.md) | [`eq`](../../../target/doc/vmnl/enum.RenderMode.html#method.eq) |
 | `vmnl::RenderMode` | `fmt` | [RenderMode](../reference/window/rendering/render_mode.md) | [`fmt`](../../../target/doc/vmnl/enum.RenderMode.html#method.fmt) |
 | `vmnl::RenderMode` | `hash` | [RenderMode](../reference/window/rendering/render_mode.md) | [`hash`](../../../target/doc/vmnl/enum.RenderMode.html#method.hash) |
+| `vmnl::StandardCursor` | `clone` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`clone`](../../../target/doc/vmnl/enum.StandardCursor.html#method.clone) |
+| `vmnl::StandardCursor` | `eq` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`eq`](../../../target/doc/vmnl/enum.StandardCursor.html#method.eq) |
+| `vmnl::StandardCursor` | `fmt` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`fmt`](../../../target/doc/vmnl/enum.StandardCursor.html#method.fmt) |
+| `vmnl::StandardCursor` | `hash` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`hash`](../../../target/doc/vmnl/enum.StandardCursor.html#method.hash) |
 | `vmnl::VMNLError` | `fmt` | [VMNLError](../reference/errors/vmnl_error.md) | [`fmt`](../../../target/doc/vmnl/struct.VMNLError.html#method.fmt) |
 | `vmnl::VMNLError` | `kind` | [VMNLError](../reference/errors/vmnl_error.md) | [`kind`](../../../target/doc/vmnl/struct.VMNLError.html#method.kind) |
 | `vmnl::VMNLError` | `location` | [VMNLError](../reference/errors/vmnl_error.md) | [`location`](../../../target/doc/vmnl/struct.VMNLError.html#method.location) |
@@ -114,6 +123,7 @@
 | `vmnl::Window` | `clear_input_transitions` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`clear_input_transitions`](../../../target/doc/vmnl/struct.Window.html#method.clear_input_transitions) |
 | `vmnl::Window` | `close` | [Window lifecycle](../reference/window/lifecycle.md) | [`close`](../../../target/doc/vmnl/struct.Window.html#method.close) |
 | `vmnl::Window` | `configure_window_polling` | [Window polling](../reference/window/polling.md) | [`configure_window_polling`](../../../target/doc/vmnl/struct.Window.html#method.configure_window_polling) |
+| `vmnl::Window` | `cursor` | [Cursor controls](../reference/window/cursor.md) | [`cursor`](../../../target/doc/vmnl/struct.Window.html#method.cursor) |
 | `vmnl::Window` | `disable_keyboard_polling` | [Window polling](../reference/window/polling.md) | [`disable_keyboard_polling`](../../../target/doc/vmnl/struct.Window.html#method.disable_keyboard_polling) |
 | `vmnl::Window` | `disable_mouse_polling` | [Window polling](../reference/window/polling.md) | [`disable_mouse_polling`](../../../target/doc/vmnl/struct.Window.html#method.disable_mouse_polling) |
 | `vmnl::Window` | `disable_window_state_polling` | [Window polling](../reference/window/polling.md) | [`disable_window_state_polling`](../../../target/doc/vmnl/struct.Window.html#method.disable_window_state_polling) |
@@ -163,6 +173,7 @@
 | `vmnl::Window` | `set_clear_color` | [Window configuration](../reference/window/configuration.md) | [`set_clear_color`](../../../target/doc/vmnl/struct.Window.html#method.set_clear_color) |
 | `vmnl::Window` | `set_close_polling` | [Window polling](../reference/window/polling.md) | [`set_close_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_close_polling) |
 | `vmnl::Window` | `set_content_scale_polling` | [Window polling](../reference/window/polling.md) | [`set_content_scale_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_content_scale_polling) |
+| `vmnl::Window` | `set_cursor` | [Cursor controls](../reference/window/cursor.md) | [`set_cursor`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor) |
 | `vmnl::Window` | `set_cursor_enter_polling` | [Window polling](../reference/window/polling.md) | [`set_cursor_enter_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor_enter_polling) |
 | `vmnl::Window` | `set_cursor_mode` | [Cursor controls](../reference/window/cursor.md) | [`set_cursor_mode`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor_mode) |
 | `vmnl::Window` | `set_cursor_pos_polling` | [Window polling](../reference/window/polling.md) | [`set_cursor_pos_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor_pos_polling) |

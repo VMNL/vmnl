@@ -4,7 +4,8 @@
 //! Headless public input-state contracts.
 
 use vmnl::{
-    Context, CursorMode, Event, EventKind, Input, Key, Modifiers, MouseButton, VMNLResult, Window,
+    Context, Cursor, CursorMode, Event, EventKind, Input, Key, Modifiers, MouseButton,
+    StandardCursor, VMNLResult, Window,
 };
 
 fn assert_empty(input: &Input) {
@@ -64,6 +65,34 @@ fn cursor_controls_are_exposed_through_public_facade() {
     assert_eq!(CursorMode::default(), CursorMode::Normal);
     assert_ne!(CursorMode::Hidden, CursorMode::Disabled);
     assert_ne!(CursorMode::Disabled, CursorMode::Captured);
+}
+
+#[test]
+fn cursor_resources_are_exposed_through_public_facade() {
+    fn assert_cursor_traits<T: Clone + std::fmt::Debug + Eq>() {}
+    fn assert_standard_cursor_traits<T: Clone + Copy + std::fmt::Debug + Eq + std::hash::Hash>() {}
+
+    assert_cursor_traits::<Cursor>();
+    assert_standard_cursor_traits::<StandardCursor>();
+
+    let _: fn(&Context, StandardCursor) -> VMNLResult<Cursor> = Cursor::standard;
+    let _from_rgba8 = Cursor::from_rgba8;
+    let _: fn(&Window) -> Option<&Cursor> = Window::cursor;
+    let _: fn(&mut Window, Option<&Cursor>) -> VMNLResult<()> = Window::set_cursor;
+
+    let shapes = [
+        StandardCursor::Arrow,
+        StandardCursor::IBeam,
+        StandardCursor::Crosshair,
+        StandardCursor::PointingHand,
+        StandardCursor::ResizeEastWest,
+        StandardCursor::ResizeNorthSouth,
+        StandardCursor::ResizeNorthwestSoutheast,
+        StandardCursor::ResizeNortheastSouthwest,
+        StandardCursor::ResizeAll,
+        StandardCursor::NotAllowed,
+    ];
+    assert_eq!(shapes.len(), 10);
 }
 
 #[test]

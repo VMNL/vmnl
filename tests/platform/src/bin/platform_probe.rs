@@ -5,7 +5,7 @@
 
 #![allow(clippy::print_stderr, clippy::print_stdout, clippy::too_many_lines)]
 
-use glfw::{ClientApiHint, InitHint, WindowHint, WindowMode};
+use glfw::{ClientApiHint, Context as _, InitHint, WindowHint, WindowMode};
 use serde_json::{json, Value};
 use std::{cell::RefCell, env, process::ExitCode, rc::Rc};
 use vmnl_platform_tests::{backend_name, parse_backend, PROBE_SCHEMA_VERSION};
@@ -153,6 +153,7 @@ fn main() -> ExitCode {
                 "disabled_after_reset": !window.uses_raw_mouse_motion(),
             })
         }
+        "cursor-resources" => cursor_resources(&mut glfw, &mut window),
         "maximize" => {
             window.maximize();
             Value::Null
@@ -173,6 +174,94 @@ fn main() -> ExitCode {
         "ok",
     );
     ExitCode::SUCCESS
+}
+
+fn cursor_resources(glfw: &mut glfw::Glfw, window: &mut glfw::PWindow) -> Value {
+    let shapes = [
+        glfw::ffi::GLFW_ARROW_CURSOR,
+        glfw::ffi::GLFW_IBEAM_CURSOR,
+        glfw::ffi::GLFW_CROSSHAIR_CURSOR,
+        glfw::ffi::GLFW_POINTING_HAND_CURSOR,
+        glfw::ffi::GLFW_RESIZE_EW_CURSOR,
+        glfw::ffi::GLFW_RESIZE_NS_CURSOR,
+        glfw::ffi::GLFW_RESIZE_NWSE_CURSOR,
+        glfw::ffi::GLFW_RESIZE_NESW_CURSOR,
+        glfw::ffi::GLFW_RESIZE_ALL_CURSOR,
+        glfw::ffi::GLFW_NOT_ALLOWED_CURSOR,
+    ];
+    let standard_cursors: Vec<*mut glfw::ffi::GLFWcursor> = shapes
+        .into_iter()
+        .map(|shape| {
+            // SAFETY: GLFW is initialized on this thread and every value is a GLFW 3.4 standard
+            // cursor constant. Each returned non-null handle is destroyed below.
+            unsafe { glfw::ffi::glfwCreateStandardCursor(shape) }
+        })
+        .collect();
+    if standard_cursors.iter().any(|cursor| cursor.is_null()) {
+        destroy_cursors(&standard_cursors);
+        return json!({"standard_created": false});
+    }
+
+    let mut pixels = vec![
+        255_u8, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255,
+    ];
+    let image = glfw::ffi::GLFWimage {
+        width: 2,
+        height: 2,
+        pixels: pixels.as_mut_ptr(),
+    };
+    // SAFETY: The 2x2 image owns exactly four packed RGBA8 pixels, its hotspot is in bounds, and
+    // GLFW copies the image before returning. The returned non-null handle is destroyed below.
+    let custom = unsafe { glfw::ffi::glfwCreateCursor(&raw const image, 1, 1) };
+    if custom.is_null() {
+        destroy_cursors(&standard_cursors);
+        return json!({"standard_created": true, "custom_created": false});
+    }
+
+    glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
+    glfw.window_hint(WindowHint::Visible(false));
+    let Some((second_window, _events)) =
+        glfw.create_window(160, 120, "VMNL cursor probe", WindowMode::Windowed)
+    else {
+        destroy_cursor(custom);
+        destroy_cursors(&standard_cursors);
+        return json!({"second_window_created": false});
+    };
+
+    // SAFETY: Both windows and cursor handles are live on the GLFW thread. The shared standard
+    // cursor remains alive until both windows have restored their default cursor.
+    unsafe {
+        glfw::ffi::glfwSetCursor(window.window_ptr(), standard_cursors[0]);
+        glfw::ffi::glfwSetCursor(second_window.window_ptr(), standard_cursors[0]);
+        glfw::ffi::glfwSetCursor(window.window_ptr(), custom);
+        glfw::ffi::glfwSetCursor(window.window_ptr(), std::ptr::null_mut());
+        glfw::ffi::glfwSetCursor(second_window.window_ptr(), std::ptr::null_mut());
+    }
+
+    destroy_cursor(custom);
+    destroy_cursors(&standard_cursors);
+    json!({
+        "standard_created": standard_cursors.len(),
+        "custom_created": true,
+        "shared_between_windows": true,
+        "replaced_and_removed": true,
+    })
+}
+
+fn destroy_cursor(cursor: *mut glfw::ffi::GLFWcursor) {
+    // SAFETY: The probe calls this exactly once for a non-null cursor it created, after removing
+    // that cursor from every live window.
+    unsafe {
+        glfw::ffi::glfwDestroyCursor(cursor);
+    }
+}
+
+fn destroy_cursors(cursors: &[*mut glfw::ffi::GLFWcursor]) {
+    for &cursor in cursors {
+        if !cursor.is_null() {
+            destroy_cursor(cursor);
+        }
+    }
 }
 
 fn emit(

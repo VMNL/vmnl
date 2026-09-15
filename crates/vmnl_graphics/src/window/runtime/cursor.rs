@@ -3,11 +3,21 @@
 
 //! Internal cursor position and input-mode operations.
 
-use crate::{CursorMode, VMNLError, VMNLErrorKind, VMNLResult};
+use crate::{Cursor, CursorMode, VMNLError, VMNLErrorKind, VMNLResult};
 
 use super::super::inner::VMNLWindow;
 
 impl VMNLWindow {
+    pub(crate) fn cursor(&self) -> Option<&Cursor> {
+        self.handle.cursor.as_ref()
+    }
+
+    pub(crate) fn set_cursor(&mut self, cursor: Option<&Cursor>) -> VMNLResult<()> {
+        crate::glfw_backend::set_cursor(&mut self.handle.context, cursor.map(Cursor::native))?;
+        self.handle.cursor = cursor.cloned();
+        Ok(())
+    }
+
     pub(crate) fn get_cursor_position(&self) -> (f64, f64) {
         self.handle.context.get_cursor_pos()
     }
