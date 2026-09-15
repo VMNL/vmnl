@@ -5,8 +5,8 @@
 //! to window management and rendering.
 
 use crate::{
-    vmnl_instance::VMNLInstance, window::event::EventQueue, window::inner::VMNLWindow, Event,
-    EventKind, Input, VMNLErrorKind,
+    vmnl_instance::VMNLInstance, window::event::EventQueue, window::inner::VMNLWindow, Cursor,
+    Event, EventKind, Input, VMNLErrorKind,
 };
 use std::rc::Rc;
 use std::sync::Arc;
@@ -46,6 +46,8 @@ pub(crate) struct WindowHandle {
     pub(crate) instance: glfw::Glfw,
     /// Handle to the actual OS window (GLFW window).
     pub(crate) context: glfw::PWindow,
+    /// Native cursor retained while assigned to this window.
+    pub(crate) cursor: Option<Cursor>,
     /// Event receiver channel used to retrieve window events.
     pub(crate) events: EventQueue,
     /// Input state manager for keyboard and mouse events.

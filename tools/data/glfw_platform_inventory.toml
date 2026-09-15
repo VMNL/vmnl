@@ -40,6 +40,16 @@ backends = [{ name = "all", status = "supported", conditions = "GLFW initialized
 proofs = ["test:platform_probe backend_actual"]
 
 [[function]]
+c_symbol = "glfwGetError"
+rust_wrappers = ["glfw::get_error", "glfw::get_error_string"]
+category = "initialization"
+introduced = "3.3"
+vmnl_usage = ["fallible cursor resource operations"]
+public_api = []
+backends = [{ name = "all", status = "supported", conditions = "Called on the same thread as the cursor operation whose error slot is inspected.", behavior = "Returns and clears the calling thread's last GLFW error so VMNL can return the category produced by a fallible cursor operation.", errors = ["Does not generate errors"], sentinel = "GLFW_NO_ERROR when no error has occurred since the previous read", source = "https://www.glfw.org/docs/3.4/group__init.html" }]
+proofs = ["test:platform_probe:null:cursor-resources", "justification:GLFW error slots are thread-local"]
+
+[[function]]
 c_symbol = "glfwWindowHint"
 rust_wrappers = ["Glfw::window_hint"]
 category = "window"
@@ -299,6 +309,43 @@ introduced = "3.0"
 vmnl_usage = ["Window::get_cursor_position"]
 backends = [{ name = "all", status = "supported", conditions = "Live window.", behavior = "Returns cursor coordinates relative to the content-area upper-left; disabled mode returns an unbounded virtual position and native cursor positions may be quantized.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "(0.0, 0.0) on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
 proofs = ["test:platform_probe:null:cursor-position", "justification:native physical-position precision is backend-defined"]
+
+[[function]]
+c_symbol = "glfwCreateCursor"
+rust_wrappers = ["glfw_backend::create_cursor", "glfw::ffi::glfwCreateCursor"]
+category = "input"
+introduced = "3.1"
+vmnl_usage = ["Cursor::from_rgba8"]
+backends = [{ name = "all", status = "supported", conditions = "GLFW is initialized on the platform thread and VMNL has validated positive dimensions, exact packed RGBA8 length and an in-bounds hotspot.", behavior = "Copies the supplied non-premultiplied RGBA8 pixels and creates a native cursor resource.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_VALUE", "GLFW_PLATFORM_ERROR"], sentinel = "null cursor on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:cursor-resources", "test:window::input::cursor RGBA8 validation"]
+
+[[function]]
+c_symbol = "glfwCreateStandardCursor"
+rust_wrappers = ["glfw_backend::create_standard_cursor", "glfw::ffi::glfwCreateStandardCursor"]
+category = "input"
+introduced = "3.1"
+vmnl_usage = ["Cursor::standard"]
+backends = [{ name = "win32-cocoa-null", status = "supported", conditions = "GLFW is initialized on the platform thread and the requested value is one of the ten GLFW 3.4 standard shapes.", behavior = "Creates a native cursor using the corresponding system cursor shape.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_CURSOR_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "null cursor on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "x11-wayland", status = "conditional", conditions = "The active cursor theme provides the requested shape; diagonal resize and not-allowed shapes may be unavailable.", behavior = "Creates the theme cursor when available and otherwise emits GLFW_CURSOR_UNAVAILABLE.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_CURSOR_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "null cursor when the shape is unavailable or another error occurs", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:cursor-resources", "justification:GLFW 3.4 standard-cursor availability table reviewed"]
+
+[[function]]
+c_symbol = "glfwDestroyCursor"
+rust_wrappers = ["glfw_backend::destroy_cursor", "glfw::ffi::glfwDestroyCursor"]
+category = "input"
+introduced = "3.1"
+vmnl_usage = ["Cursor RAII destruction"]
+public_api = []
+backends = [{ name = "all", status = "supported", conditions = "The handle is a live cursor created by GLFW and destruction runs on the platform thread while GLFW remains initialized.", behavior = "Destroys the native cursor; any native backend error is reported through the configured error callback.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_PLATFORM_ERROR"], sentinel = "No return value", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:cursor-resources", "justification:Window retains a shared Cursor owner until replacement or window destruction"]
+
+[[function]]
+c_symbol = "glfwSetCursor"
+rust_wrappers = ["glfw_backend::set_cursor", "glfw::ffi::glfwSetCursor"]
+category = "input"
+introduced = "3.1"
+vmnl_usage = ["Window::set_cursor"]
+backends = [{ name = "all", status = "conditional", conditions = "The window and optional cursor are live; visibility additionally requires normal cursor mode and may require focus.", behavior = "Assigns the cursor to a window or restores the default arrow cursor for null; one cursor may be shared by multiple windows.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_PLATFORM_ERROR"], sentinel = "No visible cursor outside normal mode or when backend focus policy suppresses it", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:cursor-resources", "justification:native visibility and theme appearance require interactive validation"]
 
 [[function]]
 c_symbol = "glfwSetCursorPos"

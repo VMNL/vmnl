@@ -61,6 +61,8 @@ RUST_CALL_TO_C = {
     ".is_focused(": "glfwGetWindowAttrib",
     ".set_should_close(": "glfwSetWindowShouldClose",
     ".should_close(": "glfwWindowShouldClose",
+    "glfw::get_error(": "glfwGetError",
+    "glfw::get_error_string(": "glfwGetError",
     ".poll_events(": "glfwPollEvents",
     ".wait_events(": "glfwWaitEvents",
     ".wait_events_timeout(": "glfwWaitEventsTimeout",

@@ -6,6 +6,7 @@
 | `WindowBuilder::build` | invalid size; GLFW/surface/swapchain/shader/render-target failures; unsupported strict present mode | Fix configuration or environment; choose preferred/portable present mode |
 | Runtime window setters | invalid size/range/aspect (`InvalidWindowSize`/`InvalidState`) | Correct input before retry |
 | Cursor position/raw-motion setters | non-finite coordinates (`InvalidState`); unsupported raw enable (`GlfwUnsupportedPlatform`) | Correct coordinates or keep raw motion disabled |
+| Cursor resource create/assign | invalid image/hotspot (`InvalidState`); unavailable theme shape (`GlfwUnsupportedPlatform`); native GLFW failure | Correct image data, choose another shape, or restore the default cursor |
 | Shape/mesh build | invalid/overflowing geometry; vertex/index allocation failure | Correct geometry or release/reduce resources |
 | Raw pipeline build | missing/read/compile/interface/layout/pipeline failures | Correct shaders/layout; verify device support |
 | Raw geometry/uniform build | invalid counts/indices or buffer allocation | Correct data/reduce allocation |

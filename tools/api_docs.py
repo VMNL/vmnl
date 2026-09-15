@@ -83,11 +83,13 @@ WINDOW_CONFIGURATION_METHODS = {
     "width",
 }
 WINDOW_CURSOR_METHODS = {
+    "cursor",
     "get_cursor_mode",
     "get_cursor_position",
     "is_cursor_hovered",
     "is_raw_mouse_motion_enabled",
     "set_cursor_mode",
+    "set_cursor",
     "set_cursor_position",
     "set_raw_mouse_motion",
 }

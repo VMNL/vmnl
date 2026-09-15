@@ -65,3 +65,18 @@ fn null_backend_cursor_position_modes_hover_and_raw_state_are_inspectable() {
         .as_array()
         .is_some_and(Vec::is_empty));
 }
+
+#[test]
+fn null_backend_creates_shares_replaces_and_destroys_cursor_resources() {
+    let record = null_probe("cursor-resources");
+    assert_eq!(
+        record["value"],
+        serde_json::json!({
+            "standard_created": 10,
+            "custom_created": true,
+            "shared_between_windows": true,
+            "replaced_and_removed": true,
+        })
+    );
+    assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+}

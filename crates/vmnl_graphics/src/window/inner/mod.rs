@@ -134,6 +134,7 @@ impl VMNLWindow {
                 instance: glfw,
                 vmnl_instance,
                 context: window,
+                cursor: None,
                 events,
                 framebuffers,
                 render_pass,

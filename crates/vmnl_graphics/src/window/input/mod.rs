@@ -4,11 +4,14 @@
 //! Input handling for the VMNL library, defining the `Input` struct and related methods
 //! for managing keyboard and mouse input states.
 
+mod cursor;
 mod cursor_mode;
 mod keyboard;
 mod modifiers;
 mod mouse;
 mod transitions;
+pub(crate) use cursor::CursorImage;
+pub use cursor::{Cursor, StandardCursor};
 pub use cursor_mode::CursorMode;
 pub use keyboard::{Key, KeyboardState};
 pub use modifiers::Modifiers;
