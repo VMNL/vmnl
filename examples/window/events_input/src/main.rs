@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-use vmnl::{Context, Event, Key, MouseButton, PresentMode, VMNLResult, Window};
+use vmnl::{Context, CursorMode, Event, Key, MouseButton, PresentMode, VMNLResult, Window};
 
 fn print_event(event: &Event) {
     println!(
@@ -64,6 +64,11 @@ fn apply_keybinds(window: &mut Window) -> VMNLResult<()> {
     let restore = keyboard.is_pressed(Key::R);
     let hide_show = keyboard.is_pressed(Key::H);
     let clear_aspect = keyboard.is_pressed(Key::C);
+    let cursor_normal = keyboard.is_pressed(Key::N);
+    let cursor_hidden = keyboard.is_pressed(Key::V);
+    let cursor_disabled = keyboard.is_pressed(Key::D);
+    let cursor_captured = keyboard.is_pressed(Key::G);
+    let center_cursor = keyboard.is_pressed(Key::P);
     let any_arrow = keyboard.is_any_down(&[Key::Left, Key::Right, Key::Up, Key::Down]);
     let any_was_used = keyboard.is_one_used();
     let any_was_pressed = keyboard.is_one_pressed();
@@ -95,6 +100,22 @@ fn apply_keybinds(window: &mut Window) -> VMNLResult<()> {
     if clear_aspect {
         window.set_aspect_ratio(None)?;
     }
+    if cursor_normal {
+        window.set_cursor_mode(CursorMode::Normal);
+    }
+    if cursor_hidden {
+        window.set_cursor_mode(CursorMode::Hidden);
+    }
+    if cursor_disabled {
+        window.set_cursor_mode(CursorMode::Disabled);
+    }
+    if cursor_captured {
+        window.set_cursor_mode(CursorMode::Captured);
+    }
+    if center_cursor {
+        let (width, height) = window.get_size();
+        window.set_cursor_position(f64::from(width) / 2.0, f64::from(height) / 2.0)?;
+    }
     if any_arrow {
         println!("[input] arrow key is down");
     }
@@ -120,6 +141,10 @@ fn main() -> VMNLResult<()> {
         .build(&context)?;
 
     configure_runtime_window(&mut window)?;
+    let raw_mouse_motion_supported = context.is_raw_mouse_motion_supported();
+    if raw_mouse_motion_supported {
+        window.set_raw_mouse_motion(true)?;
+    }
     print_monitor_summary(&window);
 
     window.set_time(0.0);
@@ -149,7 +174,16 @@ fn main() -> VMNLResult<()> {
         window.is_visible(),
         window.is_focused()
     );
+    println!(
+        "cursor: position={:?} hovered={} mode={:?} raw_supported={} raw_enabled={}",
+        window.get_cursor_position(),
+        window.is_cursor_hovered(),
+        window.get_cursor_mode(),
+        raw_mouse_motion_supported,
+        window.is_raw_mouse_motion_enabled()
+    );
     println!("keys: Escape close, F focus, I iconify, M maximize, R restore, H hide/show, C clear aspect");
+    println!("cursor keys: N normal, V hidden, D disabled, G captured, P center");
 
     while window.is_open() {
         for event in window.poll_events() {

@@ -30,8 +30,8 @@
 //! ```
 
 pub use vmnl_graphics::{
-    common, d2, d3, raw, Context, Event, EventKind, FrameRenderer, Input, Key, KeyboardState,
-    Modifiers, MonitorInfo, Monitors, MouseButton, MouseState, PresentMode, RenderMode,
-    ShaderSource, VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult, VideoMode, Window,
-    WindowBuilder,
+    common, d2, d3, raw, Context, CursorMode, Event, EventKind, FrameRenderer, Input, Key,
+    KeyboardState, Modifiers, MonitorInfo, Monitors, MouseButton, MouseState, PresentMode,
+    RenderMode, ShaderSource, VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult, VideoMode,
+    Window, WindowBuilder,
 };

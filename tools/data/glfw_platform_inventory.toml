@@ -284,12 +284,57 @@ proofs = ["test:platform_probe:x11:focus", "justification:focus grant is intenti
 
 [[function]]
 c_symbol = "glfwGetWindowAttrib"
-rust_wrappers = ["PWindow::is_iconified", "PWindow::is_maximized", "PWindow::is_visible", "PWindow::is_focused"]
+rust_wrappers = ["PWindow::is_iconified", "PWindow::is_maximized", "PWindow::is_visible", "PWindow::is_focused", "PWindow::is_hovered"]
 category = "window"
 introduced = "3.0"
-vmnl_usage = ["Window::is_iconified", "Window::is_maximized", "Window::is_visible", "Window::is_focused"]
+vmnl_usage = ["Window::is_iconified", "Window::is_maximized", "Window::is_visible", "Window::is_focused", "Window::is_cursor_hovered"]
 backends = [{ name = "all", status = "conditional", conditions = "Attribute is supported by the active backend.", behavior = "Returns current GLFW window attribute state.", errors = ["GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "GLFW_FALSE on error", source = "https://www.glfw.org/docs/3.4/group__window.html" }]
-proofs = ["justification:official window attribute reference reviewed"]
+proofs = ["test:platform_probe:null:cursor-hover", "justification:official window attribute reference reviewed"]
+
+[[function]]
+c_symbol = "glfwGetCursorPos"
+rust_wrappers = ["PWindow::get_cursor_pos"]
+category = "input"
+introduced = "3.0"
+vmnl_usage = ["Window::get_cursor_position"]
+backends = [{ name = "all", status = "supported", conditions = "Live window.", behavior = "Returns cursor coordinates relative to the content-area upper-left; disabled mode returns an unbounded virtual position and native cursor positions may be quantized.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "(0.0, 0.0) on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:cursor-position", "justification:native physical-position precision is backend-defined"]
+
+[[function]]
+c_symbol = "glfwSetCursorPos"
+rust_wrappers = ["PWindow::set_cursor_pos"]
+category = "input"
+introduced = "3.0"
+vmnl_usage = ["Window::set_cursor_position"]
+backends = [{ name = "wayland", status = "conditional", conditions = "Window is focused and cursor mode is disabled.", behavior = "Updates only GLFW's virtual disabled-mode position; other modes emit GLFW_FEATURE_UNAVAILABLE.", errors = ["GLFW_INVALID_VALUE", "GLFW_FEATURE_UNAVAILABLE"], sentinel = "No-op when unfocused or unsupported", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "x11-win32-cocoa-null", status = "conditional", conditions = "Live focused window and finite coordinates.", behavior = "Sets the cursor position in content-area coordinates; a physical cursor backend may quantize it.", errors = ["GLFW_INVALID_VALUE", "GLFW_PLATFORM_ERROR"], sentinel = "No-op when unfocused or on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:cursor-position", "justification:focus and physical cursor movement require native interactive evidence"]
+
+[[function]]
+c_symbol = "glfwGetInputMode"
+rust_wrappers = ["PWindow::get_cursor_mode", "PWindow::uses_raw_mouse_motion"]
+category = "input"
+introduced = "3.0"
+vmnl_usage = ["Window::get_cursor_mode", "Window::is_raw_mouse_motion_enabled"]
+backends = [{ name = "all", status = "supported", conditions = "Live window and a valid input-mode selector.", behavior = "Returns GLFW's stored cursor or raw-motion mode, which may differ from effective native behavior while unfocused or unsupported.", errors = ["GLFW_INVALID_ENUM"], sentinel = "Zero on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:cursor-modes", "test:platform_probe:null:raw-mouse-motion"]
+
+[[function]]
+c_symbol = "glfwSetInputMode"
+rust_wrappers = ["PWindow::set_cursor_mode", "PWindow::set_raw_mouse_motion"]
+category = "input"
+introduced = "3.0"
+vmnl_usage = ["Window::set_cursor_mode", "Window::set_raw_mouse_motion"]
+backends = [{ name = "wayland", status = "conditional", conditions = "Pointer focus and compositor pointer-constraint/relative-pointer protocols needed by the requested mode are available.", behavior = "Stores every cursor mode; disabled/captured become effective when the pointer enters. Raw motion affects relative motion only in disabled mode.", errors = ["GLFW_FEATURE_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "Stored mode may not become effective", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "x11", status = "conditional", conditions = "Window is focused; raw motion additionally requires XInput 2.", behavior = "Stores cursor/raw modes and applies disabled/captured confinement while focused; raw motion affects disabled mode only.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "Stored mode may not become effective", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "win32", status = "conditional", conditions = "Window is focused for disabled/captured confinement.", behavior = "Stores cursor/raw modes; raw motion affects disabled mode only.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "Stored mode may not become effective while unfocused", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "cocoa", status = "conditional", conditions = "Normal, hidden or disabled cursor mode requested; raw motion is not enabled.", behavior = "Captured mode emits GLFW_FEATURE_UNIMPLEMENTED; raw motion is unsupported.", errors = ["GLFW_FEATURE_UNIMPLEMENTED", "GLFW_PLATFORM_ERROR"], sentinel = "Unsupported option has no native effect", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "null", status = "supported", conditions = "Live Null window.", behavior = "Stores every cursor mode and raw-motion state without a physical cursor.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "No physical effect", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:cursor-modes", "test:platform_probe:null:raw-mouse-motion", "justification:native confinement and raw deltas require pointer focus and physical motion"]
+
+[[function]]
+c_symbol = "glfwRawMouseMotionSupported"
+rust_wrappers = ["Glfw::supports_raw_motion"]
+category = "input"
+introduced = "3.3"
+vmnl_usage = ["Context::is_raw_mouse_motion_supported", "Window::set_raw_mouse_motion"]
+backends = [{ name = "x11", status = "conditional", conditions = "XInput 2 is available.", behavior = "Returns GLFW_TRUE when XInput 2 raw motion is available, otherwise GLFW_FALSE.", errors = ["GLFW_NOT_INITIALIZED"], sentinel = "GLFW_FALSE", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "win32-wayland-null", status = "supported", conditions = "GLFW is initialized.", behavior = "Bundled GLFW 3.4 reports raw motion support.", errors = ["GLFW_NOT_INITIALIZED"], sentinel = "GLFW_FALSE", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "cocoa", status = "unsupported", conditions = "Cocoa backend active.", behavior = "Bundled GLFW 3.4 reports GLFW_FALSE because raw motion is not implemented.", errors = ["GLFW_NOT_INITIALIZED"], sentinel = "GLFW_FALSE", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:raw-mouse-motion", "justification:bundled GLFW backend implementations reviewed"]
 
 [[function]]
 c_symbol = "glfwSetWindowShouldClose"
@@ -599,15 +644,6 @@ category = "window-unused"
 introduced = "3.3"
 vmnl_usage = []
 backends = [{ name = "wayland", status = "conditional", conditions = "Compositor and decoration protocol support the attribute.", behavior = "Some mutable attributes, including floating, may be unsupported.", errors = ["GLFW_FEATURE_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "No-op on error", source = "https://www.glfw.org/docs/3.4/group__window.html" }, { name = "x11", status = "best-effort", conditions = "Window manager honors the corresponding EWMH state.", behavior = "Requests an attribute change.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "No-op on error", source = "https://www.glfw.org/docs/3.4/group__window.html" }, { name = "win32-cocoa", status = "conditional", conditions = "Attribute is mutable on the native backend.", behavior = "Updates the native attribute.", errors = ["GLFW_FEATURE_UNAVAILABLE"], sentinel = "No-op on error", source = "https://www.glfw.org/docs/3.4/group__window.html" }]
-proofs = ["justification:official backend remarks reviewed"]
-
-[[function]]
-c_symbol = "glfwSetCursorPos"
-rust_wrappers = ["PWindow::set_cursor_pos"]
-category = "input-unused"
-introduced = "3.0"
-vmnl_usage = []
-backends = [{ name = "wayland", status = "conditional", conditions = "Cursor mode is disabled.", behavior = "Warping only works for GLFW's disabled cursor mode.", errors = ["GLFW_FEATURE_UNAVAILABLE"], sentinel = "No-op", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "x11-win32-cocoa", status = "supported", conditions = "Live focused window.", behavior = "Sets cursor position in content coordinates.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "No-op on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
 proofs = ["justification:official backend remarks reviewed"]
 
 [[function]]

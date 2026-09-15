@@ -114,6 +114,45 @@ fn main() -> ExitCode {
             window.focus();
             Value::Null
         }
+        "cursor-position" => {
+            window.show();
+            window.focus();
+            window.set_cursor_mode(glfw::CursorMode::Disabled);
+            window.set_cursor_pos(37.5, 41.25);
+            json!(window.get_cursor_pos())
+        }
+        "cursor-hover" => json!(window.is_hovered()),
+        "cursor-modes" => {
+            let modes = [
+                glfw::CursorMode::Normal,
+                glfw::CursorMode::Hidden,
+                glfw::CursorMode::Disabled,
+                glfw::CursorMode::Captured,
+            ];
+            let values: Vec<String> = modes
+                .into_iter()
+                .map(|mode| {
+                    window.set_cursor_mode(mode);
+                    format!("{:?}", window.get_cursor_mode())
+                })
+                .collect();
+            json!(values)
+        }
+        "raw-mouse-motion" => {
+            let supported = glfw.supports_raw_motion();
+            if supported {
+                window.set_raw_mouse_motion(true);
+            }
+            let enabled = window.uses_raw_mouse_motion();
+            if supported {
+                window.set_raw_mouse_motion(false);
+            }
+            json!({
+                "supported": supported,
+                "enabled": enabled,
+                "disabled_after_reset": !window.uses_raw_mouse_motion(),
+            })
+        }
         "maximize" => {
             window.maximize();
             Value::Null

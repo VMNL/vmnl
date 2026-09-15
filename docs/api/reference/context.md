@@ -13,6 +13,7 @@ Import path: `vmnl::Context`. Status: experimental, operational Vulkan context.
 | Member | Contract |
 |---|---|
 | `Context::new()` | Initialize Vulkan state and return `VMNLResult<Context>`. |
+| `Context::is_raw_mouse_motion_supported()` | Read stable GLFW raw-motion availability for the active system/backend. |
 | `Clone` | Clone the single-threaded shared owner; it does not create another device. |
 
 ## Construction, defaults, and validation
@@ -37,7 +38,9 @@ Initialization can fail for Vulkan instance creation, physical-device/queue sele
 
 ## Platform, Vulkan, and display constraints
 
-A Vulkan loader and supported device are required. A display is not necessarily touched by `Context::new`, but later window creation requires GLFW and a usable display/session.
+A Vulkan loader and supported device are required. A display is not necessarily touched by
+`Context::new`, but later window creation requires GLFW and a usable display/session. Raw mouse
+motion is unavailable on Cocoa in bundled GLFW 3.4 and requires XInput 2 on X11.
 
 ## Example and related types
 

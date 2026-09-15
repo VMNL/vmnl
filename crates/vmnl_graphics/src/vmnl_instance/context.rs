@@ -30,6 +30,17 @@ pub struct Context {
 }
 
 impl Context {
+    /// Returns whether raw mouse motion is supported by the active GLFW backend and system.
+    ///
+    /// This value is stable for the lifetime of GLFW after initialization. Raw motion is
+    /// configured per window and only affects motion while its cursor mode is disabled. Bundled
+    /// GLFW 3.4 reports it unavailable on Cocoa; X11 requires `XInput` 2.
+    #[inline]
+    #[must_use]
+    pub fn is_raw_mouse_motion_supported(&self) -> bool {
+        self.inner.glfw.supports_raw_motion()
+    }
+
     /// Initialize a new `Context` required for using the graphical part of the library.
     ///
     /// # Returns

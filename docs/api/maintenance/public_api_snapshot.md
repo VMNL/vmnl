@@ -811,6 +811,31 @@ pub trait vmnl::raw::Vertex: vulkano::pipeline::graphics::vertex_input::vertex::
 impl<T> vmnl::raw::Vertex for T where T: vulkano::pipeline::graphics::vertex_input::vertex::Vertex
 pub trait vmnl::raw::Zeroable: bytemuck::zeroable::Zeroable
 impl<T> vmnl::raw::Zeroable for T where T: bytemuck::zeroable::Zeroable
+pub enum vmnl::CursorMode
+pub vmnl::CursorMode::Captured
+pub vmnl::CursorMode::Disabled
+pub vmnl::CursorMode::Hidden
+pub vmnl::CursorMode::Normal
+impl core::clone::Clone for vmnl::CursorMode
+pub fn vmnl::CursorMode::clone(&self) -> vmnl::CursorMode
+impl core::cmp::Eq for vmnl::CursorMode
+impl core::cmp::PartialEq for vmnl::CursorMode
+pub fn vmnl::CursorMode::eq(&self, &vmnl::CursorMode) -> bool
+impl core::default::Default for vmnl::CursorMode
+pub fn vmnl::CursorMode::default() -> vmnl::CursorMode
+impl core::fmt::Debug for vmnl::CursorMode
+pub fn vmnl::CursorMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for vmnl::CursorMode
+pub fn vmnl::CursorMode::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for vmnl::CursorMode
+impl core::marker::StructuralPartialEq for vmnl::CursorMode
+impl core::marker::Freeze for vmnl::CursorMode
+impl core::marker::Send for vmnl::CursorMode
+impl core::marker::Sync for vmnl::CursorMode
+impl core::marker::Unpin for vmnl::CursorMode
+impl core::marker::UnsafeUnpin for vmnl::CursorMode
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::CursorMode
+impl core::panic::unwind_safe::UnwindSafe for vmnl::CursorMode
 pub enum vmnl::EventKind
 pub vmnl::EventKind::Closed
 pub vmnl::EventKind::FocusGained
@@ -1087,6 +1112,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for vmnl::VMNLErrorKind
 impl core::panic::unwind_safe::UnwindSafe for vmnl::VMNLErrorKind
 pub struct vmnl::Context
 impl vmnl::Context
+pub fn vmnl::Context::is_raw_mouse_motion_supported(&self) -> bool
 pub fn vmnl::Context::new() -> vmnl::VMNLResult<Self>
 impl core::clone::Clone for vmnl::Context
 pub fn vmnl::Context::clone(&self) -> vmnl::Context
@@ -1409,6 +1435,14 @@ pub fn vmnl::Window::set_size(&mut self, u32, u32) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_size_limits(&mut self, core::option::Option<u32>, core::option::Option<u32>, core::option::Option<u32>, core::option::Option<u32>) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_title(&mut self, &str)
 pub const fn vmnl::Window::width(&self) -> u32
+impl vmnl::Window
+pub fn vmnl::Window::get_cursor_mode(&self) -> vmnl::CursorMode
+pub fn vmnl::Window::get_cursor_position(&self) -> (f64, f64)
+pub fn vmnl::Window::is_cursor_hovered(&self) -> bool
+pub fn vmnl::Window::is_raw_mouse_motion_enabled(&self) -> bool
+pub fn vmnl::Window::set_cursor_mode(&mut self, vmnl::CursorMode)
+pub fn vmnl::Window::set_cursor_position(&mut self, f64, f64) -> vmnl::VMNLResult<()>
+pub fn vmnl::Window::set_raw_mouse_motion(&mut self, bool) -> vmnl::VMNLResult<()>
 impl vmnl::Window
 pub fn vmnl::Window::render(&mut self) -> vmnl::FrameRenderer<'_, '_>
 impl core::marker::Freeze for vmnl::Window

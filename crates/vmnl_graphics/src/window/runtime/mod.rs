@@ -7,6 +7,7 @@
 //! configuration, transient state, and GLFW/Vulkan handles.
 
 mod config;
+mod cursor;
 mod handle;
 mod state;
 
