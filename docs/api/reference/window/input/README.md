@@ -2,6 +2,7 @@
 
 | Item | Role |
 |---|---|
+| [`CursorMode`](cursor_mode.md) | Cursor visibility and confinement mode |
 | [`Input`](input.md) | Window-owned keyboard/mouse snapshot |
 | [`Key`](key.md) | Supported key identifier |
 | [`KeyboardState`](keyboard_state.md) | Current and transition key queries |

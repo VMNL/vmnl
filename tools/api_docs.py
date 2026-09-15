@@ -82,6 +82,15 @@ WINDOW_CONFIGURATION_METHODS = {
     "set_title",
     "width",
 }
+WINDOW_CURSOR_METHODS = {
+    "get_cursor_mode",
+    "get_cursor_position",
+    "is_cursor_hovered",
+    "is_raw_mouse_motion_enabled",
+    "set_cursor_mode",
+    "set_cursor_position",
+    "set_raw_mouse_motion",
+}
 WINDOW_LIFECYCLE_METHODS = {
     "close",
     "focus",
@@ -427,6 +436,8 @@ def method_page(row: CoverageRow, method: PublicMethod) -> tuple[str, str]:
         return row.page_label, row.page_target
     if method.name in WINDOW_CONFIGURATION_METHODS:
         return "Window configuration", "../reference/window/configuration.md"
+    if method.name in WINDOW_CURSOR_METHODS:
+        return "Cursor controls", "../reference/window/cursor.md"
     if method.name in WINDOW_LIFECYCLE_METHODS:
         return "Window lifecycle", "../reference/window/lifecycle.md"
     if method.name in WINDOW_EVENT_METHODS:

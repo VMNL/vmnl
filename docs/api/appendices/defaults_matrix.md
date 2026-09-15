@@ -10,6 +10,7 @@
 | `PresentMode` | `Auto`: `Mailbox` → `Immediate` → `FifoRelaxed` → `Fifo` among supported modes |
 | `RenderMode` | `PerObject`; `Batched` currently falls back to it |
 | `Input`, `KeyboardState`, `MouseState` | All states inactive |
+| `CursorMode` / new window cursor | `Normal`; raw mouse motion disabled |
 | `Modifiers` | `NONE` |
 | `Anchor` | `TopLeft` |
 | `LineCap` | `Butt` |

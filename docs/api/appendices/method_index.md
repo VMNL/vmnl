@@ -4,7 +4,13 @@
 | Owner | Method | Canonical page | Rustdoc method |
 |---|---|---|---|
 | `vmnl::Context` | `clone` | [Context](../reference/context.md) | [`clone`](../../../target/doc/vmnl/struct.Context.html#method.clone) |
+| `vmnl::Context` | `is_raw_mouse_motion_supported` | [Context](../reference/context.md) | [`is_raw_mouse_motion_supported`](../../../target/doc/vmnl/struct.Context.html#method.is_raw_mouse_motion_supported) |
 | `vmnl::Context` | `new` | [Context](../reference/context.md) | [`new`](../../../target/doc/vmnl/struct.Context.html#method.new) |
+| `vmnl::CursorMode` | `clone` | [CursorMode](../reference/window/input/cursor_mode.md) | [`clone`](../../../target/doc/vmnl/enum.CursorMode.html#method.clone) |
+| `vmnl::CursorMode` | `default` | [CursorMode](../reference/window/input/cursor_mode.md) | [`default`](../../../target/doc/vmnl/enum.CursorMode.html#method.default) |
+| `vmnl::CursorMode` | `eq` | [CursorMode](../reference/window/input/cursor_mode.md) | [`eq`](../../../target/doc/vmnl/enum.CursorMode.html#method.eq) |
+| `vmnl::CursorMode` | `fmt` | [CursorMode](../reference/window/input/cursor_mode.md) | [`fmt`](../../../target/doc/vmnl/enum.CursorMode.html#method.fmt) |
+| `vmnl::CursorMode` | `hash` | [CursorMode](../reference/window/input/cursor_mode.md) | [`hash`](../../../target/doc/vmnl/enum.CursorMode.html#method.hash) |
 | `vmnl::Event` | `clone` | [Event](../reference/window/events/event.md) | [`clone`](../../../target/doc/vmnl/struct.Event.html#method.clone) |
 | `vmnl::Event` | `eq` | [Event](../reference/window/events/event.md) | [`eq`](../../../target/doc/vmnl/struct.Event.html#method.eq) |
 | `vmnl::Event` | `fmt` | [Event](../reference/window/events/event.md) | [`fmt`](../../../target/doc/vmnl/struct.Event.html#method.fmt) |
@@ -117,6 +123,8 @@
 | `vmnl::Window` | `enable_window_state_polling` | [Window polling](../reference/window/polling.md) | [`enable_window_state_polling`](../../../target/doc/vmnl/struct.Window.html#method.enable_window_state_polling) |
 | `vmnl::Window` | `focus` | [Window lifecycle](../reference/window/lifecycle.md) | [`focus`](../../../target/doc/vmnl/struct.Window.html#method.focus) |
 | `vmnl::Window` | `get_content_scale` | [Window configuration](../reference/window/configuration.md) | [`get_content_scale`](../../../target/doc/vmnl/struct.Window.html#method.get_content_scale) |
+| `vmnl::Window` | `get_cursor_mode` | [Cursor controls](../reference/window/cursor.md) | [`get_cursor_mode`](../../../target/doc/vmnl/struct.Window.html#method.get_cursor_mode) |
+| `vmnl::Window` | `get_cursor_position` | [Cursor controls](../reference/window/cursor.md) | [`get_cursor_position`](../../../target/doc/vmnl/struct.Window.html#method.get_cursor_position) |
 | `vmnl::Window` | `get_framebuffer_size` | [Window configuration](../reference/window/configuration.md) | [`get_framebuffer_size`](../../../target/doc/vmnl/struct.Window.html#method.get_framebuffer_size) |
 | `vmnl::Window` | `get_opacity` | [Window configuration](../reference/window/configuration.md) | [`get_opacity`](../../../target/doc/vmnl/struct.Window.html#method.get_opacity) |
 | `vmnl::Window` | `get_position` | [Window configuration](../reference/window/configuration.md) | [`get_position`](../../../target/doc/vmnl/struct.Window.html#method.get_position) |
@@ -130,12 +138,14 @@
 | `vmnl::Window` | `iconify` | [Window lifecycle](../reference/window/lifecycle.md) | [`iconify`](../../../target/doc/vmnl/struct.Window.html#method.iconify) |
 | `vmnl::Window` | `input` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`input`](../../../target/doc/vmnl/struct.Window.html#method.input) |
 | `vmnl::Window` | `is_cursor_enter_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_cursor_enter_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_cursor_enter_polling_enabled) |
+| `vmnl::Window` | `is_cursor_hovered` | [Cursor controls](../reference/window/cursor.md) | [`is_cursor_hovered`](../../../target/doc/vmnl/struct.Window.html#method.is_cursor_hovered) |
 | `vmnl::Window` | `is_cursor_pos_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_cursor_pos_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_cursor_pos_polling_enabled) |
 | `vmnl::Window` | `is_focused` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_focused`](../../../target/doc/vmnl/struct.Window.html#method.is_focused) |
 | `vmnl::Window` | `is_iconified` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_iconified`](../../../target/doc/vmnl/struct.Window.html#method.is_iconified) |
 | `vmnl::Window` | `is_maximized` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_maximized`](../../../target/doc/vmnl/struct.Window.html#method.is_maximized) |
 | `vmnl::Window` | `is_mouse_button_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_mouse_button_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_mouse_button_polling_enabled) |
 | `vmnl::Window` | `is_open` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_open`](../../../target/doc/vmnl/struct.Window.html#method.is_open) |
+| `vmnl::Window` | `is_raw_mouse_motion_enabled` | [Cursor controls](../reference/window/cursor.md) | [`is_raw_mouse_motion_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_raw_mouse_motion_enabled) |
 | `vmnl::Window` | `is_ready` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_ready`](../../../target/doc/vmnl/struct.Window.html#method.is_ready) |
 | `vmnl::Window` | `is_scroll_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_scroll_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_scroll_polling_enabled) |
 | `vmnl::Window` | `is_visible` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_visible`](../../../target/doc/vmnl/struct.Window.html#method.is_visible) |
@@ -154,7 +164,9 @@
 | `vmnl::Window` | `set_close_polling` | [Window polling](../reference/window/polling.md) | [`set_close_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_close_polling) |
 | `vmnl::Window` | `set_content_scale_polling` | [Window polling](../reference/window/polling.md) | [`set_content_scale_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_content_scale_polling) |
 | `vmnl::Window` | `set_cursor_enter_polling` | [Window polling](../reference/window/polling.md) | [`set_cursor_enter_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor_enter_polling) |
+| `vmnl::Window` | `set_cursor_mode` | [Cursor controls](../reference/window/cursor.md) | [`set_cursor_mode`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor_mode) |
 | `vmnl::Window` | `set_cursor_pos_polling` | [Window polling](../reference/window/polling.md) | [`set_cursor_pos_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor_pos_polling) |
+| `vmnl::Window` | `set_cursor_position` | [Cursor controls](../reference/window/cursor.md) | [`set_cursor_position`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor_position) |
 | `vmnl::Window` | `set_drag_and_drop_polling` | [Window polling](../reference/window/polling.md) | [`set_drag_and_drop_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_drag_and_drop_polling) |
 | `vmnl::Window` | `set_error_callback` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`set_error_callback`](../../../target/doc/vmnl/struct.Window.html#method.set_error_callback) |
 | `vmnl::Window` | `set_focus_polling` | [Window polling](../reference/window/polling.md) | [`set_focus_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_focus_polling) |
@@ -164,6 +176,7 @@
 | `vmnl::Window` | `set_maximize_polling` | [Window polling](../reference/window/polling.md) | [`set_maximize_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_maximize_polling) |
 | `vmnl::Window` | `set_mouse_button_polling` | [Window polling](../reference/window/polling.md) | [`set_mouse_button_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_mouse_button_polling) |
 | `vmnl::Window` | `set_position` | [Window configuration](../reference/window/configuration.md) | [`set_position`](../../../target/doc/vmnl/struct.Window.html#method.set_position) |
+| `vmnl::Window` | `set_raw_mouse_motion` | [Cursor controls](../reference/window/cursor.md) | [`set_raw_mouse_motion`](../../../target/doc/vmnl/struct.Window.html#method.set_raw_mouse_motion) |
 | `vmnl::Window` | `set_refresh_polling` | [Window polling](../reference/window/polling.md) | [`set_refresh_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_refresh_polling) |
 | `vmnl::Window` | `set_scroll_polling` | [Window polling](../reference/window/polling.md) | [`set_scroll_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_scroll_polling) |
 | `vmnl::Window` | `set_size` | [Window configuration](../reference/window/configuration.md) | [`set_size`](../../../target/doc/vmnl/struct.Window.html#method.set_size) |

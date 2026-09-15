@@ -3,7 +3,9 @@
 
 //! Headless public input-state contracts.
 
-use vmnl::{Event, EventKind, Input, Key, Modifiers, MouseButton, VMNLResult, Window};
+use vmnl::{
+    Context, CursorMode, Event, EventKind, Input, Key, Modifiers, MouseButton, VMNLResult, Window,
+};
 
 fn assert_empty(input: &Input) {
     let keyboard = input.keyboard();
@@ -46,6 +48,22 @@ fn event_and_batch_control_are_exposed_through_public_facade() {
     let _: fn(&Window) -> bool = Window::is_cursor_pos_polling_enabled;
     let _: fn(&Window) -> bool = Window::is_cursor_enter_polling_enabled;
     let _: fn(&Window) -> bool = Window::is_scroll_polling_enabled;
+}
+
+#[test]
+fn cursor_controls_are_exposed_through_public_facade() {
+    let _: fn(&Context) -> bool = Context::is_raw_mouse_motion_supported;
+    let _: fn(&Window) -> (f64, f64) = Window::get_cursor_position;
+    let _: fn(&mut Window, f64, f64) -> VMNLResult<()> = Window::set_cursor_position;
+    let _: fn(&Window) -> bool = Window::is_cursor_hovered;
+    let _: fn(&Window) -> CursorMode = Window::get_cursor_mode;
+    let _: fn(&mut Window, CursorMode) = Window::set_cursor_mode;
+    let _: fn(&Window) -> bool = Window::is_raw_mouse_motion_enabled;
+    let _: fn(&mut Window, bool) -> VMNLResult<()> = Window::set_raw_mouse_motion;
+
+    assert_eq!(CursorMode::default(), CursorMode::Normal);
+    assert_ne!(CursorMode::Hidden, CursorMode::Disabled);
+    assert_ne!(CursorMode::Disabled, CursorMode::Captured);
 }
 
 #[test]

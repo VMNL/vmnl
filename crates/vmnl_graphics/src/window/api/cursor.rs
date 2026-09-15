@@ -1,0 +1,90 @@
+// SPDX-FileCopyrightText: 2026 Hugo Duda
+// SPDX-License-Identifier: MIT
+
+//! Public cursor position and input-mode API.
+
+use crate::{CursorMode, VMNLResult, Window};
+
+impl Window {
+    /// Returns the cursor position relative to the upper-left corner of the content area.
+    ///
+    /// X increases to the right and Y increases downward. Coordinates are `f64` screen
+    /// coordinates, not framebuffer pixels, and can be fractional or negative. A native cursor
+    /// backend may quantize physical positions. In [`CursorMode::Disabled`], the returned virtual
+    /// position is unbounded and retains GLFW's `f64` precision.
+    #[inline]
+    #[must_use]
+    pub fn get_cursor_position(&self) -> (f64, f64) {
+        self.inner.get_cursor_position()
+    }
+
+    /// Sets the cursor position relative to the upper-left corner of the content area.
+    ///
+    /// The request has no effect while the window is unfocused. Wayland only supports updating
+    /// the virtual position in [`CursorMode::Disabled`]; other modes report the limitation
+    /// through the configured GLFW error callback.
+    ///
+    /// # Errors
+    /// Returns [`VMNLErrorKind::InvalidState`](crate::VMNLErrorKind::InvalidState) when either
+    /// coordinate is not finite.
+    #[inline]
+    pub fn set_cursor_position(&mut self, x: f64, y: f64) -> VMNLResult<()> {
+        self.inner.set_cursor_position(x, y)
+    }
+
+    /// Returns whether the cursor is currently over the window content area.
+    ///
+    /// On platforms that cannot provide the attribute, GLFW reports an error and returns
+    /// `false`.
+    #[inline]
+    #[must_use]
+    pub fn is_cursor_hovered(&self) -> bool {
+        self.inner.is_cursor_hovered()
+    }
+
+    /// Returns the cursor mode stored for this window.
+    ///
+    /// The stored mode can differ from effective native behavior while the window is unfocused
+    /// or when a backend cannot implement the requested mode.
+    #[inline]
+    #[must_use]
+    pub fn get_cursor_mode(&self) -> CursorMode {
+        self.inner.get_cursor_mode()
+    }
+
+    /// Sets the cursor visibility and confinement mode.
+    ///
+    /// Disabled and captured modes become effective only while the window is focused. Captured
+    /// mode is not implemented by GLFW 3.4 on Cocoa. Backend failures are reported through the
+    /// configured GLFW error callback; [`get_cursor_mode`](Self::get_cursor_mode) returns GLFW's
+    /// stored mode.
+    #[inline]
+    pub fn set_cursor_mode(&mut self, mode: CursorMode) {
+        self.inner.set_cursor_mode(mode);
+    }
+
+    /// Returns whether raw mouse motion is configured for this window.
+    ///
+    /// A `true` value records the option; raw deltas are delivered only while the cursor mode is
+    /// [`CursorMode::Disabled`].
+    #[inline]
+    #[must_use]
+    pub fn is_raw_mouse_motion_enabled(&self) -> bool {
+        self.inner.is_raw_mouse_motion_enabled()
+    }
+
+    /// Enables or disables raw, unscaled and unaccelerated mouse motion for this window.
+    ///
+    /// The option can be configured independently of the cursor mode, but only affects cursor
+    /// motion while [`CursorMode::Disabled`] is effective.
+    ///
+    /// # Errors
+    /// Returns [`GlfwUnsupportedPlatform`](crate::VMNLErrorKind::GlfwUnsupportedPlatform) when
+    /// enabling raw motion on a system where
+    /// [`Context::is_raw_mouse_motion_supported`](crate::Context::is_raw_mouse_motion_supported)
+    /// is `false`. Disabling remains a successful no-op on such systems.
+    #[inline]
+    pub fn set_raw_mouse_motion(&mut self, enabled: bool) -> VMNLResult<()> {
+        self.inner.set_raw_mouse_motion(enabled)
+    }
+}

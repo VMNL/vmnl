@@ -10,7 +10,11 @@ Owns a native GLFW window plus the Vulkan surface, swapchain, render pass, synch
 
 ## Public API
 
-Constructors are `new(&Context)` and `builder()`. The remaining methods are partitioned by responsibility: [configuration](configuration.md), [lifecycle](lifecycle.md), [polling](polling.md), [event processing and timers](events/event_processing_and_timers.md), and [rendering](rendering/README.md).
+Constructors are `new(&Context)` and `builder()`. The remaining methods are partitioned by
+responsibility: [configuration](configuration.md), [cursor controls](cursor.md),
+[lifecycle](lifecycle.md), [polling](polling.md),
+[event processing and timers](events/event_processing_and_timers.md), and
+[rendering](rendering/README.md).
 
 ## Construction, defaults, and validation
 
@@ -18,7 +22,10 @@ Constructors are `new(&Context)` and `builder()`. The remaining methods are part
 
 ## Units, coordinates, and valid ranges
 
-Logical window and framebuffer sizes are pixels but may differ under content scaling. Positions are virtual-screen coordinates; timing methods use seconds or platform timer ticks.
+Logical window and framebuffer sizes are pixels but may differ under content scaling. Window
+positions are virtual-screen coordinates. Cursor positions are `f64` screen coordinates relative
+to the content-area upper-left and are distinct from framebuffer pixels. Timing methods use
+seconds or platform timer ticks.
 
 ## Ownership, lifecycle, and threading
 
