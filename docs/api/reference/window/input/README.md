@@ -11,6 +11,7 @@
 | [`Modifiers`](modifiers.md) | Modifier flags attached to mouse-button events |
 | [`MouseButton`](mouse_button.md) | Supported mouse-button identifier |
 | [`MouseState`](mouse_state.md) | Current and transition button queries |
+| [Window input modes](modes.md) | Sticky mouse buttons and lock-key modifier reporting |
 | [`StandardCursor`](standard_cursor.md) | System cursor shape identifier |
 | [`StandardCursorBuilder`](standard_cursor_builder.md) | Deferred standard-cursor allocation |
 

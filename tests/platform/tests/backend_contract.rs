@@ -51,6 +51,7 @@ fn selected_backend_contract() {
         .expect("VMNL_PLATFORM_TEST_BACKEND must name wayland or x11");
     let operations: &[&str] = match backend.as_str() {
         "wayland" => &[
+            "mouse-input-modes",
             "set-position",
             "get-position",
             "set-opacity",
@@ -58,6 +59,7 @@ fn selected_backend_contract() {
             "iconify",
         ],
         "x11" => &[
+            "mouse-input-modes",
             "set-position",
             "get-position",
             "set-opacity",
@@ -66,7 +68,13 @@ fn selected_backend_contract() {
             "maximize",
             "focus",
         ],
-        "win32" | "cocoa" => &["create", "set-position", "get-position", "focus"],
+        "win32" | "cocoa" => &[
+            "create",
+            "mouse-input-modes",
+            "set-position",
+            "get-position",
+            "focus",
+        ],
         value => panic!("unsupported qualified backend: {value}"),
     };
 
@@ -76,6 +84,26 @@ fn selected_backend_contract() {
         assert_eq!(record["backend_actual"], backend);
         assert_eq!(record["operation"], *operation);
         assert_eq!(record["result"], "ok");
+        if *operation == "mouse-input-modes" {
+            assert_eq!(
+                record["value"],
+                serde_json::json!({
+                    "defaults": {
+                        "sticky_mouse_buttons": false,
+                        "lock_key_modifier_reporting": false,
+                    },
+                    "enabled": {
+                        "sticky_mouse_buttons": true,
+                        "lock_key_modifier_reporting": true,
+                    },
+                    "disabled_after_reset": {
+                        "sticky_mouse_buttons": true,
+                        "lock_key_modifier_reporting": true,
+                    },
+                })
+            );
+            assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+        }
         if backend == "wayland" && matches!(*operation, "set-position" | "set-opacity") {
             let callbacks = record["callbacks"]
                 .as_array()

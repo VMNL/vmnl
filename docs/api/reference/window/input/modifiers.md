@@ -35,6 +35,7 @@ No allocation, synchronization, or GPU work.
 ## Platform, Vulkan, and display constraints
 
 Which modifiers GLFW reports can depend on platform focus, lock-key support, and keyboard state.
+Caps Lock and Num Lock bits require `Window::set_lock_key_modifier_reporting(true)`.
 
 ## Example and related types
 
@@ -47,4 +48,5 @@ assert!(modifiers.contains(Modifiers::SHIFT));
 assert!(!modifiers.contains(Modifiers::ALT));
 ```
 
-Related: [`EventKind`](../events/event_kind.md) and [`MouseButton`](mouse_button.md).
+Related: [`EventKind`](../events/event_kind.md), [`MouseButton`](mouse_button.md), and
+[window input modes](modes.md).

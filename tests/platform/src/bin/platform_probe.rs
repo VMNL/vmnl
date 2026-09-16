@@ -138,6 +138,28 @@ fn main() -> ExitCode {
                 .collect();
             json!(values)
         }
+        "mouse-input-modes" => {
+            let defaults = json!({
+                "sticky_mouse_buttons": window.has_sticky_mouse_buttons(),
+                "lock_key_modifier_reporting": window.does_store_lock_key_mods(),
+            });
+            window.set_sticky_mouse_buttons(true);
+            window.set_store_lock_key_mods(true);
+            let enabled = json!({
+                "sticky_mouse_buttons": window.has_sticky_mouse_buttons(),
+                "lock_key_modifier_reporting": window.does_store_lock_key_mods(),
+            });
+            window.set_sticky_mouse_buttons(false);
+            window.set_store_lock_key_mods(false);
+            json!({
+                "defaults": defaults,
+                "enabled": enabled,
+                "disabled_after_reset": {
+                    "sticky_mouse_buttons": !window.has_sticky_mouse_buttons(),
+                    "lock_key_modifier_reporting": !window.does_store_lock_key_mods(),
+                },
+            })
+        }
         "raw-mouse-motion" => {
             let supported = glfw.supports_raw_motion();
             if supported {

@@ -40,6 +40,22 @@ impl VMNLWindow {
         self.handle.context.set_cursor_mode(mode.to_glfw());
     }
 
+    pub(crate) fn is_sticky_mouse_buttons_enabled(&self) -> bool {
+        self.handle.context.has_sticky_mouse_buttons()
+    }
+
+    pub(crate) fn set_sticky_mouse_buttons(&mut self, enabled: bool) {
+        self.handle.context.set_sticky_mouse_buttons(enabled);
+    }
+
+    pub(crate) fn is_lock_key_modifier_reporting_enabled(&self) -> bool {
+        self.handle.context.does_store_lock_key_mods()
+    }
+
+    pub(crate) fn set_lock_key_modifier_reporting(&mut self, enabled: bool) {
+        self.handle.context.set_store_lock_key_mods(enabled);
+    }
+
     pub(crate) fn is_raw_mouse_motion_enabled(&self) -> bool {
         self.handle.context.uses_raw_mouse_motion()
     }

@@ -88,6 +88,47 @@ impl Window {
         self.inner.set_cursor_mode(mode);
     }
 
+    /// Returns whether GLFW sticky mouse buttons are enabled for this window.
+    ///
+    /// This mode affects consuming `glfwGetMouseButton` reads. VMNL does not use those reads for
+    /// [`MouseState`](crate::MouseState), so querying VMNL snapshots never consumes a sticky
+    /// press or changes batch-transition semantics.
+    #[inline]
+    #[must_use]
+    pub fn is_sticky_mouse_buttons_enabled(&self) -> bool {
+        self.inner.is_sticky_mouse_buttons_enabled()
+    }
+
+    /// Enables or disables GLFW sticky mouse buttons for this window.
+    ///
+    /// Enabling the mode latches a native press until the next consuming `glfwGetMouseButton`
+    /// read. VMNL's event-derived [`MouseState`](crate::MouseState) remains non-consuming and
+    /// continues to report final state plus every transition in the current event batch.
+    #[inline]
+    pub fn set_sticky_mouse_buttons(&mut self, enabled: bool) {
+        self.inner.set_sticky_mouse_buttons(enabled);
+    }
+
+    /// Returns whether lock-key modifier reporting is enabled for this window.
+    ///
+    /// When enabled, mouse-button events can include
+    /// [`Modifiers::CAPS_LOCK`](crate::Modifiers::CAPS_LOCK) and
+    /// [`Modifiers::NUM_LOCK`](crate::Modifiers::NUM_LOCK).
+    #[inline]
+    #[must_use]
+    pub fn is_lock_key_modifier_reporting_enabled(&self) -> bool {
+        self.inner.is_lock_key_modifier_reporting_enabled()
+    }
+
+    /// Enables or disables lock-key modifier reporting for this window.
+    ///
+    /// Enabling this mode asks GLFW to include Caps Lock and Num Lock state in modifier payloads
+    /// delivered with input callbacks. VMNL preserves those bits in mouse-button events.
+    #[inline]
+    pub fn set_lock_key_modifier_reporting(&mut self, enabled: bool) {
+        self.inner.set_lock_key_modifier_reporting(enabled);
+    }
+
     /// Returns whether raw mouse motion is configured for this window.
     ///
     /// A `true` value records the option; raw deltas are delivered only while the cursor mode is

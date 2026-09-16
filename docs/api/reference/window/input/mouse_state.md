@@ -24,6 +24,9 @@ Not applicable; positions and scrolling are `Event` payloads.
 
 Window-owned snapshots update during `Window::poll_events`. `is_down` reports the final state; `is_pressed` and `is_released` independently retain every transition observed in that batch, so both can be true after a short click. Queries do not consume transitions. `Window::clear_input_transitions` clears only press/release flags.
 
+`Window::set_sticky_mouse_buttons` configures GLFW's consuming native button reads. VMNL snapshots
+do not perform those reads, so enabling the mode does not change `MouseState` semantics.
+
 ## Errors, panics, and failure conditions
 
 Queries are infallible. State remains unchanged until pending events are processed by `Window::poll_events`.
@@ -46,4 +49,5 @@ let state = MouseState::new();
 assert!(!state.is_down(MouseButton::Left));
 ```
 
-Related: [`MouseButton`](mouse_button.md), [`Input`](input.md), and [`Event`](../events/event.md).
+Related: [`MouseButton`](mouse_button.md), [`Input`](input.md), [window input modes](modes.md), and
+[`Event`](../events/event.md).

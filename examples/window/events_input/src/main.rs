@@ -54,6 +54,8 @@ fn configure_runtime_window(window: &mut Window) -> VMNLResult<()> {
     window.set_content_scale_polling(true);
     window.set_drag_and_drop_polling(true);
     window.set_refresh_polling(true);
+    window.set_sticky_mouse_buttons(true);
+    window.set_lock_key_modifier_reporting(true);
 
     Ok(())
 }
@@ -217,6 +219,11 @@ fn main() -> VMNLResult<()> {
         window.get_cursor_mode(),
         raw_mouse_motion_supported,
         window.is_raw_mouse_motion_enabled()
+    );
+    println!(
+        "input modes: sticky_mouse_buttons={} lock_key_modifier_reporting={}",
+        window.is_sticky_mouse_buttons_enabled(),
+        window.is_lock_key_modifier_reporting_enabled()
     );
     println!("keys: Escape close, F focus, I iconify, M maximize, R restore, H hide/show, C clear aspect");
     println!("cursor keys: N normal, V hidden, D disabled, G captured, P center");

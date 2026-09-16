@@ -14,6 +14,8 @@ use vmnl::{Context, CursorMode, Key, MouseButton, Window};
 fn main() -> vmnl::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
+    window.set_sticky_mouse_buttons(true);
+    window.set_lock_key_modifier_reporting(true);
     window.set_cursor_mode(CursorMode::Disabled);
     if context.is_raw_mouse_motion_supported() {
         window.set_raw_mouse_motion(true)?;
@@ -30,3 +32,6 @@ The complete usage remains in [`events_input`](../../../examples/window/events_i
 See [`KeyboardState`](../reference/window/input/keyboard_state.md),
 [`MouseState`](../reference/window/input/mouse_state.md), and
 [cursor controls](../reference/window/cursor.md).
+
+[Window input modes](../reference/window/input/modes.md) documents why sticky native reads do not
+change VMNL snapshot transitions.

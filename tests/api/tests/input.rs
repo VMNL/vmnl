@@ -59,6 +59,10 @@ fn cursor_controls_are_exposed_through_public_facade() {
     let _: fn(&Window) -> bool = Window::is_cursor_hovered;
     let _: fn(&Window) -> CursorMode = Window::get_cursor_mode;
     let _: fn(&mut Window, CursorMode) = Window::set_cursor_mode;
+    let _: fn(&Window) -> bool = Window::is_sticky_mouse_buttons_enabled;
+    let _: fn(&mut Window, bool) = Window::set_sticky_mouse_buttons;
+    let _: fn(&Window) -> bool = Window::is_lock_key_modifier_reporting_enabled;
+    let _: fn(&mut Window, bool) = Window::set_lock_key_modifier_reporting;
     let _: fn(&Window) -> bool = Window::is_raw_mouse_motion_enabled;
     let _: fn(&mut Window, bool) -> VMNLResult<()> = Window::set_raw_mouse_motion;
 
