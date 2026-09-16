@@ -13,15 +13,17 @@ resource to be assigned to several windows.
 
 | Member | Contract |
 |---|---|
-| `Cursor::standard` | Create one native [`StandardCursor`](standard_cursor.md). |
-| `Cursor::from_rgba8` | Create a custom cursor from validated packed RGBA8 bytes. |
+| `Cursor::standard` | Configure a [`StandardCursorBuilder`](standard_cursor_builder.md). |
+| `Cursor::rgba8` | Configure a custom [`CursorBuilder`](cursor_builder.md) from packed RGBA8 bytes. |
 | `Clone`, `Eq`, `PartialEq`, `Debug` | Share a handle, compare resource identity, hide backend details. |
 
 ## Construction, defaults, and validation
 
 There is no default cursor resource; `Window::cursor() == None` selects the backend default.
-`from_rgba8` requires positive `c_int`-representable dimensions, exactly `width * height * 4`
-bytes, and a hotspot strictly inside the image. VMNL checks multiplication overflow and every
+Cursor factories only configure builders. Their `build(&context)` method creates the native
+resource. `CursorBuilder` requires positive `c_int`-representable dimensions, exactly
+`width * height * 4` bytes, and a hotspot strictly inside the image. The hotspot defaults to
+`(0, 0)` and its diagnostic marker is disabled. VMNL checks multiplication overflow and every
 parameter before FFI.
 
 ## Units, coordinates, and valid ranges
@@ -39,16 +41,18 @@ is no explicit destroy method. A retained GLFW token keeps the library initializ
 
 ## Errors, panics, and failure conditions
 
-Invalid image inputs return `InvalidState`. An unavailable standard shape returns
+Invalid custom-builder inputs return `InvalidState` from `build`. An unavailable standard shape returns
 `GlfwUnsupportedPlatform`. Other native failures use the corresponding VMNL GLFW category.
 Destruction errors are reported only through the configured GLFW callback because destruction runs
 during `Drop`. Valid inputs do not panic.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-Each constructor performs one native allocation. Custom pixels are copied synchronously by GLFW,
-so the source slice can be reused or dropped after return. `Clone` increments an `Rc` count and does
-not duplicate the native cursor. There is no GPU allocation, transfer, or synchronization.
+Factories and builder setters allocate no native resource. Each `build` performs one native
+allocation. Custom pixels are borrowed by `CursorBuilder` and copied synchronously by GLFW during
+`build`, so the source slice can be reused or dropped afterward. An enabled hotspot marker adds one
+temporary full-image allocation without mutating the source. `Clone` increments an `Rc` count and
+does not duplicate the native cursor. There is no GPU allocation, transfer, or synchronization.
 
 ## Platform, Vulkan, and display constraints
 
@@ -65,7 +69,7 @@ use vmnl::{Context, Cursor, StandardCursor, Window};
 # fn main() -> vmnl::VMNLResult<()> {
 let context = Context::new()?;
 let mut window = Window::new(&context)?;
-let cursor = Cursor::standard(&context, StandardCursor::PointingHand)?;
+let cursor = Cursor::standard(StandardCursor::PointingHand).build(&context)?;
 window.set_cursor(Some(&cursor))?;
 assert_eq!(window.cursor(), Some(&cursor));
 window.set_cursor(None)?;
@@ -73,5 +77,6 @@ window.set_cursor(None)?;
 # }
 ```
 
-Related: [`StandardCursor`](standard_cursor.md), [cursor controls](../cursor.md), and
-[`Window`](../window.md).
+Related: [`CursorBuilder`](cursor_builder.md),
+[`StandardCursorBuilder`](standard_cursor_builder.md), [`StandardCursor`](standard_cursor.md),
+[cursor controls](../cursor.md), and [`Window`](../window.md).

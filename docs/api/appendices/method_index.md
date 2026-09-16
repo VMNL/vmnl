@@ -9,8 +9,11 @@
 | `vmnl::Cursor` | `clone` | [Cursor](../reference/window/input/cursor.md) | [`clone`](../../../target/doc/vmnl/struct.Cursor.html#method.clone) |
 | `vmnl::Cursor` | `eq` | [Cursor](../reference/window/input/cursor.md) | [`eq`](../../../target/doc/vmnl/struct.Cursor.html#method.eq) |
 | `vmnl::Cursor` | `fmt` | [Cursor](../reference/window/input/cursor.md) | [`fmt`](../../../target/doc/vmnl/struct.Cursor.html#method.fmt) |
-| `vmnl::Cursor` | `from_rgba8` | [Cursor](../reference/window/input/cursor.md) | [`from_rgba8`](../../../target/doc/vmnl/struct.Cursor.html#method.from_rgba8) |
+| `vmnl::Cursor` | `rgba8` | [Cursor](../reference/window/input/cursor.md) | [`rgba8`](../../../target/doc/vmnl/struct.Cursor.html#method.rgba8) |
 | `vmnl::Cursor` | `standard` | [Cursor](../reference/window/input/cursor.md) | [`standard`](../../../target/doc/vmnl/struct.Cursor.html#method.standard) |
+| `vmnl::CursorBuilder` | `build` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [`build`](../../../target/doc/vmnl/struct.CursorBuilder.html#method.build) |
+| `vmnl::CursorBuilder` | `hotspot` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [`hotspot`](../../../target/doc/vmnl/struct.CursorBuilder.html#method.hotspot) |
+| `vmnl::CursorBuilder` | `hotspot_marker` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [`hotspot_marker`](../../../target/doc/vmnl/struct.CursorBuilder.html#method.hotspot_marker) |
 | `vmnl::CursorMode` | `clone` | [CursorMode](../reference/window/input/cursor_mode.md) | [`clone`](../../../target/doc/vmnl/enum.CursorMode.html#method.clone) |
 | `vmnl::CursorMode` | `default` | [CursorMode](../reference/window/input/cursor_mode.md) | [`default`](../../../target/doc/vmnl/enum.CursorMode.html#method.default) |
 | `vmnl::CursorMode` | `eq` | [CursorMode](../reference/window/input/cursor_mode.md) | [`eq`](../../../target/doc/vmnl/enum.CursorMode.html#method.eq) |
@@ -103,6 +106,7 @@
 | `vmnl::StandardCursor` | `eq` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`eq`](../../../target/doc/vmnl/enum.StandardCursor.html#method.eq) |
 | `vmnl::StandardCursor` | `fmt` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`fmt`](../../../target/doc/vmnl/enum.StandardCursor.html#method.fmt) |
 | `vmnl::StandardCursor` | `hash` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`hash`](../../../target/doc/vmnl/enum.StandardCursor.html#method.hash) |
+| `vmnl::StandardCursorBuilder` | `build` | [StandardCursorBuilder](../reference/window/input/standard_cursor_builder.md) | [`build`](../../../target/doc/vmnl/struct.StandardCursorBuilder.html#method.build) |
 | `vmnl::VMNLError` | `fmt` | [VMNLError](../reference/errors/vmnl_error.md) | [`fmt`](../../../target/doc/vmnl/struct.VMNLError.html#method.fmt) |
 | `vmnl::VMNLError` | `kind` | [VMNLError](../reference/errors/vmnl_error.md) | [`kind`](../../../target/doc/vmnl/struct.VMNLError.html#method.kind) |
 | `vmnl::VMNLError` | `location` | [VMNLError](../reference/errors/vmnl_error.md) | [`location`](../../../target/doc/vmnl/struct.VMNLError.html#method.location) |

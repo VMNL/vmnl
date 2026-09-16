@@ -4,7 +4,7 @@
 //! Shareable native cursor resources.
 
 use crate::glfw_backend::NativeCursor;
-use crate::{glfw_backend, Context, VMNLError, VMNLErrorKind, VMNLResult};
+use crate::{common::Rgba, glfw_backend, Context, VMNLError, VMNLErrorKind, VMNLResult};
 use std::fmt;
 use std::os::raw::c_int;
 use std::rc::Rc;
@@ -57,61 +57,147 @@ pub struct Cursor {
 }
 
 impl Cursor {
-    /// Creates one native cursor from a standard system shape.
+    /// Configures a cursor using one standard system shape.
     ///
-    /// This call performs a native allocation. Exact appearance and size come from the active
-    /// system cursor theme.
+    /// Exact appearance and size come from the active system cursor theme. No native resource is
+    /// created until [`StandardCursorBuilder::build`] is called.
+    pub const fn standard(shape: StandardCursor) -> StandardCursorBuilder {
+        StandardCursorBuilder { shape }
+    }
+
+    /// Configures a custom cursor from packed, non-premultiplied RGBA8 pixels.
+    ///
+    /// Pixels are arranged as sequential rows from the upper-left corner, with four bytes per
+    /// pixel in red, green, blue, alpha order. The builder borrows the pixels until
+    /// [`CursorBuilder::build`] copies them through GLFW. The hotspot defaults to `(0, 0)`.
+    pub const fn rgba8(width: u32, height: u32, pixels: &[u8]) -> CursorBuilder<'_> {
+        CursorBuilder {
+            width,
+            height,
+            pixels,
+            hotspot: (0, 0),
+            hotspot_marker: None,
+        }
+    }
+
+    fn from_native(context: &Context, native: NativeCursor) -> Self {
+        Self {
+            resource: Rc::new(CursorResource {
+                native,
+                _glfw: context.inner.glfw.clone(),
+            }),
+        }
+    }
+
+    pub(crate) fn native(&self) -> &NativeCursor {
+        &self.resource.native
+    }
+}
+
+/// Builder for a cursor supplied by the active system cursor theme.
+#[must_use = "a standard cursor is not created until build is called"]
+pub struct StandardCursorBuilder {
+    shape: StandardCursor,
+}
+
+impl StandardCursorBuilder {
+    /// Creates one native cursor from the configured standard shape.
+    ///
+    /// This call performs one native allocation.
     ///
     /// # Errors
     /// Returns [`GlfwUnsupportedPlatform`](VMNLErrorKind::GlfwUnsupportedPlatform) when the active
     /// cursor theme does not provide the requested shape. Other creation failures retain their
     /// corresponding VMNL GLFW error category.
-    pub fn standard(context: &Context, shape: StandardCursor) -> VMNLResult<Self> {
-        let glfw = context.inner.glfw.clone();
-        let native = glfw_backend::create_standard_cursor(shape)?;
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{Context, Cursor, StandardCursor};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// let context = Context::new()?;
+    /// let cursor = Cursor::standard(StandardCursor::PointingHand).build(&context)?;
+    /// # let _ = cursor;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn build(self, context: &Context) -> VMNLResult<Cursor> {
+        let native = glfw_backend::create_standard_cursor(self.shape)?;
+        Ok(Cursor::from_native(context, native))
+    }
+}
 
-        Ok(Self {
-            resource: Rc::new(CursorResource {
-                native,
-                _glfw: glfw,
-            }),
-        })
+/// Builder for a custom cursor backed by borrowed packed RGBA8 pixels.
+///
+/// The pixel slice only needs to remain valid until [`build`](Self::build) returns because GLFW
+/// copies it synchronously. The hotspot defaults to the upper-left pixel `(0, 0)` and its optional
+/// visual marker is disabled by default.
+#[must_use = "a custom cursor is not created until build is called"]
+pub struct CursorBuilder<'pixels> {
+    width: u32,
+    height: u32,
+    pixels: &'pixels [u8],
+    hotspot: (u32, u32),
+    hotspot_marker: Option<Rgba>,
+}
+
+impl CursorBuilder<'_> {
+    /// Sets the active hotspot in image pixels relative to the upper-left corner.
+    pub const fn hotspot(mut self, x: u32, y: u32) -> Self {
+        self.hotspot = (x, y);
+        self
     }
 
-    /// Creates one native cursor from packed, non-premultiplied RGBA8 pixels.
+    /// Overwrites the final hotspot pixel with a diagnostic color during [`build`](Self::build).
     ///
-    /// Pixels are arranged as sequential rows from the upper-left corner, with four bytes per
-    /// pixel in red, green, blue, alpha order. GLFW copies the pixel slice before this call
-    /// returns. The hotspot uses pixel coordinates relative to the upper-left corner.
+    /// The marker is applied to an internal temporary copy and never mutates the borrowed source
+    /// slice. The caller controls visibility by choosing a color that contrasts with the cursor;
+    /// VMNL does not alter the supplied RGBA components. Enabling the marker performs one temporary
+    /// `width * height * 4` byte allocation during `build`.
+    pub fn hotspot_marker<C>(mut self, color: C) -> Self
+    where
+        C: Into<Rgba>,
+    {
+        self.hotspot_marker = Some(color.into());
+        self
+    }
+
+    /// Creates one native cursor from the configured RGBA8 image and hotspot.
     ///
-    /// This call validates the image before FFI and performs one native cursor allocation.
+    /// This call validates the image before FFI, synchronously copies the pixels through GLFW, and
+    /// performs one native allocation. When a hotspot marker is configured, it first copies the
+    /// complete source image into one temporary VMNL buffer and overwrites exactly the final
+    /// hotspot pixel.
     ///
     /// # Errors
     /// Returns [`InvalidState`](VMNLErrorKind::InvalidState) when a dimension is zero or exceeds
     /// GLFW's signed integer range, when `pixels.len()` is not exactly `width * height * 4`, or
     /// when the hotspot is outside the image. Native creation failures retain their VMNL GLFW
     /// error category.
-    pub fn from_rgba8(
-        context: &Context,
-        width: u32,
-        height: u32,
-        pixels: &[u8],
-        hotspot: (u32, u32),
-    ) -> VMNLResult<Self> {
-        let image = validate_rgba8(width, height, pixels.len(), hotspot)?;
-        let glfw = context.inner.glfw.clone();
-        let native = glfw_backend::create_cursor(image, pixels)?;
-
-        Ok(Self {
-            resource: Rc::new(CursorResource {
-                native,
-                _glfw: glfw,
-            }),
-        })
-    }
-
-    pub(crate) fn native(&self) -> &NativeCursor {
-        &self.resource.native
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::{common::Rgba, Context, Cursor};
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// let context = Context::new()?;
+    /// let pixels = [255_u8; 4 * 4 * 4];
+    /// let cursor = Cursor::rgba8(4, 4, &pixels)
+    ///     .hotspot(2, 2)
+    ///     .hotspot_marker(Rgba::MAGENTA)
+    ///     .build(&context)?;
+    /// # let _ = cursor;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn build(self, context: &Context) -> VMNLResult<Cursor> {
+        let image = validate_rgba8(self.width, self.height, self.pixels.len(), self.hotspot)?;
+        let native = if let Some(color) = self.hotspot_marker {
+            let marked_pixels =
+                pixels_with_hotspot_marker(self.width, self.pixels, self.hotspot, color)?;
+            glfw_backend::create_cursor(image, &marked_pixels)?
+        } else {
+            glfw_backend::create_cursor(image, self.pixels)?
+        };
+        Ok(Cursor::from_native(context, native))
     }
 }
 
@@ -200,10 +286,102 @@ fn validate_rgba8(
     })
 }
 
+fn pixels_with_hotspot_marker(
+    width: u32,
+    pixels: &[u8],
+    hotspot: (u32, u32),
+    color: Rgba,
+) -> VMNLResult<Vec<u8>> {
+    let byte_offset = usize::try_from(width)
+        .ok()
+        .and_then(|width| {
+            usize::try_from(hotspot.1)
+                .ok()
+                .and_then(|y| y.checked_mul(width))
+        })
+        .and_then(|row| {
+            usize::try_from(hotspot.0)
+                .ok()
+                .and_then(|x| row.checked_add(x))
+        })
+        .and_then(|pixel| pixel.checked_mul(4))
+        .ok_or_else(|| {
+            VMNLError::new(VMNLErrorKind::InvalidState(
+                "cursor hotspot byte offset overflows usize".into(),
+            ))
+        })?;
+    let marker_end = byte_offset.checked_add(4).ok_or_else(|| {
+        VMNLError::new(VMNLErrorKind::InvalidState(
+            "cursor hotspot byte range overflows usize".into(),
+        ))
+    })?;
+    let mut marked_pixels = pixels.to_vec();
+    let marker = marked_pixels
+        .get_mut(byte_offset..marker_end)
+        .ok_or_else(|| {
+            VMNLError::new(VMNLErrorKind::InvalidState(
+                "cursor hotspot marker falls outside the image".into(),
+            ))
+        })?;
+    marker.copy_from_slice(&[color.r, color.g, color.b, color.a]);
+    Ok(marked_pixels)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::validate_rgba8;
-    use crate::VMNLErrorKind;
+    use super::{pixels_with_hotspot_marker, validate_rgba8, Cursor, StandardCursor};
+    use crate::{common::Rgba, VMNLErrorKind};
+
+    #[test]
+    fn standard_builder_preserves_shape() {
+        let builder = Cursor::standard(StandardCursor::PointingHand);
+
+        assert_eq!(builder.shape, StandardCursor::PointingHand);
+    }
+
+    #[test]
+    fn rgba8_builder_uses_upper_left_hotspot_by_default() {
+        let pixels = [255_u8; 16];
+        let builder = Cursor::rgba8(2, 2, &pixels);
+
+        assert_eq!(builder.width, 2);
+        assert_eq!(builder.height, 2);
+        assert_eq!(builder.pixels, pixels);
+        assert_eq!(builder.hotspot, (0, 0));
+        assert_eq!(builder.hotspot_marker, None);
+    }
+
+    #[test]
+    fn rgba8_builder_configures_hotspot() {
+        let pixels = [255_u8; 16];
+        let builder = Cursor::rgba8(2, 2, &pixels).hotspot(1, 1);
+
+        assert_eq!(builder.hotspot, (1, 1));
+    }
+
+    #[test]
+    fn rgba8_builder_configures_hotspot_marker_from_public_color_input() {
+        let pixels = [0_u8; 16];
+        let builder = Cursor::rgba8(2, 2, &pixels)
+            .hotspot_marker([1, 2, 3])
+            .hotspot(1, 1);
+
+        assert_eq!(builder.hotspot, (1, 1));
+        assert_eq!(builder.hotspot_marker, Some(Rgba::rgba(1, 2, 3, 255)));
+    }
+
+    #[test]
+    fn hotspot_marker_overwrites_only_the_final_hotspot_pixel() -> crate::VMNLResult<()> {
+        let pixels = [0_u8; 16];
+
+        let marked = pixels_with_hotspot_marker(2, &pixels, (1, 0), Rgba::rgba(10, 20, 30, 40))?;
+
+        assert_eq!(pixels, [0_u8; 16]);
+        assert_eq!(&marked[0..4], &[0, 0, 0, 0]);
+        assert_eq!(&marked[4..8], &[10, 20, 30, 40]);
+        assert_eq!(&marked[8..16], &[0_u8; 8]);
+        Ok(())
+    }
 
     #[test]
     fn rgba8_validation_accepts_exact_data_and_in_bounds_hotspot() {

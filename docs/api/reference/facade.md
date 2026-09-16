@@ -11,10 +11,10 @@ The facade is the supported dependency boundary for VMNL clients. It hides the i
 ## Public API
 
 Root re-exports: `Context`, `Window`, `WindowBuilder`, `FrameRenderer`, `RenderMode`, `PresentMode`,
-`Event`, `EventKind`, `Cursor`, `CursorMode`, `StandardCursor`, `Input`, `Key`, `KeyboardState`,
-`Modifiers`, `MouseButton`, `MouseState`, `Monitors`, `MonitorInfo`, `VideoMode`, `ShaderSource`,
-`VMNLError`, `VMNLErrorKind`, `VMNLErrorLocation`, and `VMNLResult`. Modules: `common`, `d2`, `d3`,
-and `raw`.
+`Event`, `EventKind`, `Cursor`, `CursorBuilder`, `CursorMode`, `StandardCursor`,
+`StandardCursorBuilder`, `Input`, `Key`, `KeyboardState`, `Modifiers`, `MouseButton`, `MouseState`,
+`Monitors`, `MonitorInfo`, `VideoMode`, `ShaderSource`, `VMNLError`, `VMNLErrorKind`,
+`VMNLErrorLocation`, and `VMNLResult`. Modules: `common`, `d2`, `d3`, and `raw`.
 
 ## Construction, defaults, and validation
 

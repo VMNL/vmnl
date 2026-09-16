@@ -21,7 +21,7 @@ pub use common::ShaderSource;
 pub use exception::{VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult};
 pub use vmnl_instance::Context;
 pub use window::{
-    Cursor, CursorMode, Event, EventKind, FrameRenderer, Input, Key, KeyboardState, Modifiers,
-    MonitorInfo, Monitors, MouseButton, MouseState, PresentMode, RenderMode, StandardCursor,
-    VideoMode, Window, WindowBuilder,
+    Cursor, CursorBuilder, CursorMode, Event, EventKind, FrameRenderer, Input, Key, KeyboardState,
+    Modifiers, MonitorInfo, Monitors, MouseButton, MouseState, PresentMode, RenderMode,
+    StandardCursor, StandardCursorBuilder, VideoMode, Window, WindowBuilder,
 };

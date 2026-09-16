@@ -28,8 +28,9 @@ Derives `Clone`, `Copy`, `Debug`, `Eq`, `Hash`, and `PartialEq`.
 
 ## Construction, defaults, and validation
 
-There is no default variant. Pass a variant to `Cursor::standard`; exact image and size come from
-the current system cursor theme.
+There is no default variant. Pass a variant to `Cursor::standard`, then call
+`StandardCursorBuilder::build(&context)`; exact image and size come from the current system cursor
+theme.
 
 ## Units, coordinates, and valid ranges
 
@@ -42,13 +43,13 @@ resource and remains confined to the GLFW thread.
 
 ## Errors, panics, and failure conditions
 
-`Cursor::standard` returns `GlfwUnsupportedPlatform` if the requested system shape is unavailable.
-It does not panic for any variant.
+`StandardCursorBuilder::build` returns `GlfwUnsupportedPlatform` if the requested system shape is
+unavailable. Configuration and building do not panic for any variant.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-The enum allocates nothing. Creating the corresponding `Cursor` performs one native allocation and
-no GPU work.
+The enum and builder allocate nothing. Building the corresponding `Cursor` performs one native
+allocation and no GPU work.
 
 ## Platform, Vulkan, and display constraints
 
@@ -64,10 +65,11 @@ use vmnl::{Context, Cursor, StandardCursor};
 
 # fn main() -> vmnl::VMNLResult<()> {
 let context = Context::new()?;
-let text_cursor = Cursor::standard(&context, StandardCursor::IBeam)?;
+let text_cursor = Cursor::standard(StandardCursor::IBeam).build(&context)?;
 # let _ = text_cursor;
 # Ok(())
 # }
 ```
 
-Related: [`Cursor`](cursor.md) and [cursor controls](../cursor.md).
+Related: [`Cursor`](cursor.md), [`StandardCursorBuilder`](standard_cursor_builder.md), and
+[cursor controls](../cursor.md).

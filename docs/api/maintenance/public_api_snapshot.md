@@ -1154,8 +1154,8 @@ impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::Context
 impl !core::panic::unwind_safe::UnwindSafe for vmnl::Context
 pub struct vmnl::Cursor
 impl vmnl::Cursor
-pub fn vmnl::Cursor::from_rgba8(&vmnl::Context, u32, u32, &[u8], (u32, u32)) -> vmnl::VMNLResult<Self>
-pub fn vmnl::Cursor::standard(&vmnl::Context, vmnl::StandardCursor) -> vmnl::VMNLResult<Self>
+pub const fn vmnl::Cursor::rgba8(u32, u32, &[u8]) -> vmnl::CursorBuilder<'_>
+pub const fn vmnl::Cursor::standard(vmnl::StandardCursor) -> vmnl::StandardCursorBuilder
 impl core::clone::Clone for vmnl::Cursor
 pub fn vmnl::Cursor::clone(&self) -> vmnl::Cursor
 impl core::cmp::Eq for vmnl::Cursor
@@ -1170,6 +1170,18 @@ impl core::marker::Unpin for vmnl::Cursor
 impl core::marker::UnsafeUnpin for vmnl::Cursor
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::Cursor
 impl core::panic::unwind_safe::UnwindSafe for vmnl::Cursor
+pub struct vmnl::CursorBuilder<'pixels>
+impl vmnl::CursorBuilder<'_>
+pub fn vmnl::CursorBuilder<'_>::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::Cursor>
+pub const fn vmnl::CursorBuilder<'_>::hotspot(self, u32, u32) -> Self
+pub fn vmnl::CursorBuilder<'_>::hotspot_marker<C>(self, C) -> Self where C: core::convert::Into<vmnl::common::Rgba>
+impl<'pixels> core::marker::Freeze for vmnl::CursorBuilder<'pixels>
+impl<'pixels> core::marker::Send for vmnl::CursorBuilder<'pixels>
+impl<'pixels> core::marker::Sync for vmnl::CursorBuilder<'pixels>
+impl<'pixels> core::marker::Unpin for vmnl::CursorBuilder<'pixels>
+impl<'pixels> core::marker::UnsafeUnpin for vmnl::CursorBuilder<'pixels>
+impl<'pixels> core::panic::unwind_safe::RefUnwindSafe for vmnl::CursorBuilder<'pixels>
+impl<'pixels> core::panic::unwind_safe::UnwindSafe for vmnl::CursorBuilder<'pixels>
 pub struct vmnl::Event
 impl vmnl::Event
 pub fn vmnl::Event::into_kind(self) -> vmnl::EventKind
@@ -1343,6 +1355,16 @@ impl core::marker::Unpin for vmnl::MouseState
 impl core::marker::UnsafeUnpin for vmnl::MouseState
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::MouseState
 impl core::panic::unwind_safe::UnwindSafe for vmnl::MouseState
+pub struct vmnl::StandardCursorBuilder
+impl vmnl::StandardCursorBuilder
+pub fn vmnl::StandardCursorBuilder::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::Cursor>
+impl core::marker::Freeze for vmnl::StandardCursorBuilder
+impl core::marker::Send for vmnl::StandardCursorBuilder
+impl core::marker::Sync for vmnl::StandardCursorBuilder
+impl core::marker::Unpin for vmnl::StandardCursorBuilder
+impl core::marker::UnsafeUnpin for vmnl::StandardCursorBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::StandardCursorBuilder
+impl core::panic::unwind_safe::UnwindSafe for vmnl::StandardCursorBuilder
 pub struct vmnl::VMNLError
 impl vmnl::VMNLError
 pub const fn vmnl::VMNLError::kind(&self) -> &vmnl::VMNLErrorKind

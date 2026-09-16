@@ -24,6 +24,7 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | macro | `vmnl::raw::Zeroable` | [Zeroable derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Zeroable.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
 | struct | `vmnl::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.Context.html) | [GPU context](../../../tests/gpu/tests/context.rs) |
 | struct | `vmnl::Cursor` | [Cursor](../reference/window/input/cursor.md) | [Rustdoc](../../../target/doc/vmnl/struct.Cursor.html) | [API input](../../../tests/api/tests/input.rs) |
+| struct | `vmnl::CursorBuilder` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.CursorBuilder.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/struct.Event.html) | [event input example](../../../examples/window/events_input/src/main.rs) |
 | struct | `vmnl::FrameRenderer` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [Rustdoc](../../../target/doc/vmnl/struct.FrameRenderer.html) | [GPU frame renderer](../../../tests/gpu/tests/frame_renderer.rs) |
 | struct | `vmnl::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl/struct.Input.html) | [API input](../../../tests/api/tests/input.rs) |
@@ -32,6 +33,7 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | struct | `vmnl::Monitors` | [Monitors](../reference/window/monitors/monitors.md) | [Rustdoc](../../../target/doc/vmnl/struct.Monitors.html) | [GPU window runtime](../../../tests/gpu/tests/window_runtime.rs) |
 | struct | `vmnl::Modifiers` | [Modifiers](../reference/window/input/modifiers.md) | [Rustdoc](../../../target/doc/vmnl/struct.Modifiers.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::MouseState` | [MouseState](../reference/window/input/mouse_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.MouseState.html) | [API input](../../../tests/api/tests/input.rs) |
+| struct | `vmnl::StandardCursorBuilder` | [StandardCursorBuilder](../reference/window/input/standard_cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.StandardCursorBuilder.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::VMNLError` | [VMNLError](../reference/errors/vmnl_error.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLError.html) | [API errors](../../../tests/api/tests/errors.rs) |
 | struct | `vmnl::VMNLErrorLocation` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLErrorLocation.html) | [API errors](../../../tests/api/tests/errors.rs) |
 | struct | `vmnl::VideoMode` | [VideoMode](../reference/window/monitors/video_mode.md) | [Rustdoc](../../../target/doc/vmnl/struct.VideoMode.html) | [GPU window runtime](../../../tests/gpu/tests/window_runtime.rs) |
