@@ -2,7 +2,8 @@
 
 ## Public path and maturity
 
-`vmnl::Cursor`, `vmnl::StandardCursor`, methods on `vmnl::Window`, plus
+`vmnl::Cursor`, `vmnl::CursorBuilder`, `vmnl::StandardCursor`,
+`vmnl::StandardCursorBuilder`, methods on `vmnl::Window`, plus
 `Context::is_raw_mouse_motion_supported`. Status: experimental, operational where the active
 backend supports the requested cursor or mode.
 
@@ -15,8 +16,10 @@ confinement, hover state, and raw-motion configuration without exposing GLFW typ
 
 | Member | Contract |
 |---|---|
-| `Cursor::standard` | Allocate one [standard system cursor](input/standard_cursor.md). |
-| `Cursor::from_rgba8` | Validate and synchronously copy a packed custom [RGBA8 cursor](input/cursor.md). |
+| `Cursor::standard` | Configure a [standard cursor builder](input/standard_cursor_builder.md). |
+| `Cursor::rgba8` | Configure a custom [RGBA8 cursor builder](input/cursor_builder.md). |
+| `CursorBuilder::hotspot_marker` | Replace the final hotspot pixel with a client-selected diagnostic color. |
+| Builder `build` methods | Validate configuration and allocate the native cursor using a `Context`. |
 | `Window::cursor`, `Window::set_cursor` | Inspect/assign a shared cursor; `None` restores the backend default. |
 | `Window::get_cursor_position` | Read content-area cursor coordinates. |
 | `Window::set_cursor_position` | Request finite content-area cursor coordinates. |
@@ -30,7 +33,9 @@ confinement, hover state, and raw-motion configuration without exposing GLFW typ
 New windows start in `CursorMode::Normal`, with the backend default cursor and raw motion disabled.
 Custom cursor dimensions must be positive and fit `c_int`; the byte slice must contain exactly
 `width * height * 4` bytes and the hotspot must be inside the image. These conditions and overflow
-are checked before GLFW. Cursor coordinates must be finite. Enabling raw motion is rejected with
+are checked during `CursorBuilder::build` before GLFW. The custom hotspot defaults to `(0, 0)`.
+Its diagnostic marker is disabled by default and does not choose a contrast color implicitly.
+Cursor coordinates must be finite. Enabling raw motion is rejected with
 `GlfwUnsupportedPlatform` when the context reports it unavailable. Disabling it on an unsupported
 system is a successful no-op.
 
@@ -56,7 +61,7 @@ platform-compatible main thread through the single-threaded `Context`/`Window` A
 
 ## Errors, panics, and failure conditions
 
-Cursor creation returns `InvalidState` for invalid image parameters,
+Custom cursor building returns `InvalidState` for invalid image parameters,
 `GlfwUnsupportedPlatform` when a standard shape is unavailable, or the corresponding GLFW category
 for another native failure. `Window::set_cursor` preserves the previous resource when GLFW reports
 an error. Destruction errors can only be reported through the configured GLFW callback because
@@ -73,10 +78,12 @@ effective.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-Each cursor constructor performs one native allocation. `from_rgba8` synchronously copies the
-borrowed pixel slice before returning. Cloning and assignment only increment an `Rc` owner count;
-they allocate no VMNL resource. Cursor operations allocate no GPU resource and perform no GPU
-transfer or synchronization. Native pointer/theme costs are unspecified.
+Cursor factories and setters allocate no native resource. Each builder `build` performs one native
+allocation. `CursorBuilder::build` synchronously copies the borrowed pixel slice before returning.
+An enabled hotspot marker adds one temporary full-image VMNL allocation; the unmarked path adds
+none. Cloning and assignment only increment an `Rc` owner count; they allocate no VMNL resource.
+Cursor operations allocate no GPU resource and perform no GPU transfer or synchronization. Native
+pointer/theme costs are unspecified.
 
 ## Platform, Vulkan, and display constraints
 
@@ -95,7 +102,7 @@ use vmnl::{Context, Cursor, CursorMode, StandardCursor, Window};
 fn main() -> vmnl::VMNLResult<()> {
 let context = Context::new()?;
 let mut window = Window::new(&context)?;
-let pointer = Cursor::standard(&context, StandardCursor::PointingHand)?;
+let pointer = Cursor::standard(StandardCursor::PointingHand).build(&context)?;
 window.set_cursor(Some(&pointer))?;
 window.set_cursor_mode(CursorMode::Disabled);
     if context.is_raw_mouse_motion_supported() {
@@ -107,6 +114,8 @@ window.set_cursor_mode(CursorMode::Disabled);
 }
 ```
 
-Related: [`Cursor`](input/cursor.md), [`StandardCursor`](input/standard_cursor.md),
+Related: [`Cursor`](input/cursor.md), [`CursorBuilder`](input/cursor_builder.md),
+[`StandardCursor`](input/standard_cursor.md),
+[`StandardCursorBuilder`](input/standard_cursor_builder.md),
 [`EventKind::MouseMoved`](events/event_kind.md), [polling](polling.md), and the
 [`events_input`](../../../../examples/window/events_input/src/main.rs) example.

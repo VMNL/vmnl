@@ -10,8 +10,7 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Context::is_raw_mouse_motion_supported`, `Window::set_raw_mouse_motion` | `glfwRawMouseMotionSupported` | x11: conditional — Returns GLFW_TRUE when XInput 2 raw motion is available, otherwise GLFW_FALSE.; win32-wayland-null: supported — Bundled GLFW 3.4 reports raw motion support.; cocoa: unsupported — Bundled GLFW 3.4 reports GLFW_FALSE because raw motion is not implemented. |
 | `Context::new` | `glfwGetRequiredInstanceExtensions` | all: conditional — Returns the platform Vulkan instance extension list. |
 | `Context::new` | `glfwInit` | all: conditional — Initializes GLFW or returns failure after invoking the error callback. |
-| `Cursor::from_rgba8` | `glfwCreateCursor` | all: supported — Copies the supplied non-premultiplied RGBA8 pixels and creates a native cursor resource. |
-| `Cursor::standard` | `glfwCreateStandardCursor` | win32-cocoa-null: supported — Creates a native cursor using the corresponding system cursor shape.; x11-wayland: conditional — Creates the theme cursor when available and otherwise emits GLFW_CURSOR_UNAVAILABLE. |
+| `CursorBuilder::build` | `glfwCreateCursor` | all: supported — Copies the supplied non-premultiplied RGBA8 pixels and creates a native cursor resource. |
 | `KeyboardState`, `Window::set_key_polling` | `glfwSetKeyCallback` | all: supported — Installs key callback. |
 | `MonitorInfo::available_modes` | `glfwGetVideoModes` | all: conditional — Returns modes reported by the backend. |
 | `MonitorInfo::content_scale` | `glfwGetMonitorContentScale` | wayland: conditional — Fractional scaling may not be represented exactly by GLFW 3.4.; x11-win32-cocoa: supported — Returns content scale reported by the backend. |
@@ -22,6 +21,7 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `MonitorInfo::workarea` | `glfwGetMonitorWorkarea` | all: conditional — Returns a backend-defined work area. |
 | `Monitors` | `glfwGetMonitors` | all: conditional — Returns currently connected monitors; Null may return none. |
 | `MouseState`, `Window::set_mouse_button_polling` | `glfwSetMouseButtonCallback` | all: supported — Installs mouse-button callback. |
+| `StandardCursorBuilder::build` | `glfwCreateStandardCursor` | win32-cocoa-null: supported — Creates a native cursor using the corresponding system cursor shape.; x11-wayland: conditional — Creates the theme cursor when available and otherwise emits GLFW_CURSOR_UNAVAILABLE. |
 | `Window::close` | `glfwSetWindowShouldClose` | all: supported — Updates GLFW's local close flag. |
 | `Window::configure_window_polling` | `glfwSetWindowPosCallback` | wayland: unsupported — Callback is never invoked because global positions are unavailable.; x11-win32-cocoa: supported — Installs position callback. |
 | `Window::focus` | `glfwFocusWindow` | wayland: best-effort — Compositor will likely ignore unsolicited focus requests.; x11: best-effort — Requests focus; policy may deny it.; win32-cocoa: best-effort — Requests focus. |

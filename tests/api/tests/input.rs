@@ -4,8 +4,8 @@
 //! Headless public input-state contracts.
 
 use vmnl::{
-    Context, Cursor, CursorMode, Event, EventKind, Input, Key, Modifiers, MouseButton,
-    StandardCursor, VMNLResult, Window,
+    Context, Cursor, CursorBuilder, CursorMode, Event, EventKind, Input, Key, Modifiers,
+    MouseButton, StandardCursor, StandardCursorBuilder, VMNLResult, Window,
 };
 
 fn assert_empty(input: &Input) {
@@ -71,12 +71,21 @@ fn cursor_controls_are_exposed_through_public_facade() {
 fn cursor_resources_are_exposed_through_public_facade() {
     fn assert_cursor_traits<T: Clone + std::fmt::Debug + Eq>() {}
     fn assert_standard_cursor_traits<T: Clone + Copy + std::fmt::Debug + Eq + std::hash::Hash>() {}
+    fn build_custom_cursor(builder: CursorBuilder<'_>, context: &Context) -> VMNLResult<Cursor> {
+        builder.build(context)
+    }
 
     assert_cursor_traits::<Cursor>();
     assert_standard_cursor_traits::<StandardCursor>();
 
-    let _: fn(&Context, StandardCursor) -> VMNLResult<Cursor> = Cursor::standard;
-    let _from_rgba8 = Cursor::from_rgba8;
+    let _: fn(StandardCursor) -> StandardCursorBuilder = Cursor::standard;
+    let _: fn(StandardCursorBuilder, &Context) -> VMNLResult<Cursor> = StandardCursorBuilder::build;
+    let pixels = [255_u8; 4];
+    let builder: CursorBuilder<'_> = Cursor::rgba8(1, 1, &pixels)
+        .hotspot(0, 0)
+        .hotspot_marker([255, 0, 255, 255]);
+    let _: fn(CursorBuilder<'_>, &Context) -> VMNLResult<Cursor> = build_custom_cursor;
+    let _ = builder;
     let _: fn(&Window) -> Option<&Cursor> = Window::cursor;
     let _: fn(&mut Window, Option<&Cursor>) -> VMNLResult<()> = Window::set_cursor;
 

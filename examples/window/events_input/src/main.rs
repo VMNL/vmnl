@@ -160,9 +160,22 @@ fn main() -> VMNLResult<()> {
         .build(&context)?;
 
     configure_runtime_window(&mut window)?;
-    let standard_cursor = Cursor::standard(&context, StandardCursor::PointingHand)?;
-    let custom_pixels = vec![255_u8; 8 * 8 * 4];
-    let custom_cursor = Cursor::from_rgba8(&context, 8, 8, &custom_pixels, (4, 4))?;
+    let standard_cursor = Cursor::standard(StandardCursor::NotAllowed).build(&context)?;
+    let (width, height) = (32_u32, 32_u32);
+    let mut custom_pixels = vec![0_u8; (width * height * 4) as usize];
+    for y in 0..height {
+        for x in 0..width {
+            if x == y || x + y == width - 1 {
+                let offset = ((y * width + x) * 4) as usize;
+                custom_pixels[offset..offset + 4].copy_from_slice(&[255, 0, 0, 255]);
+            }
+        }
+    }
+
+    let custom_cursor = Cursor::rgba8(width, height, &custom_pixels)
+        .hotspot(16, 16)
+        .hotspot_marker([0, 255, 0, 255])
+        .build(&context)?;
     window.set_cursor(Some(&standard_cursor))?;
     let raw_mouse_motion_supported = context.is_raw_mouse_motion_supported();
     if raw_mouse_motion_supported {

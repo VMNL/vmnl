@@ -315,7 +315,7 @@ c_symbol = "glfwCreateCursor"
 rust_wrappers = ["glfw_backend::create_cursor", "glfw::ffi::glfwCreateCursor"]
 category = "input"
 introduced = "3.1"
-vmnl_usage = ["Cursor::from_rgba8"]
+vmnl_usage = ["CursorBuilder::build"]
 backends = [{ name = "all", status = "supported", conditions = "GLFW is initialized on the platform thread and VMNL has validated positive dimensions, exact packed RGBA8 length and an in-bounds hotspot.", behavior = "Copies the supplied non-premultiplied RGBA8 pixels and creates a native cursor resource.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_VALUE", "GLFW_PLATFORM_ERROR"], sentinel = "null cursor on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
 proofs = ["test:platform_probe:null:cursor-resources", "test:window::input::cursor RGBA8 validation"]
 
@@ -324,7 +324,7 @@ c_symbol = "glfwCreateStandardCursor"
 rust_wrappers = ["glfw_backend::create_standard_cursor", "glfw::ffi::glfwCreateStandardCursor"]
 category = "input"
 introduced = "3.1"
-vmnl_usage = ["Cursor::standard"]
+vmnl_usage = ["StandardCursorBuilder::build"]
 backends = [{ name = "win32-cocoa-null", status = "supported", conditions = "GLFW is initialized on the platform thread and the requested value is one of the ten GLFW 3.4 standard shapes.", behavior = "Creates a native cursor using the corresponding system cursor shape.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_CURSOR_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "null cursor on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "x11-wayland", status = "conditional", conditions = "The active cursor theme provides the requested shape; diagonal resize and not-allowed shapes may be unavailable.", behavior = "Creates the theme cursor when available and otherwise emits GLFW_CURSOR_UNAVAILABLE.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_CURSOR_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "null cursor when the shape is unavailable or another error occurs", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
 proofs = ["test:platform_probe:null:cursor-resources", "justification:GLFW 3.4 standard-cursor availability table reviewed"]
 
