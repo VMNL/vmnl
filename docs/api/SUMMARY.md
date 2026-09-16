@@ -51,6 +51,7 @@
       - [Modifiers](reference/window/input/modifiers.md)
       - [MouseButton](reference/window/input/mouse_button.md)
       - [MouseState](reference/window/input/mouse_state.md)
+      - [Window input modes](reference/window/input/modes.md)
       - [StandardCursor](reference/window/input/standard_cursor.md)
       - [StandardCursorBuilder](reference/window/input/standard_cursor_builder.md)
     - [Monitors](reference/window/monitors/README.md)

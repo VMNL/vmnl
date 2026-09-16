@@ -12,7 +12,7 @@ Owns a native GLFW window plus the Vulkan surface, swapchain, render pass, synch
 
 Constructors are `new(&Context)` and `builder()`. The remaining methods are partitioned by
 responsibility: [configuration](configuration.md), [cursor controls](cursor.md),
-[lifecycle](lifecycle.md), [polling](polling.md),
+[input modes](input/modes.md), [lifecycle](lifecycle.md), [polling](polling.md),
 [event processing and timers](events/event_processing_and_timers.md), and
 [rendering](rendering/README.md).
 

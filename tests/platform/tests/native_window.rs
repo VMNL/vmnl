@@ -67,6 +67,29 @@ fn null_backend_cursor_position_modes_hover_and_raw_state_are_inspectable() {
 }
 
 #[test]
+fn null_backend_mouse_input_modes_are_disabled_by_default_and_round_trip() {
+    let record = null_probe("mouse-input-modes");
+    assert_eq!(
+        record["value"],
+        serde_json::json!({
+            "defaults": {
+                "sticky_mouse_buttons": false,
+                "lock_key_modifier_reporting": false,
+            },
+            "enabled": {
+                "sticky_mouse_buttons": true,
+                "lock_key_modifier_reporting": true,
+            },
+            "disabled_after_reset": {
+                "sticky_mouse_buttons": true,
+                "lock_key_modifier_reporting": true,
+            },
+        })
+    );
+    assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+}
+
+#[test]
 fn null_backend_creates_shares_replaces_and_destroys_cursor_resources() {
     let record = null_probe("cursor-resources");
     assert_eq!(
