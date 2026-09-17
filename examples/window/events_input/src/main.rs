@@ -1,10 +1,17 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-use vmnl::{Context, Event, Key, MouseButton, PresentMode, VMNLResult, Window};
+use vmnl::{
+    Context, Cursor, CursorMode, Event, Key, MouseButton, PresentMode, StandardCursor, VMNLResult,
+    Window,
+};
 
 fn print_event(event: &Event) {
-    println!("[event] {event:?}");
+    println!(
+        "[event @ {:.6}s] {:?}",
+        event.timestamp_seconds(),
+        event.kind()
+    );
 }
 
 fn print_monitor_summary(window: &Window) {
@@ -47,11 +54,17 @@ fn configure_runtime_window(window: &mut Window) -> VMNLResult<()> {
     window.set_content_scale_polling(true);
     window.set_drag_and_drop_polling(true);
     window.set_refresh_polling(true);
+    window.set_sticky_mouse_buttons(true);
+    window.set_lock_key_modifier_reporting(true);
 
     Ok(())
 }
 
-fn apply_keybinds(window: &mut Window) -> VMNLResult<()> {
+fn apply_keybinds(
+    window: &mut Window,
+    standard_cursor: &Cursor,
+    custom_cursor: &Cursor,
+) -> VMNLResult<()> {
     let keyboard = window.input().keyboard();
     let close = keyboard.is_pressed(Key::Escape);
     let focus = keyboard.is_pressed(Key::F);
@@ -60,6 +73,14 @@ fn apply_keybinds(window: &mut Window) -> VMNLResult<()> {
     let restore = keyboard.is_pressed(Key::R);
     let hide_show = keyboard.is_pressed(Key::H);
     let clear_aspect = keyboard.is_pressed(Key::C);
+    let cursor_normal = keyboard.is_pressed(Key::N);
+    let cursor_hidden = keyboard.is_pressed(Key::V);
+    let cursor_disabled = keyboard.is_pressed(Key::D);
+    let cursor_captured = keyboard.is_pressed(Key::G);
+    let center_cursor = keyboard.is_pressed(Key::P);
+    let assign_standard_cursor = keyboard.is_pressed(Key::S);
+    let assign_custom_cursor = keyboard.is_pressed(Key::U);
+    let restore_default_cursor = keyboard.is_pressed(Key::O);
     let any_arrow = keyboard.is_any_down(&[Key::Left, Key::Right, Key::Up, Key::Down]);
     let any_was_used = keyboard.is_one_used();
     let any_was_pressed = keyboard.is_one_pressed();
@@ -91,6 +112,31 @@ fn apply_keybinds(window: &mut Window) -> VMNLResult<()> {
     if clear_aspect {
         window.set_aspect_ratio(None)?;
     }
+    if cursor_normal {
+        window.set_cursor_mode(CursorMode::Normal);
+    }
+    if cursor_hidden {
+        window.set_cursor_mode(CursorMode::Hidden);
+    }
+    if cursor_disabled {
+        window.set_cursor_mode(CursorMode::Disabled);
+    }
+    if cursor_captured {
+        window.set_cursor_mode(CursorMode::Captured);
+    }
+    if center_cursor {
+        let (width, height) = window.get_size();
+        window.set_cursor_position(f64::from(width) / 2.0, f64::from(height) / 2.0)?;
+    }
+    if assign_standard_cursor {
+        window.set_cursor(Some(standard_cursor))?;
+    }
+    if assign_custom_cursor {
+        window.set_cursor(Some(custom_cursor))?;
+    }
+    if restore_default_cursor {
+        window.set_cursor(None)?;
+    }
     if any_arrow {
         println!("[input] arrow key is down");
     }
@@ -116,6 +162,27 @@ fn main() -> VMNLResult<()> {
         .build(&context)?;
 
     configure_runtime_window(&mut window)?;
+    let standard_cursor = Cursor::standard(StandardCursor::NotAllowed).build(&context)?;
+    let (width, height) = (32_u32, 32_u32);
+    let mut custom_pixels = vec![0_u8; (width * height * 4) as usize];
+    for y in 0..height {
+        for x in 0..width {
+            if x == y || x + y == width - 1 {
+                let offset = ((y * width + x) * 4) as usize;
+                custom_pixels[offset..offset + 4].copy_from_slice(&[255, 0, 0, 255]);
+            }
+        }
+    }
+
+    let custom_cursor = Cursor::rgba8(width, height, &custom_pixels)
+        .hotspot(16, 16)
+        .hotspot_marker([0, 255, 0, 255])
+        .build(&context)?;
+    window.set_cursor(Some(&standard_cursor))?;
+    let raw_mouse_motion_supported = context.is_raw_mouse_motion_supported();
+    if raw_mouse_motion_supported {
+        window.set_raw_mouse_motion(true)?;
+    }
     print_monitor_summary(&window);
 
     window.set_time(0.0);
@@ -145,19 +212,35 @@ fn main() -> VMNLResult<()> {
         window.is_visible(),
         window.is_focused()
     );
+    println!(
+        "cursor: position={:?} hovered={} mode={:?} raw_supported={} raw_enabled={}",
+        window.get_cursor_position(),
+        window.is_cursor_hovered(),
+        window.get_cursor_mode(),
+        raw_mouse_motion_supported,
+        window.is_raw_mouse_motion_enabled()
+    );
+    println!(
+        "input modes: sticky_mouse_buttons={} lock_key_modifier_reporting={}",
+        window.is_sticky_mouse_buttons_enabled(),
+        window.is_lock_key_modifier_reporting_enabled()
+    );
     println!("keys: Escape close, F focus, I iconify, M maximize, R restore, H hide/show, C clear aspect");
+    println!("cursor keys: N normal, V hidden, D disabled, G captured, P center");
+    println!("cursor resources: S pointing hand, U custom RGBA8, O backend default");
 
     while window.is_open() {
         for event in window.poll_events() {
             print_event(&event);
         }
-        apply_keybinds(&mut window)?;
-        println!(
-            "time={:.3} iconified={} maximized={}",
-            window.get_time(),
-            window.is_iconified(),
-            window.is_maximized()
-        );
+        apply_keybinds(&mut window, &standard_cursor, &custom_cursor)?;
+        // println!(
+        //     "time={:.3} iconified={} maximized={} focused={}",
+        //     window.get_time(),
+        //     window.is_iconified(),
+        //     window.is_maximized(),
+        //     window.is_focused()
+        // );
         window.render().submit()?;
     }
 

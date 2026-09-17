@@ -7,7 +7,10 @@ use crate::window::Window;
 use crate::{Event, Input, VMNLErrorKind};
 
 impl Window {
-    /// Polls for window events and updates the input state accordingly.
+    /// Processes one event batch, updates input state, and returns delivered events.
+    ///
+    /// One call defines one batch. It clears previous press/release flags, then retains every
+    /// transition found while draining pending events. Held state is preserved between calls.
     ///
     /// # Example
     /// ```rust,no_run
@@ -27,7 +30,10 @@ impl Window {
         self.inner.poll_events()
     }
 
-    /// Waits for window events, blocking until at least one event is received.
+    /// Waits until at least one window event is pending.
+    ///
+    /// This does not process events or start an input batch. Call [`poll_events`](Self::poll_events)
+    /// afterwards to drain the pending events.
     ///
     /// # Example
     /// ```rust,no_run
@@ -44,8 +50,10 @@ impl Window {
         self.inner.wait_events();
     }
 
-    /// Waits for window events with a specified timeout,
-    /// blocking until an event is received or the timeout elapses.
+    /// Waits until a window event is pending or the specified timeout elapses.
+    ///
+    /// This does not process events or start an input batch. Call [`poll_events`](Self::poll_events)
+    /// afterwards to drain the pending events.
     ///
     /// # Arguments
     /// - `timeout`: Maximum wait time in seconds.
@@ -200,7 +208,7 @@ impl Window {
         self.inner.unset_error_callback();
     }
 
-    /// Returns a reference to the input state manager.
+    /// Returns the per-window input snapshot from the most recently processed batch.
     ///
     /// # Example
     /// ```rust,no_run
@@ -218,5 +226,14 @@ impl Window {
     #[must_use]
     pub const fn input(&self) -> &Input {
         self.inner.input()
+    }
+
+    /// Clears keyboard and mouse press/release transitions without changing held controls.
+    ///
+    /// This does not process or discard pending native events. The next call to
+    /// [`poll_events`](Self::poll_events) starts a new batch and applies every pending transition.
+    #[inline]
+    pub const fn clear_input_transitions(&mut self) {
+        self.inner.clear_input_transitions();
     }
 }

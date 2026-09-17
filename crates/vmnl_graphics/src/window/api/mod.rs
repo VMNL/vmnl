@@ -4,6 +4,7 @@
 //! Public window API module for VMNL.
 
 mod config;
+mod cursor;
 mod events;
 mod lifecycle;
 mod polling;

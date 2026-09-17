@@ -3,7 +3,7 @@
 
 //! Event-driven redraw using an explicit blocking wait.
 
-use vmnl::{common::Rgba, d2::Shape, Context, Event, Key, PresentMode, VMNLResult, Window};
+use vmnl::{common::Rgba, d2::Shape, Context, EventKind, Key, PresentMode, VMNLResult, Window};
 
 fn main() -> VMNLResult<()> {
     let context = Context::new()?;
@@ -44,12 +44,12 @@ fn main() -> VMNLResult<()> {
 
         window.wait_events();
         for event in window.poll_events() {
-            match event {
-                Event::Closed
-                | Event::KeyPressed {
+            match event.kind() {
+                EventKind::Closed
+                | EventKind::KeyPressed {
                     key: Key::Escape, ..
                 } => window.close(),
-                Event::Text(' ') => {
+                EventKind::Text(' ') => {
                     use_warm_shape = !use_warm_shape;
                     redraw = true;
                 }
