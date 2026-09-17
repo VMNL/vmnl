@@ -224,18 +224,22 @@ impl EventQueue {
         }
     }
 
+    fn process_batch(
+        delivery: &EventDelivery,
+        input: &mut Input,
+        events: impl IntoIterator<Item = (f64, glfw::WindowEvent)>,
+    ) -> Vec<Event> {
+        input.begin_batch();
+        events
+            .into_iter()
+            .filter_map(|(timestamp_seconds, event)| {
+                Self::process_event(delivery, input, timestamp_seconds, &event)
+            })
+            .collect()
+    }
+
     pub(crate) fn poll_events(&mut self, input: &mut Input) -> Vec<Event> {
-        let mut polled_events = Vec::new();
-
-        for (timestamp_seconds, event) in glfw::flush_messages(&self.events) {
-            if let Some(event) =
-                Self::process_event(&self.delivery, input, timestamp_seconds, &event)
-            {
-                polled_events.push(event);
-            }
-        }
-
-        polled_events
+        Self::process_batch(&self.delivery, input, glfw::flush_messages(&self.events))
     }
 
     pub(crate) const fn new(events: glfw::GlfwReceiver<(f64, glfw::WindowEvent)>) -> Self {
@@ -455,6 +459,47 @@ mod tests {
         assert!(!input.mouse().is_pressed(VMNLMouseButton::Left));
         assert!(!input.mouse().is_released(VMNLMouseButton::Left));
         assert!(!input.mouse().is_one_used());
+    }
+
+    #[test]
+    fn pending_events_apply_on_the_next_batch_and_clear_on_the_following_batch() {
+        let mut input = Input::new();
+        let mut delivery = EventDelivery::default();
+        delivery.set(EventDelivery::MOUSE_BUTTON, true);
+        let pending = [
+            (
+                1.0,
+                WindowEvent::MouseButton(
+                    MouseButton::Button1,
+                    Action::Press,
+                    GlfwModifiers::empty(),
+                ),
+            ),
+            (
+                1.1,
+                WindowEvent::MouseButton(
+                    MouseButton::Button1,
+                    Action::Release,
+                    GlfwModifiers::empty(),
+                ),
+            ),
+        ];
+
+        assert!(!input.mouse().is_pressed(VMNLMouseButton::Left));
+        assert!(!input.mouse().is_released(VMNLMouseButton::Left));
+
+        let events = EventQueue::process_batch(&delivery, &mut input, pending);
+
+        assert_eq!(events.len(), 2);
+        assert!(!input.mouse().is_down(VMNLMouseButton::Left));
+        assert!(input.mouse().is_pressed(VMNLMouseButton::Left));
+        assert!(input.mouse().is_released(VMNLMouseButton::Left));
+
+        let events = EventQueue::process_batch(&delivery, &mut input, []);
+
+        assert!(events.is_empty());
+        assert!(!input.mouse().is_pressed(VMNLMouseButton::Left));
+        assert!(!input.mouse().is_released(VMNLMouseButton::Left));
     }
 
     #[test]

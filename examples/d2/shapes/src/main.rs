@@ -4,9 +4,7 @@
 //! Minimal 2D shape rendering workflow.
 
 use vmnl::{
-    common::Rgba,
-    d2::{Shape, Vector2f},
-    Context, Key, PresentMode, VMNLResult, Window,
+    Context, Key, PresentMode, VMNLResult, Window, common::Rgba, d2::{LineCap, Shape, Vector2f},
 };
 
 fn main() -> VMNLResult<()> {

@@ -79,7 +79,7 @@ fn main() -> ExitCode {
 
     glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
     glfw.window_hint(WindowHint::Visible(false));
-    let Some((mut window, _events)) =
+    let Some((mut window, events)) =
         glfw.create_window(160, 120, "VMNL platform probe", WindowMode::Windowed)
     else {
         emit(
@@ -175,6 +175,10 @@ fn main() -> ExitCode {
                 "disabled_after_reset": !window.uses_raw_mouse_motion(),
             })
         }
+        "wait-events-then-poll" => wait_then_poll(&mut glfw, &mut window, &events, None),
+        "wait-events-timeout-then-poll" => {
+            wait_then_poll(&mut glfw, &mut window, &events, Some(0.001))
+        }
         "cursor-resources" => cursor_resources(&mut glfw, &mut window),
         "maximize" => {
             window.maximize();
@@ -196,6 +200,64 @@ fn main() -> ExitCode {
         "ok",
     );
     ExitCode::SUCCESS
+}
+
+fn wait_then_poll(
+    glfw: &mut glfw::Glfw,
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+    timeout: Option<f64>,
+) -> Value {
+    window.set_mouse_button_polling(true);
+    let window_ptr = window.window_ptr();
+    // SAFETY: The window is live on the GLFW thread. Temporarily removing and restoring the
+    // callback obtains the callback installed by glfw-rs without changing its final state.
+    let callback = unsafe {
+        let callback = glfw::ffi::glfwSetMouseButtonCallback(window_ptr, None);
+        glfw::ffi::glfwSetMouseButtonCallback(window_ptr, callback);
+        callback
+    };
+    let Some(callback) = callback else {
+        return json!({"callback_installed": false});
+    };
+
+    // SAFETY: The callback was installed by glfw-rs for this live window. Valid GLFW mouse-button
+    // and action constants are used, so both events enter the window's glfw-rs receiver.
+    unsafe {
+        callback(
+            window_ptr,
+            glfw::ffi::GLFW_MOUSE_BUTTON_LEFT,
+            glfw::ffi::GLFW_PRESS,
+            0,
+        );
+        callback(
+            window_ptr,
+            glfw::ffi::GLFW_MOUSE_BUTTON_LEFT,
+            glfw::ffi::GLFW_RELEASE,
+            0,
+        );
+    }
+
+    if let Some(seconds) = timeout {
+        glfw.wait_events_timeout(seconds);
+    } else {
+        glfw.post_empty_event();
+        glfw.wait_events();
+    }
+    glfw.poll_events();
+
+    let actions: Vec<String> = glfw::flush_messages(events)
+        .filter_map(|(_, event)| match event {
+            glfw::WindowEvent::MouseButton(glfw::MouseButton::Button1, action, _) => {
+                Some(format!("{action:?}"))
+            }
+            _ => None,
+        })
+        .collect();
+    json!({
+        "callback_installed": true,
+        "actions_after_poll": actions,
+    })
 }
 
 fn cursor_resources(glfw: &mut glfw::Glfw, window: &mut glfw::PWindow) -> Value {

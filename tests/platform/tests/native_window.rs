@@ -90,6 +90,22 @@ fn null_backend_mouse_input_modes_are_disabled_by_default_and_round_trip() {
 }
 
 #[test]
+fn null_backend_wait_variants_preserve_events_until_polling() {
+    for operation in ["wait-events-then-poll", "wait-events-timeout-then-poll"] {
+        let record = null_probe(operation);
+        assert_eq!(record["operation"], operation);
+        assert_eq!(
+            record["value"],
+            serde_json::json!({
+                "callback_installed": true,
+                "actions_after_poll": ["Press", "Release"],
+            })
+        );
+        assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+    }
+}
+
+#[test]
 fn null_backend_creates_shares_replaces_and_destroys_cursor_resources() {
     let record = null_probe("cursor-resources");
     assert_eq!(
