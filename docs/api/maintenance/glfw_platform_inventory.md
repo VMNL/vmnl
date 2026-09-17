@@ -91,8 +91,8 @@ A status is scoped to the named backend and stated conditions. `unverified` is n
 | `glfwSetWindowSizeLimits` | `PWindow::set_size_limits` | `Window::set_size_limits` | wayland: conditional (Limits may only apply after the window becomes visible.); x11-win32-cocoa: conditional (Requests content-area limits.) | justification:VMNL validates the limit tuple before GLFW |
 | `glfwSetWindowTitle` | `PWindow::set_title` | `Window::set_title` | all: supported (Requests a native title update; macOS may defer display until event processing.) | justification:official window reference reviewed |
 | `glfwShowWindow` | `PWindow::show` | `Window::show` | wayland: conditional (Showing may depend on buffer submission.); x11-win32-cocoa: supported (Maps or orders the window visible.) | justification:official window reference reviewed |
-| `glfwWaitEvents` | `Glfw::wait_events` | `Window::wait_events` | all: supported (Waits for native events.) | justification:wait_events example exercises this path |
-| `glfwWaitEventsTimeout` | `Glfw::wait_events_timeout` | `Window::wait_events_timeout` | all: supported (Waits until an event or timeout.) | justification:window_events_input exercises this path |
+| `glfwWaitEvents` | `Glfw::wait_events` | `Window::wait_events` | all: supported (Waits for native events.) | test:platform_probe:null:wait-events-then-poll |
+| `glfwWaitEventsTimeout` | `Glfw::wait_events_timeout` | `Window::wait_events_timeout` | all: supported (Waits until an event or timeout.) | test:platform_probe:null:wait-events-timeout-then-poll |
 | `glfwWindowHint` | `Glfw::window_hint` | `WindowBuilder::build` | all: conditional (Stores the next-window hint; unsupported hints may be ignored or fail window creation.) | justification:covered by GLFW 3.4 window creation contract |
 | `glfwWindowShouldClose` | `PWindow::should_close` | `Window::is_open` | all: supported (Reads GLFW's local close flag.) | justification:local GLFW window state |
 

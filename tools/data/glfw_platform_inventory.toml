@@ -417,7 +417,7 @@ category = "events"
 introduced = "3.0"
 vmnl_usage = ["Window::wait_events"]
 backends = [{ name = "all", status = "supported", conditions = "Called from the platform main thread where required.", behavior = "Waits for native events.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "Returns on failure", source = "https://www.glfw.org/docs/3.4/group__window.html" }]
-proofs = ["justification:wait_events example exercises this path"]
+proofs = ["test:platform_probe:null:wait-events-then-poll"]
 
 [[function]]
 c_symbol = "glfwWaitEventsTimeout"
@@ -426,7 +426,7 @@ category = "events"
 introduced = "3.2"
 vmnl_usage = ["Window::wait_events_timeout"]
 backends = [{ name = "all", status = "supported", conditions = "Timeout is finite and non-negative.", behavior = "Waits until an event or timeout.", errors = ["GLFW_INVALID_VALUE", "GLFW_PLATFORM_ERROR"], sentinel = "Returns on failure", source = "https://www.glfw.org/docs/3.4/group__window.html" }]
-proofs = ["justification:window_events_input exercises this path"]
+proofs = ["test:platform_probe:null:wait-events-timeout-then-poll"]
 
 [[function]]
 c_symbol = "glfwPostEmptyEvent"

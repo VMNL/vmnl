@@ -64,7 +64,6 @@ impl VMNLWindow {
     /// Internal implementation backing `Window::poll_events`.
     pub(crate) fn poll_events(&mut self) -> Vec<Event> {
         self.handle.instance.poll_events();
-        self.handle.input.begin_batch();
         let events: Vec<Event> = self.handle.events.poll_events(&mut self.handle.input);
         if events.iter().any(|event| {
             matches!(
