@@ -1,0 +1,68 @@
+///////////////////////////////////////////////////////////////////////////////
+/// SPDX-FileCopyrightText: 2026 Nathan Flachat
+/// SPDX-License-Identifier: MIT
+///
+////////////////////////////////////////////////////////////////////////////////
+use crate::audio::{AudioError, AudioResult, BusKind, PlaybackState};
+
+use crate::audio::music::MusicStream;
+use crate::audio::runtime::AudioRuntime;
+use crate::audio::sound::SoundVoice;
+
+use std::sync::Arc;
+
+pub(crate) struct AudioMixer;
+
+impl AudioMixer {
+    pub fn mix(runtime: &AudioRuntime, output: &mut [f32]) -> AudioResult<()> {
+        output.fill(0.0);
+
+        let master_gain = runtime.master_bus.gain();
+
+        if master_gain <= 0.0 {
+            return Ok(());
+        }
+
+        let voices: Vec<Arc<SoundVoice>> = runtime
+            .active_sound_voices
+            .read()
+            .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?
+            .iter()
+            .cloned()
+            .collect();
+
+        let streams: Vec<Arc<MusicStream>> = runtime
+            .active_music_streams
+            .read()
+            .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?
+            .iter()
+            .cloned()
+            .collect();
+
+        let sfx_gain = runtime.bus_gain(BusKind::Sfx);
+
+        if sfx_gain > 0.0 {
+            for voice in voices {
+                if voice.state() == PlaybackState::Playing {
+                    voice.mix_into(output, master_gain * sfx_gain);
+                }
+            }
+        }
+
+        let music_gain = runtime.bus_gain(BusKind::Music);
+
+        if music_gain > 0.0 {
+            for stream in streams {
+                if stream.state() == PlaybackState::Playing {
+                    stream.mix_into(output, master_gain * music_gain);
+                }
+            }
+        }
+
+        for sample in output.iter_mut() {
+            *sample = sample.clamp(-1.0, 1.0);
+        }
+
+        Ok(())
+    }
+}
