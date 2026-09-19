@@ -3,7 +3,7 @@
 
 //! Shape utilities for the VMNL library.
 
-mod circle;
+mod ellipse;
 mod indexed;
 mod line;
 mod rect;
@@ -11,7 +11,7 @@ mod triangle;
 
 use super::{Drawable2D, GpuVertex2D, RenderItem2D, Vector2f, Vertex2D};
 use crate::common::{BlendMode, GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey};
-pub use circle::CircleBuilder;
+pub use ellipse::EllipseBuilder;
 pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
 pub use rect::{Anchor, RectBuilder};
@@ -20,8 +20,8 @@ pub use triangle::TriangleBuilder;
 /// Types of shape data that can be rendered in VMNL.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub(crate) enum ShapeKind {
-    /// Filled circle shape.
-    Circle,
+    /// Filled ellipse shape.
+    Ellipse,
     /// Raw vertex data without indices.
     RawVertices,
     /// Indexed geometry using vertex and index buffers.
@@ -87,8 +87,37 @@ impl Shape {
     /// # }
     /// ```
     #[must_use]
-    pub fn circle(radius: f32) -> CircleBuilder {
-        CircleBuilder::new(radius)
+    pub fn circle(radius: f32) -> EllipseBuilder {
+        EllipseBuilder::new(Vector2f {
+            x: radius,
+            y: radius,
+        })
+    }
+
+    /// Create a filled ellipse builder with a required radius.
+    ///
+    /// The ellipse center defaults to `(0, 0)` and its color defaults to white.
+    ///
+    /// # Arguments
+    /// - `radius`: Ellipse radius in pixel-like 2D coordinates.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::Shape;
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let ellipse = Shape::ellipse(50.0, 40.0).position(100.0, 120.0).build(&context)?;
+    /// # drop(ellipse);
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[must_use]
+    pub fn ellipse(radius_x: f32, radius_y: f32) -> EllipseBuilder {
+        EllipseBuilder::new(Vector2f {
+            x: radius_x,
+            y: radius_y,
+        })
     }
 
     pub(crate) fn blend_mode_from_vertices(vertices: &[Vertex2D]) -> BlendMode {
