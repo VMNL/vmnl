@@ -29,6 +29,8 @@ Treat `docs/` as the canonical home for stable architecture, contracts, and proc
 
 ## Route Agent References
 
+- Read [`../../references/module-design.md`](../../references/module-design.md) for a module
+  interface, crate boundary, facade, raw API, backend adapter, or FFI seam decision.
 - Read [`../../references/diagnostic-protocol.md`](../../references/diagnostic-protocol.md) for a
   bug, regression, incorrect result, crash, hang, or performance diagnosis.
 - Read [`references/current-limitations.md`](references/current-limitations.md) before changing context/device selection, GLFW initialization, 3D status, or GPU test routing.

@@ -22,6 +22,8 @@ applicable repository and domain instructions.
 3. Follow [`AGENTS.md`](../../../AGENTS.md) and its domain routing. For a feature, public API,
    architecture, module, or roadmap decision, read
    [`docs/architecture.md`](../../../docs/architecture.md).
+   For a module interface, crate boundary, facade, raw API, backend adapter, or FFI seam, also read
+   [`module-design.md`](../../references/module-design.md).
 4. Treat canonical documentation as intended contract and tests or implementation as evidence of
    current behavior. Report contradictions and their owner instead of silently resolving them.
 5. Mark claims as facts, assumptions, or unknowns. Cite the file, test, specification, measurement,

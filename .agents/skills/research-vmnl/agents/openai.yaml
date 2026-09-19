@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research VMNL"
+  short_description: "Research VMNL questions from primary sources"
+  default_prompt: "Use $research-vmnl to investigate this VMNL technical question from primary sources without changing the repository."

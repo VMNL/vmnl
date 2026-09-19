@@ -45,6 +45,9 @@ action.
 - For architecture, feature, public API, module, or roadmap changes, apply
   [`docs/architecture.md`](../../../docs/architecture.md), including progressive control, domain
   independence, ownership, lifecycle, threading, synchronization, cost, and error boundaries.
+- For a changed module interface, crate boundary, facade, raw API, backend adapter, or FFI seam,
+  read [`module-design.md`](../../references/module-design.md) and verify the concrete use case,
+  caller burden, retained control, locality, and validation boundary.
 - Report contradictions between documentation, tests, implementation, examples, and the request;
   identify the source that owns the unresolved decision.
 
@@ -61,8 +64,9 @@ action.
 
 ### Tests and validation evidence
 
-- Verify that each changed observable contract has a deterministic test at the lowest level that
-  exercises the real behavior.
+- Apply the test-design and evidence rules in [`docs/testing.md`](../../../docs/testing.md). Verify
+  that each changed observable contract has a deterministic test at the lowest level that exercises
+  the real behavior.
 - For fixes and performance regressions, read
   [`diagnostic-protocol.md`](../../references/diagnostic-protocol.md) and assess the reproducer,
   hypothesis evidence, regression seam, and remaining uncertainty.
