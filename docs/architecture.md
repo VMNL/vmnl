@@ -52,6 +52,10 @@ vmnl
 A future `full` feature may enable every stable domain. A headless audio or network client must not
 need Vulkan or GLFW solely because it uses the facade.
 
+The network domain uses a Rust API over an externally owned C backend. The backend is expected to
+be pinned as a Git submodule and is read-only from VMNL integration work. The boundary, ownership,
+and evidence requirements are defined in [`network_integration.md`](network_integration.md).
+
 ## Workspace
 
 The current workspace is defined in `Cargo.toml`.
@@ -92,6 +96,16 @@ application
       -> 3D scaffold
       -> raw Vulkan-facing API
       -> internal Vulkan/window backend
+```
+
+The planned network branch is independent:
+
+```text
+application
+  -> vmnl facade (network feature)
+    -> vmnl_network safe Rust API
+      -> private C FFI layer
+        -> pinned C backend
 ```
 
 ## Stable Contract Requirements

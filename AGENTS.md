@@ -54,6 +54,10 @@ Make the smallest coherent patch. Avoid unrelated refactors, renames, formatting
 
 New audio, network, scene, or interoperability surfaces must preserve the modular target in `docs/architecture.md`. Headless audio and network clients must not acquire graphics dependencies through the facade.
 
+The planned C network backend is a read-only integration dependency for agents. Agents may inspect
+its pinned headers, ABI documentation, tests, build metadata, and implementation while developing
+the Rust integration, but must not edit backend files or advance the pinned revision.
+
 Keep stable architecture, contracts, procedures, and status in `docs/`; public contracts in Rustdoc; and local `README.md` files as navigation.
 
 For every feature or fix, assess public Rustdoc, technical and user documentation, examples and inventories, documentation navigation, and user-visible release-note impact under `docs/deployment.md`. Before the first public release, do not create per-change changelog entries. After it, record only user-visible additions, changes, fixes, and deprecations. Update only surfaces whose contract, behavior, workflow, capability, limitation, or navigation changed. In the final report, state why no documentation update was required when none was made.
