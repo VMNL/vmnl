@@ -3,7 +3,99 @@
 
 //! Private boundary for GLFW diagnostics and platform-sensitive operations.
 
-use crate::VMNLErrorKind;
+use crate::{VMNLError, VMNLErrorKind, VMNLResult};
+use std::path::Path;
+
+pub(crate) mod joysticks;
+
+/// Prints an explicitly requested controller diagnostic, without changing mappings.
+/// This opt-in output uses stderr so example stdout filters do not hide it.
+#[allow(clippy::print_stderr)]
+pub(crate) fn print_gamepad_diagnostics(glfw: &glfw::Glfw) {
+    if std::env::var_os("VMNL_GAMEPAD_DIAGNOSTICS").is_none() {
+        return;
+    }
+    eprintln!(
+        "[gamepad diagnostic] mapping_file={:?}; VMNL reads all 16 slots",
+        std::env::var_os("VMNL_GAMEPAD_MAPPINGS")
+    );
+    let mut found = false;
+    for slot in 0..16 {
+        let Some(id) = glfw::JoystickId::from_i32(slot) else {
+            continue;
+        };
+        let joystick = glfw.get_joystick(id);
+        if !joystick.is_present() {
+            continue;
+        }
+        found = true;
+        let axes = joystick.get_axes();
+        let buttons = joystick.get_buttons();
+        let hat_count = joystick.get_hats().len();
+        eprintln!(
+            "[gamepad diagnostic] slot={} name={:?} GUID={:?} mapped={}",
+            slot + 1,
+            joystick.get_name(),
+            joystick.get_guid(),
+            joystick.is_gamepad()
+        );
+        eprintln!(
+            "[gamepad diagnostic] raw_axes count={} values={axes:?}",
+            axes.len()
+        );
+        eprintln!(
+            "[gamepad diagnostic] raw_buttons count={} values={buttons:?}",
+            buttons.len()
+        );
+        eprintln!("[gamepad diagnostic] raw_hat_count={hat_count} (button array may include hat directions)");
+        eprintln!(
+            "[gamepad diagnostic] mapped_state={:?}",
+            joystick.get_gamepad_state()
+        );
+    }
+    if !found {
+        eprintln!("[gamepad diagnostic] no controller present in any GLFW slot");
+    }
+}
+
+/// Loads an optional SDL-format mapping file once during context initialization.
+/// Mappings are GLFW-global and remain installed while GLFW stays initialized.
+pub(crate) fn configure_gamepad_mappings(glfw: &glfw::Glfw) -> VMNLResult<()> {
+    let Some(path) = std::env::var_os("VMNL_GAMEPAD_MAPPINGS") else {
+        return Ok(());
+    };
+    load_gamepad_mappings(Path::new(&path), |mappings| {
+        glfw.update_gamepad_mappings(mappings)
+    })
+}
+
+fn load_gamepad_mappings(path: &Path, apply: impl FnOnce(&str) -> bool) -> VMNLResult<()> {
+    let mappings = std::fs::read_to_string(path).map_err(|error| {
+        VMNLError::new(VMNLErrorKind::InvalidState(format!(
+            "cannot read gamepad mappings from {}: {error}",
+            path.display()
+        )))
+    })?;
+    apply_gamepad_mappings(&mappings, apply)
+}
+
+pub(crate) fn apply_gamepad_mappings(
+    mappings: &str,
+    apply: impl FnOnce(&str) -> bool,
+) -> VMNLResult<()> {
+    // The GLFW Rust wrapper converts the input to a C string and cannot accept NUL bytes.
+    if mappings.contains('\0') || !mappings.is_ascii() {
+        return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+            "gamepad mappings must contain ASCII text without NUL bytes".into(),
+        )));
+    }
+    if !apply(mappings) {
+        return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+            "GLFW rejected gamepad mappings".into(),
+        )));
+    }
+    Ok(())
+}
 
 pub(crate) fn init(
     callback: impl FnMut(glfw::Error, String) + 'static,
@@ -77,6 +169,21 @@ mod tests {
     use crate::VMNLErrorKind;
 
     #[test]
+    fn runtime_mapping_validation_precedes_backend_and_reports_rejection() {
+        for invalid in ["bad\0mapping", "non-ASCII: é"] {
+            let mut called = false;
+            assert!(super::apply_gamepad_mappings(invalid, |_| {
+                called = true;
+                true
+            })
+            .is_err());
+            assert!(!called);
+        }
+        assert!(super::apply_gamepad_mappings("mapping", |text| text == "mapping").is_ok());
+        assert!(super::apply_gamepad_mappings("mapping", |_| false).is_err());
+    }
+
+    #[test]
     fn maps_glfw_errors_to_vmnl_categories() {
         let cases = [
             (
@@ -138,5 +245,38 @@ mod tests {
             callback_message(glfw::Error::Unknown(-42), "details".to_owned()),
             "GLFW unknown error -42: details"
         );
+    }
+    #[test]
+    fn mapping_file_is_read_once_and_backend_rejection_is_reported() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../examples/window/events_input/gamecontrollerdb.txt");
+        let mut calls = 0;
+        let result = super::load_gamepad_mappings(&path, |text| {
+            calls += 1;
+            text.lines()
+                .any(|line| line.starts_with("030000005e0400008e02000045050000,"))
+        });
+        assert!(result.is_ok());
+        assert_eq!(calls, 1);
+        assert!(super::load_gamepad_mappings(&path, |_| false).is_err());
+        assert!(super::load_gamepad_mappings(&path.join("missing"), |_| true).is_err());
+    }
+
+    #[test]
+    fn invalid_mapping_text_is_rejected_before_glfw() -> std::io::Result<()> {
+        let path =
+            std::env::temp_dir().join(format!("vmnl-invalid-mapping-{}.txt", std::process::id()));
+        for text in ["bad\0mapping", "non-ASCII: é"] {
+            std::fs::write(&path, text)?;
+            let mut called = false;
+            let result = super::load_gamepad_mappings(&path, |_| {
+                called = true;
+                true
+            });
+            assert!(result.is_err());
+            assert!(!called);
+        }
+        std::fs::remove_file(path)?;
+        Ok(())
     }
 }

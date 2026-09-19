@@ -96,6 +96,9 @@ fn main() -> ExitCode {
 
     let value = match operation.as_str() {
         "create" => json!(true),
+        "gamepad-mapping" => json!(glfw.update_gamepad_mappings(include_str!(
+            "../../../../examples/window/events_input/gamecontrollerdb.txt"
+        ))),
         "set-position" => {
             window.set_pos(37, 41);
             Value::Null

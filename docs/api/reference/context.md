@@ -13,6 +13,9 @@ Import path: `vmnl::Context`. Status: experimental, operational Vulkan context.
 | Member | Contract |
 |---|---|
 | `Context::new()` | Initialize Vulkan state and return `VMNLResult<Context>`. |
+| `Context::with_joystick_options(options)` | Explicit `JoystickOptions { hat_buttons }`; default true. |
+| `joystick_options()` | Inspect the resolved initialization policy. |
+| `update_gamepad_mappings(text)` | Add/replace SDL mappings at runtime; refresh input at the next poll. |
 | `Clone` | Clone the single-threaded shared owner; it does not create another device. |
 
 ## Construction, defaults, and validation
@@ -54,3 +57,30 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Related: [`WindowBuilder`](window/window_builder.md), [`BufferMemoryPreference`](common/buffer_memory_preference.md), and [`VMNLResult`](errors/vmnl_result.md).
+
+## Optional gamepad mappings
+
+Before constructing a context, set `VMNL_GAMEPAD_MAPPINGS` to an ASCII SDL-format
+mapping file to supplement GLFW's built-in mappings. Relative paths use the working
+directory. Loading happens once per context creation, before Vulkan device setup,
+and can allocate CPU memory and read the filesystem. No environment variable means
+no additional file access. Mappings affect all contexts sharing GLFW until it terminates.
+Unreadable files, NUL/non-ASCII text, and parser rejection return `InvalidState`.
+See [mapping troubleshooting](../../troubleshooting.md#joystick-connected-but-sticks-do-not-respond).
+
+## Joystick initialization
+
+Runtime mapping text uses the same ASCII/no-NUL validation and may allocate. Changes
+are GLFW-global, not per window. A rejected multi-line batch is not transactional;
+GLFW may already have accepted some entries. There is no mapping-removal API.
+
+`JoystickOptions::default()` includes synthetic hat buttons in raw button arrays.
+Use `Context::with_joystick_options(JoystickOptions { hat_buttons: false })` to
+disable them; hats remain readable separately, and mapped input is unaffected.
+Options must agree across all live contexts, otherwise initialization returns
+`InvalidState`. Drop all contexts and dependent windows/resources before changing
+them. Inspect the resolved choice with `context.joystick_options()`.
+
+Contexts share the private joystick callback registration; each window owns its
+own notification queue. VMNL must own GLFW initialization on the main thread;
+mixing another GLFW client or overwriting the joystick callback is unsupported.

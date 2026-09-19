@@ -1,0 +1,5 @@
+# Xbox 360 Linux mapping adapted to the GUID reported by the VMNL diagnostic.
+# Layout source: SDL_GameControllerDB Linux Xbox 360 Controller entries
+# https://github.com/mdqinc/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt
+# Axes 0/1 were observed moving; axes 3/4 and click buttons 9/10 still need hardware verification.
+030000005e0400008e02000045050000,Microsoft X-Box 360 pad,leftx:a0,lefty:a1,rightx:a3,righty:a4,leftstick:b9,rightstick:b10,platform:Linux,

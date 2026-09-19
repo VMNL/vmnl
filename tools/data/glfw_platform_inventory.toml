@@ -25,8 +25,8 @@ c_symbol = "glfwInitHint"
 rust_wrappers = ["glfw::init_hint", "glfw::ffi::glfwInitHint"]
 category = "initialization"
 introduced = "3.3"
-vmnl_usage = []
-backends = [{ name = "wayland", status = "conditional", conditions = "Hint is set before initialization; the probe disables libdecor and Weston is nested under Xvfb to supply an input seat.", behavior = "Selects the Wayland backend and decoration strategy used by the next initialization.", errors = ["GLFW_INVALID_ENUM", "GLFW_INVALID_VALUE"], sentinel = "No-op for invalid hint", source = "https://www.glfw.org/docs/3.4/group__init.html" }, { name = "x11-win32-cocoa-null", status = "supported", conditions = "A valid platform hint is set before initialization.", behavior = "Selects the requested compiled backend.", errors = ["GLFW_INVALID_ENUM", "GLFW_INVALID_VALUE"], sentinel = "No-op for invalid hint", source = "https://www.glfw.org/docs/3.4/group__init.html" }]
+vmnl_usage = ["Context::with_joystick_options"]
+backends = [{ name = "all", status = "unverified", conditions = "JOYSTICK_HAT_BUTTONS is set before first VMNL initialization; active contexts must agree.", behavior = "Configures synthetic hat buttons in raw button arrays; hat arrays remain available.", errors = ["GLFW_INVALID_ENUM", "GLFW_INVALID_VALUE"], sentinel = "No-op after initialization", source = "https://www.glfw.org/docs/3.4/intro_guide.html#init_hints" }, { name = "wayland", status = "conditional", conditions = "Hint is set before initialization; the probe disables libdecor and Weston is nested under Xvfb to supply an input seat.", behavior = "Selects the Wayland backend and decoration strategy used by the next initialization.", errors = ["GLFW_INVALID_ENUM", "GLFW_INVALID_VALUE"], sentinel = "No-op for invalid hint", source = "https://www.glfw.org/docs/3.4/group__init.html" }, { name = "x11-win32-cocoa-null", status = "supported", conditions = "A valid platform hint is set before initialization.", behavior = "Selects the requested compiled backend.", errors = ["GLFW_INVALID_ENUM", "GLFW_INVALID_VALUE"], sentinel = "No-op for invalid hint", source = "https://www.glfw.org/docs/3.4/group__init.html" }]
 proofs = ["test:platform_probe backend_requested/backend_actual", "justification:Weston is nested under Xvfb because GLFW 3.4.0 initialization requires wl_seat"]
 
 [[function]]
@@ -732,3 +732,108 @@ vmnl_usage = ["internal Vulkan surface creation"]
 public_api = []
 backends = [{ name = "wayland", status = "conditional", conditions = "Wayland backend is active and the window is live.", behavior = "Returns the wl_surface pointer consumed by raw-window-handle.", errors = ["GLFW_PLATFORM_UNAVAILABLE"], sentinel = "null surface on error", source = "https://www.glfw.org/docs/3.4/group__native.html" }]
 proofs = ["test:tests/gpu surface creation on Wayland", "justification:platform probe deliberately creates no surface"]
+
+[[function]]
+c_symbol = "glfwJoystickPresent"
+rust_wrappers = ["Joystick::is_present"]
+category = "input"
+introduced = "3.0"
+vmnl_usage = ["Window::poll_events"]
+backends = [{ name = "all", status = "unverified", conditions = "GLFW initialized; valid slot queried on the main thread. Physical device behavior has not been qualified on native backends.", behavior = "Reports joystick presence independently of gamepad mapping; VMNL compares samples for all 16 slots.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "GLFW_FALSE when absent", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:joysticks::tests::presence_transitions_do_not_require_mapping_or_repeat", "justification:Deterministic tests cover sampled presence transitions; physical hotplug requires a controller and native backend and remains unverified."]
+
+[[function]]
+c_symbol = "glfwGetGamepadState"
+rust_wrappers = ["Joystick::get_gamepad_state"]
+category = "input"
+introduced = "3.3"
+vmnl_usage = ["Window::poll_events"]
+backends = [{ name = "all", status = "unverified", conditions = "GLFW initialized; valid slot queried on the main thread. Device has a gamepad mapping. Native controller behavior has not been qualified.", behavior = "Reads mapped axes and buttons; VMNL preserves all 15 mapped buttons and 6 axes in all 16 slots.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "GLFW_FALSE when absent, unmapped, or on error; Rust wrapper returns None", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:joysticks::tests::mapped_sticks_and_thumb_buttons_are_independent", "test:joysticks::tests::mapping_changes_do_not_emit_connection_events", "justification:Deterministic synthetic gamepad samples validate VMNL conversion; real controller and native backend behavior remain unverified."]
+
+[[function]]
+c_symbol = "glfwUpdateGamepadMappings"
+rust_wrappers = ["Glfw::update_gamepad_mappings"]
+category = "input"
+introduced = "3.3"
+vmnl_usage = ["Context::new", "Context::update_gamepad_mappings"]
+backends = [{ name = "all", status = "conditional", conditions = "GLFW initialized and called on its main thread; mapping platform and GUID must match the device.", behavior = "Parses SDL gamepad mappings; VMNL reads optional VMNL_GAMEPAD_MAPPINGS at context creation and exposes runtime additions/replacements. Acceptance alone does not prove device recognition.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_VALUE"], sentinel = "GLFW_FALSE on parser error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:native_window::null_backend_accepts_xbox360_mapping_without_a_controller", "test:glfw_backend::tests::mapping_file_is_read_once_and_backend_rejection_is_reported", "justification:Parser acceptance is tested on Null; right-stick axes and click layout require physical controller verification."]
+
+[[function]]
+c_symbol = "glfwGetJoystickAxes"
+rust_wrappers = ["Joystick::get_axes"]
+category = "input"
+introduced = "3.0"
+vmnl_usage = ["Window::poll_events", "glfw_backend::print_gamepad_diagnostics"]
+public_api = ["Window::poll_events"]
+backends = [{ name = "all", status = "unverified", conditions = "GLFW initialized; valid slot queried on the main thread.", behavior = "Raw axis values; null when absent or on error.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "Empty or unavailable value on failure", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:joysticks::tests::raw_conversion_preserves_axes_buttons_and_all_hat_directions", "test:joysticks::tests::raw_input_survives_mapping_loss_and_clears_on_disconnect_and_reset", "justification:Conversion uses synthetic samples; physical controller/backend behavior remains unverified."]
+
+[[function]]
+c_symbol = "glfwGetJoystickButtons"
+rust_wrappers = ["Joystick::get_buttons"]
+category = "input"
+introduced = "2.2"
+vmnl_usage = ["Window::poll_events", "glfw_backend::print_gamepad_diagnostics"]
+public_api = ["Window::poll_events"]
+backends = [{ name = "all", status = "unverified", conditions = "GLFW initialized; valid slot queried on the main thread.", behavior = "Raw buttons, possibly including synthesized hat directions; null when absent or on error.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "Empty or unavailable value on failure", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:joysticks::tests::raw_conversion_preserves_axes_buttons_and_all_hat_directions", "test:joysticks::tests::raw_input_survives_mapping_loss_and_clears_on_disconnect_and_reset", "justification:Conversion uses synthetic samples; physical controller/backend behavior remains unverified."]
+
+[[function]]
+c_symbol = "glfwGetJoystickHats"
+rust_wrappers = ["Joystick::get_hats"]
+category = "input"
+introduced = "3.3"
+vmnl_usage = ["Window::poll_events", "glfw_backend::print_gamepad_diagnostics"]
+public_api = ["Window::poll_events"]
+backends = [{ name = "all", status = "unverified", conditions = "GLFW initialized; valid slot queried on the main thread.", behavior = "Hat states; null when absent or on error.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "Empty or unavailable value on failure", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:joysticks::tests::raw_conversion_preserves_axes_buttons_and_all_hat_directions", "test:joysticks::tests::raw_input_survives_mapping_loss_and_clears_on_disconnect_and_reset", "justification:Conversion uses synthetic samples; physical controller/backend behavior remains unverified."]
+
+[[function]]
+c_symbol = "glfwGetJoystickName"
+rust_wrappers = ["Joystick::get_name"]
+category = "input"
+introduced = "3.0"
+vmnl_usage = ["Window::poll_events", "glfw_backend::print_gamepad_diagnostics"]
+public_api = ["Window::poll_events"]
+backends = [{ name = "all", status = "unverified", conditions = "GLFW initialized; valid slot queried on the main thread.", behavior = "Device name or null when absent or on error.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "Empty or unavailable value on failure", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:joysticks::tests::metadata_and_application_data_follow_device_lifetime", "justification:Metadata storage uses synthetic samples; physical device readout remains unverified."]
+
+[[function]]
+c_symbol = "glfwGetJoystickGUID"
+rust_wrappers = ["Joystick::get_guid"]
+category = "input"
+introduced = "3.3"
+vmnl_usage = ["Window::poll_events", "glfw_backend::print_gamepad_diagnostics"]
+public_api = ["Window::poll_events"]
+backends = [{ name = "all", status = "unverified", conditions = "GLFW initialized; valid slot queried on the main thread.", behavior = "Device mapping GUID or null when absent or on error.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "Empty or unavailable value on failure", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:joysticks::tests::metadata_and_application_data_follow_device_lifetime", "justification:Metadata storage uses synthetic samples; physical device readout remains unverified."]
+
+[[function]]
+c_symbol = "glfwJoystickIsGamepad"
+rust_wrappers = ["Joystick::is_gamepad"]
+category = "input"
+introduced = "3.3"
+vmnl_usage = ["Window::poll_events", "glfw_backend::print_gamepad_diagnostics"]
+public_api = ["Window::poll_events"]
+backends = [{ name = "all", status = "unverified", conditions = "GLFW initialized; valid slot queried on the main thread.", behavior = "True only for a present device with a valid applicable mapping.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "Empty or unavailable value on failure", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:joysticks::tests::metadata_and_application_data_follow_device_lifetime", "justification:Metadata storage uses synthetic samples; physical device readout remains unverified."]
+
+[[function]]
+c_symbol = "glfwGetGamepadName"
+rust_wrappers = ["Joystick::get_gamepad_name"]
+category = "input"
+introduced = "3.3"
+vmnl_usage = ["Window::poll_events"]
+backends = [{ name = "all", status = "unverified", conditions = "A present device with an applicable mapping; main thread.", behavior = "Returns the mapping name, copied into VMNL metadata.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "None without a mapped device", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:joysticks::tests::metadata_and_application_data_follow_device_lifetime", "justification:Physical controller metadata requires hardware and remains unverified."]
+
+[[function]]
+c_symbol = "glfwSetJoystickCallback"
+rust_wrappers = ["Glfw::set_joystick_callback"]
+category = "input"
+introduced = "3.2"
+vmnl_usage = ["Context::with_joystick_options", "Window::poll_events"]
+backends = [{ name = "all", status = "unverified", conditions = "GLFW initialized on the main thread; VMNL owns callback registration.", behavior = "Queues every reported identified connection transition independently for each live window.", errors = ["GLFW_NOT_INITIALIZED"], sentinel = "No notifications for physical transitions the backend does not observe", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:callbacks_preserve_intermediate_transitions_for_each_window", "test:queued_connections_are_not_duplicated_and_disconnect_clears_data", "justification:Queue semantics use synthetic notifications; physical hotplug remains unverified."]

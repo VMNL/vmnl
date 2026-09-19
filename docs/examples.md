@@ -41,3 +41,12 @@ just build raw_pipeline
 3. Depend on `vmnl` through `path = "../../crates/vmnl"`.
 4. Add a row to `examples/README.md`.
 5. Keep the example runnable through `just run <name>`.
+
+## Gamepad input check
+
+`just run window_events_input` prints multi-device controller presence, stick click, and
+movement events with original axes and magnitude, plus raw axes/buttons/hats for
+mapped and unmapped devices. It also prints metadata and complete mapped button/axis
+snapshots. Follow the [joystick input procedure](api/reference/window/input/joysticks.md)
+for a manual check. The example requires a working display, Vulkan, and a mapped
+controller for stick input; it does not automatically validate controller behavior.

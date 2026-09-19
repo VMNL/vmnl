@@ -125,6 +125,7 @@ impl VMNLWindow {
         let window: Self = Self {
             handle: WindowHandle {
                 instance: glfw,
+                joystick_connections: vmnl_instance.joysticks.subscribe(),
                 vmnl_instance,
                 context: window,
                 events,

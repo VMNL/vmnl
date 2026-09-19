@@ -7,7 +7,10 @@
 //! such as resizing, key presses, mouse movements, and more. The `EventQueue` struct
 //! polls events from GLFW and translates them into VMNL-specific events.
 
-use super::{Key as VMNLKey, KeyboardState, MouseButton as VMNLMouseButton, MouseState};
+use super::{
+    Joystick as VMNLJoystick, Key as VMNLKey, KeyboardState, MouseButton as VMNLMouseButton,
+    MouseState,
+};
 
 /// The `Event` enum represents the different types of events that can occur in the VMNL application.
 ///
@@ -73,6 +76,88 @@ pub enum Event {
         dx: f64,
         /// Scroll offset in the y-direction.
         dy: f64,
+    },
+    /// The identified GLFW slot changed from absent to present, mapped or not.
+    ///
+    /// GLFW callback notifications are queued independently per window. A device
+    /// already present on the first poll also emits this event. Notifications
+    /// preserve backend order; unreported physical changes cannot be reconstructed.
+    JoystickConnected {
+        /// Device slot whose presence changed.
+        id: crate::JoystickId,
+    },
+    /// The identified GLFW slot changed from present to absent.
+    ///
+    /// Emitted before click releases and stick centering for the same poll.
+    /// Losing only the gamepad mapping does not emit this event.
+    JoystickDisconnected {
+        /// Device slot whose presence changed.
+        id: crate::JoystickId,
+    },
+    /// A stick click button was pressed.
+    ///
+    /// Emitted by `Window::poll_events` for the mapped gamepad in the identified GLFW slot.
+    JoystickButtonPressed {
+        /// Device slot that produced this event.
+        id: crate::JoystickId,
+        /// The pressed control: `JoystickLeftButton` or `JoystickRightButton`.
+        /// Direction variants are not button controls; construction does not enforce this.
+        joystick: VMNLJoystick,
+    },
+    /// A stick click button was released.
+    ///
+    /// Emitted by `Window::poll_events` for the mapped gamepad in the identified GLFW slot.
+    JoystickButtonReleased {
+        /// Device slot that produced this event.
+        id: crate::JoystickId,
+        /// The released control: `JoystickLeftButton` or `JoystickRightButton`.
+        /// Direction variants are not button controls; construction does not enforce this.
+        joystick: VMNLJoystick,
+    },
+    /// A stick axis sample changed, including magnitude changes and dead-zone motion.
+    ///
+    /// Consecutive axis samples are compared bitwise, including signed zero and NaN
+    /// payloads. Identical samples emit no event. Losing the mapped gamepad returns
+    /// axes to zero and direction to `None`. Applications can filter these events.
+    ///
+    /// Emitted by `Window::poll_events` for the mapped gamepad in the identified GLFW slot.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::{Event, Joystick};
+    ///
+    /// let moved = Event::JoystickMoved {
+    ///     id: vmnl_graphics::JoystickId::Slot1,
+    ///     axes: [0.0, -1.0],
+    ///     joystick: Joystick::JoystickLeft { degrees: Some(90.0) },
+    /// };
+    /// let centered = Event::JoystickMoved {
+    ///     id: vmnl_graphics::JoystickId::Slot1,
+    ///     axes: [0.0, 0.0],
+    ///     joystick: Joystick::JoystickRight { degrees: None },
+    /// };
+    /// if let Event::JoystickMoved {
+    ///     joystick: Joystick::JoystickLeft { degrees },
+    ///     ..
+    /// } = moved {
+    ///     assert_eq!(degrees, Some(90.0));
+    /// }
+    /// assert!(matches!(centered, Event::JoystickMoved {
+    ///     joystick: Joystick::JoystickRight { degrees: None },
+    ///     ..
+    /// }));
+    /// ```
+    JoystickMoved {
+        /// Device slot that produced this event.
+        id: crate::JoystickId,
+        /// The left or right direction variant carrying the new angle in `[0, 360)`.
+        /// Uses the selected stick's configured zero direction and rotation sense.
+        /// `None` means inside the configured dead zone or a non-finite axis sample.
+        /// Button variants and invalid angles are not rejected by construction.
+        joystick: VMNLJoystick,
+        /// Original mapped X/Y axes: right/down positive, normally in `[-1, 1]` each.
+        /// Preserved without filtering or clamping, including non-finite samples.
+        axes: [f32; 2],
     },
     /// Text input event containing the input character.
     Text(char),
