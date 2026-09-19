@@ -10,6 +10,21 @@ use super::VMNLInstance;
 use crate::VMNLResult;
 use std::rc::Rc;
 
+/// GLFW joystick initialization policy, shared by every live VMNL context.
+/// Changing it requires dropping all contexts and their windows/resources first.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct JoystickOptions {
+    /// Include synthesized hat-direction buttons in raw button arrays (default true).
+    /// Raw hats remain available when false. Mapped controls are unaffected.
+    pub hat_buttons: bool,
+}
+
+impl Default for JoystickOptions {
+    fn default() -> Self {
+        Self { hat_buttons: true }
+    }
+}
+
 /// `Context` is the main struct of the VMNL library, representing the core Vulkan context.
 ///
 /// It is responsible for initializing and managing the Vulkan resources required for rendering operations
@@ -86,8 +101,39 @@ impl Context {
     /// # }
     /// ```
     pub fn new() -> VMNLResult<Self> {
+        Self::with_joystick_options(JoystickOptions::default())
+    }
+
+    /// Initializes a context with explicit joystick options; other policies match `new`.
+    /// Must run on GLFW's main thread. VMNL must own GLFW initialization; mixing an
+    /// independently initialized GLFW client or replacing its joystick callback is unsupported.
+    ///
+    /// # Errors
+    /// Returns `InvalidState` for options conflicting with an existing VMNL context.
+    /// Other errors and allocation/GPU costs are the same as [`Self::new`].
+    pub fn with_joystick_options(options: JoystickOptions) -> VMNLResult<Self> {
         Ok(Self {
-            inner: Rc::new(VMNLInstance::new()?),
+            inner: Rc::new(VMNLInstance::new(options)?),
+        })
+    }
+
+    /// Returns the resolved joystick initialization options without backend calls.
+    #[must_use]
+    pub fn joystick_options(&self) -> JoystickOptions {
+        self.inner.joysticks.options
+    }
+
+    /// Adds or replaces SDL-format gamepad mappings at runtime, on GLFW's main thread.
+    /// Affects every context/window sharing GLFW until termination. Snapshots refresh
+    /// on the next window poll. May allocate CPU memory; performs no GPU work.
+    /// Acceptance does not guarantee a device match; GLFW does not provide transactional
+    /// rollback for a partially accepted batch or a mapping-removal operation.
+    ///
+    /// # Errors
+    /// NUL/non-ASCII text is rejected before GLFW; backend rejection returns `InvalidState`.
+    pub fn update_gamepad_mappings(&self, mappings: &str) -> VMNLResult<()> {
+        crate::glfw_backend::apply_gamepad_mappings(mappings, |text| {
+            self.inner.glfw.update_gamepad_mappings(text)
         })
     }
 }

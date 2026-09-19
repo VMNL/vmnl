@@ -6,8 +6,15 @@
 | struct | `vmnl::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.Context.html) |
 | enum | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/enum.Event.html) |
 | struct | `vmnl::FrameRenderer` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [Rustdoc](../../../target/doc/vmnl/struct.FrameRenderer.html) |
+| enum | `vmnl::GamepadAxis` | [GamepadAxis](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.GamepadAxis.html) |
+| enum | `vmnl::GamepadButton` | [GamepadButton](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.GamepadButton.html) |
+| struct | `vmnl::GamepadState` | [GamepadState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.GamepadState.html) |
+| enum | `vmnl::HatState` | [HatState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.HatState.html) |
 | struct | `vmnl::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl/struct.Input.html) |
 | enum | `vmnl::Joystick` | [Joystick](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.Joystick.html) |
+| enum | `vmnl::JoystickId` | [JoystickId](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.JoystickId.html) |
+| struct | `vmnl::JoystickInfo` | [JoystickInfo](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickInfo.html) |
+| struct | `vmnl::JoystickOptions` | [JoystickOptions](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickOptions.html) |
 | struct | `vmnl::JoystickState` | [JoystickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickState.html) |
 | enum | `vmnl::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl/enum.Key.html) |
 | struct | `vmnl::KeyboardState` | [KeyboardState](../reference/window/input/keyboard_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.KeyboardState.html) |
@@ -16,6 +23,7 @@
 | enum | `vmnl::MouseButton` | [MouseButton](../reference/window/input/mouse_button.md) | [Rustdoc](../../../target/doc/vmnl/enum.MouseButton.html) |
 | struct | `vmnl::MouseState` | [MouseState](../reference/window/input/mouse_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.MouseState.html) |
 | enum | `vmnl::PresentMode` | [PresentMode](../reference/window/present_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.PresentMode.html) |
+| struct | `vmnl::RawJoystickState` | [RawJoystickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.RawJoystickState.html) |
 | enum | `vmnl::RenderMode` | [RenderMode](../reference/window/rendering/render_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.RenderMode.html) |
 | struct | `vmnl::StickSettings` | [StickSettings](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickSettings.html) |
 | struct | `vmnl::StickState` | [StickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickState.html) |

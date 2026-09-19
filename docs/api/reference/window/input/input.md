@@ -6,12 +6,13 @@ Import path: `vmnl::Input`. Status: experimental, operational.
 
 ## Purpose and use cases
 
-Groups keyboard, mouse, and slot-1 joystick state updated by `Window::poll_events`.
+Groups keyboard, mouse, and multi-device joystick state updated by `Window::poll_events`.
 
 ## Public API
 
 `new()`, `keyboard() -> &KeyboardState`, `mouse() -> &MouseState`, and
-`joystick() -> &JoystickState`, and `set_stick_settings(joystick, settings) -> VMNLResult<()>`.
+`joystick(id: JoystickId) -> &JoystickState`, and `set_stick_settings(id, joystick, settings) -> VMNLResult<()>`.
+`joystick_mut(id)` allows settings, reset, and typed application data.
 `Default` delegates to `new`. Stick settings and validation are described in [joystick input](joysticks.md).
 
 ## Construction, defaults, and validation
@@ -34,14 +35,16 @@ Construction/accessors are infallible. Invalid stick settings return `InvalidSta
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-Fixed-size CPU state; no heap allocation or GPU work.
+Construction starts with empty raw vectors. Raw polling may allocate vectors;
+getters borrow stored state without allocation. No GPU work is performed by input sampling.
 
 ## Platform, Vulkan, and display constraints
 
 Keyboard/mouse state depends on enabled polling, platform focus, and processed events.
-Joystick sampling is independent of those polling flags. Only GLFW slot 1 is
+Joystick sampling is independent of those polling flags. All 16 GLFW slots are
 tracked; sticks require a gamepad mapping. Presence does not require a mapping.
-Other gamepad buttons, triggers, and additional device slots are not exposed.
+All raw axes, buttons, and hats are available without a mapping. Complete mapped
+buttons and axes are available through `gamepad()` when a mapping exists.
 
 ## Example and related types
 

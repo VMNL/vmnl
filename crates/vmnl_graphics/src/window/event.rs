@@ -77,28 +77,39 @@ pub enum Event {
         /// Scroll offset in the y-direction.
         dy: f64,
     },
-    /// GLFW slot 1 changed from absent to present, whether mapped as a gamepad or not.
+    /// The identified GLFW slot changed from absent to present, mapped or not.
     ///
-    /// A device already present on the first poll also emits this event. Presence
-    /// is sampled during `Window::poll_events`; changes between polls can be missed.
-    JoystickConnected,
-    /// GLFW slot 1 changed from present to absent.
+    /// GLFW callback notifications are queued independently per window. A device
+    /// already present on the first poll also emits this event. Notifications
+    /// preserve backend order; unreported physical changes cannot be reconstructed.
+    JoystickConnected {
+        /// Device slot whose presence changed.
+        id: crate::JoystickId,
+    },
+    /// The identified GLFW slot changed from present to absent.
     ///
     /// Emitted before click releases and stick centering for the same poll.
     /// Losing only the gamepad mapping does not emit this event.
-    JoystickDisconnected,
+    JoystickDisconnected {
+        /// Device slot whose presence changed.
+        id: crate::JoystickId,
+    },
     /// A stick click button was pressed.
     ///
-    /// Emitted by `Window::poll_events` for the mapped gamepad in GLFW slot 1.
+    /// Emitted by `Window::poll_events` for the mapped gamepad in the identified GLFW slot.
     JoystickButtonPressed {
+        /// Device slot that produced this event.
+        id: crate::JoystickId,
         /// The pressed control: `JoystickLeftButton` or `JoystickRightButton`.
         /// Direction variants are not button controls; construction does not enforce this.
         joystick: VMNLJoystick,
     },
     /// A stick click button was released.
     ///
-    /// Emitted by `Window::poll_events` for the mapped gamepad in GLFW slot 1.
+    /// Emitted by `Window::poll_events` for the mapped gamepad in the identified GLFW slot.
     JoystickButtonReleased {
+        /// Device slot that produced this event.
+        id: crate::JoystickId,
         /// The released control: `JoystickLeftButton` or `JoystickRightButton`.
         /// Direction variants are not button controls; construction does not enforce this.
         joystick: VMNLJoystick,
@@ -109,17 +120,19 @@ pub enum Event {
     /// payloads. Identical samples emit no event. Losing the mapped gamepad returns
     /// axes to zero and direction to `None`. Applications can filter these events.
     ///
-    /// Emitted by `Window::poll_events` for the mapped gamepad in GLFW slot 1.
+    /// Emitted by `Window::poll_events` for the mapped gamepad in the identified GLFW slot.
     ///
     /// # Example
     /// ```rust
     /// use vmnl_graphics::{Event, Joystick};
     ///
     /// let moved = Event::JoystickMoved {
+    ///     id: vmnl_graphics::JoystickId::Slot1,
     ///     axes: [0.0, -1.0],
     ///     joystick: Joystick::JoystickLeft { degrees: Some(90.0) },
     /// };
     /// let centered = Event::JoystickMoved {
+    ///     id: vmnl_graphics::JoystickId::Slot1,
     ///     axes: [0.0, 0.0],
     ///     joystick: Joystick::JoystickRight { degrees: None },
     /// };
@@ -135,6 +148,8 @@ pub enum Event {
     /// }));
     /// ```
     JoystickMoved {
+        /// Device slot that produced this event.
+        id: crate::JoystickId,
         /// The left or right direction variant carrying the new angle in `[0, 360)`.
         /// Uses the selected stick's configured zero direction and rotation sense.
         /// `None` means inside the configured dead zone or a non-finite axis sample.

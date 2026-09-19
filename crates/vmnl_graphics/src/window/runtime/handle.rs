@@ -50,6 +50,7 @@ pub(crate) struct WindowHandle {
     pub(crate) events: EventQueue,
     /// Input state manager for keyboard and mouse events.
     pub(crate) input: Input,
+    pub(crate) joystick_connections: crate::glfw_backend::joysticks::ConnectionQueue,
 }
 
 impl VMNLWindow {
@@ -64,7 +65,10 @@ impl VMNLWindow {
         self.handle.instance.poll_events();
         self.handle.input.update(&self.handle.context);
         let mut events: Vec<Event> = self.handle.events.poll_events();
-        self.handle.input.joystick().append_events(&mut events);
+        let connections = std::mem::take(&mut *self.handle.joystick_connections.borrow_mut());
+        self.handle
+            .input
+            .append_joystick_events(&mut events, &connections);
         if events.iter().any(|event| {
             matches!(
                 event,
@@ -84,10 +88,11 @@ impl VMNLWindow {
 
     pub(crate) fn set_stick_settings(
         &mut self,
+        id: crate::JoystickId,
         joystick: crate::Joystick,
         settings: crate::StickSettings,
     ) -> crate::VMNLResult<()> {
-        self.handle.input.set_stick_settings(joystick, settings)
+        self.handle.input.set_stick_settings(id, joystick, settings)
     }
 
     /// Internal implementation backing `Window::wait_events`.

@@ -59,6 +59,12 @@ If headless tests pass and GPU tests cannot create a window, the failure is envi
 
 ## Joystick Connected but Sticks Do Not Respond
 
+After polling, inspect `window.input().joystick(id).info()` for the device name,
+GUID, and mapping status, and `raw()` for unmapped input. Mappings can also be
+added/replaced at runtime using `context.update_gamepad_mappings(text)?`; check
+`gamepad()` again after the next poll. The GUID identifies the mapping class, not
+a unique physical controller.
+
 If GLFW reports joystick presence and changing raw axes but `is_gamepad()` is
 false, the device lacks a matching gamepad mapping. Set `VMNL_GAMEPAD_MAPPINGS`
 to an ASCII SDL mapping file before creating `Context`. VMNL reads it once during
@@ -101,5 +107,5 @@ P produces no extra diagnostic output.
 GLFW can parse a mapping file successfully yet reject its application to a device
 if its GUID/platform differs or referenced controls exceed that device's axes or
 buttons. The raw button array may include synthesized hat directions. Compare
-raw and mapped samples before changing any mapping indices. VMNL still consumes
-only slot 1 even though this diagnostic reports all present slots.
+raw and mapped samples before changing any mapping indices. VMNL consumes
+all 16 slots, matching the devices reported by this diagnostic.

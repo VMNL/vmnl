@@ -12,20 +12,22 @@ Represents the subset of GLFW events VMNL translates for client event loops. Der
 
 Variants: `Closed`, `FocusGained`, `FocusLost`, `Resized { width, height }`, `FramebufferResized { width, height }`, `KeyPressed { key, repeat }`, `KeyReleased { key }`, `MouseMoved { x, y }`, `MouseEntered`, `MouseLeft`, `MouseButtonPressed { button }`, `MouseButtonReleased { button }`, `MouseScrolled { dx, dy }`, and `Text(char)`. All named variant fields are public through pattern matching.
 
-Joystick integration also declares `JoystickConnected`, `JoystickDisconnected`,
-`JoystickButtonPressed { joystick }`, `JoystickButtonReleased { joystick }`, and
-`JoystickMoved { joystick, axes }`.
-`Window::poll_events` emits click and movement transitions for the mapped gamepad
-in GLFW slot 1 after native window events. Left stick transitions precede right
+Joystick integration also declares `JoystickConnected { id }`, `JoystickDisconnected { id }`,
+`JoystickButtonPressed { id, joystick }`, `JoystickButtonReleased { id, joystick }`, and
+`JoystickMoved { id, joystick, axes }`.
+`Window::poll_events` emits click and movement transitions for mapped gamepads
+in all 16 GLFW slots after native window events. Left stick transitions precede right
 stick transitions, with a click transition before a movement transition per stick.
-Presence transitions for GLFW slot 1 are sampled independently of gamepad mapping
+Presence transitions for each GLFW slot are queued from GLFW callbacks independently of gamepad mapping
 and precede stick transitions. A device already present on the first poll emits
 `JoystickConnected`. Repeated presence states do not repeat events. Loss of mapping
-alone does not emit `JoystickDisconnected`. Disconnect/reconnect cycles entirely
-between polls can be missed.
+alone does not emit `JoystickDisconnected`. Every GLFW notification is retained until that window polls; physical transitions
+not reported by GLFW cannot be reconstructed.
 Button payloads designate `Joystick::JoystickLeftButton` or `Joystick::JoystickRightButton`;
 the type also permits direction variants, so construction does not enforce this restriction.
-The connection variants do not yet carry a device identifier.
+Every controller event carries a `JoystickId`. Queued callbacks come first in backend
+order; then sampled changes and fallback presence events use ascending slot order;
+within each slot, presence precedes left-stick then right-stick transitions.
 Movement payloads use `Joystick::JoystickLeft { degrees }` or
 `Joystick::JoystickRight { degrees }`: `Some(angle)` is in `[0, 360)` using the
 configured zero direction and rotation sense; `None` means inside the configured

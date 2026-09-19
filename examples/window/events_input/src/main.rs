@@ -1,15 +1,15 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Window events, keyboard, mouse, and slot-1 gamepad input demonstration.
+//! Window events, keyboard, mouse, and multi-device gamepad input demonstration.
 
 use vmnl::{Context, Event, Joystick, Key, MouseButton, PresentMode, VMNLResult, Window};
 
 fn print_event(event: &Event) {
     match event {
-        Event::JoystickMoved { joystick, axes } => {
+        Event::JoystickMoved { id, joystick, axes } => {
             println!(
-                "[gamepad slot 1] axes: {axes:?}, magnitude: {:.3}",
+                "[gamepad {id:?}] axes: {axes:?}, magnitude: {:.3}",
                 axes[0].hypot(axes[1])
             );
             let (side, degrees) = match joystick {
@@ -18,9 +18,9 @@ fn print_event(event: &Event) {
                 _ => return,
             };
             if let Some(angle) = degrees {
-                println!("[gamepad slot 1] {side} stick: {angle:.1} degrees");
+                println!("[gamepad {id:?}] {side} stick: {angle:.1} degrees");
             } else {
-                println!("[gamepad slot 1] {side} stick: centered");
+                println!("[gamepad {id:?}] {side} stick: centered");
             }
         }
         _ => println!("[event] {event:?}"),
@@ -168,7 +168,7 @@ fn main() -> VMNLResult<()> {
     println!("keys: Escape close, F focus, I iconify, M maximize, R restore, H hide/show, C clear aspect");
 
     println!(
-        "gamepad slot 1: move each stick, return to center, click L3/R3, then unplug/reconnect"
+        "gamepads (all slots): move each stick, return to center, click L3/R3, then unplug/reconnect"
     );
     println!(
         "angles: right 0, up 90, left 180, down 270; stick input requires a GLFW gamepad mapping"
@@ -177,6 +177,26 @@ fn main() -> VMNLResult<()> {
     while window.is_open() {
         for event in window.poll_events() {
             print_event(&event);
+        }
+        for id in vmnl::JoystickId::ALL {
+            let device = window.input().joystick(id);
+            if device.is_connected() {
+                println!("[device {id:?}] {:?}", device.info());
+                if let Some(mapped) = device.gamepad() {
+                    println!(
+                        "[mapped {id:?}] axes={:?} buttons={:?}",
+                        mapped.axes(),
+                        mapped.buttons()
+                    );
+                }
+                let raw = device.raw();
+                println!(
+                    "[raw {id:?}] axes={:?} buttons={:?} hats={:?}",
+                    raw.axes(),
+                    raw.buttons(),
+                    raw.hats()
+                );
+            }
         }
         apply_keybinds(&mut window)?;
         println!(

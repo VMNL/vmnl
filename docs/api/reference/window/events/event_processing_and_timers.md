@@ -20,14 +20,16 @@ Drives the native event queue, updates input snapshots, controls GLFW time, wake
 | `get_timer_value()`, `get_timer_frequency()` | Read raw monotonic timer ticks/frequency. |
 | `set_error_callback(callback)`, `unset_error_callback()` | Replace/remove the GLFW error callback. |
 | `input()` | Borrow the updated `Input` snapshot. |
-| `set_stick_settings(joystick, settings)` | Configure one stick; inspect through `input().joystick().settings(joystick)`. |
+| `joystick_mut(id)` | Mutably borrow settings, reset, or typed device data. |
+| `set_stick_settings(id, joystick, settings)` | Configure one stick; inspect through `input().joystick(id).settings(joystick)`. |
 
-Presence transitions for GLFW slot 1, followed by stick click and direction
+Queued connection notifications in backend order, then per-slot sampled presence,
+stick click and direction
 transitions when a gamepad mapping is available, are
 appended after native window events by `poll_events()`. See [`Event`](event.md)
 for ordering, axis comparison, dead-zone, and unavailable-device behavior.
 `wait_events()` and `wait_events_timeout()` do not update joystick snapshots;
-call `poll_events()` afterward. Continuous stick input should be sampled regularly.
+they retain connection callbacks for the next `poll_events()`. Continuous stick input should be sampled regularly.
 
 ## Construction, defaults, and validation
 

@@ -6,6 +6,8 @@
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::path::Path;
 
+pub(crate) mod joysticks;
+
 /// Prints an explicitly requested controller diagnostic, without changing mappings.
 /// This opt-in output uses stderr so example stdout filters do not hide it.
 #[allow(clippy::print_stderr)]
@@ -14,7 +16,7 @@ pub(crate) fn print_gamepad_diagnostics(glfw: &glfw::Glfw) {
         return;
     }
     eprintln!(
-        "[gamepad diagnostic] mapping_file={:?}; VMNL reads slot 1 only",
+        "[gamepad diagnostic] mapping_file={:?}; VMNL reads all 16 slots",
         std::env::var_os("VMNL_GAMEPAD_MAPPINGS")
     );
     let mut found = false;
@@ -74,17 +76,23 @@ fn load_gamepad_mappings(path: &Path, apply: impl FnOnce(&str) -> bool) -> VMNLR
             path.display()
         )))
     })?;
+    apply_gamepad_mappings(&mappings, apply)
+}
+
+pub(crate) fn apply_gamepad_mappings(
+    mappings: &str,
+    apply: impl FnOnce(&str) -> bool,
+) -> VMNLResult<()> {
     // The GLFW Rust wrapper converts the input to a C string and cannot accept NUL bytes.
     if mappings.contains('\0') || !mappings.is_ascii() {
         return Err(VMNLError::new(VMNLErrorKind::InvalidState(
             "gamepad mappings must contain ASCII text without NUL bytes".into(),
         )));
     }
-    if !apply(&mappings) {
-        return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
-            "GLFW rejected gamepad mappings from {}",
-            path.display()
-        ))));
+    if !apply(mappings) {
+        return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+            "GLFW rejected gamepad mappings".into(),
+        )));
     }
     Ok(())
 }
@@ -159,6 +167,21 @@ pub(crate) fn set_aspect_ratio(
 mod tests {
     use super::{callback_message, map_error};
     use crate::VMNLErrorKind;
+
+    #[test]
+    fn runtime_mapping_validation_precedes_backend_and_reports_rejection() {
+        for invalid in ["bad\0mapping", "non-ASCII: é"] {
+            let mut called = false;
+            assert!(super::apply_gamepad_mappings(invalid, |_| {
+                called = true;
+                true
+            })
+            .is_err());
+            assert!(!called);
+        }
+        assert!(super::apply_gamepad_mappings("mapping", |text| text == "mapping").is_ok());
+        assert!(super::apply_gamepad_mappings("mapping", |_| false).is_err());
+    }
 
     #[test]
     fn maps_glfw_errors_to_vmnl_categories() {

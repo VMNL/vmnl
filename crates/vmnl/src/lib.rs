@@ -30,8 +30,9 @@
 //! ```
 
 pub use vmnl_graphics::{
-    common, d2, d3, raw, Context, Event, FrameRenderer, Input, Joystick, JoystickState, Key,
-    KeyboardState, MonitorInfo, Monitors, MouseButton, MouseState, PresentMode, RenderMode,
-    ShaderSource, StickSettings, StickState, VMNLError, VMNLErrorKind, VMNLErrorLocation,
-    VMNLResult, VideoMode, Window, WindowBuilder,
+    common, d2, d3, raw, Context, Event, FrameRenderer, GamepadAxis, GamepadButton, GamepadState,
+    HatState, Input, Joystick, JoystickId, JoystickInfo, JoystickOptions, JoystickState, Key,
+    KeyboardState, MonitorInfo, Monitors, MouseButton, MouseState, PresentMode, RawJoystickState,
+    RenderMode, ShaderSource, StickSettings, StickState, VMNLError, VMNLErrorKind,
+    VMNLErrorLocation, VMNLResult, VideoMode, Window, WindowBuilder,
 };

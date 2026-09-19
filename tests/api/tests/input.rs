@@ -95,12 +95,19 @@ fn stick_settings_are_per_stick_inspectable_and_validated() -> VMNLResult<()> {
         dead_zone: 0.0,
         ..StickSettings::default()
     };
-    input.set_stick_settings(left, settings)?;
-    assert_eq!(input.joystick().settings(left), settings);
-    assert_eq!(input.joystick().settings(right), StickSettings::default());
+    input.set_stick_settings(vmnl::JoystickId::Slot1, left, settings)?;
+    assert_eq!(
+        input.joystick(vmnl::JoystickId::Slot1).settings(left),
+        settings
+    );
+    assert_eq!(
+        input.joystick(vmnl::JoystickId::Slot1).settings(right),
+        StickSettings::default()
+    );
     for dead_zone in [-0.1, f32::NAN, f32::INFINITY] {
         assert!(input
             .set_stick_settings(
+                vmnl::JoystickId::Slot1,
                 left,
                 StickSettings {
                     dead_zone,
@@ -108,10 +115,14 @@ fn stick_settings_are_per_stick_inspectable_and_validated() -> VMNLResult<()> {
                 }
             )
             .is_err());
-        assert_eq!(input.joystick().settings(left), settings);
+        assert_eq!(
+            input.joystick(vmnl::JoystickId::Slot1).settings(left),
+            settings
+        );
     }
     assert!(input
         .set_stick_settings(
+            vmnl::JoystickId::Slot1,
             left,
             StickSettings {
                 zero_degrees: f32::NAN,
@@ -120,7 +131,7 @@ fn stick_settings_are_per_stick_inspectable_and_validated() -> VMNLResult<()> {
         )
         .is_err());
     // Ensure the same configuration entry point is exposed on the window without creating one.
-    let _: fn(&mut vmnl::Window, Joystick, StickSettings) -> VMNLResult<()> =
+    let _: fn(&mut vmnl::Window, vmnl::JoystickId, Joystick, StickSettings) -> VMNLResult<()> =
         vmnl::Window::set_stick_settings;
     Ok(())
 }
@@ -135,7 +146,7 @@ fn assert_empty(input: &Input) {
     assert!(!keyboard.is_one_down());
     assert!(!keyboard.is_one_used());
 
-    let joystick: &JoystickState = input.joystick();
+    let joystick: &JoystickState = input.joystick(vmnl::JoystickId::Slot1);
     for stick in [joystick.left(), joystick.right()] {
         let stick: &StickState = stick;
         assert_eq!(stick.degrees(), None);
@@ -164,8 +175,67 @@ fn assert_empty(input: &Input) {
 }
 
 #[test]
+fn device_selection_and_settings_are_independent_through_facade() -> VMNLResult<()> {
+    let mut input = Input::new();
+    let control = Joystick::JoystickLeftButton;
+    let settings = StickSettings {
+        dead_zone: 0.4,
+        ..StickSettings::default()
+    };
+    input.set_stick_settings(vmnl::JoystickId::Slot16, control, settings)?;
+    for id in vmnl::JoystickId::ALL {
+        let raw: &vmnl::RawJoystickState = input.joystick(id).raw();
+        let _: &[vmnl::HatState] = raw.hats();
+        assert!(raw.axes().is_empty());
+        assert!(raw.buttons().is_empty());
+        assert!(raw.hats().is_empty());
+        assert!(!input.joystick(id).is_connected());
+        assert!(!input.joystick(id).is_one_used());
+        assert_eq!(
+            input.joystick(id).settings(control),
+            if id == vmnl::JoystickId::Slot16 {
+                settings
+            } else {
+                StickSettings::default()
+            }
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn input_initial_state_is_empty_through_public_facade() -> VMNLResult<()> {
     assert_empty(&Input::new());
     assert_empty(&Input::default());
     Ok(())
+}
+#[test]
+fn controller_facade_exposes_named_controls_metadata_and_typed_data() {
+    use vmnl::{GamepadAxis, GamepadButton, GamepadState, Input, JoystickId, JoystickOptions};
+    assert_eq!(GamepadButton::ALL.len(), 15);
+    assert_eq!(GamepadAxis::ALL.len(), 6);
+    assert!(JoystickOptions::default().hat_buttons);
+    let mut input = Input::new();
+    let id = JoystickId::Slot16;
+    let mapped: Option<&GamepadState> = input.joystick(id).gamepad();
+    assert!(mapped.is_none());
+    assert!(input.joystick(id).previous_gamepad().is_none());
+    assert_eq!(input.joystick(id).info().name(), None);
+    for button in GamepadButton::ALL {
+        assert!(!input.joystick(id).is_gamepad_pressed(button));
+        assert!(!input.joystick(id).is_gamepad_released(button));
+    }
+    input
+        .joystick_mut(id)
+        .set_user_data(String::from("player two"));
+    assert_eq!(
+        input.joystick(id).user_data::<String>().map(String::as_str),
+        Some("player two")
+    );
+    assert!(input
+        .joystick(JoystickId::Slot1)
+        .user_data::<String>()
+        .is_none());
+    input.joystick_mut(id).clear_user_data();
+    assert!(input.joystick(id).user_data::<String>().is_none());
 }

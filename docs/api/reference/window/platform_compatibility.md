@@ -9,7 +9,9 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 |---|---|---|
 | `Context::new` | `glfwGetRequiredInstanceExtensions` | all: conditional — Returns the platform Vulkan instance extension list. |
 | `Context::new` | `glfwInit` | all: conditional — Initializes GLFW or returns failure after invoking the error callback. |
-| `Context::new` | `glfwUpdateGamepadMappings` | all: conditional — Parses SDL gamepad mappings; VMNL optionally reads VMNL_GAMEPAD_MAPPINGS once during context creation. Acceptance alone does not prove device recognition. |
+| `Context::new`, `Context::update_gamepad_mappings` | `glfwUpdateGamepadMappings` | all: conditional — Parses SDL gamepad mappings; VMNL reads optional VMNL_GAMEPAD_MAPPINGS at context creation and exposes runtime additions/replacements. Acceptance alone does not prove device recognition. |
+| `Context::with_joystick_options` | `glfwInitHint` | all: unverified — Configures synthetic hat buttons in raw button arrays; hat arrays remain available.; wayland: conditional — Selects the Wayland backend and decoration strategy used by the next initialization.; x11-win32-cocoa-null: supported — Selects the requested compiled backend. |
+| `Context::with_joystick_options`, `Window::poll_events` | `glfwSetJoystickCallback` | all: unverified — Queues every reported identified connection transition independently for each live window. |
 | `KeyboardState` | `glfwGetKey` | all: supported — Returns cached key state. |
 | `MonitorInfo::available_modes` | `glfwGetVideoModes` | all: conditional — Returns modes reported by the backend. |
 | `MonitorInfo::content_scale` | `glfwGetMonitorContentScale` | wayland: conditional — Fractional scaling may not be represented exactly by GLFW 3.4.; x11-win32-cocoa: supported — Returns content scale reported by the backend. |
@@ -36,8 +38,15 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Window::is_open` | `glfwWindowShouldClose` | all: supported — Reads GLFW's local close flag. |
 | `Window::maximize` | `glfwMaximizeWindow` | all: best-effort — Requests maximization. |
 | `Window::opacity` | `glfwSetWindowOpacity` | wayland: unsupported — Invokes GLFW_FEATURE_UNAVAILABLE and has no effect.; x11-win32-cocoa: conditional — Updates opacity or invokes an error callback. |
-| `Window::poll_events` | `glfwGetGamepadState` | all: unverified — Reads mapped axes and buttons; VMNL samples both sticks and their click buttons in slot 1. |
-| `Window::poll_events` | `glfwJoystickPresent` | all: unverified — Reports joystick presence independently of gamepad mapping; VMNL compares samples for slot 1. |
+| `Window::poll_events` | `glfwGetGamepadName` | all: unverified — Returns the mapping name, copied into VMNL metadata. |
+| `Window::poll_events` | `glfwGetGamepadState` | all: unverified — Reads mapped axes and buttons; VMNL preserves all 15 mapped buttons and 6 axes in all 16 slots. |
+| `Window::poll_events` | `glfwGetJoystickAxes` | all: unverified — Raw axis values; null when absent or on error. |
+| `Window::poll_events` | `glfwGetJoystickButtons` | all: unverified — Raw buttons, possibly including synthesized hat directions; null when absent or on error. |
+| `Window::poll_events` | `glfwGetJoystickGUID` | all: unverified — Device mapping GUID or null when absent or on error. |
+| `Window::poll_events` | `glfwGetJoystickHats` | all: unverified — Hat states; null when absent or on error. |
+| `Window::poll_events` | `glfwGetJoystickName` | all: unverified — Device name or null when absent or on error. |
+| `Window::poll_events` | `glfwJoystickIsGamepad` | all: unverified — True only for a present device with a valid applicable mapping. |
+| `Window::poll_events` | `glfwJoystickPresent` | all: unverified — Reports joystick presence independently of gamepad mapping; VMNL compares samples for all 16 slots. |
 | `Window::poll_events` | `glfwPollEvents` | all: supported — Processes pending native events. |
 | `Window::post_empty_event` | `glfwPostEmptyEvent` | all: supported — Wakes an event wait with an empty event. |
 | `Window::restore` | `glfwRestoreWindow` | all: best-effort — Requests restoration; Wayland cannot always restore an iconified window. |

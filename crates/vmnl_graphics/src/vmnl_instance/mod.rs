@@ -20,7 +20,7 @@ mod vulkan_instance;
 mod tests;
 
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
-pub use context::Context;
+pub use context::{Context, JoystickOptions};
 use std::sync::{Arc, Mutex};
 use vulkano::{
     command_buffer::allocator::StandardCommandBufferAllocator,
@@ -30,6 +30,7 @@ use vulkano::{
     memory::allocator::StandardMemoryAllocator,
 };
 
+// Serializes backend initialization only; owns no application/GPU state.
 static GLFW_INIT_LOCK: Mutex<()> = Mutex::new(());
 
 /// Represents the core Vulkan context used by the graphical part of the library.
@@ -57,6 +58,7 @@ pub(crate) struct VMNLInstance {
     pub(crate) descriptor_set_allocator: Arc<StandardDescriptorSetAllocator>,
     /// GLFW context used for window management and input handling.
     pub(crate) glfw: glfw::Glfw,
+    pub(crate) joysticks: std::rc::Rc<crate::glfw_backend::joysticks::JoystickBackend>,
 }
 
 impl VMNLInstance {
@@ -69,17 +71,15 @@ impl VMNLInstance {
     /// # Source
     /// <https://vulkano.rs/02-initialization/01-initialization.html#creating-an-instance>
     #[must_use = "VMNLInstance is required for Context initialization"]
-    pub(crate) fn new() -> VMNLResult<Self> {
+    pub(crate) fn new(options: JoystickOptions) -> VMNLResult<Self> {
         log::debug!("initializing VMNL instance");
         let _glfw_init_guard = GLFW_INIT_LOCK.lock().map_err(|_| {
             VMNLError::new(VMNLErrorKind::InvalidState(
                 "GLFW initialization lock is poisoned".into(),
             ))
         })?;
-        let glfw: glfw::Glfw = crate::glfw_backend::init(|error, description| {
-            log::error!("GLFW error {error:?}: {description}");
-        })
-        .map_err(|_| VMNLError::new(VMNLErrorKind::GlfwInitFailed))?;
+        let joysticks = crate::glfw_backend::joysticks::JoystickBackend::acquire(options)?;
+        let glfw = joysticks.glfw.clone();
         crate::glfw_backend::configure_gamepad_mappings(&glfw)?;
         log::debug!(
             "initialized GLFW {} backend",
@@ -121,6 +121,7 @@ impl VMNLInstance {
             command_buffer_allocator,
             descriptor_set_allocator,
             glfw,
+            joysticks,
         })
     }
 }

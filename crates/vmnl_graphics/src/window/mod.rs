@@ -21,7 +21,8 @@ pub(crate) use builder::{
 pub use builder::{PresentMode, WindowBuilder};
 pub use event::Event;
 pub use input::{
-    Input, Joystick, JoystickState, Key, KeyboardState, MouseButton, MouseState, StickSettings,
+    GamepadAxis, GamepadButton, GamepadState, HatState, Input, Joystick, JoystickId, JoystickInfo,
+    JoystickState, Key, KeyboardState, MouseButton, MouseState, RawJoystickState, StickSettings,
     StickState,
 };
 pub use monitors::{MonitorInfo, Monitors, VideoMode};
