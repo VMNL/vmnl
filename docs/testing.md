@@ -12,6 +12,44 @@ doctest     = Rustdoc example compilation/execution
 example     = user-facing visual program, not a test oracle
 ```
 
+## Test Design
+
+Start from the observable contract and its owner: explicit requirement, canonical documentation,
+public Rustdoc, upstream specification, or an approved measured baseline. Select the lowest
+practical deterministic seam that exercises that contract rather than an implementation detail
+that merely correlates with it.
+
+- Public facade behavior belongs in an API test when it can remain headless.
+- A private invariant or algorithm may be covered by a focused unit test.
+- Backend, platform, GPU, FFI, and hardware behavior requires evidence that crosses the real
+  boundary; a mock, Null backend, stub, or Rust-only seam proves only its modeled behavior.
+- Keep lower-level tests that prove distinct safety, ABI, platform, or failure-handling invariants;
+  coverage through a higher interface does not make them redundant.
+
+Expected results must come from an independent oracle: a specification, known worked case, fixed
+literal, qualified reference implementation, or directly observable outcome. A test that derives
+its expectation with the same algorithm as the implementation is tautological. Tests should fail
+when the required behavior is absent and should survive unrelated internal refactors.
+
+For a deterministic feature or fix, prefer one vertical behavior slice at a time:
+
+```text
+one observable contract
+  -> one focused failing test
+    -> the smallest coherent implementation
+      -> repeat for the next contract
+```
+
+Observing the focused test fail before the change proves that it can detect the missing or defective
+behavior. Do not fabricate that evidence or force this cycle when the real boundary is unavailable,
+intermittent, visual, platform-specific, or hardware-dependent. In those cases, record the attempted
+reproduction and missing environment, add the narrowest deterministic coverage that remains valid,
+and keep the required native, GPU, FFI, remote-system, or operator evidence explicitly outstanding.
+
+Compilation, deterministic tests, simulated or Null backends, native platform runs, GPU or hardware
+runs, remote CI, and operator observations are separate evidence classes. Report only the class
+actually exercised; success at a weaker boundary does not establish a stronger one.
+
 ## Layout
 
 ```text

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review VMNL Change"
+  short_description: "Review VMNL changes against project contracts"
+  default_prompt: "Use $review-vmnl-change to review this scoped VMNL change without modifying the repository."

@@ -2,7 +2,9 @@
 
 ## Classify Evidence
 
-Use the lowest test level that proves the behavior:
+Apply the test-design and evidence rules in
+[`docs/testing.md`](../../../../docs/testing.md). Then use the lowest test level that proves the
+graphics behavior:
 
 | Behavior | Evidence |
 | --- | --- |

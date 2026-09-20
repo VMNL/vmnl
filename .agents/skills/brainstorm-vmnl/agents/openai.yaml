@@ -1,0 +1,7 @@
+interface:
+  display_name: "Brainstorm VMNL"
+  short_description: "Clarify VMNL design decisions before changes"
+  default_prompt: "Use $brainstorm-vmnl to examine this VMNL design decision without modifying the repository."
+
+policy:
+  allow_implicit_invocation: false

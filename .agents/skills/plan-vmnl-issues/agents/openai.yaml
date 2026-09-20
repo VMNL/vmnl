@@ -1,0 +1,7 @@
+interface:
+  display_name: "Plan VMNL Issues"
+  short_description: "Turn approved VMNL work into issue graphs"
+  default_prompt: "Use $plan-vmnl-issues to turn this approved VMNL plan into a reviewed issue graph without publishing it."
+
+policy:
+  allow_implicit_invocation: false

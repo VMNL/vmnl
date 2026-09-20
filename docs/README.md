@@ -16,6 +16,8 @@ Local `README.md` files are only navigation aids for their directory. Public API
   current publication blockers.
 - [Examples](examples.md): visual example rules and command conventions.
 - [Getting Started](getting_started.md): clone, build, test, and run the first visual example.
+- [Network Integration](network_integration.md): ownership and validation contract for the planned
+  C backend and Rust API boundary.
 - [Platform Support](platform_support.md): validated platforms and local environment scope.
 - [Rust Instructions](RUST.md): rust coding guidelines.
 - [Testing](testing.md): unit, API, smoke, platform, GPU, and doctest conventions.

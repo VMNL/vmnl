@@ -29,6 +29,10 @@ Treat `docs/` as the canonical home for stable architecture, contracts, and proc
 
 ## Route Agent References
 
+- Read [`../../references/module-design.md`](../../references/module-design.md) for a module
+  interface, crate boundary, facade, raw API, backend adapter, or FFI seam decision.
+- Read [`../../references/diagnostic-protocol.md`](../../references/diagnostic-protocol.md) for a
+  bug, regression, incorrect result, crash, hang, or performance diagnosis.
 - Read [`references/current-limitations.md`](references/current-limitations.md) before changing context/device selection, GLFW initialization, 3D status, or GPU test routing.
 - Read [`references/graphics-correctness.md`](references/graphics-correctness.md) for Vulkan, synchronization, swapchain, window, resource, shader, pipeline, unsafe, platform, or performance work.
 - Read [`references/validation.md`](references/validation.md) for every feature, fix, Rust source change, test/example change, tooling change, dependency change, or validation claim.
