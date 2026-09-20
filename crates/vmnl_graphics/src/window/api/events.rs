@@ -199,7 +199,8 @@ impl Window {
         self.inner.set_error_callback(callback);
     }
 
-    /// Unsets the custom error callback, reverting to the default GLFW error handling behavior.
+    /// Removes the application's error callback without disabling internal mapping-error capture.
+    /// No application callback or default logger is invoked after removal.
     ///
     /// # Example
     /// ```rust,no_run

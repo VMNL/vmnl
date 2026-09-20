@@ -50,3 +50,35 @@ fn null_backend_accepts_xbox360_mapping_without_a_controller() {
     assert_eq!(record["value"], true);
     assert_eq!(record["callbacks"], serde_json::json!([]));
 }
+
+#[test]
+fn null_backend_reports_mapping_error_despite_true_return_value() {
+    let output = Command::new(env!("CARGO_BIN_EXE_platform_probe"))
+        .args(["null", "gamepad-mapping-malformed"])
+        .output()
+        .expect("malformed mapping probe should start");
+    assert!(
+        output.status.success(),
+        "probe failed: status={:?}, stderr={}",
+        output.status,
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let record: Value = serde_json::from_slice(&output.stdout).expect("valid probe JSON");
+    assert_eq!(record["schema"], PROBE_SCHEMA_VERSION);
+    assert_eq!(record["backend_requested"], "null");
+    assert_eq!(record["backend_actual"], "null");
+    assert_eq!(record["operation"], "gamepad-mapping-malformed");
+    assert_eq!(record["phase"], "operation");
+    assert_eq!(record["result"], "ok");
+
+    // The probe succeeds, but GLFW reports a parser error despite returning true.
+    assert_eq!(record["value"], true);
+    let callbacks = record["callbacks"].as_array().expect("callback array");
+    assert_eq!(callbacks.len(), 1, "unexpected callbacks: {callbacks:?}");
+    assert_eq!(callbacks[0]["code"], glfw::ffi::GLFW_INVALID_VALUE);
+    let description = callbacks[0]["description"]
+        .as_str()
+        .expect("error description");
+    assert!(!description.is_empty());
+}

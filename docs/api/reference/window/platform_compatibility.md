@@ -58,7 +58,7 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Window::set_cursor_enter_polling` | `glfwSetCursorEnterCallback` | all: supported — Installs cursor-enter callback. |
 | `Window::set_cursor_pos_polling` | `glfwSetCursorPosCallback` | wayland: conditional — Installs callback; delivery depends on compositor and cursor mode.; x11-win32-cocoa: supported — Installs cursor-position callback. |
 | `Window::set_drag_and_drop_polling` | `glfwSetDropCallback` | all: conditional — Installs drop callback. |
-| `Window::set_error_callback`, `Window::unset_error_callback` | `glfwSetErrorCallback` | all: supported — Installs or clears process-wide GLFW error delivery for the calling thread wrapper. |
+| `Window::set_error_callback`, `Window::unset_error_callback` | `glfwSetErrorCallback` | all: supported — Replaces or removes application error delivery while preserving internal scoped mapping-error capture. |
 | `Window::set_focus_polling` | `glfwSetWindowFocusCallback` | all: supported — Installs focus callback. |
 | `Window::set_framebuffer_size_polling` | `glfwSetFramebufferSizeCallback` | all: supported — Installs framebuffer-size callback. |
 | `Window::set_iconify_polling` | `glfwSetWindowIconifyCallback` | wayland: conditional — Installs callback but event availability is compositor-dependent.; x11-win32-cocoa: supported — Installs iconify callback. |

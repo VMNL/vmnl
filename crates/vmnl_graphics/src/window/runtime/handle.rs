@@ -135,14 +135,21 @@ impl VMNLWindow {
         &mut self,
         mut callback: impl FnMut(VMNLErrorKind, String) + 'static,
     ) {
-        crate::glfw_backend::set_error_callback(&mut self.handle.instance, move |kind, message| {
-            callback(kind, message);
-        });
+        crate::glfw_backend::set_error_callback(
+            &mut self.handle.instance,
+            &self.handle.vmnl_instance.joysticks.mapping_errors,
+            move |kind, message| {
+                callback(kind, message);
+            },
+        );
     }
 
     /// Internal implementation backing `Window::unset_error_callback`.
     pub(crate) fn unset_error_callback(&mut self) {
-        self.handle.instance.unset_error_callback();
+        crate::glfw_backend::unset_error_callback(
+            &mut self.handle.instance,
+            &self.handle.vmnl_instance.joysticks.mapping_errors,
+        );
     }
 
     /// Internal implementation backing `Window::set_char_polling`.

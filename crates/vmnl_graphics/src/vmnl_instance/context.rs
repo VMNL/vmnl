@@ -130,10 +130,14 @@ impl Context {
     /// rollback for a partially accepted batch or a mapping-removal operation.
     ///
     /// # Errors
-    /// NUL/non-ASCII text is rejected before GLFW; backend rejection returns `InvalidState`.
+    /// NUL/non-ASCII text is rejected before GLFW. A false return or an error callback
+    /// during the update returns `InvalidState`, retaining the first error's description.
+    /// Nested updates from an error callback return `InvalidState` before calling GLFW.
     pub fn update_gamepad_mappings(&self, mappings: &str) -> VMNLResult<()> {
-        crate::glfw_backend::apply_gamepad_mappings(mappings, |text| {
-            self.inner.glfw.update_gamepad_mappings(text)
-        })
+        crate::glfw_backend::apply_gamepad_mappings(
+            mappings,
+            &self.inner.joysticks.mapping_errors,
+            |text| self.inner.glfw.update_gamepad_mappings(text),
+        )
     }
 }

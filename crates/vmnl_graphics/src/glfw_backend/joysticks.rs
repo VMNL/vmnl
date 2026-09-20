@@ -45,6 +45,7 @@ thread_local! {
 pub(crate) struct JoystickBackend {
     pub(crate) glfw: glfw::Glfw,
     pub(crate) options: JoystickOptions,
+    pub(crate) mapping_errors: Rc<RefCell<super::MappingErrorCapture>>,
     connections: Rc<Connections>,
 }
 
@@ -55,7 +56,9 @@ impl JoystickBackend {
             return Ok(active);
         }
         glfw::init_hint(glfw::InitHint::JoystickHatButtons(options.hat_buttons));
-        let mut glfw = super::init(|error, description| {
+        let mapping_errors = Rc::new(RefCell::new(super::MappingErrorCapture::default()));
+
+        let mut glfw = super::init(&mapping_errors, |error, description| {
             log::error!("GLFW error {error:?}: {description}");
         })
         .map_err(|_| VMNLError::new(VMNLErrorKind::GlfwInitFailed))?;
@@ -70,6 +73,7 @@ impl JoystickBackend {
         let backend = Rc::new(Self {
             glfw,
             options,
+            mapping_errors,
             connections,
         });
         ACTIVE.with(|slot| *slot.borrow_mut() = Rc::downgrade(&backend));

@@ -71,6 +71,12 @@ See [mapping troubleshooting](../../troubleshooting.md#joystick-connected-but-st
 ## Joystick initialization
 
 Runtime mapping text uses the same ASCII/no-NUL validation and may allocate. Changes
+return `InvalidState` if GLFW returns false or reports an error callback during the
+operation, even if its Boolean return is true. The first callback error's code and
+description are retained in the error message; unrelated earlier errors are ignored.
+Nested mapping updates from an error callback are rejected before calling GLFW.
+The environment-file loader uses the same checked path. Application error callbacks
+still receive errors; removing one does not disable internal error capture. Changes
 are GLFW-global, not per window. A rejected multi-line batch is not transactional;
 GLFW may already have accepted some entries. There is no mapping-removal API.
 

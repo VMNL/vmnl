@@ -80,7 +80,7 @@ impl VMNLInstance {
         })?;
         let joysticks = crate::glfw_backend::joysticks::JoystickBackend::acquire(options)?;
         let glfw = joysticks.glfw.clone();
-        crate::glfw_backend::configure_gamepad_mappings(&glfw)?;
+        crate::glfw_backend::configure_gamepad_mappings(&glfw, &joysticks.mapping_errors)?;
         log::debug!(
             "initialized GLFW {} backend",
             crate::glfw_backend::backend_name(&glfw)
