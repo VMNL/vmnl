@@ -20,7 +20,11 @@ pub(crate) use builder::{
 };
 pub use builder::{PresentMode, WindowBuilder};
 pub use event::Event;
-pub use input::{Input, Key, KeyboardState, MouseButton, MouseState};
+pub use input::{
+    GamepadAxis, GamepadButton, GamepadState, HatState, Input, Joystick, JoystickId, JoystickInfo,
+    JoystickState, Key, KeyboardState, MouseButton, MouseState, RawJoystickState, StickSettings,
+    StickState,
+};
 pub use monitors::{MonitorInfo, Monitors, VideoMode};
 use vulkano::{
     device::Device, memory::allocator::StandardMemoryAllocator, render_pass::RenderPass,

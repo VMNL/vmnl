@@ -41,6 +41,7 @@
       - [RenderMode](reference/window/rendering/render_mode.md)
     - [Input](reference/window/input/README.md)
       - [Input](reference/window/input/input.md)
+      - [Joystick input](reference/window/input/joysticks.md)
       - [Key](reference/window/input/key.md)
       - [KeyboardState](reference/window/input/keyboard_state.md)
       - [MouseButton](reference/window/input/mouse_button.md)

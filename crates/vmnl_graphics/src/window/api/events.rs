@@ -9,6 +9,22 @@ use crate::{Event, Input, VMNLErrorKind};
 impl Window {
     /// Polls for window events and updates the input state accordingly.
     ///
+    /// Appends stick click and direction transitions for the mapped gamepad in
+    /// all 16 GLFW slots after native window events. Left stick transitions precede right
+    /// stick transitions, with clicks before movement. Unchanged states emit no
+    /// joystick events. An unavailable gamepad releases clicks and centers sticks;
+    /// queued connection callbacks are delivered after native window events in callback
+    /// order, before sampled transitions in slot order. Each window receives its own
+    /// copy, including callbacks processed by waits or other windows. Initial presence
+    /// and discrepancies with the final sample generate fallback presence events.
+    /// This preserves every GLFW notification, not physical changes GLFW never reports.
+    ///
+    /// Directions use configurable stick settings. Movement events preserve unfiltered axes.
+    /// Changes entirely between polls can be missed. Joystick polling is independent
+    /// of keyboard and mouse polling flags.
+    /// Raw vectors, metadata strings, callback queues, and the result may allocate.
+    /// Queues grow until that window polls or is dropped; no GPU work occurs.
+    ///
     /// # Example
     /// ```rust,no_run
     /// # use vmnl_graphics::{Context, Window};
@@ -183,7 +199,8 @@ impl Window {
         self.inner.set_error_callback(callback);
     }
 
-    /// Unsets the custom error callback, reverting to the default GLFW error handling behavior.
+    /// Removes the application's error callback without disabling internal mapping-error capture.
+    /// No application callback or default logger is invoked after removal.
     ///
     /// # Example
     /// ```rust,no_run
@@ -218,5 +235,28 @@ impl Window {
     #[must_use]
     pub const fn input(&self) -> &Input {
         self.inner.input()
+    }
+
+    /// Mutably borrows a device snapshot for application data, settings, or reset.
+    /// Does not poll hardware; see [`crate::JoystickState`] for lifecycle semantics.
+    pub fn joystick_mut(&mut self, id: crate::JoystickId) -> &mut crate::JoystickState {
+        self.inner.handle.input.joystick_mut(id)
+    }
+
+    /// Configures one stick's dead zone and angle convention without polling hardware.
+    ///
+    /// Settings are inspectable through `input().joystick(id).settings(joystick)`.
+    /// See [`crate::JoystickState::set_settings`] for validation and transition semantics.
+    /// This performs no GPU work.
+    ///
+    /// # Errors
+    /// Returns `InvalidState` for invalid settings, leaving input unchanged.
+    pub fn set_stick_settings(
+        &mut self,
+        id: crate::JoystickId,
+        joystick: crate::Joystick,
+        settings: crate::StickSettings,
+    ) -> crate::VMNLResult<()> {
+        self.inner.set_stick_settings(id, joystick, settings)
     }
 }

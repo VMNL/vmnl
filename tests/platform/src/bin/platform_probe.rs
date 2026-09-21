@@ -96,6 +96,14 @@ fn main() -> ExitCode {
 
     let value = match operation.as_str() {
         "create" => json!(true),
+        "gamepad-mapping" => json!(glfw.update_gamepad_mappings(include_str!(
+            "../../../../examples/window/events_input/gamecontrollerdb.txt"
+        ))),
+        "gamepad-mapping-malformed" => {
+            // Isolate parser errors from any earlier initialization callbacks.
+            callbacks.borrow_mut().clear();
+            json!(glfw.update_gamepad_mappings("0, broken, leftx:a0,"))
+        }
         "set-position" => {
             window.set_pos(37, 41);
             Value::Null

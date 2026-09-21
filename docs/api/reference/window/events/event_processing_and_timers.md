@@ -18,8 +18,18 @@ Drives the native event queue, updates input snapshots, controls GLFW time, wake
 | `post_empty_event()` | Wake a waiting event loop. |
 | `get_time()`, `set_time(seconds)` | Read/set the GLFW time base. |
 | `get_timer_value()`, `get_timer_frequency()` | Read raw monotonic timer ticks/frequency. |
-| `set_error_callback(callback)`, `unset_error_callback()` | Replace/remove the GLFW error callback. |
+| `set_error_callback(callback)`, `unset_error_callback()` | Replace/remove the application error callback; internal mapping-error capture remains active. |
 | `input()` | Borrow the updated `Input` snapshot. |
+| `joystick_mut(id)` | Mutably borrow settings, reset, or typed device data. |
+| `set_stick_settings(id, joystick, settings)` | Configure one stick; inspect through `input().joystick(id).settings(joystick)`. |
+
+Queued connection notifications in backend order, then per-slot sampled presence,
+stick click and direction
+transitions when a gamepad mapping is available, are
+appended after native window events by `poll_events()`. See [`Event`](event.md)
+for ordering, axis comparison, dead-zone, and unavailable-device behavior.
+`wait_events()` and `wait_events_timeout()` do not update joystick snapshots;
+they retain connection callbacks for the next `poll_events()`. Continuous stick input should be sampled regularly.
 
 ## Construction, defaults, and validation
 
@@ -31,11 +41,17 @@ Wait timeout and GLFW time are seconds. Timer values are ticks; divide by the no
 
 ## Ownership, lifecycle, and threading
 
-Processing requires `&mut Window` and resets transition snapshots before applying new events. The callback is stored by GLFW/VMNL until replaced, unset, or the window runtime is dropped. Wake-up behavior across threads is platform constrained; this API method itself requires mutable window access.
+Processing requires `&mut Window` and resets transition snapshots before applying new events.
+The application error callback is shared across windows using GLFW and is forwarded
+after internal mapping-error recording. Replacing it keeps that recording intact;
+unsetting it silences application delivery and logging, not internal recording.
+Wake-up behavior across threads is platform constrained; this API method itself requires mutable window access.
 
 ## Errors, panics, and failure conditions
 
-These methods expose no typed result. Known API, cursor, feature, and platform availability errors
+`set_stick_settings` returns `VMNLResult<()>`, rejecting invalid settings without mutation;
+see [joystick input](../input/joysticks.md). The other methods expose no typed result.
+Known API, cursor, feature, and platform availability errors
 map to `GlfwUnsupportedPlatform`; unknown raw codes map to `GlfwUnknownError` and remain in the
 message. Total error conversion prevents an unknown GLFW code from being transmuted into an
 invalid Rust enum. A user callback that panics crosses GLFW's C callback boundary and may abort the

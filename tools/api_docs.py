@@ -102,6 +102,8 @@ WINDOW_EVENT_METHODS = {
     "get_timer_frequency",
     "get_timer_value",
     "input",
+    "joystick_mut",
+    "set_stick_settings",
     "poll_events",
     "post_empty_event",
     "set_error_callback",
