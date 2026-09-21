@@ -81,12 +81,29 @@ impl Cursor {
     }
 
     fn from_native(context: &Context, native: NativeCursor) -> Self {
+        Self::from_native_with_glfw(context.inner.glfw.clone(), native)
+    }
+
+    fn from_native_with_glfw(glfw: glfw::Glfw, native: NativeCursor) -> Self {
         Self {
             resource: Rc::new(CursorResource {
                 native,
-                _glfw: context.inner.glfw.clone(),
+                _glfw: glfw,
             }),
         }
+    }
+
+    pub(crate) fn transparent(glfw: &glfw::Glfw) -> VMNLResult<Self> {
+        const TRANSPARENT_PIXEL: [u8; 4] = [0; 4];
+        let image = CursorImage {
+            width: 1,
+            height: 1,
+            hotspot_x: 0,
+            hotspot_y: 0,
+        };
+        let native = glfw_backend::create_cursor(image, &TRANSPARENT_PIXEL)?;
+
+        Ok(Self::from_native_with_glfw(glfw.clone(), native))
     }
 
     pub(crate) fn native(&self) -> &NativeCursor {

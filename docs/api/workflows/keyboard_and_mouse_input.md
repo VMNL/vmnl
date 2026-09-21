@@ -16,7 +16,7 @@ fn main() -> vmnl::VMNLResult<()> {
     let mut window = Window::new(&context)?;
     window.set_sticky_mouse_buttons(true);
     window.set_lock_key_modifier_reporting(true);
-    window.set_cursor_mode(CursorMode::Disabled);
+    window.set_cursor_mode(CursorMode::Disabled)?;
     if context.is_raw_mouse_motion_supported() {
         window.set_raw_mouse_motion(true)?;
     }

@@ -13,7 +13,7 @@ Selects native cursor visibility and confinement without exposing `glfw::CursorM
 | Variant | Contract |
 |---|---|
 | `Normal` | Visible, unrestricted system cursor. |
-| `Hidden` | Invisible over the content area, unrestricted. |
+| `Hidden` | Invisible over the content area and unrestricted, using VMNL's transparent cursor. |
 | `Disabled` | Hidden/grabbed cursor with virtual unbounded motion for camera controls. |
 | `Captured` | Visible cursor confined to the content area. |
 
@@ -22,7 +22,8 @@ Derives `Clone`, `Copy`, `Debug`, `Default`, `Eq`, `Hash`, and `PartialEq`. The 
 ## Construction, defaults, and validation
 
 Use a variant directly or `CursorMode::default()`. `Window::set_cursor_mode` accepts every
-variant; native availability is backend-dependent.
+variant. VMNL implements `Hidden` with a transparent cursor while GLFW remains in normal mode;
+native availability for the other modes is backend-dependent.
 
 ## Units, coordinates, and valid ranges
 
@@ -31,18 +32,22 @@ coordinate. Other modes use the native system cursor, whose position may be quan
 
 ## Ownership, lifecycle, and threading
 
-The value is copied into per-window GLFW state. Disabled/captured constraints are acquired while
-the window is focused and released or restored across focus/mode transitions according to GLFW.
+VMNL stores the requested value per window. Disabled/captured constraints are acquired while the
+window is focused and released or restored across focus/mode transitions according to GLFW. The
+client-selected cursor remains owned and inspectable while the internal hidden cursor is active.
 
 ## Errors, panics, and failure conditions
 
-The setter has no typed result. Backend errors use the configured GLFW callback. The getter
-reports GLFW's stored mode, which can differ from effective behavior while unfocused or when the
-backend cannot implement it.
+The setter returns the VMNL category produced by transparent-cursor creation or assignment and by
+the effective GLFW mode request. VMNL keeps the previous requested mode and attempts to restore its
+native cursor state after a failure. The getter reports the requested VMNL mode, which can differ
+from effective behavior while unfocused or when the backend cannot implement it.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-No VMNL allocation or GPU work. Native pointer constraint setup cost is backend-defined.
+The first hidden-mode request creates and caches one native one-pixel transparent cursor per window.
+Later mode transitions perform no VMNL allocation. There is no GPU work. Native pointer constraint
+setup cost is backend-defined.
 
 ## Platform, Vulkan, and display constraints
 
@@ -58,7 +63,7 @@ use vmnl::{Context, CursorMode, Window};
 # fn main() -> vmnl::VMNLResult<()> {
 let context = Context::new()?;
 let mut window = Window::new(&context)?;
-window.set_cursor_mode(CursorMode::Disabled);
+window.set_cursor_mode(CursorMode::Disabled)?;
 assert_eq!(window.get_cursor_mode(), CursorMode::Disabled);
 # Ok(())
 # }

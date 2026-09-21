@@ -6,7 +6,7 @@
 
 use crate::{
     vmnl_instance::VMNLInstance, window::event::EventQueue, window::inner::VMNLWindow, Cursor,
-    Event, EventKind, Input, VMNLErrorKind,
+    CursorMode, Event, EventKind, Input, VMNLErrorKind,
 };
 use std::rc::Rc;
 use std::sync::Arc;
@@ -48,6 +48,10 @@ pub(crate) struct WindowHandle {
     pub(crate) context: glfw::PWindow,
     /// Native cursor retained while assigned to this window.
     pub(crate) cursor: Option<Cursor>,
+    /// Transparent cursor allocated lazily for VMNL's logical hidden mode.
+    pub(crate) hidden_cursor: Option<Cursor>,
+    /// Cursor mode requested through VMNL; hidden maps to GLFW normal plus `hidden_cursor`.
+    pub(crate) cursor_mode: CursorMode,
     /// Event receiver channel used to retrieve window events.
     pub(crate) events: EventQueue,
     /// Input state manager for keyboard and mouse events.

@@ -5,11 +5,10 @@
 
 /// Controls how the native cursor behaves over a window.
 ///
-/// The default is [`Normal`](Self::Normal). GLFW stores the selected mode per window, but disabled
-/// or captured confinement becomes effective only while that window is focused. Captured mode is
-/// unavailable in GLFW 3.4 on Cocoa and Wayland confinement depends on compositor protocols.
-/// Backend errors are reported through
-/// [`Window::set_error_callback`](crate::Window::set_error_callback).
+/// The default is [`Normal`](Self::Normal). VMNL stores the selected mode per window. Hidden mode
+/// uses a transparent native cursor while GLFW remains in normal mode; disabled or captured
+/// confinement becomes effective only while that window is focused. Captured mode is unavailable
+/// in GLFW 3.4 on Cocoa and Wayland confinement depends on compositor protocols.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum CursorMode {
     /// Shows the cursor and lets it move normally.
@@ -24,19 +23,9 @@ pub enum CursorMode {
 }
 
 impl CursorMode {
-    pub(crate) const fn from_glfw(mode: glfw::CursorMode) -> Self {
-        match mode {
-            glfw::CursorMode::Normal => Self::Normal,
-            glfw::CursorMode::Hidden => Self::Hidden,
-            glfw::CursorMode::Disabled => Self::Disabled,
-            glfw::CursorMode::Captured => Self::Captured,
-        }
-    }
-
-    pub(crate) const fn to_glfw(self) -> glfw::CursorMode {
+    pub(crate) const fn to_effective_glfw(self) -> glfw::CursorMode {
         match self {
-            Self::Normal => glfw::CursorMode::Normal,
-            Self::Hidden => glfw::CursorMode::Hidden,
+            Self::Normal | Self::Hidden => glfw::CursorMode::Normal,
             Self::Disabled => glfw::CursorMode::Disabled,
             Self::Captured => glfw::CursorMode::Captured,
         }
@@ -53,14 +42,22 @@ mod tests {
     }
 
     #[test]
-    fn every_cursor_mode_round_trips_through_glfw() {
-        for mode in [
-            CursorMode::Normal,
-            CursorMode::Hidden,
-            CursorMode::Disabled,
-            CursorMode::Captured,
-        ] {
-            assert_eq!(CursorMode::from_glfw(mode.to_glfw()), mode);
-        }
+    fn cursor_modes_map_to_their_effective_glfw_mode() {
+        assert_eq!(
+            CursorMode::Normal.to_effective_glfw(),
+            glfw::CursorMode::Normal
+        );
+        assert_eq!(
+            CursorMode::Hidden.to_effective_glfw(),
+            glfw::CursorMode::Normal
+        );
+        assert_eq!(
+            CursorMode::Disabled.to_effective_glfw(),
+            glfw::CursorMode::Disabled
+        );
+        assert_eq!(
+            CursorMode::Captured.to_effective_glfw(),
+            glfw::CursorMode::Captured
+        );
     }
 }

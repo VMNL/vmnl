@@ -113,16 +113,16 @@ fn apply_keybinds(
         window.set_aspect_ratio(None)?;
     }
     if cursor_normal {
-        window.set_cursor_mode(CursorMode::Normal);
+        window.set_cursor_mode(CursorMode::Normal)?;
     }
     if cursor_hidden {
-        window.set_cursor_mode(CursorMode::Hidden);
+        window.set_cursor_mode(CursorMode::Hidden)?;
     }
     if cursor_disabled {
-        window.set_cursor_mode(CursorMode::Disabled);
+        window.set_cursor_mode(CursorMode::Disabled)?;
     }
     if cursor_captured {
-        window.set_cursor_mode(CursorMode::Captured);
+        window.set_cursor_mode(CursorMode::Captured)?;
     }
     if center_cursor {
         let (width, height) = window.get_size();

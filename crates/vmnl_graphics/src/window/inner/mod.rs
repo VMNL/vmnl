@@ -135,6 +135,8 @@ impl VMNLWindow {
                 vmnl_instance,
                 context: window,
                 cursor: None,
+                hidden_cursor: None,
+                cursor_mode: crate::CursorMode::Normal,
                 events,
                 framebuffers,
                 render_pass,

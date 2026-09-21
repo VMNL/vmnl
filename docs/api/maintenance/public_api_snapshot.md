@@ -1496,7 +1496,7 @@ pub fn vmnl::Window::is_lock_key_modifier_reporting_enabled(&self) -> bool
 pub fn vmnl::Window::is_raw_mouse_motion_enabled(&self) -> bool
 pub fn vmnl::Window::is_sticky_mouse_buttons_enabled(&self) -> bool
 pub fn vmnl::Window::set_cursor(&mut self, core::option::Option<&vmnl::Cursor>) -> vmnl::VMNLResult<()>
-pub fn vmnl::Window::set_cursor_mode(&mut self, vmnl::CursorMode)
+pub fn vmnl::Window::set_cursor_mode(&mut self, vmnl::CursorMode) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_cursor_position(&mut self, f64, f64) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_lock_key_modifier_reporting(&mut self, bool)
 pub fn vmnl::Window::set_raw_mouse_motion(&mut self, bool) -> vmnl::VMNLResult<()>

@@ -110,8 +110,9 @@ pub(crate) fn create_cursor(image: CursorImage, pixels: &[u8]) -> VMNLResult<Nat
         pixels: pixels.as_ptr().cast_mut(),
     };
 
-    // SAFETY: `CursorImage` is constructed only after positive dimensions, exact RGBA8 byte
-    // length and an in-bounds hotspot have been validated. GLFW copies `pixels` before returning.
+    // SAFETY: `CursorImage` is constructed after validation or from VMNL's fixed one-pixel
+    // transparent image. Both paths provide positive dimensions, an exact RGBA8 byte length and
+    // an in-bounds hotspot. GLFW copies `pixels` before returning.
     let cursor = unsafe {
         glfw::ffi::glfwCreateCursor(&raw const native_image, image.hotspot_x, image.hotspot_y)
     };
@@ -134,6 +135,25 @@ pub(crate) fn set_cursor(
         glfw::ffi::glfwSetCursor(
             window.window_ptr(),
             cursor.map_or(std::ptr::null_mut(), |cursor| cursor.0.as_ptr()),
+        );
+    }
+    operation_result()
+}
+
+pub(crate) fn set_cursor_mode(
+    window: &mut glfw::PWindow,
+    mode: glfw::CursorMode,
+) -> VMNLResult<()> {
+    use glfw::Context as _;
+
+    clear_error();
+    // SAFETY: `window` owns a live GLFW window for this exclusive borrow, `mode` is a valid GLFW
+    // cursor-mode constant, and VMNL's window API is confined to the GLFW platform thread.
+    unsafe {
+        glfw::ffi::glfwSetInputMode(
+            window.window_ptr(),
+            glfw::ffi::GLFW_CURSOR,
+            mode as std::os::raw::c_int,
         );
     }
     operation_result()

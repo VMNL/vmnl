@@ -19,10 +19,11 @@ impl Window {
     /// Assigns a custom or standard cursor, or restores the backend default with `None`.
     ///
     /// The window retains a shared clone of the resource, so the caller may drop its own clone or
-    /// assign the same cursor to other windows. The selected image is visible only in
-    /// [`CursorMode::Normal`] and may additionally require window focus on some platforms.
-    /// This call performs no VMNL allocation and preserves the previous cursor if GLFW rejects the
-    /// request.
+    /// assign the same cursor to other windows. While the mode is [`CursorMode::Hidden`], this
+    /// updates the retained client selection without replacing VMNL's active transparent cursor;
+    /// the selection is applied when leaving hidden mode. The selected image may additionally
+    /// require window focus on some platforms. This call performs no VMNL allocation and preserves
+    /// the previous cursor if GLFW rejects a native request.
     ///
     /// # Errors
     /// Returns the VMNL category produced by this `glfwSetCursor` call.
@@ -67,10 +68,11 @@ impl Window {
         self.inner.is_cursor_hovered()
     }
 
-    /// Returns the cursor mode stored for this window.
+    /// Returns the cursor mode requested through VMNL for this window.
     ///
-    /// The stored mode can differ from effective native behavior while the window is unfocused
-    /// or when a backend cannot implement the requested mode.
+    /// Hidden mode is represented by a transparent cursor while GLFW remains in normal mode. The
+    /// requested mode can differ from effective native behavior while the window is unfocused or
+    /// when a backend cannot implement it.
     #[inline]
     #[must_use]
     pub fn get_cursor_mode(&self) -> CursorMode {
@@ -79,13 +81,18 @@ impl Window {
 
     /// Sets the cursor visibility and confinement mode.
     ///
-    /// Disabled and captured modes become effective only while the window is focused. Captured
-    /// mode is not implemented by GLFW 3.4 on Cocoa. Backend failures are reported through the
-    /// configured GLFW error callback; [`get_cursor_mode`](Self::get_cursor_mode) returns GLFW's
-    /// stored mode.
+    /// Hidden mode lazily creates and reuses one transparent native cursor per window. The cursor
+    /// selected through [`set_cursor`](Self::set_cursor) remains inspectable and is restored when
+    /// leaving hidden mode. Disabled and captured modes become effective only while the window is
+    /// focused. Captured mode is not implemented by GLFW 3.4 on Cocoa.
+    ///
+    /// # Errors
+    /// Returns the VMNL category produced while creating or assigning the transparent cursor, or
+    /// while applying the effective GLFW cursor mode. On failure, VMNL keeps the previously
+    /// requested mode and attempts to restore its native cursor state.
     #[inline]
-    pub fn set_cursor_mode(&mut self, mode: CursorMode) {
-        self.inner.set_cursor_mode(mode);
+    pub fn set_cursor_mode(&mut self, mode: CursorMode) -> VMNLResult<()> {
+        self.inner.set_cursor_mode(mode)
     }
 
     /// Returns whether GLFW sticky mouse buttons are enabled for this window.

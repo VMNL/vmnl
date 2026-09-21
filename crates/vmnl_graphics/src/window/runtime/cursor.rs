@@ -13,7 +13,9 @@ impl VMNLWindow {
     }
 
     pub(crate) fn set_cursor(&mut self, cursor: Option<&Cursor>) -> VMNLResult<()> {
-        crate::glfw_backend::set_cursor(&mut self.handle.context, cursor.map(Cursor::native))?;
+        if self.handle.cursor_mode != CursorMode::Hidden {
+            crate::glfw_backend::set_cursor(&mut self.handle.context, cursor.map(Cursor::native))?;
+        }
         self.handle.cursor = cursor.cloned();
         Ok(())
     }
@@ -33,11 +35,72 @@ impl VMNLWindow {
     }
 
     pub(crate) fn get_cursor_mode(&self) -> CursorMode {
-        CursorMode::from_glfw(self.handle.context.get_cursor_mode())
+        self.handle.cursor_mode
     }
 
-    pub(crate) fn set_cursor_mode(&mut self, mode: CursorMode) {
-        self.handle.context.set_cursor_mode(mode.to_glfw());
+    pub(crate) fn set_cursor_mode(&mut self, mode: CursorMode) -> VMNLResult<()> {
+        let previous_mode = self.handle.cursor_mode;
+        if mode == previous_mode {
+            return Ok(());
+        }
+
+        if mode == CursorMode::Hidden {
+            self.apply_hidden_cursor()?;
+            if let Err(error) = self.apply_native_cursor_mode(mode) {
+                self.restore_native_cursor_state(previous_mode);
+                return Err(error);
+            }
+        } else if previous_mode == CursorMode::Hidden {
+            if let Err(error) = self.apply_native_cursor_mode(mode) {
+                self.restore_native_cursor_state(previous_mode);
+                return Err(error);
+            }
+            if let Err(error) = self.apply_client_cursor() {
+                self.restore_native_cursor_state(previous_mode);
+                return Err(error);
+            }
+        } else if let Err(error) = self.apply_native_cursor_mode(mode) {
+            let _ = self.apply_native_cursor_mode(previous_mode);
+            return Err(error);
+        }
+
+        self.handle.cursor_mode = mode;
+        Ok(())
+    }
+
+    fn apply_native_cursor_mode(&mut self, mode: CursorMode) -> VMNLResult<()> {
+        crate::glfw_backend::set_cursor_mode(&mut self.handle.context, mode.to_effective_glfw())
+    }
+
+    fn apply_client_cursor(&mut self) -> VMNLResult<()> {
+        let cursor = self.handle.cursor.clone();
+        crate::glfw_backend::set_cursor(
+            &mut self.handle.context,
+            cursor.as_ref().map(Cursor::native),
+        )
+    }
+
+    fn apply_hidden_cursor(&mut self) -> VMNLResult<()> {
+        // A non-animated cursor prevents GLFW's Wayland theme timer from restoring a visible
+        // frame after a hidden-mode request and keeps VMNL's hidden behavior backend-independent.
+        let cursor = if let Some(cursor) = &self.handle.hidden_cursor {
+            cursor.clone()
+        } else {
+            let cursor = Cursor::transparent(&self.handle.instance)?;
+            self.handle.hidden_cursor = Some(cursor.clone());
+            cursor
+        };
+
+        crate::glfw_backend::set_cursor(&mut self.handle.context, Some(cursor.native()))
+    }
+
+    fn restore_native_cursor_state(&mut self, mode: CursorMode) {
+        let _ = self.apply_native_cursor_mode(mode);
+        if mode == CursorMode::Hidden {
+            let _ = self.apply_hidden_cursor();
+        } else {
+            let _ = self.apply_client_cursor();
+        }
     }
 
     pub(crate) fn is_sticky_mouse_buttons_enabled(&self) -> bool {
