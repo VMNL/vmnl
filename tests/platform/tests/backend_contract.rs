@@ -51,6 +51,10 @@ fn selected_backend_contract() {
         .expect("VMNL_PLATFORM_TEST_BACKEND must name wayland or x11");
     let operations: &[&str] = match backend.as_str() {
         "wayland" => &[
+            "keyboard-metadata",
+            "keyboard-input-modes",
+            "keyboard-wait-events-then-poll",
+            "keyboard-wait-events-timeout-then-poll",
             "mouse-input-modes",
             "set-position",
             "get-position",
@@ -59,6 +63,10 @@ fn selected_backend_contract() {
             "iconify",
         ],
         "x11" => &[
+            "keyboard-metadata",
+            "keyboard-input-modes",
+            "keyboard-wait-events-then-poll",
+            "keyboard-wait-events-timeout-then-poll",
             "mouse-input-modes",
             "set-position",
             "get-position",
@@ -70,6 +78,10 @@ fn selected_backend_contract() {
         ],
         "win32" | "cocoa" => &[
             "create",
+            "keyboard-metadata",
+            "keyboard-input-modes",
+            "keyboard-wait-events-then-poll",
+            "keyboard-wait-events-timeout-then-poll",
             "mouse-input-modes",
             "set-position",
             "get-position",
@@ -84,45 +96,98 @@ fn selected_backend_contract() {
         assert_eq!(record["backend_actual"], backend);
         assert_eq!(record["operation"], *operation);
         assert_eq!(record["result"], "ok");
-        if *operation == "mouse-input-modes" {
-            assert_eq!(
-                record["value"],
-                serde_json::json!({
-                    "defaults": {
-                        "sticky_mouse_buttons": false,
-                        "lock_key_modifier_reporting": false,
-                    },
-                    "enabled": {
-                        "sticky_mouse_buttons": true,
-                        "lock_key_modifier_reporting": true,
-                    },
-                    "disabled_after_reset": {
-                        "sticky_mouse_buttons": true,
-                        "lock_key_modifier_reporting": true,
-                    },
-                })
-            );
-            assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
-        }
-        if backend == "wayland" && matches!(*operation, "set-position" | "set-opacity") {
-            let callbacks = record["callbacks"]
-                .as_array()
-                .expect("callbacks should be a JSON array");
-            assert!(
-                callbacks.iter().any(|callback| {
-                    matches!(
-                        callback["code"].as_i64(),
-                        Some(code) if code == i64::from(glfw::ffi::GLFW_FEATURE_UNAVAILABLE)
-                    )
-                }),
-                "Wayland {operation} must report GLFW_FEATURE_UNAVAILABLE: {record}"
-            );
-        }
-        if backend == "wayland" && *operation == "get-position" {
-            assert_eq!(record["value"], serde_json::json!([0, 0]));
-        }
-        if backend == "wayland" && *operation == "get-opacity" {
-            assert_eq!(record["value"], serde_json::json!(1.0));
-        }
+        assert_operation_contract(&backend, operation, &record);
     }
+}
+
+fn assert_operation_contract(backend: &str, operation: &str, record: &Value) {
+    match operation {
+        "mouse-input-modes" => assert_mouse_input_modes(record),
+        "keyboard-input-modes" => assert_keyboard_input_modes(record),
+        "keyboard-metadata" => assert_keyboard_metadata(record),
+        "keyboard-wait-events-then-poll" | "keyboard-wait-events-timeout-then-poll" => {
+            assert_keyboard_wait(record);
+        }
+        _ => {}
+    }
+
+    if backend == "wayland" && matches!(operation, "set-position" | "set-opacity") {
+        let callbacks = record["callbacks"]
+            .as_array()
+            .expect("callbacks should be a JSON array");
+        assert!(
+            callbacks.iter().any(|callback| {
+                matches!(
+                    callback["code"].as_i64(),
+                    Some(code) if code == i64::from(glfw::ffi::GLFW_FEATURE_UNAVAILABLE)
+                )
+            }),
+            "Wayland {operation} must report GLFW_FEATURE_UNAVAILABLE: {record}"
+        );
+    }
+    if backend == "wayland" && operation == "get-position" {
+        assert_eq!(record["value"], serde_json::json!([0, 0]));
+    }
+    if backend == "wayland" && operation == "get-opacity" {
+        assert_eq!(record["value"], serde_json::json!(1.0));
+    }
+}
+
+fn assert_mouse_input_modes(record: &Value) {
+    assert_eq!(
+        record["value"],
+        serde_json::json!({
+            "defaults": {
+                "sticky_mouse_buttons": false,
+                "lock_key_modifier_reporting": false,
+            },
+            "enabled": {
+                "sticky_mouse_buttons": true,
+                "lock_key_modifier_reporting": true,
+            },
+            "disabled_after_reset": {
+                "sticky_mouse_buttons": true,
+                "lock_key_modifier_reporting": true,
+            },
+        })
+    );
+    assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+}
+
+fn assert_keyboard_input_modes(record: &Value) {
+    assert_eq!(record["value"]["default_sticky_keys"], false);
+    assert_eq!(record["value"]["enabled_sticky_keys"], true);
+    assert_eq!(record["value"]["disabled_after_reset"], true);
+    assert_eq!(record["value"]["callback_installed"], true);
+    assert_eq!(
+        record["value"]["actions"],
+        serde_json::json!(["Press", "Release"])
+    );
+    assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+}
+
+fn assert_keyboard_metadata(record: &Value) {
+    assert!(record["value"]["a_scancode"].is_number());
+    if record["backend_actual"] == "wayland" {
+        assert_eq!(record["value"]["names_deferred_until_keyboard_event"], true);
+        assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+        return;
+    }
+
+    assert!(record["value"]["a_name_by_key"].is_string());
+    assert_eq!(
+        record["value"]["a_name_by_scancode"],
+        record["value"]["a_name_by_key"]
+    );
+    assert!(record["value"]["escape_name"].is_null());
+    assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+}
+
+fn assert_keyboard_wait(record: &Value) {
+    assert_eq!(record["value"]["callback_installed"], true);
+    assert_eq!(
+        record["value"]["actions_after_poll"],
+        serde_json::json!(["Press", "Release"])
+    );
+    assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
 }

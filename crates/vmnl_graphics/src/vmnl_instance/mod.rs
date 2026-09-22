@@ -21,7 +21,10 @@ mod tests;
 
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 pub use context::Context;
-use std::sync::{Arc, Mutex};
+use std::{
+    cell::Cell,
+    sync::{Arc, Mutex},
+};
 use vulkano::{
     command_buffer::allocator::StandardCommandBufferAllocator,
     descriptor_set::allocator::StandardDescriptorSetAllocator,
@@ -57,6 +60,8 @@ pub(crate) struct VMNLInstance {
     pub(crate) descriptor_set_allocator: Arc<StandardDescriptorSetAllocator>,
     /// GLFW context used for window management and input handling.
     pub(crate) glfw: glfw::Glfw,
+    /// Whether layout-dependent key-name queries are safe for the active backend.
+    pub(crate) keyboard_name_queries_ready: Cell<bool>,
 }
 
 impl VMNLInstance {
@@ -84,6 +89,7 @@ impl VMNLInstance {
             "initialized GLFW {} backend",
             crate::glfw_backend::backend_name(&glfw)
         );
+        let keyboard_name_queries_ready = Cell::new(glfw.get_platform() != glfw::Platform::Wayland);
         let instance: Arc<Instance> = Self::create_instance(&glfw)?;
         let device_extensions: DeviceExtensions = DeviceExtensions {
             khr_swapchain: true,
@@ -120,6 +126,7 @@ impl VMNLInstance {
             command_buffer_allocator,
             descriptor_set_allocator,
             glfw,
+            keyboard_name_queries_ready,
         })
     }
 }

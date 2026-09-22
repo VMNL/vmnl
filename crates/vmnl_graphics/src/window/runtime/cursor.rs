@@ -111,6 +111,14 @@ impl VMNLWindow {
         self.handle.context.set_sticky_mouse_buttons(enabled);
     }
 
+    pub(crate) fn is_sticky_keys_enabled(&self) -> bool {
+        self.handle.context.has_sticky_keys()
+    }
+
+    pub(crate) fn set_sticky_keys(&mut self, enabled: bool) {
+        self.handle.context.set_sticky_keys(enabled);
+    }
+
     pub(crate) fn is_lock_key_modifier_reporting_enabled(&self) -> bool {
         self.handle.context.does_store_lock_key_mods()
     }

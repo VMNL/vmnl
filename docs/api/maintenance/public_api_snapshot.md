@@ -845,9 +845,13 @@ pub vmnl::EventKind::FramebufferResized::height: u32
 pub vmnl::EventKind::FramebufferResized::width: u32
 pub vmnl::EventKind::KeyPressed
 pub vmnl::EventKind::KeyPressed::key: vmnl::Key
+pub vmnl::EventKind::KeyPressed::modifiers: vmnl::Modifiers
 pub vmnl::EventKind::KeyPressed::repeat: bool
+pub vmnl::EventKind::KeyPressed::scancode: vmnl::Scancode
 pub vmnl::EventKind::KeyReleased
 pub vmnl::EventKind::KeyReleased::key: vmnl::Key
+pub vmnl::EventKind::KeyReleased::modifiers: vmnl::Modifiers
+pub vmnl::EventKind::KeyReleased::scancode: vmnl::Scancode
 pub vmnl::EventKind::MouseButtonPressed
 pub vmnl::EventKind::MouseButtonPressed::button: vmnl::MouseButton
 pub vmnl::EventKind::MouseButtonPressed::modifiers: vmnl::Modifiers
@@ -866,6 +870,9 @@ pub vmnl::EventKind::Resized
 pub vmnl::EventKind::Resized::height: u32
 pub vmnl::EventKind::Resized::width: u32
 pub vmnl::EventKind::Text(char)
+pub vmnl::EventKind::TextWithModifiers
+pub vmnl::EventKind::TextWithModifiers::character: char
+pub vmnl::EventKind::TextWithModifiers::modifiers: vmnl::Modifiers
 impl core::clone::Clone for vmnl::EventKind
 pub fn vmnl::EventKind::clone(&self) -> vmnl::EventKind
 impl core::cmp::PartialEq for vmnl::EventKind
@@ -882,20 +889,40 @@ impl core::panic::unwind_safe::RefUnwindSafe for vmnl::EventKind
 impl core::panic::unwind_safe::UnwindSafe for vmnl::EventKind
 #[repr(usize)] pub enum vmnl::Key
 pub vmnl::Key::A
+pub vmnl::Key::Apostrophe
 pub vmnl::Key::B
+pub vmnl::Key::Backslash
 pub vmnl::Key::Backspace
 pub vmnl::Key::C
+pub vmnl::Key::CapsLock
+pub vmnl::Key::Comma
 pub vmnl::Key::D
+pub vmnl::Key::Delete
 pub vmnl::Key::Down
 pub vmnl::Key::E
+pub vmnl::Key::End
 pub vmnl::Key::Enter
+pub vmnl::Key::Equal
 pub vmnl::Key::Escape
 pub vmnl::Key::F
 pub vmnl::Key::F1
 pub vmnl::Key::F10
 pub vmnl::Key::F11
 pub vmnl::Key::F12
+pub vmnl::Key::F13
+pub vmnl::Key::F14
+pub vmnl::Key::F15
+pub vmnl::Key::F16
+pub vmnl::Key::F17
+pub vmnl::Key::F18
+pub vmnl::Key::F19
 pub vmnl::Key::F2
+pub vmnl::Key::F20
+pub vmnl::Key::F21
+pub vmnl::Key::F22
+pub vmnl::Key::F23
+pub vmnl::Key::F24
+pub vmnl::Key::F25
 pub vmnl::Key::F3
 pub vmnl::Key::F4
 pub vmnl::Key::F5
@@ -904,13 +931,40 @@ pub vmnl::Key::F7
 pub vmnl::Key::F8
 pub vmnl::Key::F9
 pub vmnl::Key::G
+pub vmnl::Key::GraveAccent
 pub vmnl::Key::H
+pub vmnl::Key::Home
 pub vmnl::Key::I
+pub vmnl::Key::Insert
 pub vmnl::Key::J
 pub vmnl::Key::K
+pub vmnl::Key::Kp0
+pub vmnl::Key::Kp1
+pub vmnl::Key::Kp2
+pub vmnl::Key::Kp3
+pub vmnl::Key::Kp4
+pub vmnl::Key::Kp5
+pub vmnl::Key::Kp6
+pub vmnl::Key::Kp7
+pub vmnl::Key::Kp8
+pub vmnl::Key::Kp9
+pub vmnl::Key::KpAdd
+pub vmnl::Key::KpDecimal
+pub vmnl::Key::KpDivide
+pub vmnl::Key::KpEnter
+pub vmnl::Key::KpEqual
+pub vmnl::Key::KpMultiply
+pub vmnl::Key::KpSubtract
 pub vmnl::Key::L
 pub vmnl::Key::Left
+pub vmnl::Key::LeftAlt
+pub vmnl::Key::LeftBracket
+pub vmnl::Key::LeftControl
+pub vmnl::Key::LeftShift
+pub vmnl::Key::LeftSuper
 pub vmnl::Key::M
+pub vmnl::Key::Menu
+pub vmnl::Key::Minus
 pub vmnl::Key::N
 pub vmnl::Key::Num0
 pub vmnl::Key::Num1
@@ -922,12 +976,27 @@ pub vmnl::Key::Num6
 pub vmnl::Key::Num7
 pub vmnl::Key::Num8
 pub vmnl::Key::Num9
+pub vmnl::Key::NumLock
 pub vmnl::Key::O
 pub vmnl::Key::P
+pub vmnl::Key::PageDown
+pub vmnl::Key::PageUp
+pub vmnl::Key::Pause
+pub vmnl::Key::Period
+pub vmnl::Key::PrintScreen
 pub vmnl::Key::Q
 pub vmnl::Key::R
 pub vmnl::Key::Right
+pub vmnl::Key::RightAlt
+pub vmnl::Key::RightBracket
+pub vmnl::Key::RightControl
+pub vmnl::Key::RightShift
+pub vmnl::Key::RightSuper
 pub vmnl::Key::S
+pub vmnl::Key::ScrollLock
+pub vmnl::Key::Semicolon
+pub vmnl::Key::Slash
+pub vmnl::Key::Space
 pub vmnl::Key::T
 pub vmnl::Key::Tab
 pub vmnl::Key::U
@@ -935,6 +1004,8 @@ pub vmnl::Key::Unknown
 pub vmnl::Key::Up
 pub vmnl::Key::V
 pub vmnl::Key::W
+pub vmnl::Key::World1
+pub vmnl::Key::World2
 pub vmnl::Key::X
 pub vmnl::Key::Y
 pub vmnl::Key::Z
@@ -1141,6 +1212,9 @@ impl core::panic::unwind_safe::RefUnwindSafe for vmnl::VMNLErrorKind
 impl core::panic::unwind_safe::UnwindSafe for vmnl::VMNLErrorKind
 pub struct vmnl::Context
 impl vmnl::Context
+pub fn vmnl::Context::get_key_name(&self, vmnl::Key) -> core::option::Option<alloc::string::String>
+pub fn vmnl::Context::get_key_scancode(&self, vmnl::Key) -> core::option::Option<vmnl::Scancode>
+pub fn vmnl::Context::get_scancode_name(&self, vmnl::Scancode) -> core::option::Option<alloc::string::String>
 pub fn vmnl::Context::is_raw_mouse_motion_supported(&self) -> bool
 pub fn vmnl::Context::new() -> vmnl::VMNLResult<Self>
 impl core::clone::Clone for vmnl::Context
@@ -1355,6 +1429,28 @@ impl core::marker::Unpin for vmnl::MouseState
 impl core::marker::UnsafeUnpin for vmnl::MouseState
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::MouseState
 impl core::panic::unwind_safe::UnwindSafe for vmnl::MouseState
+#[repr(transparent)] pub struct vmnl::Scancode(_)
+impl vmnl::Scancode
+pub const fn vmnl::Scancode::as_raw(self) -> i32
+pub const fn vmnl::Scancode::from_raw(i32) -> Self
+impl core::clone::Clone for vmnl::Scancode
+pub fn vmnl::Scancode::clone(&self) -> vmnl::Scancode
+impl core::cmp::Eq for vmnl::Scancode
+impl core::cmp::PartialEq for vmnl::Scancode
+pub fn vmnl::Scancode::eq(&self, &vmnl::Scancode) -> bool
+impl core::fmt::Debug for vmnl::Scancode
+pub fn vmnl::Scancode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for vmnl::Scancode
+pub fn vmnl::Scancode::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for vmnl::Scancode
+impl core::marker::StructuralPartialEq for vmnl::Scancode
+impl core::marker::Freeze for vmnl::Scancode
+impl core::marker::Send for vmnl::Scancode
+impl core::marker::Sync for vmnl::Scancode
+impl core::marker::Unpin for vmnl::Scancode
+impl core::marker::UnsafeUnpin for vmnl::Scancode
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::Scancode
+impl core::panic::unwind_safe::UnwindSafe for vmnl::Scancode
 pub struct vmnl::StandardCursorBuilder
 impl vmnl::StandardCursorBuilder
 pub fn vmnl::StandardCursorBuilder::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::Cursor>
@@ -1466,8 +1562,11 @@ pub fn vmnl::Window::enable_all_polling(&mut self)
 pub fn vmnl::Window::enable_keyboard_polling(&mut self)
 pub fn vmnl::Window::enable_mouse_polling(&mut self)
 pub fn vmnl::Window::enable_window_state_polling(&mut self)
+pub const fn vmnl::Window::is_char_mods_polling_enabled(&self) -> bool
+pub const fn vmnl::Window::is_char_polling_enabled(&self) -> bool
 pub const fn vmnl::Window::is_cursor_enter_polling_enabled(&self) -> bool
 pub const fn vmnl::Window::is_cursor_pos_polling_enabled(&self) -> bool
+pub const fn vmnl::Window::is_key_polling_enabled(&self) -> bool
 pub const fn vmnl::Window::is_mouse_button_polling_enabled(&self) -> bool
 pub const fn vmnl::Window::is_scroll_polling_enabled(&self) -> bool
 pub fn vmnl::Window::set_char_mods_polling(&mut self, bool)
@@ -1494,12 +1593,14 @@ pub fn vmnl::Window::get_cursor_position(&self) -> (f64, f64)
 pub fn vmnl::Window::is_cursor_hovered(&self) -> bool
 pub fn vmnl::Window::is_lock_key_modifier_reporting_enabled(&self) -> bool
 pub fn vmnl::Window::is_raw_mouse_motion_enabled(&self) -> bool
+pub fn vmnl::Window::is_sticky_keys_enabled(&self) -> bool
 pub fn vmnl::Window::is_sticky_mouse_buttons_enabled(&self) -> bool
 pub fn vmnl::Window::set_cursor(&mut self, core::option::Option<&vmnl::Cursor>) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_cursor_mode(&mut self, vmnl::CursorMode) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_cursor_position(&mut self, f64, f64) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_lock_key_modifier_reporting(&mut self, bool)
 pub fn vmnl::Window::set_raw_mouse_motion(&mut self, bool) -> vmnl::VMNLResult<()>
+pub fn vmnl::Window::set_sticky_keys(&mut self, bool)
 pub fn vmnl::Window::set_sticky_mouse_buttons(&mut self, bool)
 impl vmnl::Window
 pub fn vmnl::Window::get_content_scale(&self) -> (f32, f32)

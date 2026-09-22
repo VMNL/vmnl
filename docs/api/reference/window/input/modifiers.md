@@ -6,7 +6,8 @@ Import path: `vmnl::Modifiers`. Status: experimental, operational flags.
 
 ## Purpose and use cases
 
-Represents modifier keys captured with a mouse-button event. Derives `Debug`, `Copy`, `Clone`, `Eq`, `PartialEq`, `Hash`, and `Default`.
+Represents modifier keys captured with keyboard, mouse-button, and legacy modified-text events.
+Derives `Debug`, `Copy`, `Clone`, `Eq`, `PartialEq`, `Hash`, and `Default`.
 
 ## Public API
 
@@ -22,7 +23,7 @@ Constants: `NONE`, `SHIFT`, `CONTROL`, `ALT`, `SUPER`, `CAPS_LOCK`, and `NUM_LOC
 
 ## Ownership, lifecycle, and threading
 
-Values are copied into `EventKind::MouseButtonPressed` and `MouseButtonReleased` payloads.
+Values are copied into keyboard, mouse-button, and legacy modified-text event payloads.
 
 ## Errors, panics, and failure conditions
 

@@ -7,7 +7,13 @@
 
 use glfw::{ClientApiHint, Context as _, InitHint, WindowHint, WindowMode};
 use serde_json::{json, Value};
-use std::{cell::RefCell, env, process::ExitCode, rc::Rc};
+use std::{
+    cell::RefCell,
+    env,
+    process::ExitCode,
+    rc::Rc,
+    time::{Duration, Instant},
+};
 use vmnl_platform_tests::{backend_name, parse_backend, PROBE_SCHEMA_VERSION};
 
 fn main() -> ExitCode {
@@ -78,7 +84,7 @@ fn main() -> ExitCode {
     }
 
     glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
-    glfw.window_hint(WindowHint::Visible(false));
+    glfw.window_hint(WindowHint::Visible(operation == "sticky-keys-manual"));
     let Some((mut window, events)) =
         glfw.create_window(160, 120, "VMNL platform probe", WindowMode::Windowed)
     else {
@@ -160,6 +166,31 @@ fn main() -> ExitCode {
                 },
             })
         }
+        "keyboard-metadata" => {
+            let scancode = glfw::get_key_scancode(Some(glfw::Key::A));
+            if actual == glfw::Platform::Wayland {
+                json!({
+                    "a_scancode": scancode,
+                    "names_deferred_until_keyboard_event": true,
+                })
+            } else {
+                json!({
+                    "a_scancode": scancode,
+                    "a_name_by_key": glfw::get_key_name(Some(glfw::Key::A), None),
+                    "a_name_by_scancode": scancode
+                        .and_then(|value| glfw::get_key_name(None, Some(value))),
+                    "escape_name": glfw::get_key_name(Some(glfw::Key::Escape), None),
+                })
+            }
+        }
+        "keyboard-input-modes" => keyboard_input_modes(&mut window, &events),
+        "keyboard-wait-events-then-poll" => {
+            keyboard_wait_then_poll(&mut glfw, &mut window, &events, None)
+        }
+        "keyboard-wait-events-timeout-then-poll" => {
+            keyboard_wait_then_poll(&mut glfw, &mut window, &events, Some(0.001))
+        }
+        "sticky-keys-manual" => manual_sticky_keys(&mut glfw, &mut window, &events),
         "raw-mouse-motion" => {
             let supported = glfw.supports_raw_motion();
             if supported {
@@ -190,6 +221,7 @@ fn main() -> ExitCode {
         }
     };
 
+    let operation_succeeded = operation != "sticky-keys-manual" || value["qualified"] == true;
     emit(
         &requested_name,
         Some(actual),
@@ -197,9 +229,174 @@ fn main() -> ExitCode {
         "operation",
         &callbacks,
         &value,
-        "ok",
+        if operation_succeeded { "ok" } else { "error" },
     );
-    ExitCode::SUCCESS
+    if operation_succeeded {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(13)
+    }
+}
+
+fn keyboard_input_modes(
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+) -> Value {
+    let default_sticky_keys = window.has_sticky_keys();
+    window.set_sticky_keys(true);
+    let enabled_sticky_keys = window.has_sticky_keys();
+    window.set_key_polling(true);
+    let window_ptr = window.window_ptr();
+
+    // SAFETY: The window is live on the GLFW thread. Temporarily removing and restoring the
+    // callback obtains the callback installed by glfw-rs without changing its final state.
+    let callback = unsafe {
+        let callback = glfw::ffi::glfwSetKeyCallback(window_ptr, None);
+        glfw::ffi::glfwSetKeyCallback(window_ptr, callback);
+        callback
+    };
+    let actions = callback.map_or_else(Vec::new, |callback| {
+        let scancode = glfw::get_key_scancode(Some(glfw::Key::A)).unwrap_or_default();
+        // SAFETY: The callback was installed by glfw-rs for this live window. The key, scancode,
+        // actions and modifier mask are valid GLFW values and enter the glfw-rs receiver.
+        unsafe {
+            callback(
+                window_ptr,
+                glfw::ffi::GLFW_KEY_A,
+                scancode,
+                glfw::ffi::GLFW_PRESS,
+                0,
+            );
+            callback(
+                window_ptr,
+                glfw::ffi::GLFW_KEY_A,
+                scancode,
+                glfw::ffi::GLFW_RELEASE,
+                0,
+            );
+        }
+
+        glfw::flush_messages(events)
+            .filter_map(|(_, event)| match event {
+                glfw::WindowEvent::Key(glfw::Key::A, _, action, _) => Some(format!("{action:?}")),
+                _ => None,
+            })
+            .collect()
+    });
+
+    window.set_sticky_keys(false);
+    json!({
+        "default_sticky_keys": default_sticky_keys,
+        "enabled_sticky_keys": enabled_sticky_keys,
+        "disabled_after_reset": !window.has_sticky_keys(),
+        "callback_installed": callback.is_some(),
+        "actions": actions,
+    })
+}
+
+fn keyboard_wait_then_poll(
+    glfw: &mut glfw::Glfw,
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+    timeout: Option<f64>,
+) -> Value {
+    window.set_key_polling(true);
+    let window_ptr = window.window_ptr();
+    // SAFETY: The window is live on the GLFW thread. Temporarily removing and restoring the
+    // callback obtains the callback installed by glfw-rs without changing its final state.
+    let callback = unsafe {
+        let callback = glfw::ffi::glfwSetKeyCallback(window_ptr, None);
+        glfw::ffi::glfwSetKeyCallback(window_ptr, callback);
+        callback
+    };
+    let Some(callback) = callback else {
+        return json!({"callback_installed": false});
+    };
+    let scancode = glfw::get_key_scancode(Some(glfw::Key::A)).unwrap_or_default();
+
+    // SAFETY: The callback was installed by glfw-rs for this live window. The key, scancode,
+    // actions and modifier mask are valid GLFW values and enter the glfw-rs receiver.
+    unsafe {
+        callback(
+            window_ptr,
+            glfw::ffi::GLFW_KEY_A,
+            scancode,
+            glfw::ffi::GLFW_PRESS,
+            0,
+        );
+        callback(
+            window_ptr,
+            glfw::ffi::GLFW_KEY_A,
+            scancode,
+            glfw::ffi::GLFW_RELEASE,
+            0,
+        );
+    }
+
+    if let Some(seconds) = timeout {
+        glfw.wait_events_timeout(seconds);
+    } else {
+        glfw.post_empty_event();
+        glfw.wait_events();
+    }
+    glfw.poll_events();
+
+    let actions: Vec<String> = glfw::flush_messages(events)
+        .filter_map(|(_, event)| match event {
+            glfw::WindowEvent::Key(glfw::Key::A, _, action, _) => Some(format!("{action:?}")),
+            _ => None,
+        })
+        .collect();
+    json!({
+        "callback_installed": true,
+        "actions_after_poll": actions,
+    })
+}
+
+fn manual_sticky_keys(
+    glfw: &mut glfw::Glfw,
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+) -> Value {
+    eprintln!("Focus the probe window, then press and release A within 15 seconds.");
+    window.set_key_polling(true);
+    window.set_sticky_keys(true);
+    window.show();
+    window.focus();
+
+    let deadline = Instant::now() + Duration::from_secs(15);
+    let mut saw_press = false;
+    let mut saw_release = false;
+    while Instant::now() < deadline && !saw_release {
+        glfw.wait_events_timeout(0.1);
+        for (_, event) in glfw::flush_messages(events) {
+            match event {
+                glfw::WindowEvent::Key(glfw::Key::A, _, glfw::Action::Press, _) => {
+                    saw_press = true;
+                }
+                glfw::WindowEvent::Key(glfw::Key::A, _, glfw::Action::Release, _) => {
+                    saw_release = true;
+                }
+                _ => {}
+            }
+        }
+    }
+
+    let first_read = window.get_key(glfw::Key::A);
+    let second_read = window.get_key(glfw::Key::A);
+    window.set_sticky_keys(false);
+    let qualified = saw_press
+        && saw_release
+        && first_read == glfw::Action::Press
+        && second_read == glfw::Action::Release;
+
+    json!({
+        "qualified": qualified,
+        "saw_press": saw_press,
+        "saw_release": saw_release,
+        "first_read": format!("{first_read:?}"),
+        "second_read": format!("{second_read:?}"),
+    })
 }
 
 fn wait_then_poll(

@@ -16,7 +16,9 @@ Single-key methods: `is_down`, `is_pressed`, `is_released`. Slice methods: `is_a
 
 ## Construction, defaults, and validation
 
-New/default state contains no active key. Queries accept all `Key` variants and do not return errors.
+New/default state contains no active key. Queries accept all `Key` variants and do not return
+errors. `Key::Unknown` is event-only: all snapshot queries return `false` for it, and whole-state
+queries scan only named keys.
 
 ## Units, coordinates, and valid ranges
 

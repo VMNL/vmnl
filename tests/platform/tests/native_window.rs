@@ -90,8 +90,55 @@ fn null_backend_mouse_input_modes_are_disabled_by_default_and_round_trip() {
 }
 
 #[test]
+fn null_backend_keyboard_queries_and_sticky_mode_are_deterministic() {
+    let metadata = null_probe("keyboard-metadata");
+    assert_eq!(
+        metadata["value"],
+        serde_json::json!({
+            "a_scancode": 44,
+            "a_name_by_key": "a",
+            "a_name_by_scancode": "a",
+            "escape_name": null,
+        })
+    );
+    assert!(metadata["callbacks"].as_array().is_some_and(Vec::is_empty));
+
+    let sticky = null_probe("keyboard-input-modes");
+    assert_eq!(
+        sticky["value"],
+        serde_json::json!({
+            "default_sticky_keys": false,
+            "enabled_sticky_keys": true,
+            "disabled_after_reset": true,
+            "callback_installed": true,
+            "actions": ["Press", "Release"],
+        })
+    );
+    assert!(sticky["callbacks"].as_array().is_some_and(Vec::is_empty));
+}
+
+#[test]
 fn null_backend_wait_variants_preserve_events_until_polling() {
     for operation in ["wait-events-then-poll", "wait-events-timeout-then-poll"] {
+        let record = null_probe(operation);
+        assert_eq!(record["operation"], operation);
+        assert_eq!(
+            record["value"],
+            serde_json::json!({
+                "callback_installed": true,
+                "actions_after_poll": ["Press", "Release"],
+            })
+        );
+        assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+    }
+}
+
+#[test]
+fn null_backend_keyboard_wait_variants_preserve_events_until_polling() {
+    for operation in [
+        "keyboard-wait-events-then-poll",
+        "keyboard-wait-events-timeout-then-poll",
+    ] {
         let record = null_probe(operation);
         assert_eq!(record["operation"], operation);
         assert_eq!(

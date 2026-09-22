@@ -14,7 +14,8 @@ Carries one translated [`EventKind`](event_kind.md) and the GLFW time at which t
 
 ## Construction, defaults, and validation
 
-There is no default or public constructor. Clients receive values from `Window::poll_events`. Native negative size events and unsupported keys are omitted when they cannot be translated.
+There is no default or public constructor. Clients receive values from `Window::poll_events`.
+Native negative size events and native event kinds without a VMNL representation are omitted.
 
 ## Units, coordinates, and valid ranges
 
@@ -26,7 +27,8 @@ Events own their payload and do not borrow the window. They are snapshots and do
 
 ## Errors, panics, and failure conditions
 
-Translation is not fallible through the public API; unrepresentable/unsupported native events may be omitted.
+Translation is not fallible through the public API; native event kinds without a VMNL
+representation may be omitted. Unknown physical keys remain observable as `Key::Unknown`.
 
 ## Allocation, transfers, synchronization, and GPU cost
 

@@ -12,13 +12,21 @@ Selects which events are returned to clients and offers grouped presets. Keyboar
 
 Individual setters: `set_char_polling`, `set_mouse_button_polling`, `set_cursor_pos_polling`, `set_cursor_enter_polling`, `set_scroll_polling`, `set_size_polling`, `set_framebuffer_size_polling`, `set_focus_polling`, `set_close_polling`, `set_key_polling`, `set_char_mods_polling`, `set_refresh_polling`, `set_iconify_polling`, `set_maximize_polling`, `set_drag_and_drop_polling`, and `set_content_scale_polling`.
 
-Delivery getters: `is_mouse_button_polling_enabled`, `is_cursor_pos_polling_enabled`, `is_cursor_enter_polling_enabled`, and `is_scroll_polling_enabled`.
+Delivery getters: `is_key_polling_enabled`, `is_char_polling_enabled`,
+`is_char_mods_polling_enabled`, `is_mouse_button_polling_enabled`,
+`is_cursor_pos_polling_enabled`, `is_cursor_enter_polling_enabled`, and
+`is_scroll_polling_enabled`.
+
+The `char-mods` source and its getter/setter are legacy GLFW 3.4 compatibility APIs. Prefer
+ordinary character delivery plus key events for new code.
 
 Grouped methods: `enable_keyboard_polling`, `disable_keyboard_polling`, `enable_mouse_polling`, `disable_mouse_polling`, `enable_window_state_polling`, `disable_window_state_polling`, `configure_window_polling`, `unconfigure_window_polling`, and `enable_all_polling`.
 
 ## Construction, defaults, and validation
 
-`WindowBuilder` calls `configure_window_polling` by default. `unset_configure_window_polling` disables public delivery configured by that preset; keyboard and mouse-button state tracking remains active. Setters accept a boolean and perform no validation.
+`WindowBuilder` calls `configure_window_polling` by default, so all seven delivery getters above
+start as `true`. `unset_configure_window_polling` leaves them `false`; keyboard and mouse-button
+state tracking remains active. Setters accept a boolean and perform no validation.
 
 ## Units, coordinates, and valid ranges
 
@@ -26,15 +34,22 @@ Not applicable.
 
 ## Ownership, lifecycle, and threading
 
-Configuration is per window. It does not process pending events or update `Input`. For the five locally filtered sources (key, mouse button, cursor position, cursor enter/leave, and scroll), the setting in force when `poll_events` drains a pending event determines whether that event is returned.
+Configuration is per window. It does not process pending events or update `Input`. For the seven
+locally filtered sources (key, character, legacy character-with-modifiers, mouse button, cursor
+position, cursor enter/leave, and scroll), the setting in force when `poll_events` drains a pending
+event determines whether that event is returned.
 
 ## Errors, panics, and failure conditions
 
-No typed error. Disabling key or mouse-button delivery removes those `EventKind` values from the returned batch but does not stop their `Input` state transitions.
+No typed error. Disabling key or mouse-button delivery removes those `EventKind` values from the
+returned batch but does not stop their `Input` state transitions. Disabling either character source
+also unregisters its GLFW callback.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-No GPU work. Key/mouse/cursor/scroll callbacks remain registered even when public delivery is disabled, so native queue overhead can remain. Exact cost is backend-defined.
+No GPU work. Key/mouse/cursor/scroll callbacks remain registered even when public delivery is
+disabled, so native queue overhead can remain. Character callbacks follow their delivery setting.
+Exact cost is backend-defined.
 
 ## Platform, Vulkan, and display constraints
 

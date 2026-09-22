@@ -8,10 +8,11 @@
 | [`Input`](input.md) | Window-owned keyboard/mouse snapshot |
 | [`Key`](key.md) | Supported key identifier |
 | [`KeyboardState`](keyboard_state.md) | Current and transition key queries |
-| [`Modifiers`](modifiers.md) | Modifier flags attached to mouse-button events |
+| [`Modifiers`](modifiers.md) | Modifier flags attached to keyboard, mouse-button, and legacy text events |
 | [`MouseButton`](mouse_button.md) | Supported mouse-button identifier |
 | [`MouseState`](mouse_state.md) | Current and transition button queries |
-| [Window input modes](modes.md) | Sticky mouse buttons and lock-key modifier reporting |
+| [`Scancode`](scancode.md) | Platform-specific physical-key identifier |
+| [Window input modes](modes.md) | Sticky keys/buttons and lock-key modifier reporting |
 | [`StandardCursor`](standard_cursor.md) | System cursor shape identifier |
 | [`StandardCursorBuilder`](standard_cursor_builder.md) | Deferred standard-cursor allocation |
 

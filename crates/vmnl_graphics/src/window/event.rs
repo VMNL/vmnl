@@ -5,6 +5,7 @@
 
 use super::{
     Input, Key as VMNLKey, KeyboardState, Modifiers, MouseButton as VMNLMouseButton, MouseState,
+    Scancode,
 };
 
 /// A translated window event and the time at which GLFW generated it.
@@ -69,10 +70,14 @@ pub enum EventKind {
         /// New framebuffer height after resizing.
         height: u32,
     },
-    /// A key was pressed; includes the key and whether it is a repeat.
+    /// A key was pressed.
     KeyPressed {
         /// The key that was pressed.
         key: VMNLKey,
+        /// Platform-specific scancode reported for the physical key.
+        scancode: Scancode,
+        /// Modifier flags captured when the event was generated.
+        modifiers: Modifiers,
         /// Whether this is a repeat event.
         repeat: bool,
     },
@@ -80,6 +85,10 @@ pub enum EventKind {
     KeyReleased {
         /// The key that was released.
         key: VMNLKey,
+        /// Platform-specific scancode reported for the physical key.
+        scancode: Scancode,
+        /// Modifier flags captured when the event was generated.
+        modifiers: Modifiers,
     },
     /// The mouse moved; contains the new x and y coordinates.
     MouseMoved {
@@ -115,6 +124,16 @@ pub enum EventKind {
     },
     /// Text input event containing the input character.
     Text(char),
+    /// Legacy text input event containing the character and modifier state.
+    ///
+    /// Prefer [`EventKind::Text`] together with key events for new code. GLFW deprecated the
+    /// modified-character callback because text input and physical modifier input are distinct.
+    TextWithModifiers {
+        /// Unicode scalar value produced by text input.
+        character: char,
+        /// Modifier flags captured when the event was generated.
+        modifiers: Modifiers,
+    },
 }
 
 #[derive(Default)]
@@ -122,10 +141,12 @@ struct EventDelivery(u8);
 
 impl EventDelivery {
     const KEY: u8 = 1 << 0;
-    const MOUSE_BUTTON: u8 = 1 << 1;
-    const CURSOR_POS: u8 = 1 << 2;
-    const CURSOR_ENTER: u8 = 1 << 3;
-    const SCROLL: u8 = 1 << 4;
+    const CHAR: u8 = 1 << 1;
+    const CHAR_MODS: u8 = 1 << 2;
+    const MOUSE_BUTTON: u8 = 1 << 3;
+    const CURSOR_POS: u8 = 1 << 4;
+    const CURSOR_ENTER: u8 = 1 << 5;
+    const SCROLL: u8 = 1 << 6;
 
     const fn contains(&self, source: u8) -> bool {
         self.0 & source != 0
@@ -144,6 +165,8 @@ impl EventDelivery {
 
         match event {
             WindowEvent::Key(..) => self.contains(Self::KEY),
+            WindowEvent::Char(..) => self.contains(Self::CHAR),
+            WindowEvent::CharModifiers(..) => self.contains(Self::CHAR_MODS),
             WindowEvent::MouseButton(..) => self.contains(Self::MOUSE_BUTTON),
             WindowEvent::CursorPos(..) => self.contains(Self::CURSOR_POS),
             WindowEvent::CursorEnter(..) => self.contains(Self::CURSOR_ENTER),
@@ -175,18 +198,28 @@ impl EventQueue {
                 width: u32::try_from(*width).ok()?,
                 height: u32::try_from(*height).ok()?,
             },
-            WindowEvent::Key(key, _, Action::Press, _) => EventKind::KeyPressed {
-                key: KeyboardState::from_glfw(*key)?,
+            WindowEvent::Key(key, scancode, Action::Press, modifiers) => EventKind::KeyPressed {
+                key: KeyboardState::from_glfw(*key).unwrap_or(VMNLKey::Unknown),
+                scancode: Scancode::from_raw(*scancode),
+                modifiers: Modifiers::from_glfw(*modifiers),
                 repeat: false,
             },
-            WindowEvent::Key(key, _, Action::Repeat, _) => EventKind::KeyPressed {
-                key: KeyboardState::from_glfw(*key)?,
+            WindowEvent::Key(key, scancode, Action::Repeat, modifiers) => EventKind::KeyPressed {
+                key: KeyboardState::from_glfw(*key).unwrap_or(VMNLKey::Unknown),
+                scancode: Scancode::from_raw(*scancode),
+                modifiers: Modifiers::from_glfw(*modifiers),
                 repeat: true,
             },
-            WindowEvent::Key(key, _, Action::Release, _) => EventKind::KeyReleased {
-                key: KeyboardState::from_glfw(*key)?,
+            WindowEvent::Key(key, scancode, Action::Release, modifiers) => EventKind::KeyReleased {
+                key: KeyboardState::from_glfw(*key).unwrap_or(VMNLKey::Unknown),
+                scancode: Scancode::from_raw(*scancode),
+                modifiers: Modifiers::from_glfw(*modifiers),
             },
             WindowEvent::Char(character) => EventKind::Text(*character),
+            WindowEvent::CharModifiers(character, modifiers) => EventKind::TextWithModifiers {
+                character: *character,
+                modifiers: Modifiers::from_glfw(*modifiers),
+            },
             WindowEvent::CursorPos(x, y) => EventKind::MouseMoved { x: *x, y: *y },
             WindowEvent::CursorEnter(true) => EventKind::MouseEntered,
             WindowEvent::CursorEnter(false) => EventKind::MouseLeft,
@@ -251,6 +284,26 @@ impl EventQueue {
 
     pub(crate) const fn set_key_delivery(&mut self, enabled: bool) {
         self.delivery.set(EventDelivery::KEY, enabled);
+    }
+
+    pub(crate) const fn is_key_delivery_enabled(&self) -> bool {
+        self.delivery.contains(EventDelivery::KEY)
+    }
+
+    pub(crate) const fn set_char_delivery(&mut self, enabled: bool) {
+        self.delivery.set(EventDelivery::CHAR, enabled);
+    }
+
+    pub(crate) const fn is_char_delivery_enabled(&self) -> bool {
+        self.delivery.contains(EventDelivery::CHAR)
+    }
+
+    pub(crate) const fn set_char_mods_delivery(&mut self, enabled: bool) {
+        self.delivery.set(EventDelivery::CHAR_MODS, enabled);
+    }
+
+    pub(crate) const fn is_char_mods_delivery_enabled(&self) -> bool {
+        self.delivery.contains(EventDelivery::CHAR_MODS)
     }
 
     pub(crate) const fn set_mouse_button_delivery(&mut self, enabled: bool) {
@@ -335,56 +388,86 @@ mod tests {
     }
 
     #[test]
-    fn translates_keyboard_events_and_ignores_unknown_keys() {
+    fn translates_keyboard_events_with_metadata() {
+        let glfw_modifiers = GlfwModifiers::Shift
+            | GlfwModifiers::Control
+            | GlfwModifiers::Alt
+            | GlfwModifiers::Super
+            | GlfwModifiers::CapsLock
+            | GlfwModifiers::NumLock;
+        let modifiers = Modifiers::SHIFT
+            | Modifiers::CONTROL
+            | Modifiers::ALT
+            | Modifiers::SUPER
+            | Modifiers::CAPS_LOCK
+            | Modifiers::NUM_LOCK;
+
         assert_eq!(
-            translate(&WindowEvent::Key(
-                Key::A,
-                0,
-                Action::Press,
-                GlfwModifiers::empty()
-            ))
-            .map(Event::into_kind),
+            translate(&WindowEvent::Key(Key::A, 17, Action::Press, glfw_modifiers))
+                .map(Event::into_kind),
             Some(EventKind::KeyPressed {
                 key: VMNLKey::A,
+                scancode: Scancode::from_raw(17),
+                modifiers,
                 repeat: false,
             })
         );
         assert_eq!(
             translate(&WindowEvent::Key(
                 Key::A,
-                0,
+                -3,
                 Action::Repeat,
-                GlfwModifiers::empty()
+                glfw_modifiers
             ))
             .map(Event::into_kind),
             Some(EventKind::KeyPressed {
                 key: VMNLKey::A,
+                scancode: Scancode::from_raw(-3),
+                modifiers,
                 repeat: true,
             })
         );
         assert_eq!(
             translate(&WindowEvent::Key(
-                Key::Unknown,
-                0,
-                Action::Press,
-                GlfwModifiers::empty()
-            )),
-            None
-        );
-        assert_eq!(
-            translate(&WindowEvent::Key(
-                Key::A,
-                0,
+                Key::F25,
+                17,
                 Action::Release,
-                GlfwModifiers::empty()
+                glfw_modifiers,
             ))
             .map(Event::into_kind),
-            Some(EventKind::KeyReleased { key: VMNLKey::A })
+            Some(EventKind::KeyReleased {
+                key: VMNLKey::F25,
+                scancode: Scancode::from_raw(17),
+                modifiers,
+            })
         );
     }
 
     #[test]
-    fn translates_mouse_events_with_fractional_values_and_modifiers() {
+    fn retains_unknown_key_events_without_tracking_state() {
+        let mut input = Input::new();
+        let mut delivery = EventDelivery::default();
+        delivery.set(EventDelivery::KEY, true);
+        let unknown = WindowEvent::Key(Key::Unknown, -99, Action::Press, GlfwModifiers::Super);
+
+        assert_eq!(
+            EventQueue::process_event(&delivery, &mut input, TIMESTAMP, &unknown)
+                .map(Event::into_kind),
+            Some(EventKind::KeyPressed {
+                key: VMNLKey::Unknown,
+                scancode: Scancode::from_raw(-99),
+                modifiers: Modifiers::SUPER,
+                repeat: false,
+            })
+        );
+        assert!(!input.keyboard().is_down(VMNLKey::Unknown));
+        assert!(!input.keyboard().is_pressed(VMNLKey::Unknown));
+        assert!(!input.keyboard().is_released(VMNLKey::Unknown));
+        assert!(!input.keyboard().is_one_used());
+    }
+
+    #[test]
+    fn translates_text_and_mouse_events_with_modifiers() {
         assert_eq!(
             translate(&WindowEvent::CursorPos(-12.5, 34.25)).map(Event::into_kind),
             Some(EventKind::MouseMoved { x: -12.5, y: 34.25 })
@@ -426,8 +509,29 @@ mod tests {
             Some(EventKind::MouseLeft)
         );
         assert_eq!(
-            translate(&WindowEvent::Char('x')).map(Event::into_kind),
-            Some(EventKind::Text('x'))
+            translate(&WindowEvent::Char('é')).map(Event::into_kind),
+            Some(EventKind::Text('é'))
+        );
+        assert_eq!(
+            translate(&WindowEvent::CharModifiers(
+                'É',
+                GlfwModifiers::Shift
+                    | GlfwModifiers::Control
+                    | GlfwModifiers::Alt
+                    | GlfwModifiers::Super
+                    | GlfwModifiers::CapsLock
+                    | GlfwModifiers::NumLock,
+            ))
+            .map(Event::into_kind),
+            Some(EventKind::TextWithModifiers {
+                character: 'É',
+                modifiers: Modifiers::SHIFT
+                    | Modifiers::CONTROL
+                    | Modifiers::ALT
+                    | Modifiers::SUPER
+                    | Modifiers::CAPS_LOCK
+                    | Modifiers::NUM_LOCK,
+            })
         );
     }
 
@@ -503,6 +607,36 @@ mod tests {
     }
 
     #[test]
+    fn keyboard_short_press_applies_in_one_batch_and_clears_in_the_next() {
+        let mut input = Input::new();
+        let mut delivery = EventDelivery::default();
+        delivery.set(EventDelivery::KEY, true);
+        let pending = [
+            (
+                1.0,
+                WindowEvent::Key(Key::A, 38, Action::Press, GlfwModifiers::empty()),
+            ),
+            (
+                1.1,
+                WindowEvent::Key(Key::A, 38, Action::Release, GlfwModifiers::empty()),
+            ),
+        ];
+
+        let events = EventQueue::process_batch(&delivery, &mut input, pending);
+
+        assert_eq!(events.len(), 2);
+        assert!(!input.keyboard().is_down(VMNLKey::A));
+        assert!(input.keyboard().is_pressed(VMNLKey::A));
+        assert!(input.keyboard().is_released(VMNLKey::A));
+
+        let events = EventQueue::process_batch(&delivery, &mut input, []);
+
+        assert!(events.is_empty());
+        assert!(!input.keyboard().is_pressed(VMNLKey::A));
+        assert!(!input.keyboard().is_released(VMNLKey::A));
+    }
+
+    #[test]
     fn disabled_delivery_still_updates_keyboard_and_mouse_state() {
         let mut input = Input::new();
         let delivery = EventDelivery::default();
@@ -530,15 +664,22 @@ mod tests {
         let mut first = Input::new();
         let second = Input::new();
         let delivery = EventDelivery::default();
+        let key_press = WindowEvent::Key(Key::A, 38, Action::Press, GlfwModifiers::empty());
         let press =
             WindowEvent::MouseButton(MouseButton::Button1, Action::Press, GlfwModifiers::empty());
 
         first.begin_batch();
         assert_eq!(
+            EventQueue::process_event(&delivery, &mut first, TIMESTAMP, &key_press),
+            None
+        );
+        assert_eq!(
             EventQueue::process_event(&delivery, &mut first, TIMESTAMP, &press),
             None
         );
 
+        assert!(first.keyboard().is_down(VMNLKey::A));
+        assert!(!second.keyboard().is_down(VMNLKey::A));
         assert!(first.mouse().is_down(VMNLMouseButton::Left));
         assert!(!second.mouse().is_down(VMNLMouseButton::Left));
     }
@@ -589,14 +730,28 @@ mod tests {
     }
 
     #[test]
-    fn delivery_configuration_is_independent_per_mouse_source() {
+    fn delivery_configuration_is_independent_per_source() {
         let mut delivery = EventDelivery::default();
 
+        assert!(!delivery.contains(EventDelivery::KEY));
+        assert!(!delivery.contains(EventDelivery::CHAR));
+        assert!(!delivery.contains(EventDelivery::CHAR_MODS));
+        delivery.set(EventDelivery::KEY, true);
+        delivery.set(EventDelivery::CHAR, false);
+        delivery.set(EventDelivery::CHAR_MODS, true);
         delivery.set(EventDelivery::MOUSE_BUTTON, true);
         delivery.set(EventDelivery::CURSOR_POS, true);
         delivery.set(EventDelivery::CURSOR_ENTER, false);
         delivery.set(EventDelivery::SCROLL, true);
 
+        assert!(delivery.allows(&WindowEvent::Key(
+            Key::A,
+            0,
+            Action::Press,
+            GlfwModifiers::empty(),
+        )));
+        assert!(!delivery.allows(&WindowEvent::Char('x')));
+        assert!(delivery.allows(&WindowEvent::CharModifiers('X', GlfwModifiers::Shift,)));
         assert!(delivery.allows(&WindowEvent::MouseButton(
             MouseButton::Button1,
             Action::Press,
@@ -605,6 +760,11 @@ mod tests {
         assert!(delivery.allows(&WindowEvent::CursorPos(1.0, 2.0)));
         assert!(!delivery.allows(&WindowEvent::CursorEnter(true)));
         assert!(delivery.allows(&WindowEvent::Scroll(0.0, 1.0)));
+
+        delivery.set(EventDelivery::CHAR, true);
+        delivery.set(EventDelivery::CHAR_MODS, false);
+        assert!(delivery.allows(&WindowEvent::Char('x')));
+        assert!(!delivery.allows(&WindowEvent::CharModifiers('X', GlfwModifiers::Shift,)));
     }
 
     #[test]

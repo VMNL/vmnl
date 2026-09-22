@@ -2,15 +2,70 @@
 // SPDX-License-Identifier: MIT
 
 use vmnl::{
-    Context, Cursor, CursorMode, Event, Key, MouseButton, PresentMode, StandardCursor, VMNLResult,
-    Window,
+    Context, Cursor, CursorMode, Event, EventKind, Key, MouseButton, PresentMode, StandardCursor,
+    VMNLResult, Window,
 };
 
-fn print_event(event: &Event) {
+fn print_event(context: &Context, event: &Event) {
+    match event.kind() {
+        EventKind::KeyPressed {
+            key,
+            scancode,
+            modifiers,
+            repeat,
+        } => print_key_event(
+            context,
+            event.timestamp_seconds(),
+            "pressed",
+            *key,
+            *scancode,
+            modifiers,
+            Some(*repeat),
+        ),
+        EventKind::KeyReleased {
+            key,
+            scancode,
+            modifiers,
+        } => print_key_event(
+            context,
+            event.timestamp_seconds(),
+            "released",
+            *key,
+            *scancode,
+            modifiers,
+            None,
+        ),
+        kind => println!("[event @ {:.6}s] {kind:?}", event.timestamp_seconds()),
+    }
+}
+
+fn print_key_event(
+    context: &Context,
+    timestamp: f64,
+    action: &str,
+    key: Key,
+    event_scancode: vmnl::Scancode,
+    modifiers: &vmnl::Modifiers,
+    repeat: Option<bool>,
+) {
+    let queried_scancode = context.get_key_scancode(key);
     println!(
-        "[event @ {:.6}s] {:?}",
-        event.timestamp_seconds(),
-        event.kind()
+        "[key @ {timestamp:.6}s] action={action} key={key:?} name={:?} \
+         event_scancode={} queried_scancode={queried_scancode:?} scancode_name={:?} \
+         scancode_matches={} modifiers={modifiers:?} repeat={repeat:?}",
+        context.get_key_name(key),
+        event_scancode.as_raw(),
+        context.get_scancode_name(event_scancode),
+        queried_scancode == Some(event_scancode),
+    );
+}
+
+fn print_key_query(context: &Context, key: Key) {
+    let scancode = context.get_key_scancode(key);
+    println!(
+        "key query: key={key:?} name={:?} scancode={scancode:?} scancode_name={:?}",
+        context.get_key_name(key),
+        scancode.and_then(|value| context.get_scancode_name(value)),
     );
 }
 
@@ -50,10 +105,12 @@ fn configure_runtime_window(window: &mut Window) -> VMNLResult<()> {
     window.enable_mouse_polling();
     window.enable_window_state_polling();
     window.set_char_polling(true);
+    window.set_char_mods_polling(true);
     window.set_scroll_polling(true);
     window.set_content_scale_polling(true);
     window.set_drag_and_drop_polling(true);
     window.set_refresh_polling(true);
+    window.set_sticky_keys(true);
     window.set_sticky_mouse_buttons(true);
     window.set_lock_key_modifier_reporting(true);
 
@@ -81,6 +138,9 @@ fn apply_keybinds(
     let assign_standard_cursor = keyboard.is_pressed(Key::S);
     let assign_custom_cursor = keyboard.is_pressed(Key::U);
     let restore_default_cursor = keyboard.is_pressed(Key::O);
+    let toggle_sticky_keys = keyboard.is_pressed(Key::K);
+    let toggle_text_delivery = keyboard.is_pressed(Key::F9);
+    let toggle_legacy_text_delivery = keyboard.is_pressed(Key::F10);
     let any_arrow = keyboard.is_any_down(&[Key::Left, Key::Right, Key::Up, Key::Down]);
     let any_was_used = keyboard.is_one_used();
     let any_was_pressed = keyboard.is_one_pressed();
@@ -89,6 +149,7 @@ fn apply_keybinds(
     let mouse = window.input().mouse();
     let mouse_used = mouse.is_one_used();
     let left_or_right_down = mouse.is_any_down(&[MouseButton::Left, MouseButton::Right]);
+    let toggle_key_delivery = mouse.is_pressed(MouseButton::Right);
 
     if close {
         window.close();
@@ -136,6 +197,26 @@ fn apply_keybinds(
     }
     if restore_default_cursor {
         window.set_cursor(None)?;
+    }
+    if toggle_sticky_keys {
+        let enabled = !window.is_sticky_keys_enabled();
+        window.set_sticky_keys(enabled);
+        println!("[input] sticky_keys={enabled}");
+    }
+    if toggle_text_delivery {
+        let enabled = !window.is_char_polling_enabled();
+        window.set_char_polling(enabled);
+        println!("[input] text_delivery={enabled}");
+    }
+    if toggle_legacy_text_delivery {
+        let enabled = !window.is_char_mods_polling_enabled();
+        window.set_char_mods_polling(enabled);
+        println!("[input] legacy_text_with_modifiers_delivery={enabled}");
+    }
+    if toggle_key_delivery {
+        let enabled = !window.is_key_polling_enabled();
+        window.set_key_polling(enabled);
+        println!("[input] key_delivery={enabled}");
     }
     if any_arrow {
         println!("[input] arrow key is down");
@@ -221,17 +302,31 @@ fn main() -> VMNLResult<()> {
         window.is_raw_mouse_motion_enabled()
     );
     println!(
-        "input modes: sticky_mouse_buttons={} lock_key_modifier_reporting={}",
+        "input modes: sticky_keys={} sticky_mouse_buttons={} lock_key_modifier_reporting={}",
+        window.is_sticky_keys_enabled(),
         window.is_sticky_mouse_buttons_enabled(),
         window.is_lock_key_modifier_reporting_enabled()
     );
+    println!(
+        "keyboard delivery: key={} text={} legacy_text_with_modifiers={}",
+        window.is_key_polling_enabled(),
+        window.is_char_polling_enabled(),
+        window.is_char_mods_polling_enabled(),
+    );
+    for key in [Key::A, Key::Semicolon, Key::Kp0, Key::Escape] {
+        print_key_query(&context, key);
+    }
     println!("keys: Escape close, F focus, I iconify, M maximize, R restore, H hide/show, C clear aspect");
+    println!("keyboard mode: K toggle sticky keys");
+    println!(
+        "keyboard delivery: right click toggles key events, F9 text, F10 legacy modified text"
+    );
     println!("cursor keys: N normal, V hidden, D disabled, G captured, P center");
     println!("cursor resources: S pointing hand, U custom RGBA8, O backend default");
 
     while window.is_open() {
         for event in window.poll_events() {
-            print_event(&event);
+            print_event(&context, &event);
         }
         apply_keybinds(&mut window, &standard_cursor, &custom_cursor)?;
         // println!(

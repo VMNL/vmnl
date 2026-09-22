@@ -7,7 +7,7 @@
 //! instance state.
 
 use super::VMNLInstance;
-use crate::VMNLResult;
+use crate::{Key, KeyboardState, Scancode, VMNLResult};
 use std::rc::Rc;
 
 /// `Context` is the main struct of the VMNL library, representing the core Vulkan context.
@@ -30,6 +30,55 @@ pub struct Context {
 }
 
 impl Context {
+    /// Returns the active-layout name of a printable named key.
+    ///
+    /// The returned UTF-8 name is intended for displaying key bindings. It is not text input and
+    /// can change when the keyboard layout changes. Non-printable keys and [`Key::Unknown`] return
+    /// `None`. On Wayland, the bundled GLFW backend cannot safely query its XKB state before the
+    /// first keyboard event; VMNL returns `None` until [`Window::poll_events`](crate::Window::poll_events)
+    /// observes one.
+    ///
+    /// This call allocates an owned [`String`] when GLFW provides a name.
+    #[inline]
+    #[must_use]
+    pub fn get_key_name(&self, key: Key) -> Option<String> {
+        if !self.inner.keyboard_name_queries_ready.get() {
+            return None;
+        }
+
+        let key = KeyboardState::to_glfw(key)?;
+        glfw::get_key_name(Some(key), None)
+    }
+
+    /// Returns the active-layout name of the printable key mapped to a scancode.
+    ///
+    /// The returned UTF-8 name is intended for displaying key bindings and may change with the
+    /// keyboard layout. Invalid, unmapped, and non-printable scancodes return `None`. On Wayland,
+    /// VMNL also returns `None` until [`Window::poll_events`](crate::Window::poll_events) observes
+    /// the first keyboard event and proves that the bundled GLFW XKB state is ready.
+    ///
+    /// This call allocates an owned [`String`] when GLFW provides a name.
+    #[inline]
+    #[must_use]
+    pub fn get_scancode_name(&self, scancode: Scancode) -> Option<String> {
+        if !self.inner.keyboard_name_queries_ready.get() {
+            return None;
+        }
+
+        glfw::get_key_name(None, Some(scancode.as_raw()))
+    }
+
+    /// Returns the active platform scancode for a named key.
+    ///
+    /// [`Key::Unknown`] and named keys unsupported by the active platform return `None`. The
+    /// returned value is platform-specific and must not be persisted as a portable identifier.
+    #[inline]
+    #[must_use]
+    pub fn get_key_scancode(&self, key: Key) -> Option<Scancode> {
+        let key = KeyboardState::to_glfw(key)?;
+        glfw::get_key_scancode(Some(key)).map(Scancode::from_raw)
+    }
+
     /// Returns whether raw mouse motion is supported by the active GLFW backend and system.
     ///
     /// This value is stable for the lifetime of GLFW after initialization. Raw motion is

@@ -5,7 +5,7 @@
 
 use vmnl::{
     Context, Cursor, CursorBuilder, CursorMode, Event, EventKind, Input, Key, Modifiers,
-    MouseButton, StandardCursor, StandardCursorBuilder, VMNLResult, Window,
+    MouseButton, Scancode, StandardCursor, StandardCursorBuilder, VMNLResult, Window,
 };
 
 fn assert_empty(input: &Input) {
@@ -36,6 +36,31 @@ fn input_initial_state_is_empty_through_public_facade() -> VMNLResult<()> {
 }
 
 #[test]
+fn every_named_key_family_is_exposed_through_public_facade() {
+    let representatives = [
+        Key::Space,
+        Key::Apostrophe,
+        Key::World1,
+        Key::Insert,
+        Key::PageDown,
+        Key::CapsLock,
+        Key::PrintScreen,
+        Key::F25,
+        Key::Kp0,
+        Key::KpDecimal,
+        Key::KpEnter,
+        Key::LeftShift,
+        Key::RightControl,
+        Key::LeftAlt,
+        Key::RightSuper,
+        Key::Menu,
+    ];
+
+    assert_eq!(representatives.len(), 16);
+    assert!(representatives.iter().all(|key| *key != Key::Unknown));
+}
+
+#[test]
 fn event_and_batch_control_are_exposed_through_public_facade() {
     fn assert_event_accessors(event: Event) {
         let _: f64 = event.timestamp_seconds();
@@ -45,10 +70,73 @@ fn event_and_batch_control_are_exposed_through_public_facade() {
 
     let _: fn(Event) = assert_event_accessors;
     let _: fn(&mut Window) = Window::clear_input_transitions;
+    let _: fn(&Window) -> bool = Window::is_key_polling_enabled;
+    let _: fn(&Window) -> bool = Window::is_char_polling_enabled;
+    let _: fn(&Window) -> bool = Window::is_char_mods_polling_enabled;
     let _: fn(&Window) -> bool = Window::is_mouse_button_polling_enabled;
     let _: fn(&Window) -> bool = Window::is_cursor_pos_polling_enabled;
     let _: fn(&Window) -> bool = Window::is_cursor_enter_polling_enabled;
     let _: fn(&Window) -> bool = Window::is_scroll_polling_enabled;
+}
+
+#[test]
+fn legacy_modified_text_event_is_exposed_through_public_facade() {
+    let event = EventKind::TextWithModifiers {
+        character: 'É',
+        modifiers: Modifiers::SHIFT | Modifiers::CAPS_LOCK,
+    };
+
+    assert!(matches!(
+        event,
+        EventKind::TextWithModifiers {
+            character: 'É',
+            modifiers,
+        } if modifiers == (Modifiers::SHIFT | Modifiers::CAPS_LOCK)
+    ));
+}
+
+#[test]
+fn keyboard_event_metadata_is_exposed_through_public_facade() {
+    fn assert_scancode_traits<T: Copy + Clone + std::fmt::Debug + Eq + std::hash::Hash>() {}
+
+    assert_scancode_traits::<Scancode>();
+    assert_eq!(Scancode::from_raw(42).as_raw(), 42);
+    assert_eq!(Scancode::from_raw(-7).as_raw(), -7);
+
+    let pressed = EventKind::KeyPressed {
+        key: Key::Unknown,
+        scancode: Scancode::from_raw(-7),
+        modifiers: Modifiers::SHIFT | Modifiers::CAPS_LOCK,
+        repeat: true,
+    };
+    let released = EventKind::KeyReleased {
+        key: Key::A,
+        scancode: Scancode::from_raw(42),
+        modifiers: Modifiers::CONTROL,
+    };
+
+    assert!(matches!(
+        pressed,
+        EventKind::KeyPressed {
+            key: Key::Unknown,
+            scancode,
+            modifiers,
+            repeat: true,
+        } if scancode.as_raw() == -7
+            && modifiers == (Modifiers::SHIFT | Modifiers::CAPS_LOCK)
+    ));
+    assert!(matches!(
+        released,
+        EventKind::KeyReleased {
+            key: Key::A,
+            scancode,
+            modifiers: Modifiers::CONTROL,
+        } if scancode.as_raw() == 42
+    ));
+
+    let _: fn(&Context, Key) -> Option<String> = Context::get_key_name;
+    let _: fn(&Context, Scancode) -> Option<String> = Context::get_scancode_name;
+    let _: fn(&Context, Key) -> Option<Scancode> = Context::get_key_scancode;
 }
 
 #[test]
@@ -61,6 +149,8 @@ fn cursor_controls_are_exposed_through_public_facade() {
     let _: fn(&mut Window, CursorMode) -> VMNLResult<()> = Window::set_cursor_mode;
     let _: fn(&Window) -> bool = Window::is_sticky_mouse_buttons_enabled;
     let _: fn(&mut Window, bool) = Window::set_sticky_mouse_buttons;
+    let _: fn(&Window) -> bool = Window::is_sticky_keys_enabled;
+    let _: fn(&mut Window, bool) = Window::set_sticky_keys;
     let _: fn(&Window) -> bool = Window::is_lock_key_modifier_reporting_enabled;
     let _: fn(&mut Window, bool) = Window::set_lock_key_modifier_reporting;
     let _: fn(&Window) -> bool = Window::is_raw_mouse_motion_enabled;

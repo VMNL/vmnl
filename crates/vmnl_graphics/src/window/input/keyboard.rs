@@ -9,13 +9,36 @@
 use super::transitions::TransitionState;
 use glfw::{Action, Key as GlfwKey};
 
-/// Defines the `Key` enum, representing keys tracked for input events.
+/// A platform-specific physical key identifier supplied by the window system.
 ///
-/// This enum is used to identify specific keys when checking their states in `KeyboardState`.
+/// Scancodes are meaningful only within the platform environment that produced them. They must
+/// not be persisted or exchanged as portable key identifiers.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+pub struct Scancode(i32);
+
+impl Scancode {
+    /// Creates a scancode from the raw platform value reported by GLFW.
+    #[must_use]
+    pub const fn from_raw(raw: i32) -> Self {
+        Self(raw)
+    }
+
+    /// Returns the raw platform-specific scancode value.
+    #[must_use]
+    pub const fn as_raw(self) -> i32 {
+        self.0
+    }
+}
+
+/// Defines the `Key` enum, representing named keys used by input events and snapshots.
+///
+/// [`Key::Unknown`] is preserved in events together with its [`Scancode`], but it is not tracked by
+/// [`KeyboardState`].
 #[repr(usize)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Key {
-    /// An unknown or unhandled key.
+    /// A physical key without a named GLFW key token.
     Unknown,
     /// The 'A' key.
     A,
@@ -129,6 +152,134 @@ pub enum Key {
     F11,
     /// The 'F12' key.
     F12,
+    /// The space key.
+    Space,
+    /// The apostrophe key.
+    Apostrophe,
+    /// The comma key.
+    Comma,
+    /// The minus key.
+    Minus,
+    /// The period key.
+    Period,
+    /// The slash key.
+    Slash,
+    /// The semicolon key.
+    Semicolon,
+    /// The equal key.
+    Equal,
+    /// The left bracket key.
+    LeftBracket,
+    /// The backslash key.
+    Backslash,
+    /// The right bracket key.
+    RightBracket,
+    /// The grave accent key.
+    GraveAccent,
+    /// The first non-US world key.
+    World1,
+    /// The second non-US world key.
+    World2,
+    /// The insert key.
+    Insert,
+    /// The delete key.
+    Delete,
+    /// The page up key.
+    PageUp,
+    /// The page down key.
+    PageDown,
+    /// The home key.
+    Home,
+    /// The end key.
+    End,
+    /// The caps lock key.
+    CapsLock,
+    /// The scroll lock key.
+    ScrollLock,
+    /// The num lock key.
+    NumLock,
+    /// The print screen key.
+    PrintScreen,
+    /// The pause key.
+    Pause,
+    /// The 'F13' key.
+    F13,
+    /// The 'F14' key.
+    F14,
+    /// The 'F15' key.
+    F15,
+    /// The 'F16' key.
+    F16,
+    /// The 'F17' key.
+    F17,
+    /// The 'F18' key.
+    F18,
+    /// The 'F19' key.
+    F19,
+    /// The 'F20' key.
+    F20,
+    /// The 'F21' key.
+    F21,
+    /// The 'F22' key.
+    F22,
+    /// The 'F23' key.
+    F23,
+    /// The 'F24' key.
+    F24,
+    /// The 'F25' key.
+    F25,
+    /// The keypad '0' key.
+    Kp0,
+    /// The keypad '1' key.
+    Kp1,
+    /// The keypad '2' key.
+    Kp2,
+    /// The keypad '3' key.
+    Kp3,
+    /// The keypad '4' key.
+    Kp4,
+    /// The keypad '5' key.
+    Kp5,
+    /// The keypad '6' key.
+    Kp6,
+    /// The keypad '7' key.
+    Kp7,
+    /// The keypad '8' key.
+    Kp8,
+    /// The keypad '9' key.
+    Kp9,
+    /// The keypad decimal key.
+    KpDecimal,
+    /// The keypad divide key.
+    KpDivide,
+    /// The keypad multiply key.
+    KpMultiply,
+    /// The keypad subtract key.
+    KpSubtract,
+    /// The keypad add key.
+    KpAdd,
+    /// The keypad enter key.
+    KpEnter,
+    /// The keypad equal key.
+    KpEqual,
+    /// The left shift key.
+    LeftShift,
+    /// The left control key.
+    LeftControl,
+    /// The left alt key.
+    LeftAlt,
+    /// The left super key.
+    LeftSuper,
+    /// The right shift key.
+    RightShift,
+    /// The right control key.
+    RightControl,
+    /// The right alt key.
+    RightAlt,
+    /// The right super key.
+    RightSuper,
+    /// The menu key.
+    Menu,
 }
 
 /// An array containing all the keys defined in the `Key` enum.
@@ -191,13 +342,77 @@ pub(crate) const ALL_KEYS: &[Key] = [
     Key::F10,
     Key::F11,
     Key::F12,
+    Key::Space,
+    Key::Apostrophe,
+    Key::Comma,
+    Key::Minus,
+    Key::Period,
+    Key::Slash,
+    Key::Semicolon,
+    Key::Equal,
+    Key::LeftBracket,
+    Key::Backslash,
+    Key::RightBracket,
+    Key::GraveAccent,
+    Key::World1,
+    Key::World2,
+    Key::Insert,
+    Key::Delete,
+    Key::PageUp,
+    Key::PageDown,
+    Key::Home,
+    Key::End,
+    Key::CapsLock,
+    Key::ScrollLock,
+    Key::NumLock,
+    Key::PrintScreen,
+    Key::Pause,
+    Key::F13,
+    Key::F14,
+    Key::F15,
+    Key::F16,
+    Key::F17,
+    Key::F18,
+    Key::F19,
+    Key::F20,
+    Key::F21,
+    Key::F22,
+    Key::F23,
+    Key::F24,
+    Key::F25,
+    Key::Kp0,
+    Key::Kp1,
+    Key::Kp2,
+    Key::Kp3,
+    Key::Kp4,
+    Key::Kp5,
+    Key::Kp6,
+    Key::Kp7,
+    Key::Kp8,
+    Key::Kp9,
+    Key::KpDecimal,
+    Key::KpDivide,
+    Key::KpMultiply,
+    Key::KpSubtract,
+    Key::KpAdd,
+    Key::KpEnter,
+    Key::KpEqual,
+    Key::LeftShift,
+    Key::LeftControl,
+    Key::LeftAlt,
+    Key::LeftSuper,
+    Key::RightShift,
+    Key::RightControl,
+    Key::RightAlt,
+    Key::RightSuper,
+    Key::Menu,
 ]
 .as_slice();
 
 /// The total number of keys supported.
 ///
 /// Calculated from the highest `Key` variant; used to size state arrays.
-pub(crate) const KEY_COUNT: usize = Key::F12 as usize + 1;
+pub(crate) const KEY_COUNT: usize = Key::Menu as usize + 1;
 
 /// Represents the state of keyboard input after the most recently processed event batch.
 ///
@@ -215,6 +430,7 @@ impl KeyboardState {
     ///
     /// # Returns
     /// `Some(Key)` if conversion is successful, otherwise `None`.
+    #[allow(clippy::too_many_lines)] // Keep the GLFW mapping explicit and exhaustive.
     pub(crate) const fn from_glfw(key: GlfwKey) -> Option<Key> {
         match key {
             GlfwKey::A => Some(Key::A),
@@ -273,7 +489,71 @@ impl KeyboardState {
             GlfwKey::F10 => Some(Key::F10),
             GlfwKey::F11 => Some(Key::F11),
             GlfwKey::F12 => Some(Key::F12),
-            _ => None,
+            GlfwKey::Space => Some(Key::Space),
+            GlfwKey::Apostrophe => Some(Key::Apostrophe),
+            GlfwKey::Comma => Some(Key::Comma),
+            GlfwKey::Minus => Some(Key::Minus),
+            GlfwKey::Period => Some(Key::Period),
+            GlfwKey::Slash => Some(Key::Slash),
+            GlfwKey::Semicolon => Some(Key::Semicolon),
+            GlfwKey::Equal => Some(Key::Equal),
+            GlfwKey::LeftBracket => Some(Key::LeftBracket),
+            GlfwKey::Backslash => Some(Key::Backslash),
+            GlfwKey::RightBracket => Some(Key::RightBracket),
+            GlfwKey::GraveAccent => Some(Key::GraveAccent),
+            GlfwKey::World1 => Some(Key::World1),
+            GlfwKey::World2 => Some(Key::World2),
+            GlfwKey::Insert => Some(Key::Insert),
+            GlfwKey::Delete => Some(Key::Delete),
+            GlfwKey::PageUp => Some(Key::PageUp),
+            GlfwKey::PageDown => Some(Key::PageDown),
+            GlfwKey::Home => Some(Key::Home),
+            GlfwKey::End => Some(Key::End),
+            GlfwKey::CapsLock => Some(Key::CapsLock),
+            GlfwKey::ScrollLock => Some(Key::ScrollLock),
+            GlfwKey::NumLock => Some(Key::NumLock),
+            GlfwKey::PrintScreen => Some(Key::PrintScreen),
+            GlfwKey::Pause => Some(Key::Pause),
+            GlfwKey::F13 => Some(Key::F13),
+            GlfwKey::F14 => Some(Key::F14),
+            GlfwKey::F15 => Some(Key::F15),
+            GlfwKey::F16 => Some(Key::F16),
+            GlfwKey::F17 => Some(Key::F17),
+            GlfwKey::F18 => Some(Key::F18),
+            GlfwKey::F19 => Some(Key::F19),
+            GlfwKey::F20 => Some(Key::F20),
+            GlfwKey::F21 => Some(Key::F21),
+            GlfwKey::F22 => Some(Key::F22),
+            GlfwKey::F23 => Some(Key::F23),
+            GlfwKey::F24 => Some(Key::F24),
+            GlfwKey::F25 => Some(Key::F25),
+            GlfwKey::Kp0 => Some(Key::Kp0),
+            GlfwKey::Kp1 => Some(Key::Kp1),
+            GlfwKey::Kp2 => Some(Key::Kp2),
+            GlfwKey::Kp3 => Some(Key::Kp3),
+            GlfwKey::Kp4 => Some(Key::Kp4),
+            GlfwKey::Kp5 => Some(Key::Kp5),
+            GlfwKey::Kp6 => Some(Key::Kp6),
+            GlfwKey::Kp7 => Some(Key::Kp7),
+            GlfwKey::Kp8 => Some(Key::Kp8),
+            GlfwKey::Kp9 => Some(Key::Kp9),
+            GlfwKey::KpDecimal => Some(Key::KpDecimal),
+            GlfwKey::KpDivide => Some(Key::KpDivide),
+            GlfwKey::KpMultiply => Some(Key::KpMultiply),
+            GlfwKey::KpSubtract => Some(Key::KpSubtract),
+            GlfwKey::KpAdd => Some(Key::KpAdd),
+            GlfwKey::KpEnter => Some(Key::KpEnter),
+            GlfwKey::KpEqual => Some(Key::KpEqual),
+            GlfwKey::LeftShift => Some(Key::LeftShift),
+            GlfwKey::LeftControl => Some(Key::LeftControl),
+            GlfwKey::LeftAlt => Some(Key::LeftAlt),
+            GlfwKey::LeftSuper => Some(Key::LeftSuper),
+            GlfwKey::RightShift => Some(Key::RightShift),
+            GlfwKey::RightControl => Some(Key::RightControl),
+            GlfwKey::RightAlt => Some(Key::RightAlt),
+            GlfwKey::RightSuper => Some(Key::RightSuper),
+            GlfwKey::Menu => Some(Key::Menu),
+            GlfwKey::Unknown => None,
         }
     }
 
@@ -284,72 +564,129 @@ impl KeyboardState {
     ///
     /// # Returns
     /// `Some(GlfwKey)` if a mapping exists, otherwise `None`.
-    #[cfg(test)]
+    #[allow(clippy::too_many_lines)] // Keep the inverse test oracle explicit and exhaustive.
     pub(crate) const fn to_glfw(key: Key) -> Option<GlfwKey> {
-        use GlfwKey::{
-            Backspace, Down, Enter, Escape, Left, Num0, Num1, Num2, Num3, Num4, Num5, Num6, Num7,
-            Num8, Num9, Right, Tab, Up, A, B, C, D, E, F, F1, F10, F11, F12, F2, F3, F4, F5, F6,
-            F7, F8, F9, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
-        };
-
         match key {
-            Key::A => Some(A),
-            Key::B => Some(B),
-            Key::C => Some(C),
-            Key::D => Some(D),
-            Key::E => Some(E),
-            Key::F => Some(F),
-            Key::G => Some(G),
-            Key::H => Some(H),
-            Key::I => Some(I),
-            Key::J => Some(J),
-            Key::K => Some(K),
-            Key::L => Some(L),
-            Key::M => Some(M),
-            Key::N => Some(N),
-            Key::O => Some(O),
-            Key::P => Some(P),
-            Key::Q => Some(Q),
-            Key::R => Some(R),
-            Key::S => Some(S),
-            Key::T => Some(T),
-            Key::U => Some(U),
-            Key::V => Some(V),
-            Key::W => Some(W),
-            Key::X => Some(X),
-            Key::Y => Some(Y),
-            Key::Z => Some(Z),
-            Key::Num0 => Some(Num0),
-            Key::Num1 => Some(Num1),
-            Key::Num2 => Some(Num2),
-            Key::Num3 => Some(Num3),
-            Key::Num4 => Some(Num4),
-            Key::Num5 => Some(Num5),
-            Key::Num6 => Some(Num6),
-            Key::Num7 => Some(Num7),
-            Key::Num8 => Some(Num8),
-            Key::Num9 => Some(Num9),
-            Key::Escape => Some(Escape),
-            Key::Enter => Some(Enter),
-            Key::Left => Some(Left),
-            Key::Right => Some(Right),
-            Key::Up => Some(Up),
-            Key::Down => Some(Down),
-            Key::Tab => Some(Tab),
-            Key::Backspace => Some(Backspace),
-            Key::F1 => Some(F1),
-            Key::F2 => Some(F2),
-            Key::F3 => Some(F3),
-            Key::F4 => Some(F4),
-            Key::F5 => Some(F5),
-            Key::F6 => Some(F6),
-            Key::F7 => Some(F7),
-            Key::F8 => Some(F8),
-            Key::F9 => Some(F9),
-            Key::F10 => Some(F10),
-            Key::F11 => Some(F11),
-            Key::F12 => Some(F12),
-            // GLFW does not have a direct representation for Alt, Shift, Control, Super keys in the same way as other keys
+            Key::A => Some(GlfwKey::A),
+            Key::B => Some(GlfwKey::B),
+            Key::C => Some(GlfwKey::C),
+            Key::D => Some(GlfwKey::D),
+            Key::E => Some(GlfwKey::E),
+            Key::F => Some(GlfwKey::F),
+            Key::G => Some(GlfwKey::G),
+            Key::H => Some(GlfwKey::H),
+            Key::I => Some(GlfwKey::I),
+            Key::J => Some(GlfwKey::J),
+            Key::K => Some(GlfwKey::K),
+            Key::L => Some(GlfwKey::L),
+            Key::M => Some(GlfwKey::M),
+            Key::N => Some(GlfwKey::N),
+            Key::O => Some(GlfwKey::O),
+            Key::P => Some(GlfwKey::P),
+            Key::Q => Some(GlfwKey::Q),
+            Key::R => Some(GlfwKey::R),
+            Key::S => Some(GlfwKey::S),
+            Key::T => Some(GlfwKey::T),
+            Key::U => Some(GlfwKey::U),
+            Key::V => Some(GlfwKey::V),
+            Key::W => Some(GlfwKey::W),
+            Key::X => Some(GlfwKey::X),
+            Key::Y => Some(GlfwKey::Y),
+            Key::Z => Some(GlfwKey::Z),
+            Key::Num0 => Some(GlfwKey::Num0),
+            Key::Num1 => Some(GlfwKey::Num1),
+            Key::Num2 => Some(GlfwKey::Num2),
+            Key::Num3 => Some(GlfwKey::Num3),
+            Key::Num4 => Some(GlfwKey::Num4),
+            Key::Num5 => Some(GlfwKey::Num5),
+            Key::Num6 => Some(GlfwKey::Num6),
+            Key::Num7 => Some(GlfwKey::Num7),
+            Key::Num8 => Some(GlfwKey::Num8),
+            Key::Num9 => Some(GlfwKey::Num9),
+            Key::Escape => Some(GlfwKey::Escape),
+            Key::Enter => Some(GlfwKey::Enter),
+            Key::Left => Some(GlfwKey::Left),
+            Key::Right => Some(GlfwKey::Right),
+            Key::Up => Some(GlfwKey::Up),
+            Key::Down => Some(GlfwKey::Down),
+            Key::Tab => Some(GlfwKey::Tab),
+            Key::Backspace => Some(GlfwKey::Backspace),
+            Key::F1 => Some(GlfwKey::F1),
+            Key::F2 => Some(GlfwKey::F2),
+            Key::F3 => Some(GlfwKey::F3),
+            Key::F4 => Some(GlfwKey::F4),
+            Key::F5 => Some(GlfwKey::F5),
+            Key::F6 => Some(GlfwKey::F6),
+            Key::F7 => Some(GlfwKey::F7),
+            Key::F8 => Some(GlfwKey::F8),
+            Key::F9 => Some(GlfwKey::F9),
+            Key::F10 => Some(GlfwKey::F10),
+            Key::F11 => Some(GlfwKey::F11),
+            Key::F12 => Some(GlfwKey::F12),
+            Key::Space => Some(GlfwKey::Space),
+            Key::Apostrophe => Some(GlfwKey::Apostrophe),
+            Key::Comma => Some(GlfwKey::Comma),
+            Key::Minus => Some(GlfwKey::Minus),
+            Key::Period => Some(GlfwKey::Period),
+            Key::Slash => Some(GlfwKey::Slash),
+            Key::Semicolon => Some(GlfwKey::Semicolon),
+            Key::Equal => Some(GlfwKey::Equal),
+            Key::LeftBracket => Some(GlfwKey::LeftBracket),
+            Key::Backslash => Some(GlfwKey::Backslash),
+            Key::RightBracket => Some(GlfwKey::RightBracket),
+            Key::GraveAccent => Some(GlfwKey::GraveAccent),
+            Key::World1 => Some(GlfwKey::World1),
+            Key::World2 => Some(GlfwKey::World2),
+            Key::Insert => Some(GlfwKey::Insert),
+            Key::Delete => Some(GlfwKey::Delete),
+            Key::PageUp => Some(GlfwKey::PageUp),
+            Key::PageDown => Some(GlfwKey::PageDown),
+            Key::Home => Some(GlfwKey::Home),
+            Key::End => Some(GlfwKey::End),
+            Key::CapsLock => Some(GlfwKey::CapsLock),
+            Key::ScrollLock => Some(GlfwKey::ScrollLock),
+            Key::NumLock => Some(GlfwKey::NumLock),
+            Key::PrintScreen => Some(GlfwKey::PrintScreen),
+            Key::Pause => Some(GlfwKey::Pause),
+            Key::F13 => Some(GlfwKey::F13),
+            Key::F14 => Some(GlfwKey::F14),
+            Key::F15 => Some(GlfwKey::F15),
+            Key::F16 => Some(GlfwKey::F16),
+            Key::F17 => Some(GlfwKey::F17),
+            Key::F18 => Some(GlfwKey::F18),
+            Key::F19 => Some(GlfwKey::F19),
+            Key::F20 => Some(GlfwKey::F20),
+            Key::F21 => Some(GlfwKey::F21),
+            Key::F22 => Some(GlfwKey::F22),
+            Key::F23 => Some(GlfwKey::F23),
+            Key::F24 => Some(GlfwKey::F24),
+            Key::F25 => Some(GlfwKey::F25),
+            Key::Kp0 => Some(GlfwKey::Kp0),
+            Key::Kp1 => Some(GlfwKey::Kp1),
+            Key::Kp2 => Some(GlfwKey::Kp2),
+            Key::Kp3 => Some(GlfwKey::Kp3),
+            Key::Kp4 => Some(GlfwKey::Kp4),
+            Key::Kp5 => Some(GlfwKey::Kp5),
+            Key::Kp6 => Some(GlfwKey::Kp6),
+            Key::Kp7 => Some(GlfwKey::Kp7),
+            Key::Kp8 => Some(GlfwKey::Kp8),
+            Key::Kp9 => Some(GlfwKey::Kp9),
+            Key::KpDecimal => Some(GlfwKey::KpDecimal),
+            Key::KpDivide => Some(GlfwKey::KpDivide),
+            Key::KpMultiply => Some(GlfwKey::KpMultiply),
+            Key::KpSubtract => Some(GlfwKey::KpSubtract),
+            Key::KpAdd => Some(GlfwKey::KpAdd),
+            Key::KpEnter => Some(GlfwKey::KpEnter),
+            Key::KpEqual => Some(GlfwKey::KpEqual),
+            Key::LeftShift => Some(GlfwKey::LeftShift),
+            Key::LeftControl => Some(GlfwKey::LeftControl),
+            Key::LeftAlt => Some(GlfwKey::LeftAlt),
+            Key::LeftSuper => Some(GlfwKey::LeftSuper),
+            Key::RightShift => Some(GlfwKey::RightShift),
+            Key::RightControl => Some(GlfwKey::RightControl),
+            Key::RightAlt => Some(GlfwKey::RightAlt),
+            Key::RightSuper => Some(GlfwKey::RightSuper),
+            Key::Menu => Some(GlfwKey::Menu),
             Key::Unknown => None,
         }
     }
@@ -666,6 +1003,8 @@ mod tests {
 
     #[test]
     fn tracked_key_count_excludes_unknown_key() {
+        assert_eq!(ALL_KEYS.len(), 120);
+        assert_eq!(KEY_COUNT, 121);
         assert_eq!(ALL_KEYS.len(), KEY_COUNT - 1);
         assert!(!ALL_KEYS.contains(&Key::Unknown));
     }
