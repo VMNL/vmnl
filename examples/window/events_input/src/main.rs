@@ -162,7 +162,7 @@ fn main() -> VMNLResult<()> {
         .build(&context)?;
 
     configure_runtime_window(&mut window)?;
-    let standard_cursor = Cursor::standard(StandardCursor::NotAllowed).build(&context)?;
+    let standard_cursor = Cursor::standard(StandardCursor::Arrow).build(&context)?;
     let (width, height) = (32_u32, 32_u32);
     let mut custom_pixels = vec![0_u8; (width * height * 4) as usize];
     for y in 0..height {
@@ -240,6 +240,12 @@ fn main() -> VMNLResult<()> {
         //     window.is_iconified(),
         //     window.is_maximized(),
         //     window.is_focused()
+        // );
+        // println!(
+        //     "mode={:?}, hovered={}, position={:?}",
+        //     window.get_cursor_mode(),
+        //     window.is_cursor_hovered(),
+        //     window.get_cursor_position(),
         // );
         window.render().submit()?;
     }
