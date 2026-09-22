@@ -133,6 +133,8 @@ impl Shape {
     ///
     /// # Arguments
     /// - `radius`: arc radius in pixel-like 2D coordinates.
+    /// - `start`: arc starting point in degrees, 0 being the topmost point of the virtual circle.
+    /// - `sweep`: arc absolute length in degrees, negative value means going left, positive going right.
     ///
     /// # Example
     /// ```rust,no_run
@@ -140,7 +142,7 @@ impl Shape {
     /// # use vmnl_graphics::d2::Shape;
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
-    /// let arc = Shape::arc(80.0, 30.0, 140.0).position(100.0, 120.0).build(&context)?;
+    /// let arc = Shape::arc(80.0, 30.0, 140.0).position(100.0, 120.0).width(10).build(&context)?;
     /// # drop(arc);
     /// # Ok(())
     /// # }
@@ -148,6 +150,29 @@ impl Shape {
     #[must_use]
     pub fn arc(radius: f32, start: f32, sweep: f32) -> ArcBuilder {
         ArcBuilder::new(radius, start, sweep)
+    }
+
+    /// Create a ring builder with a required radius.
+    ///
+    /// The ring center defaults to `(0, 0)` and its color defaults to white.
+    ///
+    /// # Arguments
+    /// - `radius`: ring radius in pixel-like 2D coordinates.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::Shape;
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let ring = Shape::ring(50.0).position(100.0, 120.0).width(10).build(&context)?;
+    /// # drop(ring);
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[must_use]
+    pub fn ring(radius: f32) -> ArcBuilder {
+        ArcBuilder::new(radius, 0.0, 360.0)
     }
 
     pub(crate) fn blend_mode_from_vertices(vertices: &[Vertex2D]) -> BlendMode {

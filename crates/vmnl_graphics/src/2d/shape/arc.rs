@@ -216,7 +216,7 @@ impl ArcBuilder {
                 "arc sweep must not be NaN and finite".to_string(),
             )));
         }
-        if sweep == 0.0 || sweep.abs() >= 360.0 {
+        if sweep == 0.0 || sweep.abs() > 360.0 {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                 "arc sweep must be between -360 and 360, and strictly different than 0".to_string(),
             )));

@@ -31,6 +31,11 @@ fn main() -> VMNLResult<()> {
         .color(Rgba::rgba(0, 255, 0, 255))
         .segments(32)
         .build(&context)?;
+    let ring = Shape::ring(20.0)
+        .position(540.0, 455.0)
+        .color(Rgba::rgba(255, 0, 0, 255))
+        .segments(32)
+        .build(&context)?;
     let circle = Shape::circle(65.0)
         .position(440.0, 125.0)
         .color(Rgba::rgba(0, 0, 255, 255))
@@ -51,7 +56,7 @@ fn main() -> VMNLResult<()> {
         }
         window
             .render()
-            .draw2d([&rectangle, &circle, &triangle, &ellipse, &arc])
+            .draw2d([&rectangle, &circle, &triangle, &ellipse, &arc, &ring])
             .submit()?;
     }
 
