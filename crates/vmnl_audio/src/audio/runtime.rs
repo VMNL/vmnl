@@ -14,6 +14,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
+use arc_swap::ArcSwap;
 
 #[derive(Debug, Clone)]
 pub(crate) enum AudioCommand {
@@ -28,13 +29,15 @@ pub(crate) enum AudioCommand {
 }
 
 pub(crate) struct AudioRuntime {
-    pub master_bus: AudioBus,
-    pub music_bus: AudioBus,
-    pub sfx_bus: AudioBus,
-    pub sound_cache: RwLock<HashMap<PathBuf, Arc<DecodedAudio>>>,
-    pub active_sound_voices: RwLock<Vec<Arc<SoundVoice>>>,
-    pub active_music_streams: RwLock<Vec<Arc<MusicStream>>>,
-    pub command_queue: Mutex<Vec<AudioCommand>>,
+    master_bus: AudioBus,
+    music_bus: AudioBus,
+    sfx_bus: AudioBus,
+    sound_cache: RwLock<HashMap<PathBuf, Arc<DecodedAudio>>>,
+    active_sound_voices: Mutex<Vec<Arc<SoundVoice>>>,
+    active_music_streams: Mutex<Vec<Arc<MusicStream>>>,
+    sound_voice_snapshot: ArcSwap<Vec<Arc<SoundVoice>>>,
+    music_stream_snapshot: ArcSwap<Vec<Arc<MusicStream>>>,
+    command_queue: Mutex<Vec<AudioCommand>>,
     next_voice_id: AtomicU64,
     next_stream_id: AtomicU64,
     max_sound_voices: AtomicUsize,
@@ -48,13 +51,38 @@ impl AudioRuntime {
             music_bus: AudioBus::new(BusKind::Music),
             sfx_bus: AudioBus::new(BusKind::Sfx),
             sound_cache: RwLock::new(HashMap::new()),
-            active_sound_voices: RwLock::new(Vec::new()),
-            active_music_streams: RwLock::new(Vec::new()),
+            active_sound_voices: Mutex::new(Vec::new()),
+            active_music_streams: Mutex::new(Vec::new()),
+            sound_voice_snapshot: ArcSwap::from_pointee(Vec::new()),
+            music_stream_snapshot: ArcSwap::from_pointee(Vec::new()),
             command_queue: Mutex::new(Vec::new()),
             next_voice_id: AtomicU64::new(1),
             next_stream_id: AtomicU64::new(1),
             max_sound_voices: AtomicUsize::new(64),
         }
+    }
+
+    pub(crate) fn master_bus(&self) -> &AudioBus {
+        &self.master_bus
+    }
+
+    pub(crate) fn music_bus(&self) -> AudioBus {
+        self.music_bus.clone()
+    }
+
+    pub(crate) fn sfx_bus(&self) -> AudioBus {
+        self.sfx_bus.clone()
+    }
+
+
+    fn publish_sound_voice_snapshot(&self, voices: &[Arc<SoundVoice>],) {
+        self.sound_voice_snapshot
+            .store(Arc::new(voices.to_vec()));
+    }
+
+    fn publish_music_stream_snapshot(&self, streams: &[Arc<MusicStream>],) {
+        self.music_stream_snapshot
+            .store(Arc::new(streams.to_vec()));
     }
 
     pub fn next_voice_id(&self) -> u64 {
@@ -71,14 +99,17 @@ impl AudioRuntime {
     }
 
     pub fn set_max_sound_voices(&self, max: usize) -> AudioResult<()> {
-        self.max_sound_voices.store(max.max(1), Ordering::Relaxed);
+        self.max_sound_voices
+            .store(max.max(1), Ordering::Relaxed);
 
         let mut voices = self
             .active_sound_voices
-            .write()
+            .lock()
             .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
 
         self.enforce_voice_limit_locked(&mut voices);
+
+        self.publish_sound_voice_snapshot(&voices);
 
         Ok(())
     }
@@ -124,7 +155,7 @@ impl AudioRuntime {
                 AudioCommand::PauseAll => {
                     let voices = self
                         .active_sound_voices
-                        .read()
+                        .lock()
                         .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
 
                     for voice in voices.iter() {
@@ -133,7 +164,7 @@ impl AudioRuntime {
 
                     let streams = self
                         .active_music_streams
-                        .read()
+                        .lock()
                         .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
 
                     for stream in streams.iter() {
@@ -144,7 +175,7 @@ impl AudioRuntime {
                 AudioCommand::ResumeAll => {
                     let voices = self
                         .active_sound_voices
-                        .read()
+                        .lock()
                         .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
 
                     for voice in voices.iter() {
@@ -153,7 +184,7 @@ impl AudioRuntime {
 
                     let streams = self
                         .active_music_streams
-                        .read()
+                        .lock()
                         .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
 
                     for stream in streams.iter() {
@@ -164,7 +195,7 @@ impl AudioRuntime {
                 AudioCommand::StopAll => {
                     let voices = self
                         .active_sound_voices
-                        .read()
+                        .lock()
                         .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
 
                     for voice in voices.iter() {
@@ -173,7 +204,7 @@ impl AudioRuntime {
 
                     let streams = self
                         .active_music_streams
-                        .read()
+                        .lock()
                         .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
 
                     for stream in streams.iter() {
@@ -221,11 +252,12 @@ impl AudioRuntime {
     pub fn register_sound_voice(&self, voice: Arc<SoundVoice>) -> AudioResult<()> {
         let mut voices = self
             .active_sound_voices
-            .write()
+            .lock()
             .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
 
         voices.push(voice);
         self.enforce_voice_limit_locked(&mut voices);
+        self.publish_sound_voice_snapshot(&voices);
 
         Ok(())
     }
@@ -233,11 +265,11 @@ impl AudioRuntime {
     pub fn register_music_stream(&self, stream: Arc<MusicStream>) -> AudioResult<()> {
         let mut streams = self
             .active_music_streams
-            .write()
+            .lock()
             .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
 
         streams.push(stream);
-
+        self.publish_music_stream_snapshot(&streams);
         Ok(())
     }
 
@@ -263,20 +295,38 @@ impl AudioRuntime {
         }
     }
 
-    pub fn cleanup(&self) -> AudioResult<()> {
-        let mut voices = self
-            .active_sound_voices
-            .write()
-            .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
+    pub(crate) fn cleanup(&self) -> AudioResult<()> {
+        {
+            let mut voices = self
+                .active_sound_voices
+                .lock()
+                .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
 
-        voices.retain(|voice| !voice.is_stopped());
+            let old_len = voices.len();
 
-        let mut streams = self
-            .active_music_streams
-            .write()
-            .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
+            voices.retain(|voice| !voice.is_stopped());
 
-        streams.retain(|stream| !stream.is_stopped() && !stream.is_finished());
+            if voices.len() != old_len {
+                self.publish_sound_voice_snapshot(&voices);
+            }
+        }
+
+        {
+            let mut streams = self
+                .active_music_streams
+                .lock()
+                .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
+
+            let old_len = streams.len();
+
+            streams.retain(|stream| {
+                !stream.is_stopped() && !stream.is_finished()
+            });
+
+            if streams.len() != old_len {
+                self.publish_music_stream_snapshot(&streams);
+            }
+        }
 
         Ok(())
     }
@@ -284,7 +334,7 @@ impl AudioRuntime {
     pub fn pump_music_streams(&self) -> AudioResult<()> {
         let streams = self
             .active_music_streams
-            .read()
+            .lock()
             .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
 
         for stream in streams.iter() {
@@ -311,7 +361,7 @@ impl AudioRuntime {
     pub fn is_anything_playing(&self) -> AudioResult<bool> {
         let voices = self
             .active_sound_voices
-            .read()
+            .lock()
             .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
 
         if voices.iter().any(|voice| !voice.is_stopped()) {
@@ -320,7 +370,7 @@ impl AudioRuntime {
 
         let streams = self
             .active_music_streams
-            .read()
+            .lock()
             .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
 
         Ok(streams

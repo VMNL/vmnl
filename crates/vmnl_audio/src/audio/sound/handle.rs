@@ -4,7 +4,7 @@ use crate::audio::sound::SoundVoice;
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-use crate::audio::PlaybackState;
+use crate::audio::{AudioResult, PlaybackState};
 
 use std::sync::Arc;
 
@@ -30,8 +30,8 @@ impl SoundHandle {
         self.voice.resume();
     }
 
-    pub fn set_volume(&self, volume: f32) {
-        self.voice.set_volume(volume);
+    pub fn set_volume(&self, volume: f32) -> AudioResult<()> {
+        self.voice.set_volume(volume)
     }
 
     pub fn set_looping(&self, looping: bool) {
