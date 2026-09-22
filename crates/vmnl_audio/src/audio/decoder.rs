@@ -11,9 +11,9 @@ use std::path::Path;
 
 #[derive(Debug, Clone)]
 pub struct DecodedAudio {
-    pub channels: u32,
-    pub sample_rate: u32,
-    pub samples: Vec<f32>,
+    channels: u32,
+    sample_rate: u32,
+    samples: Vec<f32>,
 }
 
 impl DecodedAudio {
@@ -29,6 +29,20 @@ impl DecodedAudio {
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.samples.is_empty()
+    }
+
+    pub(crate) fn channels(&self) -> u32 {
+        self.channels
+    }
+
+    #[must_use]
+    pub(crate) fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+
+
+    pub(crate) fn samples(&self) -> &[f32] {
+        &self.samples
     }
 }
 

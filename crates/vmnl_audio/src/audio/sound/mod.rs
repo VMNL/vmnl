@@ -18,6 +18,16 @@ use std::sync::Arc;
 pub use handle::SoundHandle;
 pub use voice::PlaybackState;
 
+#[derive(Debug, Clone, Copy)]
+pub struct SoundPlayConfig {
+    pub volume: f32,
+    pub looping: bool,
+}
+
+impl Default for SoundPlayConfig {
+    fn default() -> Self { Self { volume: 1.0, looping: false } }
+}
+
 pub(crate) use voice::SoundVoice;
 
 #[derive(Clone)]
@@ -34,7 +44,7 @@ impl Sound {
     {
         let path = path.as_ref().to_path_buf();
         let runtime = device.runtime();
-        let decoded_audio = runtime.get_or_decode_audio(&path)?;
+        let decoded_audio = device.get_or_decode_audio(&path)?;
 
         Ok(Self {
             runtime,
@@ -44,13 +54,21 @@ impl Sound {
     }
 
     pub fn play(&self) -> AudioResult<SoundHandle> {
+        self.play_with_config(SoundPlayConfig::default())
+    }
+
+    pub fn play_with_config(&self, config: SoundPlayConfig) -> AudioResult<SoundHandle> {
         let id = self.runtime.next_voice_id();
         let voice = Arc::new(SoundVoice::new(
             id,
             self.decoded_audio.clone(),
             BusKind::Sfx,
-        ));
+            config.volume,
+            config.looping,
+            PlaybackState::Playing,
+        )?);
 
+        // The voice is fully configured before it becomes visible to the mixer.
         self.runtime.register_sound_voice(voice.clone())?;
 
         Ok(SoundHandle::new(voice))
@@ -62,7 +80,7 @@ impl Sound {
     }
 
     #[must_use]
-    pub fn decoded_audio(&self) -> &DecodedAudio {
+    pub(crate) fn decoded_audio(&self) -> &DecodedAudio {
         self.decoded_audio.as_ref()
     }
 }

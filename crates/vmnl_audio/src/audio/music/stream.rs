@@ -27,15 +27,15 @@ pub(crate) struct MusicStream {
 
 impl MusicStream {
     #[must_use]
-    pub fn new(id: u64, path: PathBuf, decoded_audio: Arc<DecodedAudio>, bus: BusKind) -> Self {
+    pub(crate) fn new(id: u64, path: PathBuf, decoded_audio: Arc<DecodedAudio>, bus: BusKind, volume: f32, looping: bool, state: PlaybackState) -> AudioResult<Self> {
         Self {
             id,
             path,
             decoded_audio,
             cursor_frames: AtomicUsize::new(0),
-            volume_bits: AtomicU32::new(1.0f32.to_bits()),
-            looping: AtomicBool::new(false),
-            state: AtomicU8::new(PlaybackState::Playing as u8),
+            volume_bits: AtomicU32::new(validate_gain(volume)?.to_bits()),
+            looping: AtomicBool::new(looping),
+            state: AtomicU8::new(state as u8),
             finished: AtomicBool::new(false),
             bus,
         }
@@ -75,6 +75,10 @@ impl MusicStream {
 
     pub fn volume(&self) -> f32 {
         f32::from_bits(self.volume_bits.load(Ordering::Relaxed))
+    }
+
+    pub(crate) fn start(&self) {
+        self.set_state(PlaybackState::Playing);
     }
 
     pub fn set_state(&self, state: PlaybackState) {
@@ -138,45 +142,56 @@ impl MusicStream {
         }
 
         let decoded = self.decoded_audio.as_ref();
-        let channels = decoded.channels.max(1) as usize;
-        let input = &decoded.samples;
+        let channels = decoded.channels().max(1) as usize;
+        let input = decoded.samples();
         let volume = self.volume();
+        let total_frames = decoded.frame_count();
+        let frame_count = output.len() / 2;
 
-        if input.is_empty() {
+        if input.is_empty() || total_frames == 0 || frame_count == 0 {
             self.stop();
             return;
         }
 
-        let frame_count = output.len() / 2;
-        let mut cursor = self.cursor_frames();
-        let total_frames = decoded.frame_count();
+        // Reserve a distinct cursor range for this mixer invocation. This makes
+        // concurrent render_into() calls safe: two mixers cannot consume the
+        // same frames and overwrite each other's cursor progress.
+        let start = self.cursor_frames.fetch_add(frame_count, Ordering::AcqRel);
 
-        for frame in 0..frame_count {
-            if cursor >= total_frames {
-                if self.looping() {
-                    cursor = 0;
-                } else {
-                    self.stop();
-                    break;
-                }
-            }
+        if self.state() != PlaybackState::Playing {
+            return;
+        }
+
+        let looping = self.looping();
+        let available = total_frames.saturating_sub(start);
+        let frames_to_mix = if looping {
+            frame_count
+        } else {
+            available.min(frame_count)
+        };
+
+        for frame in 0..frames_to_mix {
+            let cursor = if looping {
+                (start + frame) % total_frames
+            } else {
+                start + frame
+            };
 
             let base = cursor * channels;
             if base + channels > input.len() {
                 self.stop();
-                break;
+                return;
             }
 
             let left = input[base];
             let right = if channels >= 2 { input[base + 1] } else { left };
-
             let out = frame * 2;
             output[out] += left * volume * gain;
             output[out + 1] += right * volume * gain;
-
-            cursor += 1;
         }
 
-        self.cursor_frames.store(cursor, Ordering::Relaxed);
+        if !looping && frames_to_mix < frame_count {
+            self.stop();
+        }
     }
 }

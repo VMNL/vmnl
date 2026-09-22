@@ -16,8 +16,8 @@ use std::sync::Arc;
 #[derive(Debug, Clone)]
 pub struct AudioConfig {
     master_volume: f32,
-    pub sample_rate: u32,
-    pub channels: u32,
+    sample_rate: u32,
+    channels: u32,
 }
 
 impl AudioConfig {
@@ -50,9 +50,9 @@ pub struct AudioDevice {
 
 impl AudioDevice {
     pub fn new(config: AudioConfig) -> AudioResult<Self> {
-        if config.channels == 0 {
-            return Err(AudioError::InvalidState(
-                "channels must be greater than zero".to_string(),
+        if config.channels != 2 {
+            return Err(AudioError::UnsupportedFormat(
+                "the current mixer requires exactly 2 output channels".to_string(),
             ));
         }
         if config.sample_rate == 0 {
@@ -62,7 +62,7 @@ impl AudioDevice {
         }
 
         let runtime = Arc::new(AudioRuntime::new());
-        runtime.master_bus.set_volume(config.master_volume())?;
+        runtime.master_bus().set_volume(config.master_volume())?;
 
         Ok(Self {
             runtime,
@@ -72,7 +72,7 @@ impl AudioDevice {
     }
 
     #[must_use]
-    pub fn runtime(&self) -> Arc<AudioRuntime> {
+    pub(crate) fn runtime(&self) -> Arc<AudioRuntime> {
         self.runtime.clone()
     }
 
@@ -110,24 +110,31 @@ impl AudioDevice {
 
     #[must_use]
     pub fn master_volume(&self) -> f32 {
-        self.runtime.master_bus.volume()
+        self.runtime.master_bus().volume()
     }
 
     #[must_use]
     pub fn music_bus(&self) -> AudioBus {
-        self.runtime.music_bus.clone()
+        self.runtime.music_bus().clone()
     }
 
     #[must_use]
     pub fn sfx_bus(&self) -> AudioBus {
-        self.runtime.sfx_bus.clone()
+        self.runtime.sfx_bus().clone()
     }
 
-    pub fn get_or_decode_audio<P>(&self, path: P) -> AudioResult<Arc<DecodedAudio>>
+    pub(crate) fn get_or_decode_audio<P>(&self, path: P) -> AudioResult<Arc<DecodedAudio>>
     where
         P: AsRef<Path>,
     {
-        self.runtime.get_or_decode_audio(path)
+        let decoded = self.runtime.get_or_decode_audio(path)?;
+        if decoded.channels() != self.channels || decoded.sample_rate() != self.sample_rate {
+            return Err(AudioError::UnsupportedFormat(format!(
+                "audio format is {} channels at {} Hz, but device requires {} channels at {} Hz",
+                decoded.channels(), decoded.sample_rate(), self.channels, self.sample_rate
+            )));
+        }
+        Ok(decoded)
     }
 
     pub fn update(&self) -> AudioResult<()> {
@@ -138,7 +145,6 @@ impl AudioDevice {
     }
 
     pub fn render_into(&self, output: &mut [f32]) -> AudioResult<()> {
-        self.update()?;
         self.runtime.mix_into(output)?;
         Ok(())
     }
