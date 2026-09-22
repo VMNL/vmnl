@@ -3,6 +3,7 @@
 
 //! Shape utilities for the VMNL library.
 
+mod arc;
 mod ellipse;
 mod indexed;
 mod line;
@@ -11,7 +12,10 @@ mod triangle;
 mod validation;
 
 use super::{Drawable2D, GpuVertex2D, RenderItem2D, Vector2f, Vertex2D};
-use crate::common::{BlendMode, GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey};
+use crate::{
+    common::{BlendMode, GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey},
+    d2::shape::arc::ArcBuilder,
+};
 pub use ellipse::EllipseBuilder;
 pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
@@ -23,6 +27,8 @@ pub use triangle::TriangleBuilder;
 pub(crate) enum ShapeKind {
     /// Filled ellipse shape.
     Ellipse,
+    /// Filled arc shape.
+    Arc,
     /// Raw vertex data without indices.
     RawVertices,
     /// Indexed geometry using vertex and index buffers.
@@ -119,6 +125,29 @@ impl Shape {
             x: radius_x,
             y: radius_y,
         })
+    }
+
+    /// Create an arc builder with a required radius, start angle, and sweep.
+    ///
+    /// The arc center defaults to `(0, 0)` and its color defaults to white.
+    ///
+    /// # Arguments
+    /// - `radius`: arc radius in pixel-like 2D coordinates.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::Context;
+    /// # use vmnl_graphics::d2::Shape;
+    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let arc = Shape::arc(80.0, 30.0, 140.0).position(100.0, 120.0).build(&context)?;
+    /// # drop(arc);
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[must_use]
+    pub fn arc(radius: f32, start: f32, sweep: f32) -> ArcBuilder {
+        ArcBuilder::new(radius, start, sweep)
     }
 
     pub(crate) fn blend_mode_from_vertices(vertices: &[Vertex2D]) -> BlendMode {
