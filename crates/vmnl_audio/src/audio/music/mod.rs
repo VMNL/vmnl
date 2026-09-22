@@ -18,6 +18,16 @@ use std::sync::Arc;
 pub use handle::MusicHandle;
 pub(crate) use stream::MusicStream;
 
+#[derive(Debug, Clone, Copy)]
+pub struct MusicPlayConfig {
+    pub volume: f32,
+    pub looping: bool,
+}
+
+impl Default for MusicPlayConfig {
+    fn default() -> Self { Self { volume: 1.0, looping: false } }
+}
+
 #[derive(Clone)]
 pub struct Music {
     runtime: Arc<AudioRuntime>,
@@ -32,7 +42,7 @@ impl Music {
     {
         let path = path.as_ref().to_path_buf();
         let runtime = device.runtime();
-        let decoded_audio = runtime.get_or_decode_audio(&path)?;
+        let decoded_audio = device.get_or_decode_audio(&path)?;
 
         Ok(Self {
             runtime,
@@ -42,13 +52,22 @@ impl Music {
     }
 
     pub fn play(&self) -> AudioResult<MusicHandle> {
+        self.play_with_config(MusicPlayConfig::default())
+    }
+
+    pub fn play_with_config(&self, config: MusicPlayConfig) -> AudioResult<MusicHandle> {
         let id = self.runtime.next_stream_id();
         let stream = Arc::new(MusicStream::new(
             id,
             self.path.clone(),
             self.decoded_audio.clone(),
             BusKind::Music,
-        ));
+            config.volume,
+            config.looping,
+            crate::audio::PlaybackState::Playing,
+        )?);
+
+        // The stream is fully configured before registration/recording starts.
         self.runtime.register_music_stream(stream.clone())?;
         Ok(MusicHandle::new(stream))
     }
@@ -59,7 +78,7 @@ impl Music {
     }
 
     #[must_use]
-    pub fn decoded_audio(&self) -> &DecodedAudio {
+    pub(crate) fn decoded_audio(&self) -> &DecodedAudio {
         self.decoded_audio.as_ref()
     }
 }

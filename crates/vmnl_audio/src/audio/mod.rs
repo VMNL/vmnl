@@ -15,5 +15,5 @@ mod sound;
 pub use bus::{AudioBus, BusKind};
 pub use device::{AudioConfig, AudioDevice};
 pub use error::{AudioError, AudioResult};
-pub use music::{Music, MusicHandle};
-pub use sound::{PlaybackState, Sound, SoundHandle};
+pub use music::{Music, MusicHandle, MusicPlayConfig};
+pub use sound::{PlaybackState, Sound, SoundHandle, SoundPlayConfig};
