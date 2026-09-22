@@ -12,14 +12,15 @@ Drives the native event queue, updates input snapshots, controls GLFW time, wake
 
 | Methods | Contract |
 |---|---|
-| `poll_events()` | Process pending events, update input, return `Vec<Event>`. |
-| `wait_events()` | Block until at least one event, then process it. |
-| `wait_events_timeout(seconds)` | Block until an event or timeout. |
+| `poll_events()` | Start one input batch, process pending events, update input, return `Vec<Event>`. |
+| `wait_events()` | Block until at least one event is pending; does not start or process a batch. |
+| `wait_events_timeout(seconds)` | Block until an event is pending or timeout; does not start or process a batch. |
 | `post_empty_event()` | Wake a waiting event loop. |
 | `get_time()`, `set_time(seconds)` | Read/set the GLFW time base. |
 | `get_timer_value()`, `get_timer_frequency()` | Read raw monotonic timer ticks/frequency. |
 | `set_error_callback(callback)`, `unset_error_callback()` | Replace/remove the GLFW error callback. |
 | `input()` | Borrow the updated `Input` snapshot. |
+| `clear_input_transitions()` | Clear press/release flags without changing held controls or pending events. |
 
 ## Construction, defaults, and validation
 
@@ -31,7 +32,7 @@ Wait timeout and GLFW time are seconds. Timer values are ticks; divide by the no
 
 ## Ownership, lifecycle, and threading
 
-Processing requires `&mut Window` and resets transition snapshots before applying new events. The callback is stored by GLFW/VMNL until replaced, unset, or the window runtime is dropped. Wake-up behavior across threads is platform constrained; this API method itself requires mutable window access.
+Processing requires `&mut Window`. One batch is exactly one `poll_events` call: it clears the previous batch's transition flags, then applies every pending native event in order. `wait_events` and `wait_events_timeout` only wait; their pending events belong to the next `poll_events` batch. The callback is stored by GLFW/VMNL until replaced, unset, or the window runtime is dropped. Wake-up behavior across threads is platform constrained; this API method itself requires mutable window access.
 
 ## Errors, panics, and failure conditions
 
@@ -53,14 +54,14 @@ Requires an initialized GLFW window/display environment. Some platforms require 
 
 ```rust,no_run
 # extern crate vmnl;
-use vmnl::{Context, Event, Window};
+use vmnl::{Context, EventKind, Window};
 
 fn main() -> vmnl::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
     window.wait_events_timeout(0.016);
     for event in window.poll_events() {
-        if event == Event::Closed { window.close(); }
+        if matches!(event.kind(), EventKind::Closed) { window.close(); }
     }
     Ok(())
 }

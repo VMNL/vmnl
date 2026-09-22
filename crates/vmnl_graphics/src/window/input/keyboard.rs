@@ -6,7 +6,8 @@
 //! This module provides functionality to track the state of keys, manage key events,
 //! and integrate with the windowing system to capture keyboard input.
 
-use glfw::Key as GlfwKey;
+use super::transitions::TransitionState;
+use glfw::{Action, Key as GlfwKey};
 
 /// Defines the `Key` enum, representing keys tracked for input events.
 ///
@@ -198,15 +199,12 @@ pub(crate) const ALL_KEYS: &[Key] = [
 /// Calculated from the highest `Key` variant; used to size state arrays.
 pub(crate) const KEY_COUNT: usize = Key::F12 as usize + 1;
 
-/// Represents the state of keyboard input, tracking which keys are currently pressed
-/// and which were pressed in the previous frame.
+/// Represents the state of keyboard input after the most recently processed event batch.
 ///
-/// Used to manage keyboard input and detect key events such as presses and releases.
+/// Press and release transitions are retained independently, so both remain observable when they
+/// occur during the same batch. Repeat events keep a key down without creating a new press.
 pub struct KeyboardState {
-    /// Current state of each key; `true` indicates the key is pressed.
-    current: [bool; KEY_COUNT],
-    /// Previous state of each key; `true` indicates the key was pressed in the previous frame.
-    previous: [bool; KEY_COUNT],
+    transitions: TransitionState<KEY_COUNT>,
 }
 
 impl KeyboardState {
@@ -286,6 +284,7 @@ impl KeyboardState {
     ///
     /// # Returns
     /// `Some(GlfwKey)` if a mapping exists, otherwise `None`.
+    #[cfg(test)]
     pub(crate) const fn to_glfw(key: Key) -> Option<GlfwKey> {
         use GlfwKey::{
             Backspace, Down, Enter, Escape, Left, Num0, Num1, Num2, Num3, Num4, Num5, Num6, Num7,
@@ -364,17 +363,25 @@ impl KeyboardState {
         key as usize
     }
 
-    /// Updates the current and previous key states from the given GLFW window.
-    ///
-    /// # Arguments
-    /// - `window`: A reference to the GLFW window from which to read the current key states.
-    pub(crate) fn update(&mut self, window: &glfw::PWindow) {
-        self.previous = self.current;
-        for &key in ALL_KEYS {
-            if let Some(glfw_key) = Self::to_glfw(key) {
-                self.current[Self::index(key)] = window.get_key(glfw_key) == glfw::Action::Press;
-            }
+    pub(crate) const fn begin_batch(&mut self) {
+        self.transitions.begin_batch();
+    }
+
+    pub(crate) fn apply(&mut self, key: GlfwKey, action: Action) {
+        let Some(key) = Self::from_glfw(key) else {
+            return;
+        };
+        let index = Self::index(key);
+
+        match action {
+            Action::Press => self.transitions.press(index),
+            Action::Repeat => self.transitions.repeat(index),
+            Action::Release => self.transitions.release(index),
         }
+    }
+
+    pub(crate) const fn clear_transitions(&mut self) {
+        self.transitions.clear_transitions();
     }
 
     /// Returns `true` if the specified key is currently pressed.
@@ -393,10 +400,10 @@ impl KeyboardState {
     /// ```
     #[must_use]
     pub const fn is_down(&self, key: Key) -> bool {
-        self.current[Self::index(key)]
+        self.transitions.is_down(Self::index(key))
     }
 
-    /// Returns `true` if the specified key was pressed in the current frame.
+    /// Returns `true` if the specified key was pressed in the current event batch.
     ///
     /// # Arguments
     /// - `key`: The `Key` variant to check.
@@ -412,10 +419,10 @@ impl KeyboardState {
     /// ```
     #[must_use]
     pub const fn is_pressed(&self, key: Key) -> bool {
-        self.current[Self::index(key)] && !self.previous[Self::index(key)]
+        self.transitions.is_pressed(Self::index(key))
     }
 
-    /// Returns `true` if the specified key was released in the current frame.
+    /// Returns `true` if the specified key was released in the current event batch.
     ///
     /// # Arguments
     /// - `key`: The `Key` variant to check.
@@ -431,10 +438,10 @@ impl KeyboardState {
     /// ```
     #[must_use]
     pub const fn is_released(&self, key: Key) -> bool {
-        !self.current[Self::index(key)] && self.previous[Self::index(key)]
+        self.transitions.is_released(Self::index(key))
     }
 
-    /// Returns `true` if any of the specified keys were pressed in the current frame.
+    /// Returns `true` if any of the specified keys were pressed in the current event batch.
     ///
     /// # Arguments
     /// - `keys`: A slice of `Key` variants to check.
@@ -458,7 +465,7 @@ impl KeyboardState {
         false
     }
 
-    /// Returns `true` if any of the specified keys were released in the current frame.
+    /// Returns `true` if any of the specified keys were released in the current event batch.
     ///
     /// # Arguments
     /// - `keys`: A slice of `Key` variants to check.
@@ -506,7 +513,7 @@ impl KeyboardState {
         false
     }
 
-    /// Returns `true` if any of the specified keys were used (pressed, released, or down) in the current frame.
+    /// Returns `true` if any of the specified keys were used in the current event batch.
     ///
     /// # Arguments
     /// - `keys`: A slice of `Key` variants to check.
@@ -530,7 +537,7 @@ impl KeyboardState {
         false
     }
 
-    /// Returns `true` if any key was pressed in the current frame.
+    /// Returns `true` if any key was pressed in the current event batch.
     ///
     /// # Example
     /// ```rust
@@ -551,7 +558,7 @@ impl KeyboardState {
         false
     }
 
-    /// Returns `true` if any key was released in the current frame.
+    /// Returns `true` if any key was released in the current event batch.
     ///
     /// # Example
     /// ```rust
@@ -593,7 +600,7 @@ impl KeyboardState {
         false
     }
 
-    /// Returns `true` if any key was used (pressed, released, or down) in the current frame.
+    /// Returns `true` if any key was used in the current event batch.
     ///
     /// # Example
     /// ```rust
@@ -614,24 +621,6 @@ impl KeyboardState {
         false
     }
 
-    /// Resets the keyboard state, clearing all current and previous key states.
-    /// This is useful for situations where you want to ignore all previous input,
-    /// such as when the window gains focus or when you want to start fresh after a certain event.
-    /// This can be used to clear the state when the window is focused or when you want to ignore all previous input.
-    ///
-    /// # Example
-    /// ```rust
-    /// use vmnl_graphics::KeyboardState;
-    ///
-    /// let mut keyboard = KeyboardState::new();
-    /// keyboard.reset();
-    /// assert!(!keyboard.is_one_used());
-    /// ```
-    pub const fn reset(&mut self) {
-        self.current = [false; KEY_COUNT];
-        self.previous = [false; KEY_COUNT];
-    }
-
     /// Creates a new `KeyboardState` with all keys initialized to not pressed.
     ///
     /// # Example
@@ -644,8 +633,7 @@ impl KeyboardState {
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            current: [false; KEY_COUNT],
-            previous: [false; KEY_COUNT],
+            transitions: TransitionState::new(),
         }
     }
 }
@@ -659,18 +647,6 @@ impl Default for KeyboardState {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn keyboard_state(current: &[Key], previous: &[Key]) -> KeyboardState {
-        let mut state: KeyboardState = KeyboardState::new();
-
-        for &key in current {
-            state.current[KeyboardState::index(key)] = true;
-        }
-        for &key in previous {
-            state.previous[KeyboardState::index(key)] = true;
-        }
-        state
-    }
 
     #[test]
     fn all_tracked_keys_round_trip_through_glfw() {
@@ -710,9 +686,16 @@ mod tests {
 
     #[test]
     fn keyboard_state_detects_pressed_held_and_released_keys() {
-        let pressed: KeyboardState = keyboard_state(&[Key::A], &[]);
-        let held: KeyboardState = keyboard_state(&[Key::A], &[Key::A]);
-        let released: KeyboardState = keyboard_state(&[], &[Key::A]);
+        let mut pressed = KeyboardState::new();
+        pressed.apply(GlfwKey::A, Action::Press);
+        let mut held = KeyboardState::new();
+        held.apply(GlfwKey::A, Action::Press);
+        held.begin_batch();
+        held.apply(GlfwKey::A, Action::Repeat);
+        let mut released = KeyboardState::new();
+        released.apply(GlfwKey::A, Action::Press);
+        released.begin_batch();
+        released.apply(GlfwKey::A, Action::Release);
 
         assert!(pressed.is_down(Key::A));
         assert!(pressed.is_pressed(Key::A));
@@ -729,16 +712,5 @@ mod tests {
         assert!(released.is_released(Key::A));
         assert!(released.is_any_released(&[Key::B, Key::A]));
         assert!(released.is_one_released());
-    }
-
-    #[test]
-    fn reset_clears_keyboard_current_and_previous_state() {
-        let mut state: KeyboardState = keyboard_state(&[Key::A], &[Key::B]);
-
-        state.reset();
-        assert!(!state.is_one_down());
-        assert!(!state.is_one_pressed());
-        assert!(!state.is_one_released());
-        assert!(!state.is_one_used());
     }
 }

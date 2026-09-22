@@ -19,8 +19,12 @@ pub(crate) use builder::{
     validate_size_limits, validate_window_size, PresentModeSelection, WindowOptions,
 };
 pub use builder::{PresentMode, WindowBuilder};
-pub use event::Event;
-pub use input::{Input, Key, KeyboardState, MouseButton, MouseState};
+pub use event::{Event, EventKind};
+pub(crate) use input::CursorImage;
+pub use input::{
+    Cursor, CursorBuilder, CursorMode, Input, Key, KeyboardState, Modifiers, MouseButton,
+    MouseState, StandardCursor, StandardCursorBuilder,
+};
 pub use monitors::{MonitorInfo, Monitors, VideoMode};
 use vulkano::{
     device::Device, memory::allocator::StandardMemoryAllocator, render_pass::RenderPass,

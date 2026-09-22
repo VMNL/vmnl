@@ -7,9 +7,11 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 
 | VMNL API | GLFW operation | Backend status |
 |---|---|---|
+| `Context::is_raw_mouse_motion_supported`, `Window::set_raw_mouse_motion` | `glfwRawMouseMotionSupported` | x11: conditional — Returns GLFW_TRUE when XInput 2 raw motion is available, otherwise GLFW_FALSE.; win32-wayland-null: supported — Bundled GLFW 3.4 reports raw motion support.; cocoa: unsupported — Bundled GLFW 3.4 reports GLFW_FALSE because raw motion is not implemented. |
 | `Context::new` | `glfwGetRequiredInstanceExtensions` | all: conditional — Returns the platform Vulkan instance extension list. |
 | `Context::new` | `glfwInit` | all: conditional — Initializes GLFW or returns failure after invoking the error callback. |
-| `KeyboardState` | `glfwGetKey` | all: supported — Returns cached key state. |
+| `CursorBuilder::build`, `Window::set_cursor_mode` | `glfwCreateCursor` | all: supported — Copies the supplied non-premultiplied RGBA8 pixels and creates a native cursor resource. |
+| `KeyboardState`, `Window::set_key_polling` | `glfwSetKeyCallback` | all: supported — Installs key callback. |
 | `MonitorInfo::available_modes` | `glfwGetVideoModes` | all: conditional — Returns modes reported by the backend. |
 | `MonitorInfo::content_scale` | `glfwGetMonitorContentScale` | wayland: conditional — Fractional scaling may not be represented exactly by GLFW 3.4.; x11-win32-cocoa: supported — Returns content scale reported by the backend. |
 | `MonitorInfo::current_mode` | `glfwGetVideoMode` | all: conditional — Returns the current mode. |
@@ -18,11 +20,13 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `MonitorInfo::position` | `glfwGetMonitorPos` | wayland: unsupported — Global monitor position is unavailable.; x11-win32-cocoa: conditional — Returns virtual-screen coordinates. |
 | `MonitorInfo::workarea` | `glfwGetMonitorWorkarea` | all: conditional — Returns a backend-defined work area. |
 | `Monitors` | `glfwGetMonitors` | all: conditional — Returns currently connected monitors; Null may return none. |
-| `MouseState` | `glfwGetMouseButton` | all: supported — Returns cached mouse-button state. |
+| `MouseState`, `Window::set_mouse_button_polling` | `glfwSetMouseButtonCallback` | all: supported — Installs mouse-button callback. |
+| `StandardCursorBuilder::build` | `glfwCreateStandardCursor` | win32-cocoa-null: supported — Creates a native cursor using the corresponding system cursor shape.; x11-wayland: conditional — Creates the theme cursor when available and otherwise emits GLFW_CURSOR_UNAVAILABLE. |
 | `Window::close` | `glfwSetWindowShouldClose` | all: supported — Updates GLFW's local close flag. |
 | `Window::configure_window_polling` | `glfwSetWindowPosCallback` | wayland: unsupported — Callback is never invoked because global positions are unavailable.; x11-win32-cocoa: supported — Installs position callback. |
 | `Window::focus` | `glfwFocusWindow` | wayland: best-effort — Compositor will likely ignore unsolicited focus requests.; x11: best-effort — Requests focus; policy may deny it.; win32-cocoa: best-effort — Requests focus. |
 | `Window::get_content_scale` | `glfwGetWindowContentScale` | all: conditional — Returns backend scale factors. |
+| `Window::get_cursor_position` | `glfwGetCursorPos` | all: supported — Returns cursor coordinates relative to the content-area upper-left; disabled mode returns an unbounded virtual position and native cursor positions may be quantized. |
 | `Window::get_framebuffer_size` | `glfwGetFramebufferSize` | all: supported — Returns framebuffer dimensions in pixels. |
 | `Window::get_opacity` | `glfwGetWindowOpacity` | wayland: unsupported — Opacity factor is unavailable.; x11-win32-cocoa: conditional — Returns the current opacity factor. |
 | `Window::get_position` | `glfwGetWindowPos` | wayland: unsupported — Global window position cannot be queried.; x11-win32-cocoa: conditional — Returns screen coordinates, not necessarily physical pixels. |
@@ -31,7 +35,8 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Window::get_timer_value` | `glfwGetTimerValue` | all: supported — Returns raw timer ticks. |
 | `Window::hide` | `glfwHideWindow` | all: supported — Hides the native window. |
 | `Window::iconify` | `glfwIconifyWindow` | wayland: conditional — May be unsupported; restoring an iconified window is not guaranteed by GLFW 3.4.; x11-win32-cocoa: best-effort — Requests iconification. |
-| `Window::is_iconified`, `Window::is_maximized`, `Window::is_visible`, `Window::is_focused` | `glfwGetWindowAttrib` | all: conditional — Returns current GLFW window attribute state. |
+| `Window::is_iconified`, `Window::is_maximized`, `Window::is_visible`, `Window::is_focused`, `Window::is_cursor_hovered` | `glfwGetWindowAttrib` | all: conditional — Returns current GLFW window attribute state. |
+| `Window::is_lock_key_modifier_reporting_enabled`, `Window::is_raw_mouse_motion_enabled`, `Window::is_sticky_mouse_buttons_enabled` | `glfwGetInputMode` | all: supported — Returns GLFW's stored cursor, sticky mouse-button, lock-key modifier or raw-motion mode; effective cursor and raw-motion behavior can differ while unfocused or unsupported. |
 | `Window::is_open` | `glfwWindowShouldClose` | all: supported — Reads GLFW's local close flag. |
 | `Window::maximize` | `glfwMaximizeWindow` | all: best-effort — Requests maximization. |
 | `Window::opacity` | `glfwSetWindowOpacity` | wayland: unsupported — Invokes GLFW_FEATURE_UNAVAILABLE and has no effect.; x11-win32-cocoa: conditional — Updates opacity or invokes an error callback. |
@@ -43,16 +48,17 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Window::set_char_polling` | `glfwSetCharCallback` | all: supported — Installs character callback. |
 | `Window::set_close_polling` | `glfwSetWindowCloseCallback` | all: conditional — Installs close callback; macOS application Quit may invoke it for every window. |
 | `Window::set_content_scale_polling` | `glfwSetWindowContentScaleCallback` | all: conditional — Installs content-scale callback. |
+| `Window::set_cursor`, `Window::set_cursor_mode` | `glfwSetCursor` | all: conditional — Assigns the cursor to a window or restores the default arrow cursor for null. VMNL assigns a cached transparent cursor while its requested mode is Hidden; one cursor may be shared by multiple windows. |
 | `Window::set_cursor_enter_polling` | `glfwSetCursorEnterCallback` | all: supported — Installs cursor-enter callback. |
+| `Window::set_cursor_mode`, `Window::set_lock_key_modifier_reporting`, `Window::set_raw_mouse_motion`, `Window::set_sticky_mouse_buttons` | `glfwSetInputMode` | wayland: conditional — Stores sticky and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor; disabled/captured become effective when the pointer enters. Raw motion affects relative motion only in disabled mode.; x11: conditional — Stores sticky and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor; other cursor modes apply disabled/captured confinement while focused. Raw motion affects disabled mode only.; win32: conditional — Stores sticky and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor; raw motion affects disabled mode only.; cocoa: conditional — Stores sticky and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor. Captured mode emits GLFW_FEATURE_UNIMPLEMENTED; raw motion is unsupported.; null: supported — Stores sticky, lock-key, effective cursor and raw-motion modes without a physical cursor. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor. |
 | `Window::set_cursor_pos_polling` | `glfwSetCursorPosCallback` | wayland: conditional — Installs callback; delivery depends on compositor and cursor mode.; x11-win32-cocoa: supported — Installs cursor-position callback. |
+| `Window::set_cursor_position` | `glfwSetCursorPos` | wayland: conditional — Updates only GLFW's virtual disabled-mode position; other modes emit GLFW_FEATURE_UNAVAILABLE.; x11-win32-cocoa-null: conditional — Sets the cursor position in content-area coordinates; a physical cursor backend may quantize it. |
 | `Window::set_drag_and_drop_polling` | `glfwSetDropCallback` | all: conditional — Installs drop callback. |
 | `Window::set_error_callback`, `Window::unset_error_callback` | `glfwSetErrorCallback` | all: supported — Installs or clears process-wide GLFW error delivery for the calling thread wrapper. |
 | `Window::set_focus_polling` | `glfwSetWindowFocusCallback` | all: supported — Installs focus callback. |
 | `Window::set_framebuffer_size_polling` | `glfwSetFramebufferSizeCallback` | all: supported — Installs framebuffer-size callback. |
 | `Window::set_iconify_polling` | `glfwSetWindowIconifyCallback` | wayland: conditional — Installs callback but event availability is compositor-dependent.; x11-win32-cocoa: supported — Installs iconify callback. |
-| `Window::set_key_polling` | `glfwSetKeyCallback` | all: supported — Installs key callback. |
 | `Window::set_maximize_polling` | `glfwSetWindowMaximizeCallback` | all: conditional — Installs maximize callback. |
-| `Window::set_mouse_button_polling` | `glfwSetMouseButtonCallback` | all: supported — Installs mouse-button callback. |
 | `Window::set_position` | `glfwSetWindowPos` | wayland: unsupported — Invokes GLFW_FEATURE_UNAVAILABLE and has no effect.; x11: best-effort — Requests a position; the window manager may override it.; win32-cocoa: conditional — Requests a position in screen coordinates. |
 | `Window::set_refresh_polling` | `glfwSetWindowRefreshCallback` | all: conditional — Installs refresh callback. |
 | `Window::set_scroll_polling` | `glfwSetScrollCallback` | all: supported — Installs scroll callback. |

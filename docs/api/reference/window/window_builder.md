@@ -26,7 +26,7 @@ The type implements `Default`.
 
 ## Construction, defaults, and validation
 
-Defaults: title `VMNL Window`, size `800x600`, automatic polling enabled, no size limits, built-in 2D shaders, opaque black clear color, and `PresentMode::Auto`. Both initial dimensions must be at least 64. Minimum limits cannot exceed corresponding maximum limits.
+Defaults: title `VMNL Window`, size `800x600`, common public event delivery enabled, no size limits, built-in 2D shaders, opaque black clear color, and `PresentMode::Auto`. Both initial dimensions must be at least 64. Minimum limits cannot exceed corresponding maximum limits.
 
 ## Units, coordinates, and valid ranges
 

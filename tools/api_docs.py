@@ -82,6 +82,23 @@ WINDOW_CONFIGURATION_METHODS = {
     "set_title",
     "width",
 }
+WINDOW_CURSOR_METHODS = {
+    "cursor",
+    "get_cursor_mode",
+    "get_cursor_position",
+    "is_cursor_hovered",
+    "is_raw_mouse_motion_enabled",
+    "set_cursor_mode",
+    "set_cursor",
+    "set_cursor_position",
+    "set_raw_mouse_motion",
+}
+WINDOW_INPUT_MODE_METHODS = {
+    "is_lock_key_modifier_reporting_enabled",
+    "is_sticky_mouse_buttons_enabled",
+    "set_lock_key_modifier_reporting",
+    "set_sticky_mouse_buttons",
+}
 WINDOW_LIFECYCLE_METHODS = {
     "close",
     "focus",
@@ -98,6 +115,7 @@ WINDOW_LIFECYCLE_METHODS = {
     "show",
 }
 WINDOW_EVENT_METHODS = {
+    "clear_input_transitions",
     "get_time",
     "get_timer_frequency",
     "get_timer_value",
@@ -426,6 +444,10 @@ def method_page(row: CoverageRow, method: PublicMethod) -> tuple[str, str]:
         return row.page_label, row.page_target
     if method.name in WINDOW_CONFIGURATION_METHODS:
         return "Window configuration", "../reference/window/configuration.md"
+    if method.name in WINDOW_CURSOR_METHODS:
+        return "Cursor controls", "../reference/window/cursor.md"
+    if method.name in WINDOW_INPUT_MODE_METHODS:
+        return "Input modes", "../reference/window/input/modes.md"
     if method.name in WINDOW_LIFECYCLE_METHODS:
         return "Window lifecycle", "../reference/window/lifecycle.md"
     if method.name in WINDOW_EVENT_METHODS:
