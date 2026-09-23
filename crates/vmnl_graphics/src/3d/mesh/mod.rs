@@ -5,7 +5,7 @@
 
 use super::{Drawable3D, GpuVertex3D, RenderItem3D, Vertex3D};
 use crate::common::{
-    checked_draw_counts, validate_triangle_indices, BufferMemoryPreference, GpuGeometry,
+    validate_indexed_triangle_geometry, BufferMemoryPreference, GpuGeometry,
     GraphicsResourceFactory, MaterialKey, PipelineKey,
 };
 use crate::{Context, VMNLResult};
@@ -95,10 +95,6 @@ impl MeshBuilder {
         self
     }
 
-    fn validate_geometry(vertices: &[Vertex3D], indices: &[u32]) -> VMNLResult<()> {
-        validate_triangle_indices(vertices.len(), indices, "mesh")
-    }
-
     /// Build the GPU-backed mesh.
     ///
     /// The mesh is valid as a 3D resource immediately after this call, but it
@@ -128,9 +124,8 @@ impl MeshBuilder {
     /// # }
     /// ```
     pub fn build(self, context: &Context) -> VMNLResult<Mesh> {
-        Self::validate_geometry(&self.vertices, &self.indices)?;
-        let (vertex_count, index_count): (u32, u32) =
-            checked_draw_counts(self.vertices.len(), self.indices.len())?;
+        let (vertex_count, index_count) =
+            validate_indexed_triangle_geometry(self.vertices.len(), &self.indices, "mesh")?;
 
         Ok(Mesh {
             geometry: GpuGeometry {
@@ -186,37 +181,6 @@ impl Mesh {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{common::Rgba, VMNLErrorKind};
-
-    fn vertex(x: f32, y: f32, z: f32) -> Vertex3D {
-        Vertex3D {
-            position: super::super::Vector3f { x, y, z },
-            color: Rgba::new(255, 255, 255, 255),
-        }
-    }
-
-    fn vertices() -> [Vertex3D; 3] {
-        [
-            vertex(0.0, 0.0, 0.0),
-            vertex(1.0, 0.0, 0.0),
-            vertex(0.0, 1.0, 0.0),
-        ]
-    }
-
-    #[test]
-    fn validate_geometry_accepts_triangle_indices() {
-        assert!(MeshBuilder::validate_geometry(&vertices(), &[0, 1, 2]).is_ok());
-    }
-
-    #[test]
-    fn validate_geometry_rejects_out_of_bounds_indices() {
-        let result: VMNLResult<()> = MeshBuilder::validate_geometry(&vertices(), &[0, 1, 3]);
-
-        assert!(matches!(
-            result,
-            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "mesh index 3 is out of bounds for 3 vertices")
-        ));
-    }
 
     #[test]
     fn mesh_implements_drawable_3d() {

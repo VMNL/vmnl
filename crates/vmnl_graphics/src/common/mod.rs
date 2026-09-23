@@ -14,5 +14,5 @@ pub use color::Rgba;
 pub use shader::ShaderSource;
 
 pub(crate) use buffer::{GraphicsResourceFactory, IndexBuffer, VertexBuffer};
-pub(crate) use geometry::{checked_draw_counts, validate_triangle_indices, GpuGeometry};
+pub(crate) use geometry::{checked_draw_counts, validate_indexed_triangle_geometry, GpuGeometry};
 pub(crate) use pipeline::{BlendMode, MaterialKey, PipelineKey};

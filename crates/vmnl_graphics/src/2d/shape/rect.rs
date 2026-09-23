@@ -4,10 +4,15 @@
 //! Rectangle shape utilities for the VMNL graphics module,
 //! providing functions to create axis-aligned rectangles defined by position, size, and color.
 
-use super::{Shape, ShapeKind::Rectangle, Vector2f, Vertex2D};
+use super::{
+    validation::{validate_finite, validate_positive_finite},
+    Shape,
+    ShapeKind::Rectangle,
+    Vector2f, Vertex2D,
+};
 use crate::{
     common::{BufferMemoryPreference, Rgba},
-    Context, VMNLError, VMNLErrorKind, VMNLResult,
+    Context, VMNLResult,
 };
 
 /// Predefined local origins for rectangle rotation.
@@ -320,73 +325,26 @@ impl RectBuilder {
         )
     }
 
-    fn validate_geometry(
+    fn validate_parameters(
         position: Vector2f,
         size: Vector2f,
         rotation: f32,
         origin: RectOrigin,
     ) -> VMNLResult<()> {
-        if size.x < 0.0 || size.y < 0.0 {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "rectangle size must be strictly positive".to_string(),
-            )));
-        }
-        if size.x == 0.0 || size.y == 0.0 {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "rectangle size must be non-zero".to_string(),
-            )));
-        }
-        if size.x.is_infinite() || size.y.is_infinite() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "rectangle size must be finite".to_string(),
-            )));
-        }
-        if size.x.is_nan() || size.y.is_nan() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "rectangle size must not be NaN".to_string(),
-            )));
-        }
-        if position.x.is_infinite() || position.y.is_infinite() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "rectangle position must be finite".to_string(),
-            )));
-        }
-        if position.x.is_nan() || position.y.is_nan() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "rectangle position must not be NaN".to_string(),
-            )));
-        }
+        validate_positive_finite(&[size.x, size.y], "rectangle size")?;
+        validate_finite(&[position.x, position.y], "rectangle position")?;
+
         let bounds: Vector2f = Vector2f {
             x: position.x + size.x,
             y: position.y + size.y,
         };
-        if bounds.x.is_infinite() || bounds.y.is_infinite() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "rectangle bounds must be finite".to_string(),
-            )));
-        }
-        if rotation.is_infinite() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "rectangle rotation must be finite".to_string(),
-            )));
-        }
-        if rotation.is_nan() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "rectangle rotation must not be NaN".to_string(),
-            )));
-        }
+        validate_finite(&[bounds.x, bounds.y], "rectangle bounds")?;
+        validate_finite(&[rotation], "rectangle rotation")?;
+
         if let RectOrigin::Custom(origin) = origin {
-            if origin.x.is_infinite() || origin.y.is_infinite() {
-                return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                    "rectangle origin must be finite".to_string(),
-                )));
-            }
-            if origin.x.is_nan() || origin.y.is_nan() {
-                return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                    "rectangle origin must not be NaN".to_string(),
-                )));
-            }
+            validate_finite(&[origin.x, origin.y], "rectangle origin")?;
         }
+
         Ok(())
     }
 
@@ -490,7 +448,7 @@ impl RectBuilder {
         origin: RectOrigin,
         buffer_memory_preference: BufferMemoryPreference,
     ) -> VMNLResult<Shape> {
-        Self::validate_geometry(position, size, rotation, origin)?;
+        Self::validate_parameters(position, size, rotation, origin)?;
 
         let vertices: [Vertex2D; 4] = Self::vertices(position, size, color, rotation, origin);
         let indices: [u32; 6] = [0, 1, 2, 2, 3, 0];
@@ -517,6 +475,7 @@ impl RectBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::VMNLErrorKind;
 
     fn assert_vector_eq(actual: Vector2f, expected: Vector2f) {
         const EPSILON: f32 = 0.00001;
@@ -554,8 +513,8 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_accepts_positive_finite_rect() {
-        assert!(RectBuilder::validate_geometry(
+    fn validate_parameters_accepts_positive_finite_rect() {
+        assert!(RectBuilder::validate_parameters(
             Vector2f { x: 1.0, y: 2.0 },
             Vector2f { x: 3.0, y: 4.0 },
             0.0,
@@ -565,9 +524,9 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_rejects_invalid_size() {
+    fn validate_parameters_rejects_invalid_size() {
         assert_invalid_state(
-            RectBuilder::validate_geometry(
+            RectBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f { x: -1.0, y: 1.0 },
                 0.0,
@@ -576,16 +535,16 @@ mod tests {
             "rectangle size must be strictly positive",
         );
         assert_invalid_state(
-            RectBuilder::validate_geometry(
+            RectBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f { x: 1.0, y: 0.0 },
                 0.0,
                 RectOrigin::Anchor(Anchor::TopLeft),
             ),
-            "rectangle size must be non-zero",
+            "rectangle size must be strictly positive",
         );
         assert_invalid_state(
-            RectBuilder::validate_geometry(
+            RectBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f {
                     x: f32::INFINITY,
@@ -597,7 +556,7 @@ mod tests {
             "rectangle size must be finite",
         );
         assert_invalid_state(
-            RectBuilder::validate_geometry(
+            RectBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f {
                     x: f32::NAN,
@@ -611,9 +570,9 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_rejects_invalid_position_and_bounds() {
+    fn validate_parameters_rejects_invalid_position_and_bounds() {
         assert_invalid_state(
-            RectBuilder::validate_geometry(
+            RectBuilder::validate_parameters(
                 Vector2f {
                     x: f32::INFINITY,
                     y: 0.0,
@@ -625,7 +584,7 @@ mod tests {
             "rectangle position must be finite",
         );
         assert_invalid_state(
-            RectBuilder::validate_geometry(
+            RectBuilder::validate_parameters(
                 Vector2f {
                     x: f32::NAN,
                     y: 0.0,
@@ -637,7 +596,7 @@ mod tests {
             "rectangle position must not be NaN",
         );
         assert_invalid_state(
-            RectBuilder::validate_geometry(
+            RectBuilder::validate_parameters(
                 Vector2f {
                     x: f32::MAX,
                     y: 0.0,
@@ -654,9 +613,9 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_rejects_invalid_rotation() {
+    fn validate_parameters_rejects_invalid_rotation() {
         assert_invalid_state(
-            RectBuilder::validate_geometry(
+            RectBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f { x: 1.0, y: 1.0 },
                 f32::INFINITY,
@@ -665,7 +624,7 @@ mod tests {
             "rectangle rotation must be finite",
         );
         assert_invalid_state(
-            RectBuilder::validate_geometry(
+            RectBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f { x: 1.0, y: 1.0 },
                 f32::NAN,
@@ -676,9 +635,9 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_rejects_invalid_origin() {
+    fn validate_parameters_rejects_invalid_origin() {
         assert_invalid_state(
-            RectBuilder::validate_geometry(
+            RectBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f { x: 1.0, y: 1.0 },
                 0.0,
@@ -690,7 +649,7 @@ mod tests {
             "rectangle origin must be finite",
         );
         assert_invalid_state(
-            RectBuilder::validate_geometry(
+            RectBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f { x: 1.0, y: 1.0 },
                 0.0,

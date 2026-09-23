@@ -78,3 +78,26 @@ For more information, see [Conventional Commits](https://www.conventionalcommits
 - Keep GPU ownership, lifetimes, and synchronization explicit.
 - Make cache ownership and invalidation explicit; do not add hidden caches.
 - Measure performance claims under a reproducible workload.
+
+## Adding a 2D Shape
+
+Use this validation sequence before any GPU allocation or upload:
+
+1. Validate public parameters in a shape-local `validate_parameters` method.
+2. Generate vertices and indices deterministically.
+3. Send indexed triangle geometry through `IndexedShapeBuilder::indexed_shape`.
+
+Reuse validators by invariant, not by parameter name:
+
+- `shape::validation::validate_finite` rejects `NaN` before infinity.
+- `shape::validation::validate_positive_finite` adds the strictly-positive invariant.
+- Keep shape-specific relations, such as distinct line endpoints, in `validate_parameters`.
+- `common::validate_indexed_triangle_geometry` validates shared triangle topology, index bounds,
+  and draw-count conversion.
+- `TriangleBuilder::validate_vertices` owns the triangle-specific distinct-vertex rule.
+- `raw::validate_geometry_inputs` remains the separate, topology-independent raw rendering
+  boundary.
+
+Test generic truth tables in the shared validator module. Shape tests must cover composition of
+shared invariants and shape-specific rules. Update this inventory when adding a new shared
+validator.
