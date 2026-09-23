@@ -142,7 +142,7 @@ impl Shape {
     /// # use vmnl_graphics::d2::Shape;
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
-    /// let arc = Shape::arc(80.0, 30.0, 140.0).position(100.0, 120.0).width(10).build(&context)?;
+    /// let arc = Shape::arc(80.0, 30.0, 140.0).position(100.0, 120.0).width(10.0).build(&context)?;
     /// # drop(arc);
     /// # Ok(())
     /// # }
@@ -165,7 +165,7 @@ impl Shape {
     /// # use vmnl_graphics::d2::Shape;
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
-    /// let ring = Shape::ring(50.0).position(100.0, 120.0).width(10).build(&context)?;
+    /// let ring = Shape::ring(50.0).position(100.0, 120.0).width(10.0).build(&context)?;
     /// # drop(ring);
     /// # Ok(())
     /// # }

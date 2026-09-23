@@ -128,7 +128,7 @@ impl ArcBuilder {
     /// # use vmnl_graphics::d2::Shape;
     /// # fn main() -> vmnl_graphics::VMNLResult<()> {
     /// # let context = Context::new()?;
-    /// let arc = Shape::Arc(50.0, 40.0)
+    /// let arc = Shape::arc(50.0, 40.0, 52.0)
     ///     .position(100.0, 120.0)
     ///     .color([0, 200, 255])
     ///     .build(&context)?;
