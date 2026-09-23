@@ -102,18 +102,6 @@ _test-report suite:
     fi
 
     case '{{ suite }}' in
-        api)
-            suite_name='API'
-            suite_scope='public headless facade'
-            suite_kind='tests'
-            test_command=(cargo "${color_args[@]}" test -p vmnl-api-tests)
-            ;;
-        doctest)
-            suite_name='RUSTDOC'
-            suite_scope='documentation examples'
-            suite_kind='tests'
-            test_command=(cargo "${color_args[@]}" test --workspace --all-features --doc)
-            ;;
         gpu)
             suite_name='GPU'
             suite_scope='Vulkan + GLFW display required'
@@ -155,6 +143,18 @@ _test-report suite:
             suite_scope='workspace libraries'
             suite_kind='tests'
             test_command=(cargo "${color_args[@]}" test --workspace --lib --exclude vmnl-api-tests --exclude vmnl-gpu-tests --exclude vmnl-platform-tests --exclude vmnl-smoke-tests)
+            ;;
+        api)
+            suite_name='API'
+            suite_scope='public headless facade'
+            suite_kind='tests'
+            test_command=(cargo "${color_args[@]}" test -p vmnl-api-tests)
+            ;;
+        doctest)
+            suite_name='RUSTDOC'
+            suite_scope='documentation examples'
+            suite_kind='tests'
+            test_command=(cargo "${color_args[@]}" test --workspace --all-features --doc)
             ;;
         *)
             printf 'unknown VMNL test suite: %s\n' '{{ suite }}' >&2
@@ -259,12 +259,12 @@ _test-total report:
         test)
             report_name='TEST'
             report_unit='suites'
-            recipes=(test-unit test-api test-smoke)
+            recipes=(test-unit test-api test-smoke test-platform)
             ;;
         validate)
             report_name='VALIDATION'
             report_unit='steps'
-            recipes=(build-workspace check-fmt check-clippy doctest docs _docs-api-check test-unit test-api test-smoke test-platform)
+            recipes=(build-workspace check-fmt check-clippy test-unit test-api test-smoke test-platform doctest docs _docs-api-check)
             ;;
         *)
             printf 'unknown VMNL aggregate report: %s\n' '{{ report }}' >&2
@@ -328,18 +328,6 @@ _test-total report:
                 stage_name='FORMAT'
                 stage_detail='formatting checked'
                 ;;
-            docs)
-                stage_name='DOCS'
-                stage_detail='Rustdoc built'
-                ;;
-            _docs-api-check)
-                stage_name='DOCS-API'
-                stage_detail='mdBook, inventory, snippets, and links checked'
-                ;;
-            doctest)
-                stage_name='RUSTDOC'
-                record_suite='doctest'
-                ;;
             test-api)
                 stage_name='API'
                 record_suite='api'
@@ -355,6 +343,18 @@ _test-total report:
             test-platform)
                 stage_name='PLATFORM'
                 record_suite='platform'
+                ;;
+            docs)
+                stage_name='DOCS'
+                stage_detail='Rustdoc built'
+                ;;
+            _docs-api-check)
+                stage_name='DOCS-API'
+                stage_detail='mdBook, inventory, snippets, and links checked'
+                ;;
+            doctest)
+                stage_name='RUSTDOC'
+                record_suite='doctest'
                 ;;
         esac
 
