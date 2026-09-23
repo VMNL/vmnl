@@ -6,6 +6,8 @@ Local `README.md` files are only navigation aids for their directory. Public API
 
 ## Index
 
+- [AI Model Selection](ai_workflow.md): dated Plus-budget audit, task routing, model handoffs,
+and a comparison protocol.# AI Model Selection
 - [API](API.md): portal to the exhaustive client-facing API book.
 - [Architecture](architecture.md): project direction, control model, domain scope, boundaries, and
   current workspace layout.
