@@ -5,6 +5,8 @@
 
 #![allow(clippy::expect_used, clippy::panic)]
 
+#[cfg(target_os = "linux")]
+use serde_json::json;
 use serde_json::Value;
 use std::{
     env,
@@ -74,6 +76,7 @@ fn native_keyboard_probe(backend: &str) -> Result<Output, String> {
             .map_err(|error| format!("platform probe should start: {error}"))?;
 
         if let Err(reason) = wait_until_ready(&mut child, &ready_file) {
+            let reason = append_external_x11_focus_diagnostic(backend, &reason);
             return Err(terminate_with_diagnostics(child, &reason));
         }
         if let Err(reason) = inject_key_a() {
@@ -84,6 +87,152 @@ fn native_keyboard_probe(backend: &str) -> Result<Output, String> {
     })();
     let _ = fs::remove_file(ready_file);
     result
+}
+
+#[cfg(target_os = "linux")]
+fn append_external_x11_focus_diagnostic(backend: &str, reason: &str) -> String {
+    if backend != "wayland" {
+        return reason.to_owned();
+    }
+
+    let diagnostic = measure_external_x11_focus().unwrap_or_else(|error| {
+        json!({
+            "measurement_error": error,
+        })
+    });
+    format!("{reason}; external_x11_focus={diagnostic}")
+}
+
+#[cfg(not(target_os = "linux"))]
+fn append_external_x11_focus_diagnostic(_backend: &str, reason: &str) -> String {
+    reason.to_owned()
+}
+
+#[cfg(target_os = "linux")]
+fn measure_external_x11_focus() -> Result<Value, String> {
+    use x11rb::{connection::Connection as _, protocol::xproto::ConnectionExt as _};
+
+    let (connection, screen_number) = x11rb::connect(None)
+        .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
+    let screen = connection
+        .setup()
+        .roots
+        .get(screen_number)
+        .ok_or_else(|| format!("parent X server has no screen {screen_number}"))?;
+    let root = screen.root;
+    let focus = connection
+        .get_input_focus()
+        .map_err(|error| format!("failed to request parent X11 input focus: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read parent X11 input focus: {error}"))?;
+    let pointer = connection
+        .query_pointer(root)
+        .map_err(|error| format!("failed to request parent X11 pointer position: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read parent X11 pointer position: {error}"))?;
+    let tree = connection
+        .query_tree(root)
+        .map_err(|error| format!("failed to request parent X11 root tree: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read parent X11 root tree: {error}"))?;
+
+    let root_children: Vec<Value> = tree
+        .children
+        .iter()
+        .take(16)
+        .map(|&window| {
+            json!({
+                "id": x11_window_id(window),
+                "wm_name": x11_text_property(
+                    &connection,
+                    window,
+                    x11rb::protocol::xproto::AtomEnum::WM_NAME,
+                ),
+                "wm_class": x11_text_property(
+                    &connection,
+                    window,
+                    x11rb::protocol::xproto::AtomEnum::WM_CLASS,
+                ),
+            })
+        })
+        .collect();
+
+    Ok(json!({
+        "display": env::var("DISPLAY").ok(),
+        "screen": screen_number,
+        "root": x11_window_id(root),
+        "focus": {
+            "id": x11_window_id(focus.focus),
+            "kind": x11_focus_target_kind(focus.focus, root),
+            "revert_to": x11_revert_to_name(focus.revert_to),
+            "revert_to_raw": u8::from(focus.revert_to),
+        },
+        "pointer": {
+            "child": x11_window_id(pointer.child),
+            "root_x": pointer.root_x,
+            "root_y": pointer.root_y,
+            "same_screen": pointer.same_screen,
+        },
+        "root_child_count": tree.children.len(),
+        "root_children": root_children,
+        "root_children_truncated": tree.children.len() > 16,
+    }))
+}
+
+#[cfg(target_os = "linux")]
+fn x11_text_property(
+    connection: &x11rb::rust_connection::RustConnection,
+    window: u32,
+    property: x11rb::protocol::xproto::AtomEnum,
+) -> Value {
+    use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
+
+    let reply = match connection.get_property(false, window, property, AtomEnum::STRING, 0, 256) {
+        Ok(cookie) => match cookie.reply() {
+            Ok(reply) => reply,
+            Err(error) => return json!({ "error": error.to_string() }),
+        },
+        Err(error) => return json!({ "error": error.to_string() }),
+    };
+    if reply.value.is_empty() {
+        return Value::Null;
+    }
+
+    let fields: Vec<String> = reply
+        .value
+        .split(|byte| *byte == 0)
+        .filter(|field| !field.is_empty())
+        .map(|field| String::from_utf8_lossy(field).into_owned())
+        .collect();
+    json!(fields)
+}
+
+#[cfg(target_os = "linux")]
+fn x11_window_id(window: u32) -> String {
+    format!("0x{window:08x}")
+}
+
+#[cfg(target_os = "linux")]
+fn x11_focus_target_kind(focus: u32, root: u32) -> &'static str {
+    match focus {
+        0 => "none",
+        1 => "pointer-root",
+        value if value == root => "root",
+        _ => "window",
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn x11_revert_to_name(revert_to: x11rb::protocol::xproto::InputFocus) -> &'static str {
+    use x11rb::protocol::xproto::InputFocus;
+
+    match revert_to {
+        InputFocus::NONE => "none",
+        InputFocus::POINTER_ROOT => "pointer-root",
+        InputFocus::PARENT => "parent",
+        InputFocus::FOLLOW_KEYBOARD => "follow-keyboard",
+        _ => "unknown",
+    }
 }
 
 fn wait_until_ready(child: &mut Child, ready_file: &Path) -> Result<(), String> {
