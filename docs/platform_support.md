@@ -13,10 +13,10 @@
 
 | Platform | CI validation | Local Justfile | Status |
 |----------|---------------|----------------|--------|
-| Ubuntu Linux | Configured: build, headless tests, GLFW Null, Weston/Wayland and Xvfb/Openbox X11. | Yes | Blocking CI path; current workflow run required for evidence. |
+| Ubuntu Linux | Configured: build, headless tests, GLFW Null, Weston/Wayland and Xvfb/Openbox X11, including XTEST keyboard injection. | Yes | Blocking CI path; current workflow run required for evidence. |
 | Other Linux distributions | No distribution matrix. | Best effort. | Backend guarantees remain environment-scoped. |
-| Windows | Configured: build, headless tests and GLFW Null; native Win32 probe is experimental. | Compile and Null only unless run locally. | Current workflow run required; native results are non-blocking until qualified. |
-| macOS | Configured: build, headless tests and GLFW Null; native Cocoa probe is experimental. | Compile and Null only unless run locally. | Current workflow run required; Cocoa executes from `main` and remains non-blocking. |
+| Windows | Configured: build, headless tests and GLFW Null; visible Win32 probe with `SendInput` is experimental. | Compile and Null only unless run locally on an active desktop. | Current workflow run required; native results are non-blocking until qualified. |
+| macOS | Configured: build, headless tests and GLFW Null; visible Cocoa probe with `CGEventPost` is experimental. | Compile and Null only unless run locally with the required Accessibility permission. | Current workflow run required; Cocoa executes from `main` and remains non-blocking. |
 
 `just bootstrap` invokes `./deps`, which requires `/etc/os-release` and only contains Linux
 package-manager paths. CI invokes Cargo directly and never invokes the bootstrap recipe.
@@ -26,6 +26,10 @@ package-manager paths. CI invokes Cargo directly and never invokes the bootstrap
 - Visual examples and GPU tests require a Vulkan-capable GPU, a Vulkan loader, GLFW, and a display server.
 - Headless verification uses `just test`; it excludes GPU/display tests.
 - GLFW portability probes use `ClientApi::NoApi`; they create no Vulkan instance, surface, or GPU resource.
+- Native keyboard probes require a focused visible window. X11 requires XTEST, Windows requires an
+  active desktop at the same integrity level, and macOS may require Accessibility authorization.
+- The nested Weston probe covers XTEST → Xvfb → Weston X11 backend → Wayland client input, not a
+  native Wayland `libei`, portal, or `uinput` seat.
 - Compile GPU tests without a display with `just test-gpu-compile`.
 
 The generated [window compatibility matrix](api/reference/window/platform_compatibility.md) is

@@ -9,12 +9,14 @@ use glfw::{ClientApiHint, Context as _, InitHint, WindowHint, WindowMode};
 use serde_json::{json, Value};
 use std::{
     cell::RefCell,
-    env,
+    env, fs,
     process::ExitCode,
     rc::Rc,
     time::{Duration, Instant},
 };
 use vmnl_platform_tests::{backend_name, parse_backend, PROBE_SCHEMA_VERSION};
+
+const NATIVE_INPUT_TIMEOUT: Duration = Duration::from_secs(5);
 
 fn main() -> ExitCode {
     let mut arguments = env::args().skip(1);
@@ -84,7 +86,10 @@ fn main() -> ExitCode {
     }
 
     glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
-    glfw.window_hint(WindowHint::Visible(operation == "sticky-keys-manual"));
+    glfw.window_hint(WindowHint::Visible(matches!(
+        operation.as_str(),
+        "keyboard-native-input" | "sticky-keys-manual"
+    )));
     let Some((mut window, events)) =
         glfw.create_window(160, 120, "VMNL platform probe", WindowMode::Windowed)
     else {
@@ -190,6 +195,7 @@ fn main() -> ExitCode {
         "keyboard-wait-events-timeout-then-poll" => {
             keyboard_wait_then_poll(&mut glfw, &mut window, &events, Some(0.001))
         }
+        "keyboard-native-input" => native_keyboard_input(&mut glfw, &mut window, &events, actual),
         "sticky-keys-manual" => manual_sticky_keys(&mut glfw, &mut window, &events),
         "raw-mouse-motion" => {
             let supported = glfw.supports_raw_motion();
@@ -221,7 +227,10 @@ fn main() -> ExitCode {
         }
     };
 
-    let operation_succeeded = operation != "sticky-keys-manual" || value["qualified"] == true;
+    let operation_succeeded = !matches!(
+        operation.as_str(),
+        "keyboard-native-input" | "sticky-keys-manual"
+    ) || value["qualified"] == true;
     emit(
         &requested_name,
         Some(actual),
@@ -396,6 +405,75 @@ fn manual_sticky_keys(
         "saw_release": saw_release,
         "first_read": format!("{first_read:?}"),
         "second_read": format!("{second_read:?}"),
+    })
+}
+
+fn native_keyboard_input(
+    glfw: &mut glfw::Glfw,
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+    platform: glfw::Platform,
+) -> Value {
+    window.set_key_polling(true);
+    window.show();
+    if platform != glfw::Platform::Wayland {
+        window.focus();
+    }
+
+    let focus_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    while !window.is_focused() && Instant::now() < focus_deadline {
+        glfw.wait_events_timeout(0.01);
+        glfw::flush_messages(events).for_each(drop);
+    }
+    if !window.is_focused() {
+        return json!({
+            "qualified": false,
+            "stage": "focus",
+            "focused": false,
+        });
+    }
+
+    let Some(ready_file) = env::var_os("VMNL_PLATFORM_READY_FILE") else {
+        return json!({
+            "qualified": false,
+            "stage": "handshake",
+            "error": "VMNL_PLATFORM_READY_FILE is missing",
+        });
+    };
+    if let Err(error) = fs::write(&ready_file, b"READY\n") {
+        return json!({
+            "qualified": false,
+            "stage": "handshake",
+            "error": error.to_string(),
+        });
+    }
+
+    let input_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    let mut actions = Vec::new();
+    let mut scancodes = Vec::new();
+    while actions.as_slice() != ["Press", "Release"] && Instant::now() < input_deadline {
+        glfw.wait_events_timeout(0.01);
+        for (_, event) in glfw::flush_messages(events) {
+            if let glfw::WindowEvent::Key(glfw::Key::A, scancode, action, _) = event {
+                actions.push(format!("{action:?}"));
+                scancodes.push(scancode);
+            }
+        }
+    }
+
+    let qualified = actions.as_slice() == ["Press", "Release"]
+        && scancodes.len() == 2
+        && scancodes[0] == scancodes[1]
+        && window.get_key(glfw::Key::A) == glfw::Action::Release;
+    json!({
+        "qualified": qualified,
+        "stage": "input",
+        "focused": window.is_focused(),
+        "injector": env::var("VMNL_PLATFORM_INPUT_INJECTOR")
+            .unwrap_or_else(|_| "unknown".to_owned()),
+        "actions": actions,
+        "scancodes": scancodes,
+        "final_state": format!("{:?}", window.get_key(glfw::Key::A)),
     })
 }
 

@@ -15,9 +15,9 @@ passed.
 |---|---|---|---|---|---|
 | Named keys | 120 named `GLFW_KEY_*` tokens | Complete: `Key` exposes all 120 named keys and facade representatives cover every key family. | `Key` represents every named GLFW 3.4 key without exposing GLFW types. | Exhaustive bidirectional conversion test and exact tracked-key count. | Exercise every key available on the recorded keyboard; list unavailable keys. |
 | Unknown physical keys | `GLFW_KEY_UNKNOWN` plus callback scancode | Complete: unknown events are emitted while snapshot state remains unchanged. | Emit `Key::Unknown` events with their `Scancode`; `KeyboardState` tracks named keys only and always reports `false` for `Key::Unknown`. | Unknown-key reducer test retains the event and proves the snapshot remains unused. | Best effort only; justify when the keyboard exposes no unknown key. |
-| Scancode value | Key callback scancode | Complete: public `Scancode` preserves the callback value. | Public `Scancode` newtype with `from_raw` and `as_raw`; values are platform-specific and must not be persisted as portable identifiers. | API and translation tests preserve fixed positive and negative raw values without exposing a backend type. | Compare the reported scancode for a real key within one recorded environment. |
+| Scancode value | Key callback scancode | Complete: public `Scancode` preserves the callback value. | Public `Scancode` newtype with `from_raw` and `as_raw`; values are platform-specific and must not be persisted as portable identifiers. | API and translation tests preserve fixed positive and negative raw values without exposing a backend type. | The automated native probe requires equal press/release scancodes for `A`; compare other real keys manually within one recorded environment. |
 | Key event modifiers | Key callback modifier bits | Complete: press, repeat, and release preserve `Modifiers`. | Press and release events preserve `Modifiers`; Caps Lock and Num Lock appear only when lock-key reporting is enabled. | Translation tests convert every GLFW modifier bit for press, repeat, and release events. | Exercise Shift, Control, Alt, Super, Caps Lock, and Num Lock where available. |
-| Press and release events | `GLFW_PRESS`, `GLFW_RELEASE` | Complete: named and unknown events retain key metadata. | `KeyPressed { key, scancode, modifiers, repeat }` and `KeyReleased { key, scancode, modifiers }`. | Translation tests cover named and unknown keys with metadata. | Press and release representative alphanumeric, punctuation, navigation, keypad, function, and modifier keys. |
+| Press and release events | `GLFW_PRESS`, `GLFW_RELEASE` | Complete: named and unknown events retain key metadata. | `KeyPressed { key, scancode, modifiers, repeat }` and `KeyReleased { key, scancode, modifiers }`. | Translation tests cover named and unknown keys with metadata. | The automated native probe requires the exact `A` press/release sequence; exercise the remaining key families manually. |
 | Repeat | `GLFW_REPEAT` | Complete: repeat preserves metadata and does not create a press transition. | Repeat produces `KeyPressed { repeat: true, .. }`, keeps the key down, and does not create a new press transition. | Existing transition test plus metadata preservation on repeat. | Hold a repeatable key and observe repeat events without repeated `is_pressed`. |
 | Snapshot batches | Key callback plus `Window::poll_events` | Complete automatically: keyboard press and release transitions coexist for one batch and clear on the next batch. | One poll is one batch; press and release transitions are independent, non-consuming, and clear on the next batch. | Shared reducer tests include a keyboard press/release batch followed by an empty batch. | Regression check only. |
 | Event timestamps | GLFW event channel timestamp | Complete after PR #81. | Every keyboard and text event uses the existing `Event` timestamp contract. | Existing timestamp translation test covers the shared envelope. | No keyboard-specific native evidence required. |
@@ -75,6 +75,13 @@ but its Rustdoc must identify it as legacy and recommend `Text` plus key events 
 
 Record the operating system, desktop, session type, and backend with the observations. Automatic
 Null or native platform probes do not replace the following operator checks.
+
+The `keyboard-native-input` platform operation creates a visible GLFW `NoApi` window, confirms
+focus, signals readiness to the test process, then requires an injected `A` press/release pair with
+matching scancodes before timeout. `tests/platform/tests/backend_contract.rs` selects XTEST for
+X11 and nested Weston, `SendInput` for Win32, and `CGEventPost` for Cocoa. Its versioned JSON record
+contains the actual backend and injector. This proves one representative native delivery path; it
+does not qualify every key, layout, input method, physical keyboard, or standalone Wayland seat.
 
 Run the public VMNL workflow:
 

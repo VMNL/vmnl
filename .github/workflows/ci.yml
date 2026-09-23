@@ -183,7 +183,7 @@ jobs:
           VMNL_PLATFORM_TEST_BACKEND=x11 \
             cargo test -p vmnl-platform-tests --locked \
               --test backend_contract -- --ignored --nocapture
-      - name: Run native hidden-window probe experimentally
+      - name: Run native platform probes experimentally
         if: runner.os != 'Linux'
         continue-on-error: true
         env:

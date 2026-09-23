@@ -96,9 +96,14 @@ Quality (format -> Clippy)
 Each OS validation job reuses one Cargo target directory for compilation and every test stage; no
 target directory is cached or transferred between runners. Linux then forces the GLFW Wayland
 backend under Weston with Pixman nested on Xvfb and tests the GLFW X11 backend under Xvfb with
-Openbox. Win32 and Cocoa hidden-window probes remain visible but non-blocking until ten consecutive
-successful runs use the same runner image, GLFW revision, and probe schema; any of those changes
-resets the count.
+Openbox. Both paths run a visible keyboard probe: a separate test process waits for the window to
+be focused, injects an `A` press/release pair through XTEST, and requires the exact native GLFW
+event sequence before timeout. The Wayland path injects through the parent Xvfb server into
+Weston's X11 backend; it does not qualify a standalone Wayland compositor seat.
+
+Win32 uses `SendInput` and Cocoa uses `CGEventPost` for the same scenario. Their native probes
+remain visible but non-blocking until ten consecutive successful runs use the same runner image,
+GLFW revision, injector, and probe schema; any of those changes resets the count.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored
@@ -117,6 +122,8 @@ and display server.
 - Platform probes must use `ClientApi::NoApi`, run one operation per subprocess, and emit one
   versioned JSON record. Missing output, unexpected backend, non-zero status, signal, or abort is
   a failure.
+- Native-input probes must acquire focus before signaling readiness, receive the injected press and
+  release in order, and fail non-zero on focus failure, wrong input, timeout, crash, or abort.
 - GPU tests must be isolated under `tests/gpu`.
 - Visual examples must live under `examples`.
 - Tests must assert behavior or fail through a non-zero exit code.

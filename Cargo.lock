@@ -705,6 +705,8 @@ version = "0.1.0"
 dependencies = [
  "glfw",
  "serde_json",
+ "windows-sys",
+ "x11rb",
 ]
 
 [[package]]

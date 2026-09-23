@@ -10,21 +10,26 @@ use std::{
     env,
     fs::{self, OpenOptions},
     io::Write as _,
-    path::PathBuf,
-    process::Command,
+    path::{Path, PathBuf},
+    process::{Child, Command, Output, Stdio},
+    sync::atomic::{AtomicU64, Ordering},
+    thread,
+    time::{Duration, Instant},
 };
 
+const NATIVE_INPUT_TIMEOUT: Duration = Duration::from_secs(7);
+const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
+static READY_FILE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
 fn probe(backend: &str, operation: &str) -> Value {
-    let output = Command::new(env!("CARGO_BIN_EXE_platform_probe"))
-        .args([backend, operation])
-        .output()
-        .expect("platform probe should start");
-    assert!(
-        output.status.success(),
-        "{backend}/{operation} failed or aborted: status={:?}, stderr={}",
-        output.status,
-        String::from_utf8_lossy(&output.stderr)
-    );
+    let output = if operation == "keyboard-native-input" {
+        native_keyboard_probe(backend).expect("native keyboard probe should complete")
+    } else {
+        Command::new(env!("CARGO_BIN_EXE_platform_probe"))
+            .args([backend, operation])
+            .output()
+            .expect("platform probe should start")
+    };
     assert!(
         !output.stdout.is_empty(),
         "{backend}/{operation} emitted no JSON"
@@ -41,7 +46,288 @@ fn probe(backend: &str, operation: &str) -> Value {
             .write_all(&output.stdout)
             .expect("platform artifact should be written");
     }
+    assert!(
+        output.status.success(),
+        "{backend}/{operation} failed or aborted: status={:?}, stdout={}, stderr={}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
     serde_json::from_slice(&output.stdout).expect("platform probe should emit one JSON record")
+}
+
+fn native_keyboard_probe(backend: &str) -> Result<Output, String> {
+    let sequence = READY_FILE_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    let ready_file = env::temp_dir().join(format!(
+        "vmnl-platform-ready-{}-{sequence}",
+        std::process::id()
+    ));
+    let injector = input_injector_name(backend)?;
+    let result = (|| {
+        let mut child = Command::new(env!("CARGO_BIN_EXE_platform_probe"))
+            .args([backend, "keyboard-native-input"])
+            .env("VMNL_PLATFORM_READY_FILE", &ready_file)
+            .env("VMNL_PLATFORM_INPUT_INJECTOR", injector)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|error| format!("platform probe should start: {error}"))?;
+
+        if let Err(reason) = wait_until_ready(&mut child, &ready_file) {
+            return Err(terminate_with_diagnostics(child, &reason));
+        }
+        if let Err(reason) = inject_key_a() {
+            return Err(terminate_with_diagnostics(child, &reason));
+        }
+
+        wait_for_probe(child)
+    })();
+    let _ = fs::remove_file(ready_file);
+    result
+}
+
+fn wait_until_ready(child: &mut Child, ready_file: &Path) -> Result<(), String> {
+    let deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    loop {
+        if ready_file.is_file() {
+            return Ok(());
+        }
+        if let Some(status) = child
+            .try_wait()
+            .map_err(|error| format!("failed to inspect platform probe: {error}"))?
+        {
+            return Err(format!("platform probe exited before READY with {status}"));
+        }
+        if Instant::now() >= deadline {
+            return Err("platform probe did not emit READY within 7 seconds".to_owned());
+        }
+        thread::sleep(PROCESS_POLL_INTERVAL);
+    }
+}
+
+fn wait_for_probe(mut child: Child) -> Result<Output, String> {
+    let deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    loop {
+        if child
+            .try_wait()
+            .map_err(|error| format!("failed to inspect platform probe: {error}"))?
+            .is_some()
+        {
+            return child
+                .wait_with_output()
+                .map_err(|error| format!("failed to collect platform probe output: {error}"));
+        }
+        if Instant::now() >= deadline {
+            return Err(terminate_with_diagnostics(
+                child,
+                "platform probe did not exit within 7 seconds after input injection",
+            ));
+        }
+        thread::sleep(PROCESS_POLL_INTERVAL);
+    }
+}
+
+fn terminate_with_diagnostics(mut child: Child, reason: &str) -> String {
+    let _ = child.kill();
+    match child.wait_with_output() {
+        Ok(output) => format!(
+            "{reason}; status={:?}, stdout={}, stderr={}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        ),
+        Err(error) => format!("{reason}; failed to collect platform probe output: {error}"),
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn input_injector_name(backend: &str) -> Result<&'static str, String> {
+    match backend {
+        "x11" => Ok("x11-xtest"),
+        "wayland" => Ok("x11-xtest-parent"),
+        value => Err(format!("XTEST cannot inject the {value} backend")),
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn input_injector_name(backend: &str) -> Result<&'static str, String> {
+    (backend == "win32")
+        .then_some("send-input")
+        .ok_or_else(|| format!("SendInput cannot inject the {backend} backend"))
+}
+
+#[cfg(target_os = "macos")]
+fn input_injector_name(backend: &str) -> Result<&'static str, String> {
+    (backend == "cocoa")
+        .then_some("cg-event-post")
+        .ok_or_else(|| format!("CGEventPost cannot inject the {backend} backend"))
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+fn input_injector_name(backend: &str) -> Result<&'static str, String> {
+    Err(format!(
+        "native input injection is unsupported for {backend} on this OS"
+    ))
+}
+
+#[cfg(target_os = "linux")]
+fn inject_key_a() -> Result<(), String> {
+    use x11rb::{
+        connection::Connection as _,
+        protocol::{
+            xproto::{ConnectionExt as _, KEY_PRESS_EVENT, KEY_RELEASE_EVENT},
+            xtest::ConnectionExt as _,
+        },
+    };
+
+    const XK_A: u32 = 0x0041;
+    const XK_A_LOWER: u32 = 0x0061;
+
+    let (connection, _) = x11rb::connect(None)
+        .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
+    connection
+        .xtest_get_version(2, 2)
+        .map_err(|error| format!("failed to query XTEST: {error}"))?
+        .reply()
+        .map_err(|error| format!("XTEST is unavailable: {error}"))?;
+
+    let setup = connection.setup();
+    let keycode_count = u16::from(setup.max_keycode) - u16::from(setup.min_keycode) + 1;
+    let keycode_count = u8::try_from(keycode_count)
+        .map_err(|_| "X11 keycode range does not fit the protocol request".to_owned())?;
+    let mapping = connection
+        .get_keyboard_mapping(setup.min_keycode, keycode_count)
+        .map_err(|error| format!("failed to request the X11 keyboard mapping: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read the X11 keyboard mapping: {error}"))?;
+    let keysyms_per_keycode = usize::from(mapping.keysyms_per_keycode);
+    if keysyms_per_keycode == 0 {
+        return Err("X11 returned an empty keyboard mapping".to_owned());
+    }
+    let keycode_offset = mapping
+        .keysyms
+        .chunks(keysyms_per_keycode)
+        .position(|keysyms| keysyms.contains(&XK_A) || keysyms.contains(&XK_A_LOWER))
+        .ok_or_else(|| "X11 keyboard mapping has no A keysym".to_owned())?;
+    let keycode = u16::from(setup.min_keycode)
+        + u16::try_from(keycode_offset)
+            .map_err(|_| "X11 A keycode offset is too large".to_owned())?;
+    let keycode = u8::try_from(keycode).map_err(|_| "X11 A keycode is invalid".to_owned())?;
+
+    connection
+        .xtest_fake_input(KEY_PRESS_EVENT, keycode, 0, 0, 0, 0, 0)
+        .map_err(|error| format!("failed to enqueue XTEST A press: {error}"))?
+        .check()
+        .map_err(|error| format!("XTEST A press failed: {error}"))?;
+    connection
+        .xtest_fake_input(KEY_RELEASE_EVENT, keycode, 0, 0, 0, 0, 0)
+        .map_err(|error| format!("failed to enqueue XTEST A release: {error}"))?
+        .check()
+        .map_err(|error| format!("XTEST A release failed: {error}"))?;
+    connection
+        .flush()
+        .map_err(|error| format!("failed to flush XTEST input: {error}"))
+}
+
+#[cfg(target_os = "windows")]
+fn inject_key_a() -> Result<(), String> {
+    use std::mem::size_of;
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
+        SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, VK_A,
+    };
+
+    let inputs = [
+        INPUT {
+            r#type: INPUT_KEYBOARD,
+            Anonymous: INPUT_0 {
+                ki: KEYBDINPUT {
+                    wVk: VK_A,
+                    ..KEYBDINPUT::default()
+                },
+            },
+        },
+        INPUT {
+            r#type: INPUT_KEYBOARD,
+            Anonymous: INPUT_0 {
+                ki: KEYBDINPUT {
+                    wVk: VK_A,
+                    dwFlags: KEYEVENTF_KEYUP,
+                    ..KEYBDINPUT::default()
+                },
+            },
+        },
+    ];
+    let input_size = i32::try_from(size_of::<INPUT>())
+        .map_err(|_| "Win32 INPUT size does not fit i32".to_owned())?;
+    // SAFETY: `inputs` contains two initialized keyboard INPUT records and remains alive for the
+    // duration of the call. `input_size` is the exact size of one INPUT record.
+    let sent = unsafe { SendInput(2, inputs.as_ptr(), input_size) };
+    if sent == 2 {
+        Ok(())
+    } else {
+        Err(format!(
+            "SendInput inserted {sent}/2 events: {}",
+            std::io::Error::last_os_error()
+        ))
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn inject_key_a() -> Result<(), String> {
+    use std::ffi::c_void;
+
+    type CGEventRef = *mut c_void;
+    const CG_HID_EVENT_TAP: u32 = 0;
+    const ANSI_A_KEYCODE: u16 = 0;
+
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        fn CGEventCreateKeyboardEvent(
+            source: *mut c_void,
+            virtual_key: u16,
+            key_down: bool,
+        ) -> CGEventRef;
+        fn CGEventPost(tap: u32, event: CGEventRef);
+    }
+    #[link(name = "CoreFoundation", kind = "framework")]
+    extern "C" {
+        fn CFRelease(value: *const c_void);
+    }
+
+    // SAFETY: A null source requests the default CoreGraphics event source. Keycode zero is the
+    // documented ANSI A hardware keycode, and both returned references are checked before use.
+    let (press, release) = unsafe {
+        (
+            CGEventCreateKeyboardEvent(std::ptr::null_mut(), ANSI_A_KEYCODE, true),
+            CGEventCreateKeyboardEvent(std::ptr::null_mut(), ANSI_A_KEYCODE, false),
+        )
+    };
+    if press.is_null() || release.is_null() {
+        // SAFETY: Any non-null value was created above with a retained CoreFoundation reference.
+        unsafe {
+            if !press.is_null() {
+                CFRelease(press);
+            }
+            if !release.is_null() {
+                CFRelease(release);
+            }
+        }
+        return Err("CGEventCreateKeyboardEvent returned null".to_owned());
+    }
+
+    // SAFETY: Both event references are valid and retained until after they are posted.
+    unsafe {
+        CGEventPost(CG_HID_EVENT_TAP, press);
+        CGEventPost(CG_HID_EVENT_TAP, release);
+        CFRelease(press);
+        CFRelease(release);
+    }
+    Ok(())
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+fn inject_key_a() -> Result<(), String> {
+    Err("native input injection is unsupported on this OS".to_owned())
 }
 
 #[test]
@@ -61,6 +347,7 @@ fn selected_backend_contract() {
             "set-opacity",
             "get-opacity",
             "iconify",
+            "keyboard-native-input",
         ],
         "x11" => &[
             "keyboard-metadata",
@@ -75,6 +362,7 @@ fn selected_backend_contract() {
             "iconify",
             "maximize",
             "focus",
+            "keyboard-native-input",
         ],
         "win32" | "cocoa" => &[
             "create",
@@ -86,6 +374,7 @@ fn selected_backend_contract() {
             "set-position",
             "get-position",
             "focus",
+            "keyboard-native-input",
         ],
         value => panic!("unsupported qualified backend: {value}"),
     };
@@ -108,6 +397,7 @@ fn assert_operation_contract(backend: &str, operation: &str, record: &Value) {
         "keyboard-wait-events-then-poll" | "keyboard-wait-events-timeout-then-poll" => {
             assert_keyboard_wait(record);
         }
+        "keyboard-native-input" => assert_native_keyboard_input(record),
         _ => {}
     }
 
@@ -189,5 +479,30 @@ fn assert_keyboard_wait(record: &Value) {
         record["value"]["actions_after_poll"],
         serde_json::json!(["Press", "Release"])
     );
+    assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+}
+
+fn assert_native_keyboard_input(record: &Value) {
+    assert_eq!(record["value"]["qualified"], true);
+    assert_eq!(record["value"]["stage"], "input");
+    assert_eq!(record["value"]["focused"], true);
+    assert_eq!(
+        record["value"]["actions"],
+        serde_json::json!(["Press", "Release"])
+    );
+    assert_eq!(record["value"]["final_state"], "Release");
+    let expected_injector = match record["backend_actual"].as_str() {
+        Some("x11") => "x11-xtest",
+        Some("wayland") => "x11-xtest-parent",
+        Some("win32") => "send-input",
+        Some("cocoa") => "cg-event-post",
+        value => panic!("unexpected native-input backend: {value:?}"),
+    };
+    assert_eq!(record["value"]["injector"], expected_injector);
+    let scancodes = record["value"]["scancodes"]
+        .as_array()
+        .expect("native input scancodes should be an array");
+    assert_eq!(scancodes.len(), 2);
+    assert_eq!(scancodes[0], scancodes[1]);
     assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
 }
