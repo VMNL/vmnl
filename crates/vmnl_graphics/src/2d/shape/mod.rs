@@ -8,6 +8,7 @@ mod indexed;
 mod line;
 mod rect;
 mod triangle;
+mod validation;
 
 use super::{Drawable2D, GpuVertex2D, RenderItem2D, Vector2f, Vertex2D};
 use crate::common::{BlendMode, GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey};

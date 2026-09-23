@@ -4,7 +4,10 @@
 //! Line shape utilities for the VMNL graphics module,
 //! providing functions to create lines defined by start and end points, width, cap style, and color.
 
-use super::{Shape, Vector2f};
+use super::{
+    validation::{validate_finite, validate_positive_finite},
+    Shape, Vector2f,
+};
 use crate::{
     common::{BufferMemoryPreference, Rgba},
     d2::{IndexedShapeBuilder, Vertex2D},
@@ -214,39 +217,16 @@ impl LineBuilder {
         )
     }
 
-    fn validate_geometry(from: Vector2f, to: Vector2f, width: f32) -> VMNLResult<()> {
-        if from.x.is_nan() || from.y.is_nan() || to.x.is_nan() || to.y.is_nan() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "line endpoints must not be NaN".to_string(),
-            )));
-        }
-        if from.x.is_infinite() || from.y.is_infinite() || to.x.is_infinite() || to.y.is_infinite()
-        {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "line endpoints must be finite".to_string(),
-            )));
-        }
+    fn validate_parameters(from: Vector2f, to: Vector2f, width: f32) -> VMNLResult<()> {
+        validate_finite(&[from.x, from.y, to.x, to.y], "line endpoints")?;
+
         if from == to {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                 "line endpoints must be distinct".to_string(),
             )));
         }
-        if width.is_nan() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "line width must not be NaN".to_string(),
-            )));
-        }
-        if width.is_infinite() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "line width must be finite".to_string(),
-            )));
-        }
-        if width <= 0.0 {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "line width must be strictly positive".to_string(),
-            )));
-        }
-        Ok(())
+
+        validate_positive_finite(&[width], "line width")
     }
 
     fn flat_line_vertices(
@@ -415,7 +395,7 @@ impl LineBuilder {
         color: Rgba,
         buffer_memory_preference: BufferMemoryPreference,
     ) -> VMNLResult<Shape> {
-        Self::validate_geometry(from, to, width)?;
+        Self::validate_parameters(from, to, width)?;
         let (vertices, indices): (Vec<Vertex2D>, Vec<u32>) =
             Self::geometry(from, to, width, cap, color)?;
         IndexedShapeBuilder::indexed_shape(context, &vertices, &indices, buffer_memory_preference)
@@ -462,8 +442,8 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_accepts_distinct_endpoints_and_positive_width() {
-        assert!(LineBuilder::validate_geometry(
+    fn validate_parameters_accepts_distinct_endpoints_and_positive_width() {
+        assert!(LineBuilder::validate_parameters(
             Vector2f { x: 0.0, y: 0.0 },
             Vector2f { x: 1.0, y: 1.0 },
             1.0,
@@ -472,9 +452,9 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_rejects_equal_endpoints() {
+    fn validate_parameters_rejects_equal_endpoints() {
         assert_invalid_state(
-            LineBuilder::validate_geometry(
+            LineBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f { x: 0.0, y: 0.0 },
                 1.0,
@@ -484,9 +464,9 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_rejects_nan_endpoints() {
+    fn validate_parameters_rejects_nan_endpoints() {
         assert_invalid_state(
-            LineBuilder::validate_geometry(
+            LineBuilder::validate_parameters(
                 Vector2f {
                     x: f32::NAN,
                     y: 0.0,
@@ -497,7 +477,7 @@ mod tests {
             "line endpoints must not be NaN",
         );
         assert_invalid_state(
-            LineBuilder::validate_geometry(
+            LineBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f {
                     x: 1.0,
@@ -510,9 +490,9 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_rejects_infinite_endpoints() {
+    fn validate_parameters_rejects_infinite_endpoints() {
         assert_invalid_state(
-            LineBuilder::validate_geometry(
+            LineBuilder::validate_parameters(
                 Vector2f {
                     x: f32::INFINITY,
                     y: 0.0,
@@ -523,7 +503,7 @@ mod tests {
             "line endpoints must be finite",
         );
         assert_invalid_state(
-            LineBuilder::validate_geometry(
+            LineBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f {
                     x: 1.0,
@@ -536,9 +516,9 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_rejects_nan_width() {
+    fn validate_parameters_rejects_nan_width() {
         assert_invalid_state(
-            LineBuilder::validate_geometry(
+            LineBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f { x: 1.0, y: 1.0 },
                 f32::NAN,
@@ -548,9 +528,9 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_rejects_infinite_width() {
+    fn validate_parameters_rejects_infinite_width() {
         assert_invalid_state(
-            LineBuilder::validate_geometry(
+            LineBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f { x: 1.0, y: 1.0 },
                 f32::INFINITY,
@@ -560,9 +540,9 @@ mod tests {
     }
 
     #[test]
-    fn validate_geometry_rejects_non_positive_width() {
+    fn validate_parameters_rejects_non_positive_width() {
         assert_invalid_state(
-            LineBuilder::validate_geometry(
+            LineBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f { x: 1.0, y: 1.0 },
                 0.0,
@@ -570,7 +550,7 @@ mod tests {
             "line width must be strictly positive",
         );
         assert_invalid_state(
-            LineBuilder::validate_geometry(
+            LineBuilder::validate_parameters(
                 Vector2f { x: 0.0, y: 0.0 },
                 Vector2f { x: 1.0, y: 1.0 },
                 -1.0,

@@ -7,7 +7,7 @@
 use super::{Shape, ShapeKind::IndexedGeometry, Vertex2D};
 use crate::{
     common::{
-        checked_draw_counts, validate_triangle_indices, BufferMemoryPreference, GpuGeometry,
+        validate_indexed_triangle_geometry, BufferMemoryPreference, GpuGeometry,
         GraphicsResourceFactory,
     },
     d2::GpuVertex2D,
@@ -110,15 +110,6 @@ impl IndexedShapeBuilder {
         )
     }
 
-    /// Validate the geometry of the indexed shape, ensuring it meets the requirements for rendering.
-    /// This includes checks for a minimum number of vertices, valid triangle indices, and index bounds.
-    ///
-    /// # Errors
-    /// Returns an error if the geometry is invalid, such as having too few vertices, non-triangle-aligned indices, or out-of-bounds indices.
-    fn validate_geometry(vertices: &[Vertex2D], indices: &[u32]) -> VMNLResult<()> {
-        validate_triangle_indices(vertices.len(), indices, "indexed shape")
-    }
-
     /// Create a `Shape` instance with indexed vertices.
     ///
     /// # Arguments
@@ -134,14 +125,13 @@ impl IndexedShapeBuilder {
         indices: &[u32],
         buffer_memory_preference: BufferMemoryPreference,
     ) -> VMNLResult<Shape> {
-        Self::validate_geometry(vertices, indices)?;
+        let (vertex_count, index_count) =
+            validate_indexed_triangle_geometry(vertices.len(), indices, "indexed shape")?;
         log::trace!(
             "creating indexed shape: vertices={}, indices={}",
             vertices.len(),
             indices.len()
         );
-        let (vertex_count, index_count): (u32, u32) =
-            checked_draw_counts(vertices.len(), indices.len())?;
 
         Ok(Shape {
             kind: IndexedGeometry,
@@ -167,7 +157,7 @@ impl IndexedShapeBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{common::Rgba, d2::Vector2f, VMNLErrorKind};
+    use crate::{common::Rgba, d2::Vector2f};
 
     fn vertex(x: f32, y: f32) -> Vertex2D {
         Vertex2D {
@@ -178,50 +168,6 @@ mod tests {
 
     fn vertices() -> [Vertex2D; 3] {
         [vertex(0.0, 0.0), vertex(1.0, 0.0), vertex(0.0, 1.0)]
-    }
-
-    #[test]
-    fn validate_geometry_accepts_triangle_indices() {
-        assert!(IndexedShapeBuilder::validate_geometry(&vertices(), &[0, 1, 2]).is_ok());
-    }
-
-    #[test]
-    fn validate_geometry_rejects_too_few_vertices() {
-        let result: VMNLResult<()> =
-            IndexedShapeBuilder::validate_geometry(&vertices()[..2], &[0, 1, 2]);
-
-        assert!(matches!(
-            result,
-            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "indexed shape requires at least 3 vertices")
-        ));
-    }
-
-    #[test]
-    fn validate_geometry_rejects_non_triangle_index_count() {
-        let result: VMNLResult<()> = IndexedShapeBuilder::validate_geometry(&vertices(), &[]);
-
-        assert!(matches!(
-            result,
-            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "indexed shape requires a non-empty triangle index list")
-        ));
-        let result: VMNLResult<()> =
-            IndexedShapeBuilder::validate_geometry(&vertices(), &[0, 1, 2, 0]);
-
-        assert!(matches!(
-            result,
-            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "indexed shape requires a non-empty triangle index list")
-        ));
-    }
-
-    #[test]
-    fn validate_geometry_rejects_out_of_bounds_indices() {
-        let result: VMNLResult<()> =
-            IndexedShapeBuilder::validate_geometry(&vertices(), &[0, 1, 3]);
-
-        assert!(matches!(
-            result,
-            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "indexed shape index 3 is out of bounds for 3 vertices")
-        ));
     }
 
     #[test]
