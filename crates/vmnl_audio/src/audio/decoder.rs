@@ -241,4 +241,137 @@ impl AudioDecoder {
             samples,
         })
     }
+
+    pub(crate) fn resample_to_stereo(
+    &self,
+    target_sample_rate: u32,
+    ) -> AudioResult<Self> {
+        if target_sample_rate == 0 {
+            return Err(AudioError::InvalidState(
+                "target sample rate must be greater than zero"
+                    .to_string(),
+            ));
+        }
+
+        match self.channels {
+            1 | 2 => {}
+
+            channels => {
+                return Err(AudioError::UnsupportedFormat(
+                    format!(
+                        "sound input has {channels} channels, \
+                        but the mixer accepts mono or stereo"
+                    ),
+                ));
+            }
+        }
+
+        let source_frames = self.frame_count();
+
+        if source_frames == 0 {
+            return Ok(Self {
+                channels: 2,
+                sample_rate: target_sample_rate,
+                samples: Vec::new(),
+            });
+        }
+
+        /*
+        * No conversion necessary.
+        */
+        if self.channels == 2
+            && self.sample_rate == target_sample_rate
+        {
+            return Ok(self.clone());
+        }
+
+        let target_frames_u128 =
+            (source_frames as u128
+                * target_sample_rate as u128
+                + self.sample_rate as u128
+                - 1)
+                / self.sample_rate as u128;
+
+        let target_frames =
+            usize::try_from(target_frames_u128)
+                .map_err(|_| {
+                    AudioError::DecoderFailed(
+                        "resampled audio is too large"
+                            .to_string(),
+                    )
+                })?;
+
+        let source_channels =
+            self.channels as usize;
+
+        let mut samples =
+            Vec::with_capacity(
+                target_frames.saturating_mul(2)
+            );
+
+        for frame in 0..target_frames {
+            let source_position =
+                frame as f64
+                    * self.sample_rate as f64
+                    / target_sample_rate as f64;
+
+            let source_index =
+                source_position.floor() as usize;
+
+            let fraction =
+                (source_position
+                    - source_index as f64)
+                    as f32;
+
+            let i0 =
+                source_index.min(
+                    source_frames - 1
+                );
+
+            let i1 =
+                (i0 + 1).min(
+                    source_frames - 1
+                );
+
+            let sample =
+                |index: usize, channel: usize| {
+                    self.samples[
+                        index * source_channels
+                            + channel
+                    ]
+                };
+
+            let left0 = sample(i0, 0);
+            let left1 = sample(i1, 0);
+
+            let left =
+                left0
+                    + (left1 - left0)
+                        * fraction;
+
+            let right =
+                if self.channels == 1 {
+                    left
+                } else {
+                    let right0 =
+                        sample(i0, 1);
+
+                    let right1 =
+                        sample(i1, 1);
+
+                    right0
+                        + (right1 - right0)
+                            * fraction
+                };
+
+            samples.push(left);
+            samples.push(right);
+        }
+
+        Ok(Self {
+            channels: 2,
+            sample_rate: target_sample_rate,
+            samples,
+        })
+    }
 }
