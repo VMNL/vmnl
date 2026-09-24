@@ -15,6 +15,7 @@ pub enum AudioError {
     SoundCachePoisoned,
     ActiveSoundVoicesPoisoned,
     ActiveMusicStreamsPoisoned,
+    MusicDecoderPoisoned,
     Io(std::io::Error),
 }
 
@@ -31,6 +32,7 @@ impl Display for AudioError {
             Self::SoundCachePoisoned => write!(f, "Audio sound cache lock was poisoned"),
             Self::ActiveSoundVoicesPoisoned => write!(f, "Active sound voices lock was poisoned"),
             Self::ActiveMusicStreamsPoisoned => write!(f, "Active music streams lock was poisoned"),
+            Self::MusicDecoderPoisoned => write!(f, "Music decoder lock was poisoned"),
             Self::Io(error) => write!(f, "IO error: {error}"),
         }
     }
