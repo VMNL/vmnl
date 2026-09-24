@@ -3,19 +3,23 @@
 
 //! Window events, keyboard, mouse, and multi-device gamepad input demonstration.
 
-use vmnl::{Context, Event, Joystick, Key, MouseButton, PresentMode, VMNLResult, Window};
+use vmnl::{Context, Event, Key, MouseButton, PresentMode, Stick, VMNLResult, Window};
 
 fn print_event(event: &Event) {
     match event {
-        Event::JoystickMoved { id, joystick, axes } => {
+        Event::JoystickMoved {
+            id,
+            stick,
+            axes,
+            degrees,
+        } => {
             println!(
                 "[gamepad {id:?}] axes: {axes:?}, magnitude: {:.3}",
                 axes[0].hypot(axes[1])
             );
-            let (side, degrees) = match joystick {
-                Joystick::JoystickLeft { degrees } => ("left", degrees),
-                Joystick::JoystickRight { degrees } => ("right", degrees),
-                _ => return,
+            let side = match stick {
+                Stick::Left => "left",
+                Stick::Right => "right",
             };
             if let Some(angle) = degrees {
                 println!("[gamepad {id:?}] {side} stick: {angle:.1} degrees");

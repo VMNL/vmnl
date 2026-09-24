@@ -11,7 +11,6 @@
 | struct | `vmnl::GamepadState` | [GamepadState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.GamepadState.html) |
 | enum | `vmnl::HatState` | [HatState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.HatState.html) |
 | struct | `vmnl::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl/struct.Input.html) |
-| enum | `vmnl::Joystick` | [Joystick](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.Joystick.html) |
 | enum | `vmnl::JoystickId` | [JoystickId](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.JoystickId.html) |
 | struct | `vmnl::JoystickInfo` | [JoystickInfo](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickInfo.html) |
 | struct | `vmnl::JoystickOptions` | [JoystickOptions](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickOptions.html) |
@@ -25,6 +24,7 @@
 | enum | `vmnl::PresentMode` | [PresentMode](../reference/window/present_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.PresentMode.html) |
 | struct | `vmnl::RawJoystickState` | [RawJoystickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.RawJoystickState.html) |
 | enum | `vmnl::RenderMode` | [RenderMode](../reference/window/rendering/render_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.RenderMode.html) |
+| enum | `vmnl::Stick` | [Joystick](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.Stick.html) |
 | struct | `vmnl::StickSettings` | [StickSettings](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickSettings.html) |
 | struct | `vmnl::StickState` | [StickState](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickState.html) |
 | struct | `vmnl::VMNLError` | [VMNLError](../reference/errors/vmnl_error.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLError.html) |

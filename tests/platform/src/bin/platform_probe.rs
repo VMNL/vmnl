@@ -10,6 +10,14 @@ use serde_json::{json, Value};
 use std::{cell::RefCell, env, process::ExitCode, rc::Rc};
 use vmnl_platform_tests::{backend_name, parse_backend, PROBE_SCHEMA_VERSION};
 
+// Compile the production helpers directly, without a Vulkan dependency or test-only public API.
+#[allow(dead_code)]
+#[path = "../../../../crates/vmnl_graphics/src/exception.rs"]
+mod exception;
+pub use exception::{VMNLError, VMNLErrorKind, VMNLResult};
+#[path = "../../../../crates/vmnl_graphics/src/glfw_backend/mappings.rs"]
+mod mappings;
+
 fn main() -> ExitCode {
     let mut arguments = env::args().skip(1);
     let Some(requested_name) = arguments.next() else {
@@ -44,7 +52,8 @@ fn main() -> ExitCode {
     }
     let callbacks = Rc::new(RefCell::new(Vec::<Value>::new()));
     let callback_records = Rc::clone(&callbacks);
-    let Ok(mut glfw) = glfw::init(move |error, description| {
+    let capture = Rc::new(RefCell::new(mappings::MappingErrorCapture::default()));
+    let Ok(mut glfw) = mappings::init(&capture, move |error, description| {
         callback_records.borrow_mut().push(json!({
             "code": error.as_raw(),
             "kind": error.to_string(),
@@ -103,6 +112,57 @@ fn main() -> ExitCode {
             // Isolate parser errors from any earlier initialization callbacks.
             callbacks.borrow_mut().clear();
             json!(glfw.update_gamepad_mappings("0, broken, leftx:a0,"))
+        }
+        "gamepad-mapping-checked" => {
+            callbacks.borrow_mut().clear();
+            let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("fixtures/malformed-gamepad-mapping.txt");
+            let mut parser_return = None;
+            let result = mappings::load_gamepad_mappings(&path, &capture, |text| {
+                let accepted = glfw.update_gamepad_mappings(text);
+                parser_return = Some(accepted);
+                accepted
+            });
+            let error = match result {
+                Err(error) if matches!(error.kind(), VMNLErrorKind::InvalidState(_)) => {
+                    error.to_string()
+                }
+                other => {
+                    eprintln!("expected InvalidState, got {other:?}");
+                    return ExitCode::from(13);
+                }
+            };
+            let initial_callbacks = callbacks.borrow().clone();
+            let valid =
+                include_str!("../../../../examples/window/events_input/gamecontrollerdb.txt");
+            let recovery = mappings::apply_gamepad_mappings(valid, &capture, |text| {
+                glfw.update_gamepad_mappings(text)
+            })
+            .is_ok();
+            let replacement_records = Rc::clone(&callbacks);
+            mappings::set_error_callback(&mut glfw, &capture, move |error, description| {
+                replacement_records
+                    .borrow_mut()
+                    .push(json!({"code": error.as_raw(), "description": description}));
+            });
+            callbacks.borrow_mut().clear();
+            let replaced =
+                mappings::apply_gamepad_mappings("0, broken, leftx:a0,", &capture, |text| {
+                    glfw.update_gamepad_mappings(text)
+                })
+                .is_err();
+            let replacement_callbacks = callbacks.borrow().clone();
+            mappings::unset_error_callback(&mut glfw, &capture);
+            callbacks.borrow_mut().clear();
+            let removed =
+                mappings::apply_gamepad_mappings("0, broken, leftx:a0,", &capture, |text| {
+                    glfw.update_gamepad_mappings(text)
+                })
+                .is_err();
+            json!({"parser_return": parser_return, "error_kind": "InvalidState", "error": error,
+                "initial_callbacks": initial_callbacks, "valid_after_error": recovery,
+                "replacement_rejected": replaced, "replacement_callbacks": replacement_callbacks,
+                "removed_rejected": removed})
         }
         "set-position" => {
             window.set_pos(37, 41);

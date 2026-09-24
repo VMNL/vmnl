@@ -8,8 +8,8 @@ mod joysticks;
 mod keyboard;
 mod mouse;
 pub use joysticks::{
-    GamepadAxis, GamepadButton, GamepadState, HatState, Joystick, JoystickId, JoystickInfo,
-    JoystickState, RawJoystickState, StickSettings, StickState,
+    GamepadAxis, GamepadButton, GamepadState, HatState, JoystickId, JoystickInfo, JoystickState,
+    RawJoystickState, Stick, StickSettings, StickState,
 };
 pub use keyboard::{Key, KeyboardState};
 pub use mouse::{MouseButton, MouseState};
@@ -87,15 +87,15 @@ impl Input {
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_graphics::{Input, Joystick, JoystickId};
+    /// use vmnl_graphics::{Input, GamepadButton, JoystickId};
     ///
     /// let input = Input::new();
-    /// if input.joystick(JoystickId::Slot1).is_pressed(Joystick::JoystickLeftButton) {
+    /// if input.joystick(JoystickId::Slot1).is_pressed(GamepadButton::LeftThumb) {
     ///     println!("Left joystick button was pressed!");
     /// }
     /// if input.joystick(JoystickId::Slot1).is_any_down(&[
-    ///     Joystick::JoystickLeftButton,
-    ///     Joystick::JoystickRightButton,
+    ///     GamepadButton::LeftThumb,
+    ///     GamepadButton::RightThumb,
     /// ]) {
     ///     println!("A joystick button is held down!");
     /// }
@@ -123,10 +123,10 @@ impl Input {
     pub fn set_stick_settings(
         &mut self,
         id: JoystickId,
-        joystick: Joystick,
+        stick: Stick,
         settings: StickSettings,
     ) -> crate::VMNLResult<()> {
-        self.joysticks[id.index()].set_settings(joystick, settings)
+        self.joysticks[id.index()].set_settings(stick, settings)
     }
 
     /// Updates keyboard, mouse, and joystick states from the given GLFW window.
@@ -259,12 +259,12 @@ mod tests {
     #[test]
     fn all_slots_preserve_independent_samples_settings_and_event_ids() -> crate::VMNLResult<()> {
         let mut input = Input::new();
-        let control = Joystick::JoystickLeftButton;
+        let control = GamepadButton::LeftThumb;
         let settings = StickSettings {
             dead_zone: 0.5,
             ..StickSettings::default()
         };
-        input.set_stick_settings(JoystickId::Slot16, control, settings)?;
+        input.set_stick_settings(JoystickId::Slot16, Stick::Left, settings)?;
         for (index, id) in JoystickId::ALL.into_iter().enumerate() {
             assert_eq!(id.index(), index);
             assert_eq!(id.to_glfw() as usize, index);
@@ -294,7 +294,7 @@ mod tests {
                 batch[1],
                 crate::Event::JoystickButtonPressed {
                     id,
-                    joystick: control
+                    button: control
                 }
             );
             assert!(
@@ -305,7 +305,7 @@ mod tests {
         assert!(input.joystick(JoystickId::Slot1).is_released(control));
         assert!(input.joystick(JoystickId::Slot16).is_down(control));
         assert_eq!(
-            input.joystick(JoystickId::Slot16).settings(control),
+            input.joystick(JoystickId::Slot16).settings(Stick::Left),
             settings
         );
         Ok(())

@@ -818,19 +818,20 @@ pub vmnl::Event::FramebufferResized
 pub vmnl::Event::FramebufferResized::height: u32
 pub vmnl::Event::FramebufferResized::width: u32
 pub vmnl::Event::JoystickButtonPressed
+pub vmnl::Event::JoystickButtonPressed::button: vmnl::GamepadButton
 pub vmnl::Event::JoystickButtonPressed::id: vmnl::JoystickId
-pub vmnl::Event::JoystickButtonPressed::joystick: vmnl::Joystick
 pub vmnl::Event::JoystickButtonReleased
+pub vmnl::Event::JoystickButtonReleased::button: vmnl::GamepadButton
 pub vmnl::Event::JoystickButtonReleased::id: vmnl::JoystickId
-pub vmnl::Event::JoystickButtonReleased::joystick: vmnl::Joystick
 pub vmnl::Event::JoystickConnected
 pub vmnl::Event::JoystickConnected::id: vmnl::JoystickId
 pub vmnl::Event::JoystickDisconnected
 pub vmnl::Event::JoystickDisconnected::id: vmnl::JoystickId
 pub vmnl::Event::JoystickMoved
 pub vmnl::Event::JoystickMoved::axes: [f32; 2]
+pub vmnl::Event::JoystickMoved::degrees: core::option::Option<f32>
 pub vmnl::Event::JoystickMoved::id: vmnl::JoystickId
-pub vmnl::Event::JoystickMoved::joystick: vmnl::Joystick
+pub vmnl::Event::JoystickMoved::stick: vmnl::Stick
 pub vmnl::Event::KeyPressed
 pub vmnl::Event::KeyPressed::key: vmnl::Key
 pub vmnl::Event::KeyPressed::repeat: bool
@@ -955,28 +956,6 @@ impl core::marker::Unpin for vmnl::HatState
 impl core::marker::UnsafeUnpin for vmnl::HatState
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::HatState
 impl core::panic::unwind_safe::UnwindSafe for vmnl::HatState
-pub enum vmnl::Joystick
-pub vmnl::Joystick::JoystickLeft
-pub vmnl::Joystick::JoystickLeft::degrees: core::option::Option<f32>
-pub vmnl::Joystick::JoystickLeftButton
-pub vmnl::Joystick::JoystickRight
-pub vmnl::Joystick::JoystickRight::degrees: core::option::Option<f32>
-pub vmnl::Joystick::JoystickRightButton
-impl core::clone::Clone for vmnl::Joystick
-pub fn vmnl::Joystick::clone(&self) -> vmnl::Joystick
-impl core::cmp::PartialEq for vmnl::Joystick
-pub fn vmnl::Joystick::eq(&self, &vmnl::Joystick) -> bool
-impl core::fmt::Debug for vmnl::Joystick
-pub fn vmnl::Joystick::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for vmnl::Joystick
-impl core::marker::StructuralPartialEq for vmnl::Joystick
-impl core::marker::Freeze for vmnl::Joystick
-impl core::marker::Send for vmnl::Joystick
-impl core::marker::Sync for vmnl::Joystick
-impl core::marker::Unpin for vmnl::Joystick
-impl core::marker::UnsafeUnpin for vmnl::Joystick
-impl core::panic::unwind_safe::RefUnwindSafe for vmnl::Joystick
-impl core::panic::unwind_safe::UnwindSafe for vmnl::Joystick
 pub enum vmnl::JoystickId
 pub vmnl::JoystickId::Slot1
 pub vmnl::JoystickId::Slot10
@@ -1190,6 +1169,29 @@ impl core::marker::Unpin for vmnl::ShaderSource
 impl core::marker::UnsafeUnpin for vmnl::ShaderSource
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::ShaderSource
 impl core::panic::unwind_safe::UnwindSafe for vmnl::ShaderSource
+pub enum vmnl::Stick
+pub vmnl::Stick::Left
+pub vmnl::Stick::Right
+impl vmnl::Stick
+pub const vmnl::Stick::ALL: [Self; 2]
+impl core::clone::Clone for vmnl::Stick
+pub fn vmnl::Stick::clone(&self) -> vmnl::Stick
+impl core::cmp::Eq for vmnl::Stick
+impl core::cmp::PartialEq for vmnl::Stick
+pub fn vmnl::Stick::eq(&self, &vmnl::Stick) -> bool
+impl core::fmt::Debug for vmnl::Stick
+pub fn vmnl::Stick::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for vmnl::Stick
+pub fn vmnl::Stick::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for vmnl::Stick
+impl core::marker::StructuralPartialEq for vmnl::Stick
+impl core::marker::Freeze for vmnl::Stick
+impl core::marker::Send for vmnl::Stick
+impl core::marker::Sync for vmnl::Stick
+impl core::marker::Unpin for vmnl::Stick
+impl core::marker::UnsafeUnpin for vmnl::Stick
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::Stick
+impl core::panic::unwind_safe::UnwindSafe for vmnl::Stick
 #[non_exhaustive] pub enum vmnl::VMNLErrorKind
 pub vmnl::VMNLErrorKind::GlfwContextCreationFailed
 pub vmnl::VMNLErrorKind::GlfwInitFailed
@@ -1303,7 +1305,7 @@ pub fn vmnl::Input::joystick_mut(&mut self, vmnl::JoystickId) -> &mut vmnl::Joys
 pub const fn vmnl::Input::keyboard(&self) -> &vmnl::KeyboardState
 pub const fn vmnl::Input::mouse(&self) -> &vmnl::MouseState
 pub fn vmnl::Input::new() -> Self
-pub fn vmnl::Input::set_stick_settings(&mut self, vmnl::JoystickId, vmnl::Joystick, vmnl::StickSettings) -> vmnl::VMNLResult<()>
+pub fn vmnl::Input::set_stick_settings(&mut self, vmnl::JoystickId, vmnl::Stick, vmnl::StickSettings) -> vmnl::VMNLResult<()>
 impl core::default::Default for vmnl::Input
 pub fn vmnl::Input::default() -> Self
 impl core::marker::Freeze for vmnl::Input
@@ -1361,29 +1363,32 @@ impl vmnl::JoystickState
 pub fn vmnl::JoystickState::clear_user_data(&mut self)
 pub const fn vmnl::JoystickState::gamepad(&self) -> core::option::Option<&vmnl::GamepadState>
 pub const fn vmnl::JoystickState::info(&self) -> &vmnl::JoystickInfo
-pub fn vmnl::JoystickState::is_any_down(&self, &[vmnl::Joystick]) -> bool
-pub fn vmnl::JoystickState::is_any_pressed(&self, &[vmnl::Joystick]) -> bool
-pub fn vmnl::JoystickState::is_any_released(&self, &[vmnl::Joystick]) -> bool
-pub fn vmnl::JoystickState::is_any_used(&self, &[vmnl::Joystick]) -> bool
+pub fn vmnl::JoystickState::is_any_down(&self, &[vmnl::GamepadButton]) -> bool
+pub fn vmnl::JoystickState::is_any_pressed(&self, &[vmnl::GamepadButton]) -> bool
+pub fn vmnl::JoystickState::is_any_released(&self, &[vmnl::GamepadButton]) -> bool
+pub fn vmnl::JoystickState::is_any_used(&self, &[vmnl::GamepadButton]) -> bool
 pub const fn vmnl::JoystickState::is_connected(&self) -> bool
-pub const fn vmnl::JoystickState::is_down(&self, vmnl::Joystick) -> bool
+pub fn vmnl::JoystickState::is_down(&self, vmnl::GamepadButton) -> bool
 pub fn vmnl::JoystickState::is_gamepad_pressed(&self, vmnl::GamepadButton) -> bool
 pub fn vmnl::JoystickState::is_gamepad_released(&self, vmnl::GamepadButton) -> bool
 pub fn vmnl::JoystickState::is_one_down(&self) -> bool
 pub fn vmnl::JoystickState::is_one_pressed(&self) -> bool
 pub fn vmnl::JoystickState::is_one_released(&self) -> bool
 pub fn vmnl::JoystickState::is_one_used(&self) -> bool
-pub const fn vmnl::JoystickState::is_pressed(&self, vmnl::Joystick) -> bool
-pub const fn vmnl::JoystickState::is_released(&self, vmnl::Joystick) -> bool
+pub fn vmnl::JoystickState::is_pressed(&self, vmnl::GamepadButton) -> bool
+pub fn vmnl::JoystickState::is_released(&self, vmnl::GamepadButton) -> bool
+pub const fn vmnl::JoystickState::is_stick_activated(&self, vmnl::Stick) -> bool
+pub const fn vmnl::JoystickState::is_stick_active(&self, vmnl::Stick) -> bool
+pub const fn vmnl::JoystickState::is_stick_deactivated(&self, vmnl::Stick) -> bool
 pub const fn vmnl::JoystickState::left(&self) -> &vmnl::StickState
 pub fn vmnl::JoystickState::new() -> Self
 pub const fn vmnl::JoystickState::previous_gamepad(&self) -> core::option::Option<&vmnl::GamepadState>
 pub const fn vmnl::JoystickState::raw(&self) -> &vmnl::RawJoystickState
 pub fn vmnl::JoystickState::reset(&mut self)
 pub const fn vmnl::JoystickState::right(&self) -> &vmnl::StickState
-pub fn vmnl::JoystickState::set_settings(&mut self, vmnl::Joystick, vmnl::StickSettings) -> vmnl::VMNLResult<()>
+pub fn vmnl::JoystickState::set_settings(&mut self, vmnl::Stick, vmnl::StickSettings) -> vmnl::VMNLResult<()>
 pub fn vmnl::JoystickState::set_user_data<T: 'static>(&mut self, T)
-pub const fn vmnl::JoystickState::settings(&self, vmnl::Joystick) -> vmnl::StickSettings
+pub const fn vmnl::JoystickState::settings(&self, vmnl::Stick) -> vmnl::StickSettings
 pub fn vmnl::JoystickState::user_data<T: 'static>(&self) -> core::option::Option<&T>
 pub fn vmnl::JoystickState::user_data_mut<T: 'static>(&mut self) -> core::option::Option<&mut T>
 impl core::default::Default for vmnl::JoystickState
@@ -1678,7 +1683,7 @@ pub fn vmnl::Window::joystick_mut(&mut self, vmnl::JoystickId) -> &mut vmnl::Joy
 pub fn vmnl::Window::poll_events(&mut self) -> alloc::vec::Vec<vmnl::Event>
 pub fn vmnl::Window::post_empty_event(&mut self)
 pub fn vmnl::Window::set_error_callback(&mut self, impl core::ops::function::FnMut(vmnl::VMNLErrorKind, alloc::string::String) + 'static)
-pub fn vmnl::Window::set_stick_settings(&mut self, vmnl::JoystickId, vmnl::Joystick, vmnl::StickSettings) -> vmnl::VMNLResult<()>
+pub fn vmnl::Window::set_stick_settings(&mut self, vmnl::JoystickId, vmnl::Stick, vmnl::StickSettings) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_time(&mut self, f64)
 pub fn vmnl::Window::unset_error_callback(&mut self)
 pub fn vmnl::Window::wait_events(&mut self)

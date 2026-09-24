@@ -11,39 +11,26 @@ use glfw::{
     Action, GamepadAxis as GlfwAxis, GamepadButton as GlfwButton, GamepadState as GlfwState,
 };
 
-/// A stick direction in degrees or a stick click button.
-///
-/// Angles use the range `[0, 360)`. By default they are counterclockwise: right is 0 degrees,
-/// up is 90, left is 180, and down is 270. [`StickSettings`] can change this convention.
-/// This range is not enforced by
-/// construction. A centered stick has no direction and uses `None`.
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub enum Joystick {
-    /// The left stick direction, or `None` when centered.
-    JoystickLeft {
-        /// Direction in degrees, following the enum's angle convention.
-        degrees: Option<f32>,
-    },
-    /// The left Joystick Button.
-    JoystickLeftButton,
-    /// The right stick direction, or `None` when centered.
-    JoystickRight {
-        /// Direction in degrees, following the enum's angle convention.
-        degrees: Option<f32>,
-    },
-    /// The right Joystick Button.
-    JoystickRightButton,
+/// Selects a stick without carrying its measured axes or angle.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Stick {
+    /// Left analog stick.
+    Left,
+    /// Right analog stick.
+    Right,
 }
 
-/// Controls checked by aggregate input queries.
-///
-/// Direction values are selectors here, not live controller state.
-pub(crate) const ALL_JOYSTICK: &[Joystick] = &[
-    Joystick::JoystickLeft { degrees: None },
-    Joystick::JoystickLeftButton,
-    Joystick::JoystickRight { degrees: None },
-    Joystick::JoystickRightButton,
-];
+impl Stick {
+    /// Both sticks, in snapshot order.
+    pub const ALL: [Self; 2] = [Self::Left, Self::Right];
+
+    const fn index(self) -> usize {
+        match self {
+            Self::Left => 0,
+            Self::Right => 1,
+        }
+    }
+}
 
 /// Identifies a controller slot, not a permanent physical device.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -534,8 +521,8 @@ impl StickState {
 /// A device already present on the first update produces a connection event. Updates use a
 /// radial dead zone of 0.15 by default, replaceable per stick with `set_settings`.
 /// Original mapped axes and their magnitude remain accessible inside the dead zone.
-/// Queries select the left or right control; any angle carried by the selector
-/// is ignored. Read the observed angle through `left().degrees()` or `right().degrees()`.
+/// Stick selectors carry no values; mapped buttons use separate selectors.
+/// Read the observed angle through `left().degrees()` or `right().degrees()`.
 ///
 /// This snapshot does not poll devices or process window events. Transitions are
 /// relative to the last update, so changes entirely between samples can be missed.
@@ -657,10 +644,10 @@ impl JoystickState {
         self.connected
     }
 
-    /// Returns the resolved settings for the selected stick (button selectors also work).
+    /// Returns the resolved settings for the selected stick.
     #[must_use]
-    pub const fn settings(&self, joystick: Joystick) -> StickSettings {
-        self.settings[Self::index(joystick)]
+    pub const fn settings(&self, stick: Stick) -> StickSettings {
+        self.settings[stick.index()]
     }
 
     /// Reinterprets both snapshots using new settings, preserving axes and clicks.
@@ -671,26 +658,15 @@ impl JoystickState {
     /// # Errors
     /// Invalid settings return `InvalidState` without changing any state: the dead
     /// zone must be finite and nonnegative and the zero direction must be finite.
-    pub fn set_settings(&mut self, joystick: Joystick, settings: StickSettings) -> VMNLResult<()> {
+    pub fn set_settings(&mut self, stick: Stick, settings: StickSettings) -> VMNLResult<()> {
         settings.validate()?;
-        let index = Self::index(joystick);
+        let index = stick.index();
         self.settings[index] = settings;
         for states in [&mut self.current, &mut self.previous] {
             let state = states[index];
             states[index] = StickState::interpreted(state.axes, state.clicked, settings);
         }
         Ok(())
-    }
-
-    /// Returns the index corresponding to a joystick control.
-    ///
-    /// # Arguments
-    /// - `joystick`: The direction or click button identifying the stick.
-    const fn index(joystick: Joystick) -> usize {
-        match joystick {
-            Joystick::JoystickLeft { .. } | Joystick::JoystickLeftButton => 0,
-            Joystick::JoystickRight { .. } | Joystick::JoystickRightButton => 1,
-        }
     }
 
     /// Updates device presence and both sticks from a GLFW gamepad snapshot.
@@ -765,33 +741,33 @@ impl JoystickState {
             events.push(Event::JoystickDisconnected { id });
         }
 
-        for (index, button) in [Joystick::JoystickLeftButton, Joystick::JoystickRightButton]
+        // Preserve click-before-movement ordering for each stick.
+        for button in GamepadButton::ALL
             .into_iter()
-            .enumerate()
+            .filter(|button| {
+                !matches!(button, GamepadButton::LeftThumb | GamepadButton::RightThumb)
+            })
+            .chain([GamepadButton::LeftThumb, GamepadButton::RightThumb])
         {
             if self.is_pressed(button) {
-                events.push(Event::JoystickButtonPressed {
-                    id,
-                    joystick: button,
-                });
+                events.push(Event::JoystickButtonPressed { id, button });
             }
             if self.is_released(button) {
-                events.push(Event::JoystickButtonReleased {
-                    id,
-                    joystick: button,
-                });
+                events.push(Event::JoystickButtonReleased { id, button });
             }
+            let index = match button {
+                GamepadButton::LeftThumb => 0,
+                GamepadButton::RightThumb => 1,
+                _ => continue,
+            };
             if self.current[index].axes.map(f32::to_bits)
                 != self.previous[index].axes.map(f32::to_bits)
             {
                 let degrees = self.current[index].degrees;
-                let joystick = match button {
-                    Joystick::JoystickLeftButton => Joystick::JoystickLeft { degrees },
-                    _ => Joystick::JoystickRight { degrees },
-                };
                 events.push(Event::JoystickMoved {
                     id,
-                    joystick,
+                    stick: Stick::ALL[index],
+                    degrees,
                     axes: self.current[index].axes,
                 });
             }
@@ -810,106 +786,104 @@ impl JoystickState {
         &self.current[1]
     }
 
-    /// Returns whether a selected control is active in a snapshot.
-    const fn is_active(states: &[StickState; JOYSTICK_COUNT], joystick: Joystick) -> bool {
-        let state = &states[Self::index(joystick)];
-        match joystick {
-            Joystick::JoystickLeft { .. } | Joystick::JoystickRight { .. } => {
-                state.degrees.is_some()
-            }
-            Joystick::JoystickLeftButton | Joystick::JoystickRightButton => state.clicked,
-        }
-    }
-
-    /// Returns whether the selected stick is tilted or its selected click button is held.
-    ///
-    /// # Arguments
-    /// - `joystick`: The control to check. A direction selector's angle is ignored.
+    /// Returns whether the selected stick is outside its configured dead zone.
     #[must_use]
-    pub const fn is_down(&self, joystick: Joystick) -> bool {
-        Self::is_active(&self.current, joystick)
+    pub const fn is_stick_active(&self, stick: Stick) -> bool {
+        self.current[stick.index()].degrees.is_some()
     }
 
-    /// Returns whether the selected control became active during the last update.
-    ///
-    /// # Arguments
-    /// - `joystick`: The control to check. For directions, this detects leaving
-    ///   the dead zone, not angle changes while the stick remains tilted.
+    /// Returns whether the stick left its dead zone in the last update.
     #[must_use]
-    pub const fn is_pressed(&self, joystick: Joystick) -> bool {
-        Self::is_active(&self.current, joystick) && !Self::is_active(&self.previous, joystick)
+    pub const fn is_stick_activated(&self, stick: Stick) -> bool {
+        self.is_stick_active(stick) && self.previous[stick.index()].degrees.is_none()
     }
 
-    /// Returns whether the selected control became inactive during the last update.
-    ///
-    /// # Arguments
-    /// - `joystick`: The control to check. For directions, this detects returning
-    ///   to the dead zone. Unavailable gamepads also release active controls.
+    /// Returns whether the stick returned to its dead zone or became unavailable.
     #[must_use]
-    pub const fn is_released(&self, joystick: Joystick) -> bool {
-        !Self::is_active(&self.current, joystick) && Self::is_active(&self.previous, joystick)
+    pub const fn is_stick_deactivated(&self, stick: Stick) -> bool {
+        !self.is_stick_active(stick) && self.previous[stick.index()].degrees.is_some()
     }
 
-    /// Returns whether any selected controls are active during the last update.
+    /// Returns whether the selected mapped button is held. False without a sample.
     ///
-    /// # Arguments
-    /// - `joysticks`: The controls to check. An empty slice returns `false`.
+    /// Stick selectors cannot be used as buttons:
+    /// ```compile_fail
+    /// use vmnl_graphics::{JoystickState, Stick};
+    /// JoystickState::new().is_down(Stick::Left);
+    /// ```
     #[must_use]
-    pub fn is_any_down(&self, joysticks: &[Joystick]) -> bool {
-        joysticks.iter().any(|&joystick| self.is_down(joystick))
+    pub fn is_down(&self, button: GamepadButton) -> bool {
+        self.mapped.is_some_and(|state| state.is_down(button))
     }
 
-    /// Returns whether any selected controls became active during the last update.
-    ///
-    /// # Arguments
-    /// - `joysticks`: The controls to check. An empty slice returns `false`.
+    /// Returns whether the mapped button became pressed in the last update.
     #[must_use]
-    pub fn is_any_pressed(&self, joysticks: &[Joystick]) -> bool {
-        joysticks.iter().any(|&joystick| self.is_pressed(joystick))
+    pub fn is_pressed(&self, button: GamepadButton) -> bool {
+        self.is_gamepad_pressed(button)
     }
 
-    /// Returns whether any selected controls became inactive during the last update.
-    ///
-    /// # Arguments
-    /// - `joysticks`: The controls to check. An empty slice returns `false`.
+    /// Returns whether the mapped button was released, including mapping loss.
     #[must_use]
-    pub fn is_any_released(&self, joysticks: &[Joystick]) -> bool {
-        joysticks.iter().any(|&joystick| self.is_released(joystick))
+    pub fn is_released(&self, button: GamepadButton) -> bool {
+        self.is_gamepad_released(button)
     }
 
-    /// Returns whether any selected controls are active or were released during the last update.
-    ///
-    /// # Arguments
-    /// - `joysticks`: The controls to check. An empty slice returns `false`.
+    /// Returns whether any selected mapped buttons are held. Empty slices return false.
     #[must_use]
-    pub fn is_any_used(&self, joysticks: &[Joystick]) -> bool {
-        joysticks
-            .iter()
-            .any(|&joystick| self.is_down(joystick) || self.is_released(joystick))
+    pub fn is_any_down(&self, buttons: &[GamepadButton]) -> bool {
+        buttons.iter().any(|&button| self.is_down(button))
     }
 
-    /// Returns whether any stick direction or click button is active during the last update.
+    /// Returns whether any selected mapped buttons became pressed. Empty slices return false.
+    #[must_use]
+    pub fn is_any_pressed(&self, buttons: &[GamepadButton]) -> bool {
+        buttons.iter().any(|&button| self.is_pressed(button))
+    }
+
+    /// Returns whether any selected mapped buttons were released. Empty slices return false.
+    #[must_use]
+    pub fn is_any_released(&self, buttons: &[GamepadButton]) -> bool {
+        buttons.iter().any(|&button| self.is_released(button))
+    }
+
+    /// Returns whether any selected mapped buttons are held or were released.
+    /// Empty slices return false.
+    #[must_use]
+    pub fn is_any_used(&self, buttons: &[GamepadButton]) -> bool {
+        self.is_any_down(buttons) || self.is_any_released(buttons)
+    }
+
+    /// Returns whether either stick is active or any mapped button is held.
     #[must_use]
     pub fn is_one_down(&self) -> bool {
-        self.is_any_down(ALL_JOYSTICK)
+        Stick::ALL
+            .into_iter()
+            .any(|stick| self.is_stick_active(stick))
+            || self.is_any_down(&GamepadButton::ALL)
     }
 
-    /// Returns whether any stick direction or click button became active during the last update.
+    /// Returns whether either stick activated or any mapped button became pressed.
     #[must_use]
     pub fn is_one_pressed(&self) -> bool {
-        self.is_any_pressed(ALL_JOYSTICK)
+        Stick::ALL
+            .into_iter()
+            .any(|stick| self.is_stick_activated(stick))
+            || self.is_any_pressed(&GamepadButton::ALL)
     }
 
-    /// Returns whether any stick direction or click button became inactive during the last update.
+    /// Returns whether either stick deactivated or any mapped button was released.
     #[must_use]
     pub fn is_one_released(&self) -> bool {
-        self.is_any_released(ALL_JOYSTICK)
+        Stick::ALL
+            .into_iter()
+            .any(|stick| self.is_stick_deactivated(stick))
+            || self.is_any_released(&GamepadButton::ALL)
     }
 
-    /// Returns whether any stick direction or click button is active or was released during the last update.
+    /// Returns whether any stick or mapped button is active or was released.
     #[must_use]
     pub fn is_one_used(&self) -> bool {
-        self.is_any_used(ALL_JOYSTICK)
+        self.is_one_down() || self.is_one_released()
     }
 
     /// Clears both snapshots and presence history, preserving settings and producing no releases.
@@ -938,6 +912,86 @@ mod tests {
     use super::*;
 
     #[test]
+    fn every_button_emits_press_and_release_once_for_each_slot() {
+        for id in JoystickId::ALL {
+            for (index, button) in GamepadButton::ALL.into_iter().enumerate() {
+                for release_mode in 0..3 {
+                    let disconnected = release_mode == 2;
+                    let mut state = JoystickState::new();
+                    state.update(true, None);
+                    let mut sample = glfw::ffi::GLFWgamepadstate {
+                        buttons: [0; 15],
+                        axes: [0.0; 6],
+                    };
+                    sample.buttons[index] = 1;
+                    let sample: GlfwState = sample.into();
+                    state.update(true, Some(&sample));
+                    let mut events = Vec::new();
+                    state.append_events(id, &mut events);
+                    assert_eq!(events, vec![Event::JoystickButtonPressed { id, button }]);
+                    events.clear();
+                    state.update(true, Some(&sample));
+                    state.append_events(id, &mut events);
+                    assert!(events.is_empty());
+                    let released = gamepad([0.0; 4], false, false);
+                    let next = (release_mode == 0).then_some(&released);
+                    state.update(!disconnected, next);
+                    state.append_events(id, &mut events);
+                    let mut expected = Vec::new();
+                    if disconnected {
+                        expected.push(Event::JoystickDisconnected { id });
+                    }
+                    expected.push(Event::JoystickButtonReleased { id, button });
+                    assert_eq!(events, expected);
+                    events.clear();
+                    state.update(!disconnected, next);
+                    state.append_events(id, &mut events);
+                    assert!(events.is_empty());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn presence_mapping_and_rest_are_distinct() {
+        let mut state = JoystickState::new();
+        assert!(!state.is_connected());
+        state.update(true, None);
+        assert!(state.is_connected());
+        assert!(!state.info().is_gamepad());
+        assert!(state.gamepad().is_none());
+
+        state.set_info(JoystickInfo {
+            is_gamepad: true,
+            ..JoystickInfo::default()
+        });
+        state.update(true, Some(&gamepad([0.0; 4], false, false)));
+        assert!(state.is_connected());
+        assert!(state.info().is_gamepad());
+        assert!(state.gamepad().is_some());
+        assert!(!state.is_stick_active(Stick::Left));
+        assert!(!state.is_one_down());
+    }
+
+    #[test]
+    fn aggregate_queries_include_non_thumb_buttons() {
+        let mut state = JoystickState::new();
+        let mut sample = glfw::ffi::GLFWgamepadstate {
+            buttons: [0; 15],
+            axes: [0.0; 6],
+        };
+        sample.buttons[0] = 1;
+        state.update(true, Some(&sample.into()));
+        assert!(state.is_one_down());
+        assert!(state.is_one_pressed());
+        assert!(!state.is_stick_active(Stick::Left));
+        state.update(true, None);
+        assert!(state.is_one_released());
+        assert!(state.is_one_used());
+        assert!(!state.is_one_down());
+    }
+
+    #[test]
     fn every_mapped_control_preserves_values_and_transitions() -> Result<(), &'static str> {
         let axes = [-0.8, 0.2, 0.6, -0.4, -1.0, 1.0];
         for (index, button) in GamepadButton::ALL.into_iter().enumerate() {
@@ -957,12 +1011,19 @@ mod tests {
             }
             assert_eq!(mapped.axes().map(f32::to_bits), axes.map(f32::to_bits));
             assert!(state.is_gamepad_pressed(button));
+            assert!(state.is_down(button));
+            assert!(state.is_pressed(button));
+            assert!(state.is_any_down(&[button]));
             state.update(true, Some(&sample));
             assert!(!state.is_gamepad_pressed(button));
+            assert!(!state.is_pressed(button));
+            assert!(state.is_down(button));
             state.update(true, None);
             assert!(state.gamepad().is_none());
             assert!(state.previous_gamepad().is_some());
             assert!(state.is_gamepad_released(button));
+            assert!(state.is_released(button));
+            assert!(!state.is_down(button));
             state.update(false, Some(&sample));
             assert!(state.gamepad().is_none());
             assert!(!state.is_gamepad_released(button));
@@ -1091,7 +1152,7 @@ mod tests {
     #[test]
     fn settings_reinterpret_history_and_survive_reset() -> VMNLResult<()> {
         let mut state = JoystickState::new();
-        let left = Joystick::JoystickLeft { degrees: None };
+        let left = Stick::Left;
         let sample = gamepad([0.1, 0.0, 0.1, 0.0], true, false);
         state.update(true, Some(&sample));
         state.update(true, Some(&sample));
@@ -1107,9 +1168,9 @@ mod tests {
         );
         assert_eq!(state.left().degrees(), Some(90.0));
         assert_eq!(state.right().degrees(), None);
-        assert!(state.is_down(left));
-        assert!(!state.is_pressed(left));
-        assert!(!state.is_released(left));
+        assert!(state.is_stick_active(left));
+        assert!(!state.is_stick_activated(left));
+        assert!(!state.is_stick_deactivated(left));
         assert!(state.left().is_clicked());
         let mut events = Vec::new();
         state.append_events(JoystickId::Slot1, &mut events);
@@ -1195,14 +1256,14 @@ mod tests {
         state.update(true, Some(&gamepad([1.0, 0.0, 0.0, -1.0], true, false)));
         assert_eq!(state.left().degrees(), Some(0.0));
         assert_eq!(state.right().degrees(), Some(90.0));
-        assert!(state.is_pressed(Joystick::JoystickLeftButton));
-        assert!(!state.is_down(Joystick::JoystickRightButton));
+        assert!(state.is_pressed(GamepadButton::LeftThumb));
+        assert!(!state.is_down(GamepadButton::RightThumb));
         state.update(true, Some(&gamepad([0.0, 1.0, -1.0, 0.0], false, true)));
         assert_eq!(state.left().degrees(), Some(270.0));
         assert_eq!(state.right().degrees(), Some(180.0));
-        assert!(state.is_released(Joystick::JoystickLeftButton));
-        assert!(state.is_pressed(Joystick::JoystickRightButton));
-        assert!(!state.is_pressed(Joystick::JoystickLeft { degrees: None }));
+        assert!(state.is_released(GamepadButton::LeftThumb));
+        assert!(state.is_pressed(GamepadButton::RightThumb));
+        assert!(!state.is_stick_activated(Stick::Left));
     }
 
     #[test]
@@ -1223,9 +1284,9 @@ mod tests {
         assert!(!state.is_one_pressed());
         state.update(true, None);
         assert!(!state.is_one_down());
-        assert!(state.is_released(Joystick::JoystickLeft { degrees: None }));
-        assert!(state.is_released(Joystick::JoystickLeftButton));
-        assert!(!state.is_released(Joystick::JoystickRightButton));
+        assert!(state.is_stick_deactivated(Stick::Left));
+        assert!(state.is_released(GamepadButton::LeftThumb));
+        assert!(!state.is_released(GamepadButton::RightThumb));
         assert!(state.is_one_used());
         state.update(true, None);
         assert!(!state.is_one_used());
@@ -1261,23 +1322,23 @@ mod tests {
                 },
                 Event::JoystickButtonPressed {
                     id: JoystickId::Slot1,
-                    joystick: Joystick::JoystickLeftButton
+                    button: GamepadButton::LeftThumb
                 },
                 Event::JoystickMoved {
                     id: JoystickId::Slot1,
                     axes: [1.0, 0.0],
-                    joystick: Joystick::JoystickLeft { degrees: Some(0.0) }
+                    stick: Stick::Left,
+                    degrees: Some(0.0)
                 },
                 Event::JoystickButtonPressed {
                     id: JoystickId::Slot1,
-                    joystick: Joystick::JoystickRightButton
+                    button: GamepadButton::RightThumb
                 },
                 Event::JoystickMoved {
                     id: JoystickId::Slot1,
                     axes: [0.0, -1.0],
-                    joystick: Joystick::JoystickRight {
-                        degrees: Some(90.0)
-                    }
+                    stick: Stick::Right,
+                    degrees: Some(90.0)
                 },
             ]
         );
@@ -1294,14 +1355,13 @@ mod tests {
             vec![
                 Event::JoystickButtonReleased {
                     id: JoystickId::Slot1,
-                    joystick: Joystick::JoystickLeftButton
+                    button: GamepadButton::LeftThumb
                 },
                 Event::JoystickMoved {
                     id: JoystickId::Slot1,
                     axes: [0.0, -1.0],
-                    joystick: Joystick::JoystickLeft {
-                        degrees: Some(90.0)
-                    }
+                    stick: Stick::Left,
+                    degrees: Some(90.0)
                 },
             ]
         );
@@ -1318,7 +1378,8 @@ mod tests {
             events,
             vec![Event::JoystickMoved {
                 id: JoystickId::Slot1,
-                joystick: Joystick::JoystickLeft { degrees: Some(0.0) },
+                stick: Stick::Left,
+                degrees: Some(0.0),
                 axes: [0.5, 0.0],
             }]
         );
@@ -1330,7 +1391,8 @@ mod tests {
             vec![Event::JoystickMoved {
                 id: JoystickId::Slot1,
                 axes: [0.1, 0.0],
-                joystick: Joystick::JoystickLeft { degrees: None },
+                stick: Stick::Left,
+                degrees: None,
             }]
         );
         events.clear();
@@ -1340,7 +1402,8 @@ mod tests {
             events,
             vec![Event::JoystickMoved {
                 id: JoystickId::Slot1,
-                joystick: Joystick::JoystickLeft { degrees: None },
+                stick: Stick::Left,
+                degrees: None,
                 axes: [0.0, 0.1],
             }]
         );
@@ -1358,21 +1421,23 @@ mod tests {
             vec![
                 Event::JoystickButtonReleased {
                     id: JoystickId::Slot1,
-                    joystick: Joystick::JoystickLeftButton
+                    button: GamepadButton::LeftThumb
                 },
                 Event::JoystickMoved {
                     id: JoystickId::Slot1,
                     axes: [0.0, 0.0],
-                    joystick: Joystick::JoystickLeft { degrees: None }
+                    stick: Stick::Left,
+                    degrees: None
                 },
                 Event::JoystickButtonReleased {
                     id: JoystickId::Slot1,
-                    joystick: Joystick::JoystickRightButton
+                    button: GamepadButton::RightThumb
                 },
                 Event::JoystickMoved {
                     id: JoystickId::Slot1,
                     axes: [0.0, 0.0],
-                    joystick: Joystick::JoystickRight { degrees: None }
+                    stick: Stick::Right,
+                    degrees: None
                 },
             ]
         );
@@ -1454,12 +1519,13 @@ mod tests {
                 },
                 Event::JoystickButtonReleased {
                     id: JoystickId::Slot1,
-                    joystick: Joystick::JoystickLeftButton
+                    button: GamepadButton::LeftThumb
                 },
                 Event::JoystickMoved {
                     id: JoystickId::Slot1,
                     axes: [0.0, 0.0],
-                    joystick: Joystick::JoystickLeft { degrees: None }
+                    stick: Stick::Left,
+                    degrees: None
                 },
             ]
         );

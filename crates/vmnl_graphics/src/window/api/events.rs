@@ -254,9 +254,9 @@ impl Window {
     pub fn set_stick_settings(
         &mut self,
         id: crate::JoystickId,
-        joystick: crate::Joystick,
+        stick: crate::Stick,
         settings: crate::StickSettings,
     ) -> crate::VMNLResult<()> {
-        self.inner.set_stick_settings(id, joystick, settings)
+        self.inner.set_stick_settings(id, stick, settings)
     }
 }

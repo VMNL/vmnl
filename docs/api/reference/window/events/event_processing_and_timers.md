@@ -21,7 +21,7 @@ Drives the native event queue, updates input snapshots, controls GLFW time, wake
 | `set_error_callback(callback)`, `unset_error_callback()` | Replace/remove the application error callback; internal mapping-error capture remains active. |
 | `input()` | Borrow the updated `Input` snapshot. |
 | `joystick_mut(id)` | Mutably borrow settings, reset, or typed device data. |
-| `set_stick_settings(id, joystick, settings)` | Configure one stick; inspect through `input().joystick(id).settings(joystick)`. |
+| `set_stick_settings(id, stick, settings)` | Configure one stick; inspect through `input().joystick(id).settings(joystick)`. |
 
 Queued connection notifications in backend order, then per-slot sampled presence,
 stick click and direction

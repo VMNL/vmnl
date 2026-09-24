@@ -13,8 +13,8 @@ Represents the subset of GLFW events VMNL translates for client event loops. Der
 Variants: `Closed`, `FocusGained`, `FocusLost`, `Resized { width, height }`, `FramebufferResized { width, height }`, `KeyPressed { key, repeat }`, `KeyReleased { key }`, `MouseMoved { x, y }`, `MouseEntered`, `MouseLeft`, `MouseButtonPressed { button }`, `MouseButtonReleased { button }`, `MouseScrolled { dx, dy }`, and `Text(char)`. All named variant fields are public through pattern matching.
 
 Joystick integration also declares `JoystickConnected { id }`, `JoystickDisconnected { id }`,
-`JoystickButtonPressed { id, joystick }`, `JoystickButtonReleased { id, joystick }`, and
-`JoystickMoved { id, joystick, axes }`.
+`JoystickButtonPressed { id, button }`, `JoystickButtonReleased { id, button }`, and
+`JoystickMoved { id, stick, axes, degrees }`.
 `Window::poll_events` emits click and movement transitions for mapped gamepads
 in all 16 GLFW slots after native window events. Left stick transitions precede right
 stick transitions, with a click transition before a movement transition per stick.
@@ -23,13 +23,16 @@ and precede stick transitions. A device already present on the first poll emits
 `JoystickConnected`. Repeated presence states do not repeat events. Loss of mapping
 alone does not emit `JoystickDisconnected`. Every GLFW notification is retained until that window polls; physical transitions
 not reported by GLFW cannot be reconstructed.
-Button payloads designate `Joystick::JoystickLeftButton` or `Joystick::JoystickRightButton`;
-the type also permits direction variants, so construction does not enforce this restriction.
+Button payloads use `GamepadButton`, which cannot contain a stick direction.
+Polling emits press/release events for all 15 mapped buttons. Non-thumb buttons
+follow `GamepadButton::ALL` order before the existing left/right stick transitions.
+Holding a button does not repeat its press event; mapping loss or disconnection
+releases held buttons once.
 Every controller event carries a `JoystickId`. Queued callbacks come first in backend
 order; then sampled changes and fallback presence events use ascending slot order;
-within each slot, presence precedes left-stick then right-stick transitions.
-Movement payloads use `Joystick::JoystickLeft { degrees }` or
-`Joystick::JoystickRight { degrees }`: `Some(angle)` is in `[0, 360)` using the
+within each slot, presence precedes non-thumb buttons, then left-stick and right-stick transitions.
+Movement payloads select `Stick::Left` or `Stick::Right` separately from
+`degrees`: `Some(angle)` is in `[0, 360)` using the
 configured zero direction and rotation sense; `None` means inside the configured
 dead zone or non-finite axes. Defaults are counterclockwise from right with a 0.15
 radial threshold. `axes` preserves original mapped X/Y samples, right/down positive,

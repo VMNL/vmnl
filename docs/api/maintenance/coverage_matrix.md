@@ -6,7 +6,7 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 |---|---|---|---|---|
 | alias | `vmnl::VMNLResult` | [VMNLResult](../reference/errors/vmnl_result.md) | [Rustdoc](../../../target/doc/vmnl/type.VMNLResult.html) | [API errors](../../../tests/api/tests/errors.rs) |
 | enum | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/enum.Event.html) | [event input example](../../../examples/window/events_input/src/main.rs) |
-| enum | `vmnl::Joystick` | [Joystick](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.Joystick.html) | [API input](../../../tests/api/tests/input.rs) |
+| enum | `vmnl::Stick` | [Joystick](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.Stick.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::JoystickId` | [JoystickId](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.JoystickId.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::GamepadButton` | [GamepadButton](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.GamepadButton.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::GamepadAxis` | [GamepadAxis](../reference/window/input/joysticks.md) | [Rustdoc](../../../target/doc/vmnl/enum.GamepadAxis.html) | [API input](../../../tests/api/tests/input.rs) |

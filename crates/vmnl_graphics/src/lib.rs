@@ -21,8 +21,8 @@ pub use common::ShaderSource;
 pub use exception::{VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult};
 pub use vmnl_instance::{Context, JoystickOptions};
 pub use window::{
-    Event, FrameRenderer, GamepadAxis, GamepadButton, GamepadState, HatState, Input, Joystick,
-    JoystickId, JoystickInfo, JoystickState, Key, KeyboardState, MonitorInfo, Monitors,
-    MouseButton, MouseState, PresentMode, RawJoystickState, RenderMode, StickSettings, StickState,
+    Event, FrameRenderer, GamepadAxis, GamepadButton, GamepadState, HatState, Input, JoystickId,
+    JoystickInfo, JoystickState, Key, KeyboardState, MonitorInfo, Monitors, MouseButton,
+    MouseState, PresentMode, RawJoystickState, RenderMode, Stick, StickSettings, StickState,
     VideoMode, Window, WindowBuilder,
 };

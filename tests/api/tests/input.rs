@@ -4,7 +4,8 @@
 //! Headless public input-state contracts.
 
 use vmnl::{
-    Input, Joystick, JoystickState, Key, MouseButton, StickSettings, StickState, VMNLResult,
+    GamepadButton, Input, JoystickState, Key, MouseButton, Stick, StickSettings, StickState,
+    VMNLResult,
 };
 
 #[test]
@@ -88,8 +89,8 @@ fn configured_angles_wrap_and_dead_zone_boundary_is_inclusive() -> VMNLResult<()
 
 #[test]
 fn stick_settings_are_per_stick_inspectable_and_validated() -> VMNLResult<()> {
-    let left = Joystick::JoystickLeftButton;
-    let right = Joystick::JoystickRightButton;
+    let left = Stick::Left;
+    let right = Stick::Right;
     let mut input = Input::new();
     let settings = StickSettings {
         dead_zone: 0.0,
@@ -131,7 +132,7 @@ fn stick_settings_are_per_stick_inspectable_and_validated() -> VMNLResult<()> {
         )
         .is_err());
     // Ensure the same configuration entry point is exposed on the window without creating one.
-    let _: fn(&mut vmnl::Window, vmnl::JoystickId, Joystick, StickSettings) -> VMNLResult<()> =
+    let _: fn(&mut vmnl::Window, vmnl::JoystickId, Stick, StickSettings) -> VMNLResult<()> =
         vmnl::Window::set_stick_settings;
     Ok(())
 }
@@ -152,15 +153,15 @@ fn assert_empty(input: &Input) {
         assert_eq!(stick.degrees(), None);
         assert!(!stick.is_clicked());
     }
-    for control in [
-        Joystick::JoystickLeft { degrees: None },
-        Joystick::JoystickLeftButton,
-        Joystick::JoystickRight { degrees: None },
-        Joystick::JoystickRightButton,
-    ] {
-        assert!(!joystick.is_down(control));
-        assert!(!joystick.is_pressed(control));
-        assert!(!joystick.is_released(control));
+    for stick in Stick::ALL {
+        assert!(!joystick.is_stick_active(stick));
+        assert!(!joystick.is_stick_activated(stick));
+        assert!(!joystick.is_stick_deactivated(stick));
+    }
+    for button in GamepadButton::ALL {
+        assert!(!joystick.is_down(button));
+        assert!(!joystick.is_pressed(button));
+        assert!(!joystick.is_released(button));
     }
     assert!(!joystick.is_one_used());
 
@@ -177,7 +178,7 @@ fn assert_empty(input: &Input) {
 #[test]
 fn device_selection_and_settings_are_independent_through_facade() -> VMNLResult<()> {
     let mut input = Input::new();
-    let control = Joystick::JoystickLeftButton;
+    let control = Stick::Left;
     let settings = StickSettings {
         dead_zone: 0.4,
         ..StickSettings::default()

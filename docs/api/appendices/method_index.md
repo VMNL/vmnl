@@ -43,9 +43,6 @@
 | `vmnl::Input` | `mouse` | [Input](../reference/window/input/input.md) | [`mouse`](../../../target/doc/vmnl/struct.Input.html#method.mouse) |
 | `vmnl::Input` | `new` | [Input](../reference/window/input/input.md) | [`new`](../../../target/doc/vmnl/struct.Input.html#method.new) |
 | `vmnl::Input` | `set_stick_settings` | [Input](../reference/window/input/input.md) | [`set_stick_settings`](../../../target/doc/vmnl/struct.Input.html#method.set_stick_settings) |
-| `vmnl::Joystick` | `clone` | [Joystick](../reference/window/input/joysticks.md) | [`clone`](../../../target/doc/vmnl/enum.Joystick.html#method.clone) |
-| `vmnl::Joystick` | `eq` | [Joystick](../reference/window/input/joysticks.md) | [`eq`](../../../target/doc/vmnl/enum.Joystick.html#method.eq) |
-| `vmnl::Joystick` | `fmt` | [Joystick](../reference/window/input/joysticks.md) | [`fmt`](../../../target/doc/vmnl/enum.Joystick.html#method.fmt) |
 | `vmnl::JoystickId` | `clone` | [JoystickId](../reference/window/input/joysticks.md) | [`clone`](../../../target/doc/vmnl/enum.JoystickId.html#method.clone) |
 | `vmnl::JoystickId` | `eq` | [JoystickId](../reference/window/input/joysticks.md) | [`eq`](../../../target/doc/vmnl/enum.JoystickId.html#method.eq) |
 | `vmnl::JoystickId` | `fmt` | [JoystickId](../reference/window/input/joysticks.md) | [`fmt`](../../../target/doc/vmnl/enum.JoystickId.html#method.fmt) |
@@ -81,6 +78,9 @@
 | `vmnl::JoystickState` | `is_one_used` | [JoystickState](../reference/window/input/joysticks.md) | [`is_one_used`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_one_used) |
 | `vmnl::JoystickState` | `is_pressed` | [JoystickState](../reference/window/input/joysticks.md) | [`is_pressed`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_pressed) |
 | `vmnl::JoystickState` | `is_released` | [JoystickState](../reference/window/input/joysticks.md) | [`is_released`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_released) |
+| `vmnl::JoystickState` | `is_stick_activated` | [JoystickState](../reference/window/input/joysticks.md) | [`is_stick_activated`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_stick_activated) |
+| `vmnl::JoystickState` | `is_stick_active` | [JoystickState](../reference/window/input/joysticks.md) | [`is_stick_active`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_stick_active) |
+| `vmnl::JoystickState` | `is_stick_deactivated` | [JoystickState](../reference/window/input/joysticks.md) | [`is_stick_deactivated`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_stick_deactivated) |
 | `vmnl::JoystickState` | `left` | [JoystickState](../reference/window/input/joysticks.md) | [`left`](../../../target/doc/vmnl/struct.JoystickState.html#method.left) |
 | `vmnl::JoystickState` | `new` | [JoystickState](../reference/window/input/joysticks.md) | [`new`](../../../target/doc/vmnl/struct.JoystickState.html#method.new) |
 | `vmnl::JoystickState` | `previous_gamepad` | [JoystickState](../reference/window/input/joysticks.md) | [`previous_gamepad`](../../../target/doc/vmnl/struct.JoystickState.html#method.previous_gamepad) |
@@ -152,6 +152,10 @@
 | `vmnl::RenderMode` | `eq` | [RenderMode](../reference/window/rendering/render_mode.md) | [`eq`](../../../target/doc/vmnl/enum.RenderMode.html#method.eq) |
 | `vmnl::RenderMode` | `fmt` | [RenderMode](../reference/window/rendering/render_mode.md) | [`fmt`](../../../target/doc/vmnl/enum.RenderMode.html#method.fmt) |
 | `vmnl::RenderMode` | `hash` | [RenderMode](../reference/window/rendering/render_mode.md) | [`hash`](../../../target/doc/vmnl/enum.RenderMode.html#method.hash) |
+| `vmnl::Stick` | `clone` | [Joystick](../reference/window/input/joysticks.md) | [`clone`](../../../target/doc/vmnl/enum.Stick.html#method.clone) |
+| `vmnl::Stick` | `eq` | [Joystick](../reference/window/input/joysticks.md) | [`eq`](../../../target/doc/vmnl/enum.Stick.html#method.eq) |
+| `vmnl::Stick` | `fmt` | [Joystick](../reference/window/input/joysticks.md) | [`fmt`](../../../target/doc/vmnl/enum.Stick.html#method.fmt) |
+| `vmnl::Stick` | `hash` | [Joystick](../reference/window/input/joysticks.md) | [`hash`](../../../target/doc/vmnl/enum.Stick.html#method.hash) |
 | `vmnl::StickSettings` | `clone` | [StickSettings](../reference/window/input/joysticks.md) | [`clone`](../../../target/doc/vmnl/struct.StickSettings.html#method.clone) |
 | `vmnl::StickSettings` | `default` | [StickSettings](../reference/window/input/joysticks.md) | [`default`](../../../target/doc/vmnl/struct.StickSettings.html#method.default) |
 | `vmnl::StickSettings` | `eq` | [StickSettings](../reference/window/input/joysticks.md) | [`eq`](../../../target/doc/vmnl/struct.StickSettings.html#method.eq) |

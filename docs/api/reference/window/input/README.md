@@ -3,7 +3,7 @@
 | Item | Role |
 |---|---|
 | [`Input`](input.md) | Window-owned keyboard/mouse/joystick snapshot |
-| [`Joystick`](joysticks.md) | Stick direction or click selector |
+| [`Stick`](joysticks.md) | Left or right stick selector, without measured values |
 | [`JoystickId`](joysticks.md) | Select one of 16 controller slots |
 | [`RawJoystickState`](joysticks.md) | Device-dependent raw axes, buttons, and hats |
 | [`HatState`](joysticks.md) | Raw hat cardinal and diagonal directions |

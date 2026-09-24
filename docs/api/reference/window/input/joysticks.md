@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-`vmnl::JoystickId`, `vmnl::Joystick`, `vmnl::JoystickState`, `vmnl::StickSettings`, and `vmnl::StickState` are experimental.
+`vmnl::JoystickId`, `vmnl::Stick`, `vmnl::JoystickState`, `vmnl::StickSettings`, and `vmnl::StickState` are experimental.
 VMNL samples all 16 GLFW slots. It tracks device presence and the two sticks of
 a mapped gamepad, including their click buttons (L3/R3). All raw axes, buttons, and
 hats are available even without a mapping. All 15 mapped buttons and all 6 axes,
@@ -48,8 +48,7 @@ data instead of exposing GLFW user pointers. GLFW has no separate mapping-ID get
   IDs identify reusable slots, not permanent devices. Each slot has independent
   snapshots and per-stick settings; `joystick(id)` borrows that slot without polling.
 
-- `Joystick`: `JoystickLeft { degrees }`, `JoystickRight { degrees }`,
-  `JoystickLeftButton`, and `JoystickRightButton`.
+- `Stick`: `Left` and `Right`; `ALL` lists both selectors.
 - `JoystickState`: `new`, `default`, `reset`, `left`, `right`, `is_down`,
   `is_connected`,
   `is_pressed`, `is_released`, `is_any_down`, `is_any_pressed`, `is_any_released`,
@@ -64,11 +63,12 @@ input also has `Input::set_stick_settings`. Inspect resolved settings with
 mutation. Settings changes reinterpret both snapshots, preserving their original axes
 and clicks, without polling or enqueueing events. Previously returned events remain unchanged.
 
-Query selectors identify a control, not an exact angle: their `degrees` field is
-ignored by the boolean queries. For a direction, `is_down` means tilted outside
-the dead zone, `is_pressed` means leaving it, and `is_released` means returning to
-it. Rotation while tilted changes the angle and emits `JoystickMoved`, but does
-not count as another press. Click queries are independent of stick tilt.
+Button queries (`is_down`, `is_pressed`, `is_released`, and `is_any_*`) accept
+`GamepadButton`, never an angle or stick. Stick queries use `Stick`:
+`is_stick_active` means outside the dead zone, `is_stick_activated` means leaving
+it, and `is_stick_deactivated` means returning to it or losing the sample.
+Rotation while tilted emits movement without another activation.
+`is_one_*` includes both sticks and all 15 mapped buttons.
 
 ## Construction, defaults, and validation
 
@@ -105,7 +105,7 @@ Default angles are `Option<f32>` in degrees: right is 0, up 90, left 180, down 2
 must be finite and nonnegative; zero disables the dead zone except at exact center.
 Values above 1 are allowed. `zero_degrees` is any finite counterclockwise angle from
 right, interpreted modulo 360; `clockwise` reverses rotation from that zero.
-Computed angles are in `[0, 360)`; directly constructed enum payloads are not validated.
+Computed angles are in `[0, 360)`; directly constructed event payloads are not validated.
 
 Movement events carry the original axes and compare their bits, including magnitude
 changes, dead-zone motion, signed zero, and NaN payload changes. Identical samples
@@ -159,12 +159,12 @@ loaded at context creation with `VMNL_GAMEPAD_MAPPINGS`. See
 
 ```rust
 # extern crate vmnl;
-use vmnl::{Input, Joystick, JoystickId, JoystickState, StickSettings, StickState};
+use vmnl::{Input, GamepadButton, Stick, JoystickId, JoystickState, StickSettings, StickState};
 
 # fn main() -> vmnl::VMNLResult<()> {
 let mut input = Input::new();
 let id = JoystickId::Slot3;
-input.set_stick_settings(id, Joystick::JoystickLeftButton, StickSettings {
+input.set_stick_settings(id, Stick::Left, StickSettings {
     dead_zone: 0.05,
     zero_degrees: 90.0,
     clockwise: true,
@@ -172,7 +172,7 @@ input.set_stick_settings(id, Joystick::JoystickLeftButton, StickSettings {
 let joystick: &JoystickState = input.joystick(id);
 let left: &StickState = joystick.left();
 assert_eq!(left.degrees(), None);
-assert!(!joystick.is_down(Joystick::JoystickLeftButton));
+assert!(!joystick.is_down(GamepadButton::LeftThumb));
 assert_eq!(left.axes(), [0.0, 0.0]);
 # Ok(())
 # }
@@ -208,7 +208,7 @@ Related: [`Input`](input.md), [`Event`](../events/event.md), and
 For multi-device validation, connect two controllers and verify that events carry
 separate IDs, settings affect only the selected device, and disconnecting one leaves
 the other's input active. Device events follow ascending slot order, with presence,
-then left and right stick transitions within each slot when there are no queued callbacks.
+then non-thumb button transitions in `GamepadButton::ALL` order, then left and right stick transitions within each slot when there are no queued callbacks.
 Queued connection notifications precede these sampled transitions in backend order.
 Each window receives its own notifications, even when another window or a blocking
 wait processes GLFW events. Initial presence and final-sample discrepancies have

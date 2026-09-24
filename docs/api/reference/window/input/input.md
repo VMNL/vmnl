@@ -11,7 +11,7 @@ Groups keyboard, mouse, and multi-device joystick state updated by `Window::poll
 ## Public API
 
 `new()`, `keyboard() -> &KeyboardState`, `mouse() -> &MouseState`, and
-`joystick(id: JoystickId) -> &JoystickState`, and `set_stick_settings(id, joystick, settings) -> VMNLResult<()>`.
+`joystick(id: JoystickId) -> &JoystickState`, and `set_stick_settings(id, stick, settings) -> VMNLResult<()>`.
 `joystick_mut(id)` allows settings, reset, and typed application data.
 `Default` delegates to `new`. Stick settings and validation are described in [joystick input](joysticks.md).
 

@@ -3,68 +3,29 @@
 
 //! Private boundary for GLFW diagnostics and platform-sensitive operations.
 
-use crate::{VMNLError, VMNLErrorKind, VMNLResult};
+use crate::{VMNLErrorKind, VMNLResult};
 use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
 
 pub(crate) mod joysticks;
+mod mappings;
+use mappings::load_gamepad_mappings;
+pub(crate) use mappings::{apply_gamepad_mappings, init, MappingErrorCapture};
+#[cfg(test)]
+use mappings::{recording_callback, MappingCaptureScope};
 
-#[derive(Debug, Default)]
-pub(crate) struct MappingErrorCapture {
-    active: bool,
-    error: Option<(glfw::Error, String)>,
-}
-
-struct MappingCaptureScope<'a>(&'a RefCell<MappingErrorCapture>);
-
-impl<'a> MappingCaptureScope<'a> {
-    fn begin(capture: &'a RefCell<MappingErrorCapture>) -> VMNLResult<Self> {
-        let mut state = capture.borrow_mut();
-        if state.active {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                "gamepad mapping updates cannot be nested inside an error callback".into(),
-            )));
-        }
-        state.begin();
-        Ok(Self(capture))
-    }
-}
-
-impl Drop for MappingCaptureScope<'_> {
-    fn drop(&mut self) {
-        self.0.borrow_mut().finish();
-    }
-}
-
-fn recording_callback(
+pub(crate) fn set_error_callback(
+    glfw: &mut glfw::Glfw,
     capture: &Rc<RefCell<MappingErrorCapture>>,
-    mut callback: impl FnMut(glfw::Error, String) + 'static,
-) -> impl FnMut(glfw::Error, String) + 'static {
-    let capture = Rc::clone(capture);
-    move |error, description| {
-        // Release the borrow before running application code, which may re-enter VMNL.
-        capture.borrow_mut().record(error, &description);
-        callback(error, description);
-    }
+    mut callback: impl FnMut(VMNLErrorKind, String) + 'static,
+) {
+    mappings::set_error_callback(glfw, capture, move |error, description| {
+        callback(map_error(error), callback_message(error, description));
+    });
 }
 
-impl MappingErrorCapture {
-    fn record(&mut self, error: glfw::Error, description: &str) {
-        if self.active && self.error.is_none() {
-            self.error = Some((error, description.to_owned()));
-        }
-    }
-    fn begin(&mut self) {
-        self.error = None;
-        self.active = true;
-    }
-
-    fn finish(&mut self) -> Option<(glfw::Error, String)> {
-        self.active = false;
-        self.error.take()
-    }
-}
+pub(crate) use mappings::unset_error_callback;
 
 /// Prints an explicitly requested controller diagnostic, without changing mappings.
 /// This opt-in output uses stderr so example stdout filters do not hide it.
@@ -128,72 +89,6 @@ pub(crate) fn configure_gamepad_mappings(
     load_gamepad_mappings(Path::new(&path), capture, |mappings| {
         glfw.update_gamepad_mappings(mappings)
     })
-}
-
-fn load_gamepad_mappings(
-    path: &Path,
-    capture: &RefCell<MappingErrorCapture>,
-    apply: impl FnOnce(&str) -> bool,
-) -> VMNLResult<()> {
-    let mappings = std::fs::read_to_string(path).map_err(|error| {
-        VMNLError::new(VMNLErrorKind::InvalidState(format!(
-            "cannot read gamepad mappings from {}: {error}",
-            path.display()
-        )))
-    })?;
-    apply_gamepad_mappings(&mappings, capture, apply)
-}
-
-pub(crate) fn apply_gamepad_mappings(
-    mappings: &str,
-    capture: &RefCell<MappingErrorCapture>,
-    apply: impl FnOnce(&str) -> bool,
-) -> VMNLResult<()> {
-    // The GLFW Rust wrapper converts the input to a C string and cannot accept NUL bytes.
-    if mappings.contains('\0') || !mappings.is_ascii() {
-        return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-            "gamepad mappings must contain ASCII text without NUL bytes".into(),
-        )));
-    }
-    let _scope = MappingCaptureScope::begin(capture)?;
-    let accepted = apply(mappings);
-    let error = capture.borrow_mut().finish();
-    if let Some((code, description)) = error {
-        return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
-            "GLFW rejected gamepad mappings ({}): {description}",
-            code.as_raw()
-        ))));
-    }
-    if !accepted {
-        return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-            "GLFW rejected gamepad mappings".into(),
-        )));
-    }
-    Ok(())
-}
-
-pub(crate) fn init(
-    capture: &Rc<RefCell<MappingErrorCapture>>,
-    callback: impl FnMut(glfw::Error, String) + 'static,
-) -> Result<glfw::Glfw, glfw::InitError> {
-    glfw::init(recording_callback(capture, callback))
-}
-
-pub(crate) fn set_error_callback(
-    glfw: &mut glfw::Glfw,
-    capture: &Rc<RefCell<MappingErrorCapture>>,
-    mut callback: impl FnMut(VMNLErrorKind, String) + 'static,
-) {
-    glfw.set_error_callback(recording_callback(capture, move |error, description| {
-        callback(map_error(error), callback_message(error, description));
-    }));
-}
-
-pub(crate) fn unset_error_callback(
-    glfw: &mut glfw::Glfw,
-    capture: &Rc<RefCell<MappingErrorCapture>>,
-) {
-    glfw.set_error_callback(recording_callback(capture, |_, _| {}));
 }
 
 pub(crate) fn map_error(error: glfw::Error) -> VMNLErrorKind {

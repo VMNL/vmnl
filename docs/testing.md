@@ -74,6 +74,12 @@ and display server.
 
 ## Invariants
 
+The Null-backend mapping regression uses the production mapping module and error
+types directly in the platform probe, without depending on Vulkan. It loads a
+malformed mapping fixture through the real GLFW parser and verifies `InvalidState`
+even when GLFW returns true. It also checks callback replacement/removal and a valid
+update after rejection. Mock-based unit tests remain complementary, not the parser oracle.
+
 - API tests must be headless.
 - Smoke tests must not open a window.
 - Platform probes must use `ClientApi::NoApi`, run one operation per subprocess, and emit one
