@@ -1,5 +1,16 @@
 # Testing
 
+Joystick polling coverage has two layers. The deterministic
+`polling_samples_all_slots_before_delivering_transitions` test scripts the private
+sampling boundary and runs the same polling orchestration as `Window::poll_events`.
+It verifies all-slot sampling, snapshot updates, callback draining, event ordering,
+held/pressed/released buttons, mapping loss, and disconnect delivery without GLFW or Vulkan.
+It does not validate GLFW hardware reads.
+The ignored GPU test `window_poll_events_refreshes_joystick_snapshots_and_delivers_input_events`
+calls the public window API and real `Input::update`; run it with Vulkan and a display.
+Without controllers it covers the absent-device path; attach controllers to exercise
+mapped/raw hardware samples. Compilation alone is not evidence of hardware coverage.
+
 ## Test Types
 
 ```text

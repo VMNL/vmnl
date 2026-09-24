@@ -62,13 +62,13 @@ impl VMNLWindow {
 
     /// Internal implementation backing `Window::poll_events`.
     pub(crate) fn poll_events(&mut self) -> Vec<Event> {
-        self.handle.instance.poll_events();
-        self.handle.input.update(&self.handle.context);
-        let mut events: Vec<Event> = self.handle.events.poll_events();
-        let connections = std::mem::take(&mut *self.handle.joystick_connections.borrow_mut());
-        self.handle
-            .input
-            .append_joystick_events(&mut events, &connections);
+        let events = super::polling::poll_input_events(
+            &mut self.handle.input,
+            || self.handle.instance.poll_events(),
+            |input| input.update(&self.handle.context),
+            || self.handle.events.poll_events(),
+            &self.handle.joystick_connections,
+        );
         if events.iter().any(|event| {
             matches!(
                 event,

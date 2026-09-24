@@ -26,6 +26,13 @@ pub struct Input {
     joysticks: [JoystickState; 16],
 }
 
+pub(crate) struct JoystickSample {
+    pub(crate) connected: bool,
+    pub(crate) gamepad: Option<glfw::GamepadState>,
+    pub(crate) raw: RawJoystickState,
+    pub(crate) info: JoystickInfo,
+}
+
 impl Default for Input {
     fn default() -> Self {
         Self::new()
@@ -141,7 +148,7 @@ impl Input {
             crate::glfw_backend::print_gamepad_diagnostics(&window.glfw);
         }
 
-        for id in JoystickId::ALL {
+        self.update_joysticks(|id| {
             let joystick = window.glfw.get_joystick(id.to_glfw());
             let axes = joystick.get_axes();
             let buttons = joystick.get_buttons();
@@ -155,8 +162,27 @@ impl Input {
             };
             let connected = joystick.is_present();
             let raw = RawJoystickState::from_glfw(axes, &buttons, &hats);
-            self.joysticks[id.index()].update_with_raw(connected, gamepad.as_ref(), raw);
-            self.joysticks[id.index()].set_info(info);
+            JoystickSample {
+                connected,
+                gamepad,
+                raw,
+                info,
+            }
+        });
+    }
+
+    pub(crate) fn update_joysticks(
+        &mut self,
+        mut sample: impl FnMut(JoystickId) -> JoystickSample,
+    ) {
+        for id in JoystickId::ALL {
+            let sample = sample(id);
+            self.joysticks[id.index()].update_with_raw(
+                sample.connected,
+                sample.gamepad.as_ref(),
+                sample.raw,
+            );
+            self.joysticks[id.index()].set_info(sample.info);
         }
     }
 
