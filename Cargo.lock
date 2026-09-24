@@ -703,6 +703,7 @@ dependencies = [
 name = "vmnl-platform-tests"
 version = "0.1.0"
 dependencies = [
+ "cc",
  "glfw",
  "serde_json",
  "windows-sys",

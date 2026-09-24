@@ -75,7 +75,7 @@ fn native_keyboard_probe(backend: &str) -> Result<Output, String> {
             .spawn()
             .map_err(|error| format!("platform probe should start: {error}"))?;
 
-        if let Err(reason) = wait_until_ready(&mut child, &ready_file) {
+        if let Err(reason) = wait_until_ready(&mut child, &ready_file, backend) {
             let reason = append_external_x11_focus_diagnostic(backend, &reason);
             return Err(terminate_with_diagnostics(child, &reason));
         }
@@ -250,20 +250,103 @@ fn x11_revert_to_name(revert_to: x11rb::protocol::xproto::InputFocus) -> &'stati
     }
 }
 
-fn wait_until_ready(child: &mut Child, ready_file: &Path) -> Result<(), String> {
+#[cfg(target_os = "linux")]
+fn activate_wayland_window() -> Result<(), String> {
+    use x11rb::{
+        connection::Connection as _,
+        protocol::{
+            xproto::{AtomEnum, ConnectionExt as _, BUTTON_PRESS_EVENT, BUTTON_RELEASE_EVENT},
+            xtest::ConnectionExt as _,
+        },
+    };
+
+    let (connection, screen_number) = x11rb::connect(None)
+        .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
+    let root = connection.setup().roots[screen_number].root;
+    let focus = connection
+        .get_input_focus()
+        .map_err(|error| format!("failed to query Weston focus: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read Weston focus: {error}"))?
+        .focus;
+    let class = x11_text_property(&connection, focus, AtomEnum::WM_CLASS);
+    if !class.as_array().is_some_and(|fields| {
+        fields
+            .iter()
+            .any(|field| field.as_str() == Some("Weston Compositor"))
+    }) {
+        return Err(format!(
+            "refusing to click X11 focus {}: expected Weston Compositor, got {class}",
+            x11_window_id(focus)
+        ));
+    }
+
+    let geometry = connection
+        .get_geometry(focus)
+        .map_err(|error| format!("failed to query Weston geometry: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read Weston geometry: {error}"))?;
+    let center_x = i16::try_from(geometry.width / 2)
+        .map_err(|_| "Weston window width is too large for X11 pointer coordinates".to_owned())?;
+    let center_y = i16::try_from(geometry.height / 2)
+        .map_err(|_| "Weston window height is too large for X11 pointer coordinates".to_owned())?;
+    let position = connection
+        .translate_coordinates(focus, root, center_x, center_y)
+        .map_err(|error| format!("failed to translate Weston center: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read Weston center: {error}"))?;
+    connection
+        .xtest_get_version(2, 2)
+        .map_err(|error| format!("failed to query XTEST: {error}"))?
+        .reply()
+        .map_err(|error| format!("XTEST is unavailable: {error}"))?;
+    connection
+        .warp_pointer(0u32, root, 0, 0, 0, 0, position.dst_x, position.dst_y)
+        .map_err(|error| format!("failed to move pointer into Weston: {error}"))?
+        .check()
+        .map_err(|error| format!("X11 pointer move into Weston failed: {error}"))?;
+    for event in [BUTTON_PRESS_EVENT, BUTTON_RELEASE_EVENT] {
+        connection
+            .xtest_fake_input(event, 1, 0, root, position.dst_x, position.dst_y, 0)
+            .map_err(|error| format!("failed to enqueue Weston activation click: {error}"))?
+            .check()
+            .map_err(|error| format!("Weston activation click failed: {error}"))?;
+    }
+    connection
+        .flush()
+        .map_err(|error| format!("failed to flush Weston activation click: {error}"))
+}
+
+fn wait_until_ready(child: &mut Child, ready_file: &Path, backend: &str) -> Result<(), String> {
     let deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    #[cfg(not(target_os = "linux"))]
+    let _ = backend;
+    #[cfg(target_os = "linux")]
+    let mut next_activation = Instant::now();
     loop {
-        if ready_file.is_file() {
-            return Ok(());
-        }
         if let Some(status) = child
             .try_wait()
             .map_err(|error| format!("failed to inspect platform probe: {error}"))?
         {
             return Err(format!("platform probe exited before READY with {status}"));
         }
+        let signal = match fs::read_to_string(ready_file) {
+            Ok(signal) => signal,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => String::new(),
+            Err(error) => return Err(format!("failed to read platform probe signal: {error}")),
+        };
+        if signal == "READY\n" {
+            return Ok(());
+        }
+        #[cfg(target_os = "linux")]
+        if backend == "wayland" && signal == "MAPPED\n" && Instant::now() >= next_activation {
+            activate_wayland_window()?;
+            next_activation = Instant::now() + Duration::from_millis(250);
+        }
         if Instant::now() >= deadline {
-            return Err("platform probe did not emit READY within 7 seconds".to_owned());
+            return Err(format!(
+                "platform probe did not emit READY within 7 seconds; signal={signal:?}"
+            ));
         }
         thread::sleep(PROCESS_POLL_INTERVAL);
     }

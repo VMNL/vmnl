@@ -7,6 +7,8 @@
 
 use glfw::{ClientApiHint, Context as _, InitHint, WindowHint, WindowMode};
 use serde_json::{json, Value};
+#[cfg(target_os = "linux")]
+use std::ffi::c_void;
 use std::{
     cell::RefCell,
     env, fs,
@@ -86,6 +88,9 @@ fn main() -> ExitCode {
     }
 
     glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
+    if actual == glfw::Platform::Wayland && operation == "keyboard-native-input" {
+        glfw.window_hint(WindowHint::Maximized(true));
+    }
     glfw.window_hint(WindowHint::Visible(matches!(
         operation.as_str(),
         "keyboard-native-input" | "sticky-keys-manual"
@@ -408,6 +413,58 @@ fn manual_sticky_keys(
     })
 }
 
+#[cfg(target_os = "linux")]
+struct WaylandProbeBuffer(*mut c_void);
+
+#[cfg(target_os = "linux")]
+unsafe extern "C" {
+    fn vmnl_map_wayland_probe(
+        display: *mut c_void,
+        surface: *mut c_void,
+        width: i32,
+        height: i32,
+        error: *mut i32,
+    ) -> *mut c_void;
+    fn vmnl_destroy_wayland_probe_buffer(buffer: *mut c_void);
+}
+
+#[cfg(target_os = "linux")]
+impl Drop for WaylandProbeBuffer {
+    fn drop(&mut self) {
+        // SAFETY: The helper returned this live wl_buffer; it is destroyed before GLFW ends.
+        unsafe { vmnl_destroy_wayland_probe_buffer(self.0) };
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn map_wayland_probe(
+    glfw: &mut glfw::Glfw,
+    window: &glfw::PWindow,
+) -> Result<WaylandProbeBuffer, String> {
+    glfw.poll_events();
+    let (width, height) = window.get_framebuffer_size();
+    let mut error = 0;
+    // SAFETY: GLFW owns both live Wayland objects for this window on this thread. The helper
+    // attaches a test-only shm buffer and returns its ownership to WaylandProbeBuffer.
+    let buffer = unsafe {
+        vmnl_map_wayland_probe(
+            glfw.get_wayland_display(),
+            window.get_wayland_window(),
+            width,
+            height,
+            &raw mut error,
+        )
+    };
+    if buffer.is_null() {
+        Err(format!(
+            "Wayland shm mapping failed: code={error}, framebuffer={width}x{height}, maximized={}",
+            window.is_maximized()
+        ))
+    } else {
+        Ok(WaylandProbeBuffer(buffer))
+    }
+}
+
 fn native_keyboard_input(
     glfw: &mut glfw::Glfw,
     window: &mut glfw::PWindow,
@@ -420,6 +477,38 @@ fn native_keyboard_input(
         window.focus();
     }
 
+    let Some(ready_file) = env::var_os("VMNL_PLATFORM_READY_FILE") else {
+        return json!({
+            "qualified": false,
+            "stage": "handshake",
+            "error": "VMNL_PLATFORM_READY_FILE is missing",
+        });
+    };
+
+    #[cfg(target_os = "linux")]
+    let _wayland_buffer = if platform == glfw::Platform::Wayland {
+        match map_wayland_probe(glfw, window) {
+            Ok(buffer) => Some(buffer),
+            Err(error) => {
+                return json!({
+                    "qualified": false,
+                    "stage": "mapping",
+                    "error": error,
+                });
+            }
+        }
+    } else {
+        None
+    };
+    if platform == glfw::Platform::Wayland {
+        if let Err(error) = fs::write(&ready_file, b"MAPPED\n") {
+            return json!({
+                "qualified": false,
+                "stage": "handshake",
+                "error": error.to_string(),
+            });
+        }
+    }
     let focus_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
     while !window.is_focused() && Instant::now() < focus_deadline {
         glfw.wait_events_timeout(0.01);
@@ -430,16 +519,12 @@ fn native_keyboard_input(
             "qualified": false,
             "stage": "focus",
             "focused": false,
+            "hovered": window.is_hovered(),
+            "maximized": window.is_maximized(),
+            "framebuffer_size": window.get_framebuffer_size(),
         });
     }
 
-    let Some(ready_file) = env::var_os("VMNL_PLATFORM_READY_FILE") else {
-        return json!({
-            "qualified": false,
-            "stage": "handshake",
-            "error": "VMNL_PLATFORM_READY_FILE is missing",
-        });
-    };
     if let Err(error) = fs::write(&ready_file, b"READY\n") {
         return json!({
             "qualified": false,
