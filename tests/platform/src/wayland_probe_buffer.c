@@ -61,22 +61,22 @@ struct wl_buffer *vmnl_map_wayland_probe(
     if (!display || !surface || width <= 0 || height <= 0 ||
         width > INT_MAX / 4 || height > INT_MAX / (width * 4)) {
         const char msg[] = "Invalid parameters for Wayland probe buffer\n";
-        write(STDERR_FILENO, msg, sizeof(msg) - 1);
+        (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
         return NULL;
     }
     shm_lookup lookup = { NULL };
     struct wl_registry *registry = wl_display_get_registry(display);
     if (registry == NULL) {
         const char msg[] = "Failed to get Wayland registry: ";
-        write(STDERR_FILENO, msg, sizeof(msg) - 1);
-        write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
+        (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+        (void)write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
         return NULL;
     }
     if (wl_registry_add_listener(registry, &registry_listener, &lookup) < 0 ||
         wl_display_roundtrip(display) < 0 || lookup.shm == NULL) {
         const char msg[] = "Failed to bind wl_shm interface: ";
-        write(STDERR_FILENO, msg, sizeof(msg) - 1);
-        write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
+        (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+        (void)write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
         wl_registry_destroy(registry);
         return NULL;
     }
@@ -86,26 +86,26 @@ struct wl_buffer *vmnl_map_wayland_probe(
     const int fd = memfd_create("vmnl-platform-probe", MFD_CLOEXEC);
     if (fd < 0) {
         const char msg[] = "Failed to create memfd: ";
-        write(STDERR_FILENO, msg, sizeof(msg) - 1);
-        write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
+        (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+        (void)write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
         goto done;
     }
     if (ftruncate(fd, size) < 0) {
         const char msg[] = "Failed to truncate memfd: ";
-        write(STDERR_FILENO, msg, sizeof(msg) - 1);
-        write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
+        (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+        (void)write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
         if (close(fd) < 0) {
             const char msg[] = "Failed to close memfd: ";
-            write(STDERR_FILENO, msg, sizeof(msg) - 1);
-            write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
+            (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+            (void)write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
         }
         goto done;
     }
     struct wl_shm_pool *pool = wl_shm_create_pool(lookup.shm, fd, size);
     if (close(fd) < 0) {
         const char msg[] = "Failed to close memfd: ";
-        write(STDERR_FILENO, msg, sizeof(msg) - 1);
-        write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
+        (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+        (void)write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
         if (pool != NULL) {
             wl_shm_pool_destroy(pool);
         }
@@ -113,8 +113,8 @@ struct wl_buffer *vmnl_map_wayland_probe(
     }
     if (pool == NULL) {
         const char msg[] = "Failed to create wl_shm_pool: ";
-        write(STDERR_FILENO, msg, sizeof(msg) - 1);
-        write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
+        (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+        (void)write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
         goto done;
     }
     struct wl_buffer *buffer = wl_shm_pool_create_buffer(
@@ -128,8 +128,8 @@ struct wl_buffer *vmnl_map_wayland_probe(
     wl_shm_pool_destroy(pool);
     if (buffer == NULL) {
         const char msg[] = "Failed to create wl_buffer: ";
-        write(STDERR_FILENO, msg, sizeof(msg) - 1);
-        write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
+        (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+        (void)write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
         goto done;
     }
 
@@ -140,8 +140,8 @@ struct wl_buffer *vmnl_map_wayland_probe(
     *error = 3;
     if (wl_display_flush(display) < 0) {
         const char msg[] = "Failed to flush Wayland display: ";
-        write(STDERR_FILENO, msg, sizeof(msg) - 1);
-        write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
+        (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+        (void)write(STDERR_FILENO, strerror(errno), strlen(strerror(errno)));
         wl_buffer_destroy(buffer);
         buffer = NULL;
     }
