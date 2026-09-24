@@ -13,7 +13,7 @@
 
 | Platform | CI validation | Local Justfile | Status |
 |----------|---------------|----------------|--------|
-| Ubuntu Linux | Configured: build, headless tests, GLFW Null, Weston/Wayland and Xvfb/Openbox X11, including XTEST keyboard injection. | Yes | Blocking CI path; current workflow run required for evidence. |
+| Ubuntu Linux | Configured: build, headless tests, GLFW Null, Weston Wayland nested in Xvfb/Openbox and Xvfb/Openbox X11, including XTEST keyboard injection. | Yes | Blocking CI path; current workflow run required for evidence. |
 | Other Linux distributions | No distribution matrix. | Best effort. | Backend guarantees remain environment-scoped. |
 | Windows | Configured: build, headless tests and GLFW Null; visible Win32 probe with `SendInput` is experimental. | Compile and Null only unless run locally on an active desktop. | Current workflow run required; native results are non-blocking until qualified. |
 | macOS | Configured: build, headless tests and GLFW Null; visible Cocoa probe with `CGEventPost` is experimental. | Compile and Null only unless run locally with the required Accessibility permission. | Current workflow run required; Cocoa executes from `main` and remains non-blocking. |

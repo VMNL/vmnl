@@ -95,11 +95,12 @@ Quality (format -> Clippy)
 
 Each OS validation job reuses one Cargo target directory for compilation and every test stage; no
 target directory is cached or transferred between runners. Linux then forces the GLFW Wayland
-backend under Weston with Pixman nested on Xvfb and tests the GLFW X11 backend under Xvfb with
-Openbox. Both paths run a visible keyboard probe: a separate test process waits for the window to
-be focused, injects an `A` press/release pair through XTEST, and requires the exact native GLFW
-event sequence before timeout. The Wayland path injects through the parent Xvfb server into
-Weston's X11 backend; it does not qualify a standalone Wayland compositor seat.
+backend under Weston with Pixman nested on Xvfb with Openbox, then tests the GLFW X11 backend
+under Xvfb with Openbox. Both paths run a visible keyboard probe: a separate test process
+waits for the window to be focused, injects an `A` press/release pair through XTEST, and
+requires the exact native GLFW event sequence before timeout. The Wayland path injects through
+the parent Xvfb server into Weston's X11 backend; it does not qualify a standalone Wayland
+compositor seat.
 
 Win32 uses `SendInput` and Cocoa uses `CGEventPost` for the same scenario. Their native probes
 remain visible but non-blocking until ten consecutive successful runs use the same runner image,

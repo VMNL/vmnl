@@ -79,6 +79,7 @@ fn native_keyboard_probe(backend: &str) -> Result<Output, String> {
             let reason = append_external_x11_focus_diagnostic(backend, &reason);
             return Err(terminate_with_diagnostics(child, &reason));
         }
+        log_external_x11_focus_at_ready(backend);
         if let Err(reason) = inject_key_a() {
             return Err(terminate_with_diagnostics(child, &reason));
         }
@@ -107,6 +108,20 @@ fn append_external_x11_focus_diagnostic(backend: &str, reason: &str) -> String {
 fn append_external_x11_focus_diagnostic(_backend: &str, reason: &str) -> String {
     reason.to_owned()
 }
+
+#[cfg(target_os = "linux")]
+#[allow(clippy::print_stderr)]
+fn log_external_x11_focus_at_ready(backend: &str) {
+    if backend == "wayland" {
+        eprintln!(
+            "focus_at_ready={}",
+            append_external_x11_focus_diagnostic(backend, "glfw_focus_confirmed_by_ready=true")
+        );
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn log_external_x11_focus_at_ready(_backend: &str) {}
 
 #[cfg(target_os = "linux")]
 fn measure_external_x11_focus() -> Result<Value, String> {
