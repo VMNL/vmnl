@@ -409,6 +409,10 @@ check-fmt:
 check-clippy:
     cargo clippy --workspace --all-targets --all-features -- -D warnings
 
+# Install the repository-owned Git hooks for this clone.
+hooks-install:
+    git config core.hooksPath .githooks
+
 # Apply formatting and automatic fixes.
 lint:
     cargo fmt --all
