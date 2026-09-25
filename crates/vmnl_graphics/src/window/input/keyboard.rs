@@ -423,6 +423,10 @@ pub struct KeyboardState {
 }
 
 impl KeyboardState {
+    pub(crate) const fn named_keys() -> &'static [Key] {
+        ALL_KEYS
+    }
+
     /// Converts a GLFW key code to the corresponding `Key` variant.
     ///
     /// # Arguments

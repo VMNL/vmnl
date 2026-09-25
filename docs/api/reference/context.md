@@ -30,7 +30,9 @@ devices. Keyboard queries are uncached and use the active layout at call time. `
 non-printable values, invalid scancodes, and unsupported mappings return `None`. On Wayland, name
 queries also return `None` until `Window::poll_events` observes the first keyboard event; this
 avoids calling the bundled GLFW XKB path before its state is initialized. Scancode queries remain
-available immediately.
+available immediately. After keyboard readiness, Wayland resolves a scancode against the 120
+named-key mappings before asking GLFW for its name. This avoids a spurious backend error for
+non-printable named keys; an unmapped scancode still uses GLFW's scancode query.
 
 ## Units, coordinates, and valid ranges
 
@@ -52,6 +54,8 @@ sentinel as `None`; backend failures are reported through the configured GLFW er
 `new` creates Vulkan instance/device/queue and allocator state. Exact allocation count,
 initialization latency, queue policy beyond current requirements, and synchronization cost are not
 specified. Successful name queries allocate one owned `String`; scancode queries do not allocate.
+`get_scancode_name` may query up to 120 key-to-scancode mappings on Wayland; the other backends
+keep the direct scancode lookup.
 No keyboard query performs GPU work, transfer, synchronization, or waiting.
 
 ## Platform, Vulkan, and display constraints

@@ -10,6 +10,29 @@ use super::VMNLInstance;
 use crate::{Key, KeyboardState, Scancode, VMNLResult};
 use std::rc::Rc;
 
+fn wayland_scancode_name(
+    scancode: Scancode,
+    mut scancode_for_key: impl FnMut(Key) -> Option<Scancode>,
+    mut name_for_key: impl FnMut(Key) -> Option<String>,
+    mut name_for_scancode: impl FnMut(Scancode) -> Option<String>,
+) -> Option<String> {
+    // The bundled GLFW Wayland backend emits an error for a non-printable scancode instead of
+    // returning null. Its named-key path returns null without an error for the same physical key.
+    if !(0..=255).contains(&scancode.as_raw()) {
+        return None;
+    }
+
+    if let Some(key) = KeyboardState::named_keys()
+        .iter()
+        .copied()
+        .find(|&key| scancode_for_key(key) == Some(scancode))
+    {
+        return name_for_key(key);
+    }
+
+    name_for_scancode(scancode)
+}
+
 /// `Context` is the main struct of the VMNL library, representing the core Vulkan context.
 ///
 /// It is responsible for initializing and managing the Vulkan resources required for rendering operations
@@ -56,6 +79,8 @@ impl Context {
     /// keyboard layout. Invalid, unmapped, and non-printable scancodes return `None`. On Wayland,
     /// VMNL also returns `None` until [`Window::poll_events`](crate::Window::poll_events) observes
     /// the first keyboard event and proves that the bundled GLFW XKB state is ready.
+    /// On Wayland, known scancodes are resolved against the named keys first so non-printable
+    /// keys return `None` without triggering a spurious GLFW backend error.
     ///
     /// This call allocates an owned [`String`] when GLFW provides a name.
     #[inline]
@@ -63,6 +88,15 @@ impl Context {
     pub fn get_scancode_name(&self, scancode: Scancode) -> Option<String> {
         if !self.inner.keyboard_name_queries_ready.get() {
             return None;
+        }
+
+        if self.inner.glfw.get_platform() == glfw::Platform::Wayland {
+            return wayland_scancode_name(
+                scancode,
+                |key| self.get_key_scancode(key),
+                |key| self.get_key_name(key),
+                |scancode| glfw::get_key_name(None, Some(scancode.as_raw())),
+            );
         }
 
         glfw::get_key_name(None, Some(scancode.as_raw()))
@@ -143,5 +177,90 @@ impl Context {
         Ok(Self {
             inner: Rc::new(VMNLInstance::new()?),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cell::Cell;
+
+    #[test]
+    fn wayland_non_printable_scancode_avoids_raw_name_lookup() {
+        let raw_called = Cell::new(false);
+        let name = wayland_scancode_name(
+            Scancode::from_raw(29),
+            |key| (key == Key::LeftControl).then_some(Scancode::from_raw(29)),
+            |key| {
+                assert_eq!(key, Key::LeftControl);
+                None
+            },
+            |_| {
+                raw_called.set(true);
+                None
+            },
+        );
+        assert_eq!(name, None);
+        assert!(!raw_called.get());
+    }
+
+    #[test]
+    fn wayland_printable_scancode_uses_named_key_and_unknown_falls_back() {
+        let unexpected_call = Cell::new(false);
+        let mapped = wayland_scancode_name(
+            Scancode::from_raw(30),
+            |key| (key == Key::A).then_some(Scancode::from_raw(30)),
+            |key| {
+                assert_eq!(key, Key::A);
+                Some("a".to_owned())
+            },
+            |_| {
+                unexpected_call.set(true);
+                None
+            },
+        );
+        assert_eq!(mapped.as_deref(), Some("a"));
+        assert!(!unexpected_call.get());
+
+        let unknown = wayland_scancode_name(
+            Scancode::from_raw(254),
+            |_| None,
+            |_| {
+                unexpected_call.set(true);
+                None
+            },
+            |scancode| {
+                assert_eq!(scancode.as_raw(), 254);
+                Some("é".to_owned())
+            },
+        );
+        assert_eq!(unknown.as_deref(), Some("é"));
+        assert!(!unexpected_call.get());
+    }
+
+    #[test]
+    fn wayland_invalid_scancode_never_calls_glfw() {
+        let called = Cell::new(false);
+        for raw in [-1, 256] {
+            assert_eq!(
+                wayland_scancode_name(
+                    Scancode::from_raw(raw),
+                    |_| {
+                        called.set(true);
+                        None
+                    },
+                    |_| {
+                        called.set(true);
+                        None
+                    },
+                    |_| {
+                        called.set(true);
+                        None
+                    },
+                ),
+                None
+            );
+        }
+        assert!(!called.get());
     }
 }
