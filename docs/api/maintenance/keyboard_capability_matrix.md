@@ -73,8 +73,8 @@ but its Rustdoc must identify it as legacy and recommend `Text` plus key events 
 
 ## Native qualification protocol
 
-Record the operating system, desktop, session type, and backend with the observations. Automatic
-Null or native platform probes do not replace the following operator checks.
+Record the operating system, desktop, session type, backend, and active keyboard layout with the
+observations. Automatic Null or native platform probes do not replace the following operator checks.
 
 The `keyboard-native-input` platform operation creates a visible GLFW `NoApi` window, confirms
 focus, signals readiness to the test process, then requires an injected `A` press/release pair with
@@ -89,8 +89,11 @@ Run the public VMNL workflow:
 just run window_events_input
 ```
 
-1. Confirm the startup queries for `A`, `Semicolon`, `Kp0`, and `Escape`; record unavailable
-   physical keys instead of treating them as passed. `Escape` must have no printable name.
+1. Inspect the startup queries for `A`, `Semicolon`, `Kp0`, and `Escape`. On Wayland, `name` and
+   `scancode_name` are expected to be `None` until the first keyboard event is processed by
+   `poll_events`; the scancode query can already succeed. After pressing an available key, check
+   its name and scancode name in the event output. `Escape` must have no printable name. Record
+   unavailable physical keys instead of treating them as passed.
 2. Press representative alphanumeric, punctuation, navigation, keypad, function, and modifier
    keys. For named keys, verify `scancode_matches=true` between the event and queried scancode.
 3. Hold a repeatable key and verify repeat events without repeated `is_pressed` transitions.
