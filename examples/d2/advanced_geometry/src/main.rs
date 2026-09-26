@@ -5,7 +5,7 @@
 
 use vmnl::{
     common::{BufferMemoryPreference, Rgba},
-    d2::{Anchor, LineCap, Shape, Vector2f, Vertex2D},
+    d2::{Shape, Vector2f, Vertex2D},
     Context, Key, PresentMode, RenderMode, VMNLResult, Window,
 };
 
@@ -59,19 +59,7 @@ fn main() -> VMNLResult<()> {
         } else {
             RenderMode::Batched
         };
-        window
-            .render()
-            .mode(mode)
-            .draw2d([
-                &pentagon,
-                &triangle,
-                &centered,
-                &custom_origin,
-                &line_butt,
-                &line_round,
-                &line_square,
-            ])
-            .submit()?;
+        window.render().mode(mode).draw2d([&pentagon]).submit()?;
         frame = frame.wrapping_add(1);
     }
 

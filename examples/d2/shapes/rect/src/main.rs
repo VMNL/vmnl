@@ -4,9 +4,9 @@
 //! Minimal 2D shape rendering workflow.
 
 use vmnl::{
-    d2::{Shape, Anchor},
-    common::{Rgba, BufferMemoryPreference},
-    Context, VMNLResult, Window
+    common::{BufferMemoryPreference, Rgba},
+    d2::{Anchor, Shape},
+    Context, VMNLResult, Window,
 };
 
 fn main() -> VMNLResult<()> {
@@ -17,7 +17,7 @@ fn main() -> VMNLResult<()> {
         .set_clear_color(Rgba::rgb(0, 0, 0))
         .build(&context)?;
 
-    let rectangle = Shape::rect(500.0,300.0)
+    let rectangle = Shape::rect(500.0, 300.0)
         .position(960.0, 540.0)
         .color(Rgba::rgba(225, 0, 0, 255))
         .anchor(Anchor::TopLeft)
@@ -27,10 +27,7 @@ fn main() -> VMNLResult<()> {
 
     while window.is_open() {
         for _ in window.poll_events() {}
-        window
-            .render()
-            .draw2d([&rectangle])
-            .submit()?;
+        window.render().draw2d([&rectangle]).submit()?;
     }
 
     Ok(())

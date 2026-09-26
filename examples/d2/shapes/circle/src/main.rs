@@ -3,11 +3,7 @@
 
 //! Minimal 2D shape rendering workflow.
 
-use vmnl::{
-    d2::{Shape},
-    common::Rgba,
-    Context, VMNLResult, Window,
-};
+use vmnl::{common::Rgba, d2::Shape, Context, VMNLResult, Window};
 
 fn main() -> VMNLResult<()> {
     let context = Context::new()?;
@@ -23,10 +19,7 @@ fn main() -> VMNLResult<()> {
 
     while window.is_open() {
         for _ in window.poll_events() {}
-        window
-            .render()
-            .draw2d([&circle])
-            .submit()?;
+        window.render().draw2d([&circle]).submit()?;
     }
 
     Ok(())

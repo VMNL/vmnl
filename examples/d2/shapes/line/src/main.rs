@@ -4,8 +4,8 @@
 //! Minimal 2D shape rendering workflow.
 
 use vmnl::{
-    d2::{Shape, Vector2f, LineCap},
-    common::{Rgba, BufferMemoryPreference},
+    common::{BufferMemoryPreference, Rgba},
+    d2::{LineCap, Shape, Vector2f},
     Context, VMNLResult, Window,
 };
 
@@ -18,8 +18,14 @@ fn main() -> VMNLResult<()> {
         .build(&context)?;
 
     let line_round = Shape::line(
-        Vector2f { x: 1060.0, y: 240.0 },
-        Vector2f { x: 1460.0, y: 840.0 },
+        Vector2f {
+            x: 1060.0,
+            y: 240.0,
+        },
+        Vector2f {
+            x: 1460.0,
+            y: 840.0,
+        },
     )
     .color(Rgba::RED)
     .width(30.0)
@@ -28,7 +34,10 @@ fn main() -> VMNLResult<()> {
     .build(&context)?;
     let line_square = Shape::line(
         Vector2f { x: 660.0, y: 240.0 },
-        Vector2f { x: 1060.0, y: 840.0 },
+        Vector2f {
+            x: 1060.0,
+            y: 840.0,
+        },
     )
     .color(Rgba::GREEN)
     .width(30.0)
