@@ -6,7 +6,7 @@
 use vmnl::{
     common::Rgba,
     d2::{Shape, Vector2f},
-    Context, Key, PresentMode, VMNLResult, Window,
+    Context, PresentMode, VMNLResult, Window,
 };
 
 fn main() -> VMNLResult<()> {
