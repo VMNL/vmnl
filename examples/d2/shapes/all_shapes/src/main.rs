@@ -38,12 +38,8 @@ fn main() -> VMNLResult<()> {
     .vertex_colors(Rgba::YELLOW, Rgba::MAGENTA, Rgba::CYAN)
     .build(&context)?;
 
-    println!("Press Escape to close.");
     while window.is_open() {
         for _ in window.poll_events() {}
-        if window.input().keyboard().is_pressed(Key::Escape) {
-            window.close();
-        }
         window
             .render()
             .draw2d([&rectangle, &circle, &triangle, &ellipse])
