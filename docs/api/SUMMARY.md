@@ -73,6 +73,8 @@
       - [Anchor](reference/d2/shapes/anchor.md)
       - [LineBuilder](reference/d2/shapes/line_builder.md)
       - [LineCap](reference/d2/shapes/line_cap.md)
+      - [LineJoin](reference/d2/shapes/line_join.md)
+      - [PolylineBuilder](reference/d2/shapes/polyline_builder.md)
   - [3D](reference/d3/README.md)
     - [Camera](reference/d3/camera.md)
     - [Drawable3D](reference/d3/drawable_3d.md)

@@ -125,6 +125,22 @@ impl IndexedShapeBuilder {
         indices: &[u32],
         buffer_memory_preference: BufferMemoryPreference,
     ) -> VMNLResult<Shape> {
+        Self::indexed_shape_with_kind(
+            vmnl_context,
+            vertices,
+            indices,
+            buffer_memory_preference,
+            IndexedGeometry,
+        )
+    }
+
+    pub(super) fn indexed_shape_with_kind(
+        vmnl_context: &Context,
+        vertices: &[Vertex2D],
+        indices: &[u32],
+        buffer_memory_preference: BufferMemoryPreference,
+        kind: super::ShapeKind,
+    ) -> VMNLResult<Shape> {
         let (vertex_count, index_count) =
             validate_indexed_triangle_geometry(vertices.len(), indices, "indexed shape")?;
         log::trace!(
@@ -134,7 +150,7 @@ impl IndexedShapeBuilder {
         );
 
         Ok(Shape {
-            kind: IndexedGeometry,
+            kind,
             blend_mode: Shape::blend_mode_from_vertices(vertices),
             geometry: GpuGeometry {
                 vertex_count,

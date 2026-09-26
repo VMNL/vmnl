@@ -6,7 +6,7 @@ Import path: `vmnl::d2::LineCap`. Status: experimental.
 
 ## Purpose and use cases
 
-Selects generated geometry at both endpoints of a thick line.
+Selects generated geometry at both endpoints of a thick line or open polyline. Closed polylines have no endpoint caps.
 
 ## Public API
 
@@ -14,7 +14,7 @@ Variants: `Butt` (default, no extension), `Round` (semicircular geometry), and `
 
 ## Construction, defaults, and validation
 
-Every variant is valid; geometry validation belongs to `LineBuilder::build`.
+Every variant is valid; geometry validation belongs to `LineBuilder::build` or `PolylineBuilder::build`.
 
 ## Units, coordinates, and valid ranges
 
@@ -45,4 +45,4 @@ use vmnl::d2::LineCap;
 assert_eq!(LineCap::default(), LineCap::Butt);
 ```
 
-Related: [`LineBuilder`](line_builder.md).
+Related: [`LineBuilder`](line_builder.md) and [`PolylineBuilder`](polyline_builder.md).
