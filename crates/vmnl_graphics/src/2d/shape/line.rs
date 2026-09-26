@@ -5,6 +5,8 @@
 //! providing functions to create lines defined by start and end points, width, cap style, and color.
 
 use super::{
+    polyline::LineJoin,
+    stroke::{tessellate_stroke, StrokeColors},
     validation::{validate_finite, validate_positive_finite},
     Shape, Vector2f,
 };
@@ -14,6 +16,7 @@ use crate::{
     Context, VMNLError, VMNLErrorKind, VMNLResult,
 };
 
+#[cfg(test)]
 const ROUND_CAP_SEGMENTS: u16 = 12;
 
 /// Line cap styles for rendering line endpoints.
@@ -229,113 +232,6 @@ impl LineBuilder {
         validate_positive_finite(&[width], "line width")
     }
 
-    fn flat_line_vertices(
-        from: Vector2f,
-        to: Vector2f,
-        width: f32,
-        cap: LineCap,
-        color: Rgba,
-    ) -> [Vertex2D; 4] {
-        let cap_extension: f32 = match cap {
-            LineCap::Butt | LineCap::Round => 0.0,
-            LineCap::Square => width / 2.0,
-        };
-        let half_width: f32 = width / 2.0;
-        let dir: Vector2f = (to - from).normalize();
-        let normal: Vector2f = Vector2f {
-            x: -dir.y * half_width,
-            y: dir.x * half_width,
-        };
-        let cap_offset: Vector2f = dir * cap_extension;
-        let from: Vector2f = Vector2f {
-            x: from.x - cap_offset.x,
-            y: from.y - cap_offset.y,
-        };
-        let to: Vector2f = Vector2f {
-            x: to.x + cap_offset.x,
-            y: to.y + cap_offset.y,
-        };
-
-        [
-            Vertex2D {
-                position: Vector2f {
-                    x: from.x + normal.x,
-                    y: from.y + normal.y,
-                },
-                color,
-            },
-            Vertex2D {
-                position: Vector2f {
-                    x: to.x + normal.x,
-                    y: to.y + normal.y,
-                },
-                color,
-            },
-            Vertex2D {
-                position: Vector2f {
-                    x: to.x - normal.x,
-                    y: to.y - normal.y,
-                },
-                color,
-            },
-            Vertex2D {
-                position: Vector2f {
-                    x: from.x - normal.x,
-                    y: from.y - normal.y,
-                },
-                color,
-            },
-        ]
-    }
-
-    fn push_round_cap(
-        vertices: &mut Vec<Vertex2D>,
-        indices: &mut Vec<u32>,
-        center: Vector2f,
-        axis: Vector2f,
-        normal: Vector2f,
-        radius: f32,
-        color: Rgba,
-    ) -> VMNLResult<()> {
-        let center_index: u32 = u32::try_from(vertices.len()).map_err(|_| {
-            VMNLError::new(VMNLErrorKind::InvalidState(
-                "line vertex count out of bounds".to_string(),
-            ))
-        })?;
-        vertices.push(Vertex2D {
-            position: center,
-            color,
-        });
-        let first_arc_index: u32 = u32::try_from(vertices.len()).map_err(|_| {
-            VMNLError::new(VMNLErrorKind::InvalidState(
-                "line vertex count out of bounds".to_string(),
-            ))
-        })?;
-
-        for segment in 0..=ROUND_CAP_SEGMENTS {
-            let t: f32 = f32::from(segment) / f32::from(ROUND_CAP_SEGMENTS);
-            let angle: f32 = -std::f32::consts::FRAC_PI_2 + t * std::f32::consts::PI;
-            let axis_scale: f32 = angle.cos() * radius;
-            let normal_scale: f32 = angle.sin() * radius;
-
-            vertices.push(Vertex2D {
-                position: Vector2f {
-                    x: center.x + axis.x * axis_scale + normal.x * normal_scale,
-                    y: center.y + axis.y * axis_scale + normal.y * normal_scale,
-                },
-                color,
-            });
-        }
-        for segment in 0..ROUND_CAP_SEGMENTS {
-            indices.extend_from_slice(&[
-                center_index,
-                first_arc_index + u32::from(segment),
-                first_arc_index + u32::from(segment) + 1,
-            ]);
-        }
-        Ok(())
-    }
-
     fn geometry(
         from: Vector2f,
         to: Vector2f,
@@ -343,34 +239,15 @@ impl LineBuilder {
         cap: LineCap,
         color: Rgba,
     ) -> VMNLResult<(Vec<Vertex2D>, Vec<u32>)> {
-        let body_cap: LineCap = match cap {
-            LineCap::Butt | LineCap::Round => LineCap::Butt,
-            LineCap::Square => LineCap::Square,
-        };
-        let mut vertices: Vec<Vertex2D> =
-            Self::flat_line_vertices(from, to, width, body_cap, color).to_vec();
-        let mut indices: Vec<u32> = vec![0, 1, 2, 2, 3, 0];
-
-        if cap == LineCap::Round {
-            let radius: f32 = width / 2.0;
-            let dir: Vector2f = (to - from).normalize();
-            let normal: Vector2f = Vector2f {
-                x: -dir.y,
-                y: dir.x,
-            };
-
-            Self::push_round_cap(
-                &mut vertices,
-                &mut indices,
-                from,
-                dir * -1.0,
-                normal,
-                radius,
-                color,
-            )?;
-            Self::push_round_cap(&mut vertices, &mut indices, to, dir, normal, radius, color)?;
-        }
-        Ok((vertices, indices))
+        tessellate_stroke(
+            &[from, to],
+            width,
+            cap,
+            LineJoin::Bevel,
+            4.0,
+            false,
+            StrokeColors::Uniform(color),
+        )
     }
 
     /// Create a line shape from validated builder options.
@@ -405,11 +282,6 @@ impl LineBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn assert_vector_eq(actual: Vector2f, expected: Vector2f) {
-        assert!((actual.x - expected.x).abs() < f32::EPSILON);
-        assert!((actual.y - expected.y).abs() < f32::EPSILON);
-    }
 
     fn assert_invalid_state(result: VMNLResult<()>, expected: &str) {
         assert!(matches!(
@@ -560,51 +432,48 @@ mod tests {
     }
 
     #[test]
-    fn flat_line_vertices_returns_butt_line_vertices_around_line_axis() {
-        let vertices: [Vertex2D; 4] = LineBuilder::flat_line_vertices(
+    fn geometry_uses_shared_tessellator_for_the_existing_line_body() -> VMNLResult<()> {
+        let (vertices, indices): (Vec<Vertex2D>, Vec<u32>) = LineBuilder::geometry(
             Vector2f { x: 0.0, y: 0.0 },
             Vector2f { x: 4.0, y: 0.0 },
             2.0,
             LineCap::Butt,
-            Rgba::new(255, 255, 255, 255),
+            Rgba::WHITE,
+        )?;
+        assert_eq!(
+            vertices
+                .iter()
+                .map(|vertex| vertex.position)
+                .collect::<Vec<_>>(),
+            vec![
+                Vector2f { x: 0.0, y: 1.0 },
+                Vector2f { x: 4.0, y: 1.0 },
+                Vector2f { x: 4.0, y: -1.0 },
+                Vector2f { x: 0.0, y: -1.0 },
+            ]
         );
+        assert_eq!(indices, vec![0, 1, 2, 2, 3, 0]);
 
-        assert_vector_eq(vertices[0].position, Vector2f { x: 0.0, y: 1.0 });
-        assert_vector_eq(vertices[1].position, Vector2f { x: 4.0, y: 1.0 });
-        assert_vector_eq(vertices[2].position, Vector2f { x: 4.0, y: -1.0 });
-        assert_vector_eq(vertices[3].position, Vector2f { x: 0.0, y: -1.0 });
-    }
-
-    #[test]
-    fn flat_line_vertices_extends_square_cap_by_half_width() {
-        let vertices: [Vertex2D; 4] = LineBuilder::flat_line_vertices(
-            Vector2f { x: 0.0, y: 0.0 },
-            Vector2f { x: 4.0, y: 0.0 },
-            2.0,
-            LineCap::Square,
-            Rgba::new(255, 255, 255, 255),
-        );
-
-        assert_vector_eq(vertices[0].position, Vector2f { x: -1.0, y: 1.0 });
-        assert_vector_eq(vertices[1].position, Vector2f { x: 5.0, y: 1.0 });
-        assert_vector_eq(vertices[2].position, Vector2f { x: 5.0, y: -1.0 });
-        assert_vector_eq(vertices[3].position, Vector2f { x: -1.0, y: -1.0 });
-    }
-
-    #[test]
-    fn flat_line_vertices_uses_perpendicular_normal_for_diagonal_line() {
-        let vertices: [Vertex2D; 4] = LineBuilder::flat_line_vertices(
+        let (diagonal, _): (Vec<Vertex2D>, Vec<u32>) = LineBuilder::geometry(
             Vector2f { x: 0.0, y: 0.0 },
             Vector2f { x: 3.0, y: 4.0 },
             10.0,
             LineCap::Butt,
-            Rgba::new(255, 255, 255, 255),
+            Rgba::WHITE,
+        )?;
+        assert_eq!(
+            diagonal
+                .iter()
+                .map(|vertex| vertex.position)
+                .collect::<Vec<_>>(),
+            vec![
+                Vector2f { x: -4.0, y: 3.0 },
+                Vector2f { x: -1.0, y: 7.0 },
+                Vector2f { x: 7.0, y: 1.0 },
+                Vector2f { x: 4.0, y: -3.0 },
+            ]
         );
-
-        assert_vector_eq(vertices[0].position, Vector2f { x: -4.0, y: 3.0 });
-        assert_vector_eq(vertices[1].position, Vector2f { x: -1.0, y: 7.0 });
-        assert_vector_eq(vertices[2].position, Vector2f { x: 7.0, y: 1.0 });
-        assert_vector_eq(vertices[3].position, Vector2f { x: 4.0, y: -3.0 });
+        Ok(())
     }
 
     #[test]

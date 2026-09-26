@@ -308,6 +308,30 @@ impl core::marker::Unpin for vmnl::d2::LineCap
 impl core::marker::UnsafeUnpin for vmnl::d2::LineCap
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::LineCap
 impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::LineCap
+pub enum vmnl::d2::LineJoin
+pub vmnl::d2::LineJoin::Bevel
+pub vmnl::d2::LineJoin::Miter
+pub vmnl::d2::LineJoin::Round
+impl core::clone::Clone for vmnl::d2::LineJoin
+pub fn vmnl::d2::LineJoin::clone(&self) -> vmnl::d2::LineJoin
+impl core::cmp::Eq for vmnl::d2::LineJoin
+impl core::cmp::PartialEq for vmnl::d2::LineJoin
+pub fn vmnl::d2::LineJoin::eq(&self, &vmnl::d2::LineJoin) -> bool
+impl core::default::Default for vmnl::d2::LineJoin
+pub fn vmnl::d2::LineJoin::default() -> vmnl::d2::LineJoin
+impl core::fmt::Debug for vmnl::d2::LineJoin
+pub fn vmnl::d2::LineJoin::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for vmnl::d2::LineJoin
+pub fn vmnl::d2::LineJoin::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for vmnl::d2::LineJoin
+impl core::marker::StructuralPartialEq for vmnl::d2::LineJoin
+impl core::marker::Freeze for vmnl::d2::LineJoin
+impl core::marker::Send for vmnl::d2::LineJoin
+impl core::marker::Sync for vmnl::d2::LineJoin
+impl core::marker::Unpin for vmnl::d2::LineJoin
+impl core::marker::UnsafeUnpin for vmnl::d2::LineJoin
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::LineJoin
+impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::LineJoin
 pub struct vmnl::d2::EllipseBuilder
 impl vmnl::d2::EllipseBuilder
 pub const fn vmnl::d2::EllipseBuilder::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
@@ -346,6 +370,25 @@ impl core::marker::Unpin for vmnl::d2::LineBuilder
 impl core::marker::UnsafeUnpin for vmnl::d2::LineBuilder
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::LineBuilder
 impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::LineBuilder
+pub struct vmnl::d2::PolylineBuilder
+impl vmnl::d2::PolylineBuilder
+pub fn vmnl::d2::PolylineBuilder::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
+pub fn vmnl::d2::PolylineBuilder::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::d2::Shape>
+pub fn vmnl::d2::PolylineBuilder::cap(self, vmnl::d2::LineCap) -> Self
+pub fn vmnl::d2::PolylineBuilder::closed(self) -> Self
+pub fn vmnl::d2::PolylineBuilder::color<C>(self, C) -> Self where C: core::convert::Into<vmnl::common::Rgba>
+pub fn vmnl::d2::PolylineBuilder::join(self, vmnl::d2::LineJoin) -> Self
+pub fn vmnl::d2::PolylineBuilder::miter_limit(self, f32) -> Self
+pub fn vmnl::d2::PolylineBuilder::point_colors<C>(self, C) -> Self where C: core::convert::Into<alloc::vec::Vec<vmnl::common::Rgba>>
+pub fn vmnl::d2::PolylineBuilder::segment_colors<C>(self, C) -> Self where C: core::convert::Into<alloc::vec::Vec<vmnl::common::Rgba>>
+pub fn vmnl::d2::PolylineBuilder::width(self, f32) -> Self
+impl core::marker::Freeze for vmnl::d2::PolylineBuilder
+impl core::marker::Send for vmnl::d2::PolylineBuilder
+impl core::marker::Sync for vmnl::d2::PolylineBuilder
+impl core::marker::Unpin for vmnl::d2::PolylineBuilder
+impl core::marker::UnsafeUnpin for vmnl::d2::PolylineBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::PolylineBuilder
+impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::PolylineBuilder
 pub struct vmnl::d2::RectBuilder
 impl vmnl::d2::RectBuilder
 pub fn vmnl::d2::RectBuilder::anchor(self, vmnl::d2::Anchor) -> Self
@@ -378,6 +421,7 @@ pub fn vmnl::d2::Shape::circle(f32) -> vmnl::d2::EllipseBuilder
 pub fn vmnl::d2::Shape::ellipse(f32, f32) -> vmnl::d2::EllipseBuilder
 pub fn vmnl::d2::Shape::indexed<V, I>(V, I) -> vmnl::d2::IndexedShapeBuilder where V: core::convert::Into<alloc::vec::Vec<vmnl::d2::Vertex2D>>, I: core::convert::Into<alloc::vec::Vec<u32>>
 pub fn vmnl::d2::Shape::line(vmnl::d2::Vector2f, vmnl::d2::Vector2f) -> vmnl::d2::LineBuilder
+pub fn vmnl::d2::Shape::polyline<P>(P) -> vmnl::d2::PolylineBuilder where P: core::convert::Into<alloc::vec::Vec<vmnl::d2::Vector2f>>
 pub fn vmnl::d2::Shape::rect(f32, f32) -> vmnl::d2::RectBuilder
 pub fn vmnl::d2::Shape::triangle(vmnl::d2::Vector2f, vmnl::d2::Vector2f, vmnl::d2::Vector2f) -> vmnl::d2::TriangleBuilder
 pub fn vmnl::d2::Shape::triangle_from_vertices([vmnl::d2::Vertex2D; 3]) -> vmnl::d2::TriangleBuilder

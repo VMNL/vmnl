@@ -1,11 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
+//! GPU integration coverage for 2D geometry and Vulkan resources.
+
 use vmnl::{
     common::{BufferMemoryPreference, Rgba},
-    d2::{LineCap, Shape, Vector2f, Vertex2D},
+    d2::{LineCap, LineJoin, Shape, Vector2f, Vertex2D},
     d3::{Mesh, Vector3f, Vertex3D},
-    raw, Context, PresentMode, VMNLError, VMNLErrorKind, VMNLResult, Window,
+    raw, Context, PresentMode, RenderMode, VMNLError, VMNLErrorKind, VMNLResult, Window,
 };
 use vmnl_gpu_tests::gpu_test_guard;
 
@@ -136,6 +138,38 @@ fn d2_d3_and_raw_builders_create_valid_gpu_resources() -> VMNLResult<()> {
     .indices([0, 1, 2])
     .build(&context)?;
 
+    Ok(())
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn polylines_submit_opaque_and_translucent_shapes_in_both_render_modes() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut window = Window::builder()
+        .title("VMNL GPU polyline geometry")
+        .size(640, 480)
+        .present_mode(PresentMode::Auto)
+        .build(&context)?;
+    let opaque = Shape::polyline([v2(80.0, 120.0), v2(300.0, 180.0), v2(500.0, 100.0)])
+        .width(16.0)
+        .join(LineJoin::Miter)
+        .color(Rgba::CYAN)
+        .build(&context)?;
+    let translucent = Shape::polyline([v2(80.0, 260.0), v2(300.0, 320.0), v2(500.0, 240.0)])
+        .width(20.0)
+        .cap(LineCap::Round)
+        .join(LineJoin::Round)
+        .segment_colors([Rgba::rgba(255, 0, 0, 128), Rgba::rgba(0, 255, 255, 128)])
+        .build(&context)?;
+
+    for mode in [RenderMode::PerObject, RenderMode::Batched] {
+        window
+            .render()
+            .mode(mode)
+            .draw2d([&opaque, &translucent])
+            .submit()?;
+    }
     Ok(())
 }
 

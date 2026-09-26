@@ -17,24 +17,6 @@ pub struct Vector2f {
     pub y: f32,
 }
 
-impl Vector2f {
-    /// Normalize the vector to have a length of 1, preserving its direction.
-    ///
-    /// # Returns
-    /// A new `Vector2f` instance representing the normalized vector.
-    pub(crate) fn normalize(self) -> Self {
-        if (self.x == 0.0 && self.y == 0.0) || self.x.is_nan() || self.y.is_nan() {
-            return Self { x: 0.0, y: 0.0 };
-        }
-        let length: f32 = (self.x * self.x + self.y * self.y).sqrt();
-
-        Self {
-            x: self.x / length,
-            y: self.y / length,
-        }
-    }
-}
-
 impl Eq for Vector2f {}
 
 impl Ord for Vector2f {
@@ -109,13 +91,5 @@ mod tests {
                 Vector2f { x: 2.0, y: 0.0 },
             ]
         );
-    }
-
-    #[test]
-    fn vector2f_normalize_returns_unit_vector() {
-        let normalized: Vector2f = Vector2f { x: 3.0, y: 4.0 }.normalize();
-
-        assert!((normalized.x - 0.6).abs() < f32::EPSILON);
-        assert!((normalized.y - 0.8).abs() < f32::EPSILON);
     }
 }

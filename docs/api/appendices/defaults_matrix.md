@@ -16,6 +16,8 @@
 | `Modifiers` | `NONE` |
 | `Anchor` | `TopLeft` |
 | `LineCap` | `Butt` |
+| `LineJoin` | `Bevel` |
+| Polyline | open; width `1.0`; butt cap; bevel join; miter limit `4.0`; opaque white; device memory preference |
 | Rectangle | position `(0,0)`, white, rotation `0°`, top-left origin, device memory preference |
 | Circle | center `(0,0)`, white, 32-triangle tessellation, device memory preference |
 | Ellipse | center `(0,0)`, white, 32-triangle tessellation, device memory preference |
