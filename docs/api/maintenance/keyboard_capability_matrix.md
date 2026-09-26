@@ -12,7 +12,7 @@ requirements; unavailable physical keys or layouts must be reported as untested 
 passed.
 
 | Capability | GLFW surface | Current status | Target VMNL contract | Deterministic evidence | Native evidence |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | Named keys | 120 named `GLFW_KEY_*` tokens | Complete: `Key` exposes all 120 named keys and facade representatives cover every key family. | `Key` represents every named GLFW 3.4 key without exposing GLFW types. | Exhaustive bidirectional conversion test and exact tracked-key count. | Exercise every key available on the recorded keyboard; list unavailable keys. |
 | Unknown physical keys | `GLFW_KEY_UNKNOWN` plus callback scancode | Complete: unknown events are emitted while snapshot state remains unchanged. | Emit `Key::Unknown` events with their `Scancode`; `KeyboardState` tracks named keys only and always reports `false` for `Key::Unknown`. | Unknown-key reducer test retains the event and proves the snapshot remains unused. | Best effort only; justify when the keyboard exposes no unknown key. |
 | Scancode value | Key callback scancode | Complete: public `Scancode` preserves the callback value. | Public `Scancode` newtype with `from_raw` and `as_raw`; values are platform-specific and must not be persisted as portable identifiers. | API and translation tests preserve fixed positive and negative raw values without exposing a backend type. | The automated native probe requires equal press/release scancodes for `A`; compare other real keys manually within one recorded environment. |
@@ -103,11 +103,14 @@ just run window_events_input
 
 Qualify the underlying GLFW sticky latch separately because VMNL deliberately does not expose the
 consuming `glfwGetKey` read. Replace `wayland` with `x11` when testing that backend, focus the probe
-window, then press and release `A` once:
+window within 15 seconds, then press and release the physical key at the US `A` position once
+within a separate 15 seconds (`Q` on French AZERTY). On Wayland,
+the probe attaches a test-only shm buffer so the GLFW `NoApi` window can appear:
 
 ```bash
 cargo run -p vmnl-platform-tests --bin platform_probe -- wayland sticky-keys-manual
 ```
 
 The probe qualifies the latch only when its JSON record reports `qualified: true`, a first read of
-`Press`, and a second read of `Release`.
+`Press`, and a second read of `Release`. An error at `stage: mapping` or `stage: focus` does not test
+the sticky-key latch.

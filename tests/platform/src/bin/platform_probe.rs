@@ -201,7 +201,7 @@ fn main() -> ExitCode {
             keyboard_wait_then_poll(&mut glfw, &mut window, &events, Some(0.001))
         }
         "keyboard-native-input" => native_keyboard_input(&mut glfw, &mut window, &events, actual),
-        "sticky-keys-manual" => manual_sticky_keys(&mut glfw, &mut window, &events),
+        "sticky-keys-manual" => manual_sticky_keys(&mut glfw, &mut window, &events, actual),
         "raw-mouse-motion" => {
             let supported = glfw.supports_raw_motion();
             if supported {
@@ -371,13 +371,48 @@ fn manual_sticky_keys(
     glfw: &mut glfw::Glfw,
     window: &mut glfw::PWindow,
     events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+    platform: glfw::Platform,
 ) -> Value {
-    eprintln!("Focus the probe window, then press and release A within 15 seconds.");
     window.set_key_polling(true);
-    window.set_sticky_keys(true);
     window.show();
-    window.focus();
+    if platform != glfw::Platform::Wayland {
+        window.focus();
+    }
 
+    #[cfg(target_os = "linux")]
+    let _wayland_buffer = if platform == glfw::Platform::Wayland {
+        match map_wayland_probe(glfw, window) {
+            Ok(buffer) => Some(buffer),
+            Err(error) => {
+                return json!({
+                    "qualified": false,
+                    "stage": "mapping",
+                    "error": error,
+                });
+            }
+        }
+    } else {
+        None
+    };
+
+    eprintln!("Focus the probe window within 15 seconds.");
+    let focus_deadline = Instant::now() + Duration::from_secs(15);
+    while !window.is_focused() && Instant::now() < focus_deadline {
+        glfw.wait_events_timeout(0.1);
+        glfw::flush_messages(events).for_each(drop);
+    }
+    if !window.is_focused() {
+        return json!({
+            "qualified": false,
+            "stage": "focus",
+            "focused": false,
+        });
+    }
+
+    window.set_sticky_keys(true);
+    eprintln!(
+        "Press and release the key at the US A position (Q on French AZERTY) within 15 seconds."
+    );
     let deadline = Instant::now() + Duration::from_secs(15);
     let mut saw_press = false;
     let mut saw_release = false;
@@ -406,6 +441,8 @@ fn manual_sticky_keys(
 
     json!({
         "qualified": qualified,
+        "stage": "input",
+        "focused": window.is_focused(),
         "saw_press": saw_press,
         "saw_release": saw_release,
         "first_read": format!("{first_read:?}"),
