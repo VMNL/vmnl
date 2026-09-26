@@ -10,3 +10,5 @@
 | [`Anchor`](anchor.md) | Rectangle rotation pivot |
 | [`LineBuilder`](line_builder.md) | Thick line geometry |
 | [`LineCap`](line_cap.md) | Line endpoint style |
+| [`LineJoin`](line_join.md) | Polyline join style |
+| [`PolylineBuilder`](polyline_builder.md) | Connected thick stroke geometry |
