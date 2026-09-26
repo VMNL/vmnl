@@ -13,7 +13,7 @@ mod transitions;
 pub(crate) use cursor::CursorImage;
 pub use cursor::{Cursor, CursorBuilder, StandardCursor, StandardCursorBuilder};
 pub use cursor_mode::CursorMode;
-pub use keyboard::{Key, KeyboardState};
+pub use keyboard::{Key, KeyboardState, Scancode};
 pub use modifiers::Modifiers;
 pub use mouse::{MouseButton, MouseState};
 

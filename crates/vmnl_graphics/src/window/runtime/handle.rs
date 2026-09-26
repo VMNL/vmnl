@@ -69,6 +69,12 @@ impl VMNLWindow {
     pub(crate) fn poll_events(&mut self) -> Vec<Event> {
         self.handle.instance.poll_events();
         let events: Vec<Event> = self.handle.events.poll_events(&mut self.handle.input);
+        if self.handle.input.keyboard().is_one_used() {
+            self.handle
+                .vmnl_instance
+                .keyboard_name_queries_ready
+                .set(true);
+        }
         if events.iter().any(|event| {
             matches!(
                 event.kind(),
@@ -144,6 +150,11 @@ impl VMNLWindow {
     /// Internal implementation backing `Window::set_char_polling`.
     pub(crate) fn set_char_polling(&mut self, enabled: bool) {
         self.handle.context.set_char_polling(enabled);
+        self.handle.events.set_char_delivery(enabled);
+    }
+
+    pub(crate) const fn is_char_polling_enabled(&self) -> bool {
+        self.handle.events.is_char_delivery_enabled()
     }
 
     /// Internal implementation backing `Window::set_mouse_button_polling`.
@@ -207,9 +218,18 @@ impl VMNLWindow {
         self.handle.events.set_key_delivery(enabled);
     }
 
+    pub(crate) const fn is_key_polling_enabled(&self) -> bool {
+        self.handle.events.is_key_delivery_enabled()
+    }
+
     /// Internal implementation backing `Window::set_char_mods_polling`.
     pub(crate) fn set_char_mods_polling(&mut self, enabled: bool) {
         self.handle.context.set_char_mods_polling(enabled);
+        self.handle.events.set_char_mods_delivery(enabled);
+    }
+
+    pub(crate) const fn is_char_mods_polling_enabled(&self) -> bool {
+        self.handle.events.is_char_mods_delivery_enabled()
     }
 
     /// Internal implementation backing `Window::set_refresh_polling`.
@@ -241,14 +261,18 @@ impl VMNLWindow {
     pub(crate) fn enable_keyboard_polling(&mut self) {
         self.handle.events.set_key_delivery(true);
         self.handle.context.set_char_polling(true);
+        self.handle.events.set_char_delivery(true);
         self.handle.context.set_char_mods_polling(true);
+        self.handle.events.set_char_mods_delivery(true);
     }
 
     /// Internal implementation backing `Window::disable_keyboard_polling`.
     pub(crate) fn disable_keyboard_polling(&mut self) {
         self.handle.events.set_key_delivery(false);
         self.handle.context.set_char_polling(false);
+        self.handle.events.set_char_delivery(false);
         self.handle.context.set_char_mods_polling(false);
+        self.handle.events.set_char_mods_delivery(false);
     }
 
     /// Internal implementation backing `Window::enable_mouse_polling`.
@@ -311,6 +335,8 @@ impl VMNLWindow {
     pub(crate) fn enable_all_polling(&mut self) {
         self.handle.context.set_all_polling(true);
         self.handle.events.set_key_delivery(true);
+        self.handle.events.set_char_delivery(true);
+        self.handle.events.set_char_mods_delivery(true);
         self.handle.events.set_mouse_button_delivery(true);
         self.handle.events.set_cursor_pos_delivery(true);
         self.handle.events.set_cursor_enter_delivery(true);

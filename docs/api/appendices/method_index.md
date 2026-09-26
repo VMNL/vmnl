@@ -4,6 +4,9 @@
 | Owner | Method | Canonical page | Rustdoc method |
 |---|---|---|---|
 | `vmnl::Context` | `clone` | [Context](../reference/context.md) | [`clone`](../../../target/doc/vmnl/struct.Context.html#method.clone) |
+| `vmnl::Context` | `get_key_name` | [Context](../reference/context.md) | [`get_key_name`](../../../target/doc/vmnl/struct.Context.html#method.get_key_name) |
+| `vmnl::Context` | `get_key_scancode` | [Context](../reference/context.md) | [`get_key_scancode`](../../../target/doc/vmnl/struct.Context.html#method.get_key_scancode) |
+| `vmnl::Context` | `get_scancode_name` | [Context](../reference/context.md) | [`get_scancode_name`](../../../target/doc/vmnl/struct.Context.html#method.get_scancode_name) |
 | `vmnl::Context` | `is_raw_mouse_motion_supported` | [Context](../reference/context.md) | [`is_raw_mouse_motion_supported`](../../../target/doc/vmnl/struct.Context.html#method.is_raw_mouse_motion_supported) |
 | `vmnl::Context` | `new` | [Context](../reference/context.md) | [`new`](../../../target/doc/vmnl/struct.Context.html#method.new) |
 | `vmnl::Cursor` | `clone` | [Cursor](../reference/window/input/cursor.md) | [`clone`](../../../target/doc/vmnl/struct.Cursor.html#method.clone) |
@@ -102,6 +105,12 @@
 | `vmnl::RenderMode` | `eq` | [RenderMode](../reference/window/rendering/render_mode.md) | [`eq`](../../../target/doc/vmnl/enum.RenderMode.html#method.eq) |
 | `vmnl::RenderMode` | `fmt` | [RenderMode](../reference/window/rendering/render_mode.md) | [`fmt`](../../../target/doc/vmnl/enum.RenderMode.html#method.fmt) |
 | `vmnl::RenderMode` | `hash` | [RenderMode](../reference/window/rendering/render_mode.md) | [`hash`](../../../target/doc/vmnl/enum.RenderMode.html#method.hash) |
+| `vmnl::Scancode` | `as_raw` | [Scancode](../reference/window/input/scancode.md) | [`as_raw`](../../../target/doc/vmnl/struct.Scancode.html#method.as_raw) |
+| `vmnl::Scancode` | `clone` | [Scancode](../reference/window/input/scancode.md) | [`clone`](../../../target/doc/vmnl/struct.Scancode.html#method.clone) |
+| `vmnl::Scancode` | `eq` | [Scancode](../reference/window/input/scancode.md) | [`eq`](../../../target/doc/vmnl/struct.Scancode.html#method.eq) |
+| `vmnl::Scancode` | `fmt` | [Scancode](../reference/window/input/scancode.md) | [`fmt`](../../../target/doc/vmnl/struct.Scancode.html#method.fmt) |
+| `vmnl::Scancode` | `from_raw` | [Scancode](../reference/window/input/scancode.md) | [`from_raw`](../../../target/doc/vmnl/struct.Scancode.html#method.from_raw) |
+| `vmnl::Scancode` | `hash` | [Scancode](../reference/window/input/scancode.md) | [`hash`](../../../target/doc/vmnl/struct.Scancode.html#method.hash) |
 | `vmnl::StandardCursor` | `clone` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`clone`](../../../target/doc/vmnl/enum.StandardCursor.html#method.clone) |
 | `vmnl::StandardCursor` | `eq` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`eq`](../../../target/doc/vmnl/enum.StandardCursor.html#method.eq) |
 | `vmnl::StandardCursor` | `fmt` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`fmt`](../../../target/doc/vmnl/enum.StandardCursor.html#method.fmt) |
@@ -151,11 +160,14 @@
 | `vmnl::Window` | `hide` | [Window lifecycle](../reference/window/lifecycle.md) | [`hide`](../../../target/doc/vmnl/struct.Window.html#method.hide) |
 | `vmnl::Window` | `iconify` | [Window lifecycle](../reference/window/lifecycle.md) | [`iconify`](../../../target/doc/vmnl/struct.Window.html#method.iconify) |
 | `vmnl::Window` | `input` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`input`](../../../target/doc/vmnl/struct.Window.html#method.input) |
+| `vmnl::Window` | `is_char_mods_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_char_mods_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_char_mods_polling_enabled) |
+| `vmnl::Window` | `is_char_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_char_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_char_polling_enabled) |
 | `vmnl::Window` | `is_cursor_enter_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_cursor_enter_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_cursor_enter_polling_enabled) |
 | `vmnl::Window` | `is_cursor_hovered` | [Cursor controls](../reference/window/cursor.md) | [`is_cursor_hovered`](../../../target/doc/vmnl/struct.Window.html#method.is_cursor_hovered) |
 | `vmnl::Window` | `is_cursor_pos_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_cursor_pos_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_cursor_pos_polling_enabled) |
 | `vmnl::Window` | `is_focused` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_focused`](../../../target/doc/vmnl/struct.Window.html#method.is_focused) |
 | `vmnl::Window` | `is_iconified` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_iconified`](../../../target/doc/vmnl/struct.Window.html#method.is_iconified) |
+| `vmnl::Window` | `is_key_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_key_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_key_polling_enabled) |
 | `vmnl::Window` | `is_lock_key_modifier_reporting_enabled` | [Input modes](../reference/window/input/modes.md) | [`is_lock_key_modifier_reporting_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_lock_key_modifier_reporting_enabled) |
 | `vmnl::Window` | `is_maximized` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_maximized`](../../../target/doc/vmnl/struct.Window.html#method.is_maximized) |
 | `vmnl::Window` | `is_mouse_button_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_mouse_button_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_mouse_button_polling_enabled) |
@@ -163,6 +175,7 @@
 | `vmnl::Window` | `is_raw_mouse_motion_enabled` | [Cursor controls](../reference/window/cursor.md) | [`is_raw_mouse_motion_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_raw_mouse_motion_enabled) |
 | `vmnl::Window` | `is_ready` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_ready`](../../../target/doc/vmnl/struct.Window.html#method.is_ready) |
 | `vmnl::Window` | `is_scroll_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_scroll_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_scroll_polling_enabled) |
+| `vmnl::Window` | `is_sticky_keys_enabled` | [Input modes](../reference/window/input/modes.md) | [`is_sticky_keys_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_sticky_keys_enabled) |
 | `vmnl::Window` | `is_sticky_mouse_buttons_enabled` | [Input modes](../reference/window/input/modes.md) | [`is_sticky_mouse_buttons_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_sticky_mouse_buttons_enabled) |
 | `vmnl::Window` | `is_visible` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_visible`](../../../target/doc/vmnl/struct.Window.html#method.is_visible) |
 | `vmnl::Window` | `maximize` | [Window lifecycle](../reference/window/lifecycle.md) | [`maximize`](../../../target/doc/vmnl/struct.Window.html#method.maximize) |
@@ -200,6 +213,7 @@
 | `vmnl::Window` | `set_size` | [Window configuration](../reference/window/configuration.md) | [`set_size`](../../../target/doc/vmnl/struct.Window.html#method.set_size) |
 | `vmnl::Window` | `set_size_limits` | [Window configuration](../reference/window/configuration.md) | [`set_size_limits`](../../../target/doc/vmnl/struct.Window.html#method.set_size_limits) |
 | `vmnl::Window` | `set_size_polling` | [Window polling](../reference/window/polling.md) | [`set_size_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_size_polling) |
+| `vmnl::Window` | `set_sticky_keys` | [Input modes](../reference/window/input/modes.md) | [`set_sticky_keys`](../../../target/doc/vmnl/struct.Window.html#method.set_sticky_keys) |
 | `vmnl::Window` | `set_sticky_mouse_buttons` | [Input modes](../reference/window/input/modes.md) | [`set_sticky_mouse_buttons`](../../../target/doc/vmnl/struct.Window.html#method.set_sticky_mouse_buttons) |
 | `vmnl::Window` | `set_time` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`set_time`](../../../target/doc/vmnl/struct.Window.html#method.set_time) |
 | `vmnl::Window` | `set_title` | [Window configuration](../reference/window/configuration.md) | [`set_title`](../../../target/doc/vmnl/struct.Window.html#method.set_title) |

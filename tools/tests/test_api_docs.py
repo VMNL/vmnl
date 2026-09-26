@@ -108,6 +108,25 @@ class MatrixTests(unittest.TestCase):
             finally:
                 api_docs.MATRIX_PATH = old_matrix
 
+    def test_routes_sticky_key_methods_to_input_modes(self) -> None:
+        row = api_docs.CoverageRow(
+            api_docs.PublicItem("struct", "vmnl::Window"),
+            "Window",
+            "../reference/window/window.md",
+            "Rustdoc",
+            "window.html",
+            "test",
+        )
+
+        for name in ("is_sticky_keys_enabled", "set_sticky_keys"):
+            self.assertEqual(
+                api_docs.method_page(
+                    row,
+                    api_docs.PublicMethod("vmnl::Window", name),
+                ),
+                ("Input modes", "../reference/window/input/modes.md"),
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

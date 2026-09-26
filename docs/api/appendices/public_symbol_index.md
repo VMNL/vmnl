@@ -20,6 +20,7 @@
 | struct | `vmnl::MouseState` | [MouseState](../reference/window/input/mouse_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.MouseState.html) |
 | enum | `vmnl::PresentMode` | [PresentMode](../reference/window/present_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.PresentMode.html) |
 | enum | `vmnl::RenderMode` | [RenderMode](../reference/window/rendering/render_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.RenderMode.html) |
+| struct | `vmnl::Scancode` | [Scancode](../reference/window/input/scancode.md) | [Rustdoc](../../../target/doc/vmnl/struct.Scancode.html) |
 | enum | `vmnl::StandardCursor` | [StandardCursor](../reference/window/input/standard_cursor.md) | [Rustdoc](../../../target/doc/vmnl/enum.StandardCursor.html) |
 | struct | `vmnl::StandardCursorBuilder` | [StandardCursorBuilder](../reference/window/input/standard_cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.StandardCursorBuilder.html) |
 | struct | `vmnl::VMNLError` | [VMNLError](../reference/errors/vmnl_error.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLError.html) |

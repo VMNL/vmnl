@@ -6,6 +6,10 @@
 4. Use `is_pressed`/`is_released` only as batch transitions; use `is_down` for held state.
 
 One `poll_events` call is one batch. A press and release in that call leave `is_down == false` and both transition queries true. Disabling event delivery does not disable keyboard/mouse-button tracking.
+Keyboard events retain the platform scancode and modifier flags; unknown physical keys are emitted
+as `Key::Unknown` but are not added to the keyboard snapshot.
+For text entry, use `EventKind::Text` together with key events. `TextWithModifiers` exists only for
+compatibility with GLFW's deprecated modified-character callback.
 
 ```rust,no_run
 # extern crate vmnl;

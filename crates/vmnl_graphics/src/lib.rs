@@ -22,6 +22,6 @@ pub use exception::{VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult};
 pub use vmnl_instance::Context;
 pub use window::{
     Cursor, CursorBuilder, CursorMode, Event, EventKind, FrameRenderer, Input, Key, KeyboardState,
-    Modifiers, MonitorInfo, Monitors, MouseButton, MouseState, PresentMode, RenderMode,
+    Modifiers, MonitorInfo, Monitors, MouseButton, MouseState, PresentMode, RenderMode, Scancode,
     StandardCursor, StandardCursorBuilder, VideoMode, Window, WindowBuilder,
 };

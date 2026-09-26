@@ -95,8 +95,10 @@ WINDOW_CURSOR_METHODS = {
 }
 WINDOW_INPUT_MODE_METHODS = {
     "is_lock_key_modifier_reporting_enabled",
+    "is_sticky_keys_enabled",
     "is_sticky_mouse_buttons_enabled",
     "set_lock_key_modifier_reporting",
+    "set_sticky_keys",
     "set_sticky_mouse_buttons",
 }
 WINDOW_LIFECYCLE_METHODS = {

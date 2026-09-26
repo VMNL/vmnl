@@ -7,8 +7,18 @@
 
 use glfw::{ClientApiHint, Context as _, InitHint, WindowHint, WindowMode};
 use serde_json::{json, Value};
-use std::{cell::RefCell, env, process::ExitCode, rc::Rc};
+#[cfg(target_os = "linux")]
+use std::ffi::c_void;
+use std::{
+    cell::RefCell,
+    env, fs,
+    process::ExitCode,
+    rc::Rc,
+    time::{Duration, Instant},
+};
 use vmnl_platform_tests::{backend_name, parse_backend, PROBE_SCHEMA_VERSION};
+
+const NATIVE_INPUT_TIMEOUT: Duration = Duration::from_secs(5);
 
 fn main() -> ExitCode {
     let mut arguments = env::args().skip(1);
@@ -78,7 +88,13 @@ fn main() -> ExitCode {
     }
 
     glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
-    glfw.window_hint(WindowHint::Visible(false));
+    if actual == glfw::Platform::Wayland && operation == "keyboard-native-input" {
+        glfw.window_hint(WindowHint::Maximized(true));
+    }
+    glfw.window_hint(WindowHint::Visible(matches!(
+        operation.as_str(),
+        "keyboard-native-input" | "sticky-keys-manual"
+    )));
     let Some((mut window, events)) =
         glfw.create_window(160, 120, "VMNL platform probe", WindowMode::Windowed)
     else {
@@ -160,6 +176,32 @@ fn main() -> ExitCode {
                 },
             })
         }
+        "keyboard-metadata" => {
+            let scancode = glfw::get_key_scancode(Some(glfw::Key::A));
+            if actual == glfw::Platform::Wayland {
+                json!({
+                    "a_scancode": scancode,
+                    "names_deferred_until_keyboard_event": true,
+                })
+            } else {
+                json!({
+                    "a_scancode": scancode,
+                    "a_name_by_key": glfw::get_key_name(Some(glfw::Key::A), None),
+                    "a_name_by_scancode": scancode
+                        .and_then(|value| glfw::get_key_name(None, Some(value))),
+                    "escape_name": glfw::get_key_name(Some(glfw::Key::Escape), None),
+                })
+            }
+        }
+        "keyboard-input-modes" => keyboard_input_modes(&mut window, &events),
+        "keyboard-wait-events-then-poll" => {
+            keyboard_wait_then_poll(&mut glfw, &mut window, &events, None)
+        }
+        "keyboard-wait-events-timeout-then-poll" => {
+            keyboard_wait_then_poll(&mut glfw, &mut window, &events, Some(0.001))
+        }
+        "keyboard-native-input" => native_keyboard_input(&mut glfw, &mut window, &events, actual),
+        "sticky-keys-manual" => manual_sticky_keys(&mut glfw, &mut window, &events, actual),
         "raw-mouse-motion" => {
             let supported = glfw.supports_raw_motion();
             if supported {
@@ -190,6 +232,10 @@ fn main() -> ExitCode {
         }
     };
 
+    let operation_succeeded = !matches!(
+        operation.as_str(),
+        "keyboard-native-input" | "sticky-keys-manual"
+    ) || value["qualified"] == true;
     emit(
         &requested_name,
         Some(actual),
@@ -197,9 +243,360 @@ fn main() -> ExitCode {
         "operation",
         &callbacks,
         &value,
-        "ok",
+        if operation_succeeded { "ok" } else { "error" },
     );
-    ExitCode::SUCCESS
+    if operation_succeeded {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(13)
+    }
+}
+
+fn keyboard_input_modes(
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+) -> Value {
+    let default_sticky_keys = window.has_sticky_keys();
+    window.set_sticky_keys(true);
+    let enabled_sticky_keys = window.has_sticky_keys();
+    window.set_key_polling(true);
+    let window_ptr = window.window_ptr();
+
+    // SAFETY: The window is live on the GLFW thread. Temporarily removing and restoring the
+    // callback obtains the callback installed by glfw-rs without changing its final state.
+    let callback = unsafe {
+        let callback = glfw::ffi::glfwSetKeyCallback(window_ptr, None);
+        glfw::ffi::glfwSetKeyCallback(window_ptr, callback);
+        callback
+    };
+    let actions = callback.map_or_else(Vec::new, |callback| {
+        let scancode = glfw::get_key_scancode(Some(glfw::Key::A)).unwrap_or_default();
+        // SAFETY: The callback was installed by glfw-rs for this live window. The key, scancode,
+        // actions and modifier mask are valid GLFW values and enter the glfw-rs receiver.
+        unsafe {
+            callback(
+                window_ptr,
+                glfw::ffi::GLFW_KEY_A,
+                scancode,
+                glfw::ffi::GLFW_PRESS,
+                0,
+            );
+            callback(
+                window_ptr,
+                glfw::ffi::GLFW_KEY_A,
+                scancode,
+                glfw::ffi::GLFW_RELEASE,
+                0,
+            );
+        }
+
+        glfw::flush_messages(events)
+            .filter_map(|(_, event)| match event {
+                glfw::WindowEvent::Key(glfw::Key::A, _, action, _) => Some(format!("{action:?}")),
+                _ => None,
+            })
+            .collect()
+    });
+
+    window.set_sticky_keys(false);
+    json!({
+        "default_sticky_keys": default_sticky_keys,
+        "enabled_sticky_keys": enabled_sticky_keys,
+        "disabled_after_reset": !window.has_sticky_keys(),
+        "callback_installed": callback.is_some(),
+        "actions": actions,
+    })
+}
+
+fn keyboard_wait_then_poll(
+    glfw: &mut glfw::Glfw,
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+    timeout: Option<f64>,
+) -> Value {
+    window.set_key_polling(true);
+    let window_ptr = window.window_ptr();
+    // SAFETY: The window is live on the GLFW thread. Temporarily removing and restoring the
+    // callback obtains the callback installed by glfw-rs without changing its final state.
+    let callback = unsafe {
+        let callback = glfw::ffi::glfwSetKeyCallback(window_ptr, None);
+        glfw::ffi::glfwSetKeyCallback(window_ptr, callback);
+        callback
+    };
+    let Some(callback) = callback else {
+        return json!({"callback_installed": false});
+    };
+    let scancode = glfw::get_key_scancode(Some(glfw::Key::A)).unwrap_or_default();
+
+    // SAFETY: The callback was installed by glfw-rs for this live window. The key, scancode,
+    // actions and modifier mask are valid GLFW values and enter the glfw-rs receiver.
+    unsafe {
+        callback(
+            window_ptr,
+            glfw::ffi::GLFW_KEY_A,
+            scancode,
+            glfw::ffi::GLFW_PRESS,
+            0,
+        );
+        callback(
+            window_ptr,
+            glfw::ffi::GLFW_KEY_A,
+            scancode,
+            glfw::ffi::GLFW_RELEASE,
+            0,
+        );
+    }
+
+    if let Some(seconds) = timeout {
+        glfw.wait_events_timeout(seconds);
+    } else {
+        glfw.post_empty_event();
+        glfw.wait_events();
+    }
+    glfw.poll_events();
+
+    let actions: Vec<String> = glfw::flush_messages(events)
+        .filter_map(|(_, event)| match event {
+            glfw::WindowEvent::Key(glfw::Key::A, _, action, _) => Some(format!("{action:?}")),
+            _ => None,
+        })
+        .collect();
+    json!({
+        "callback_installed": true,
+        "actions_after_poll": actions,
+    })
+}
+
+fn manual_sticky_keys(
+    glfw: &mut glfw::Glfw,
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+    platform: glfw::Platform,
+) -> Value {
+    window.set_key_polling(true);
+    window.show();
+    if platform != glfw::Platform::Wayland {
+        window.focus();
+    }
+
+    #[cfg(target_os = "linux")]
+    let _wayland_buffer = if platform == glfw::Platform::Wayland {
+        match map_wayland_probe(glfw, window) {
+            Ok(buffer) => Some(buffer),
+            Err(error) => {
+                return json!({
+                    "qualified": false,
+                    "stage": "mapping",
+                    "error": error,
+                });
+            }
+        }
+    } else {
+        None
+    };
+
+    eprintln!("Focus the probe window within 15 seconds.");
+    let focus_deadline = Instant::now() + Duration::from_secs(15);
+    while !window.is_focused() && Instant::now() < focus_deadline {
+        glfw.wait_events_timeout(0.1);
+        glfw::flush_messages(events).for_each(drop);
+    }
+    if !window.is_focused() {
+        return json!({
+            "qualified": false,
+            "stage": "focus",
+            "focused": false,
+        });
+    }
+
+    window.set_sticky_keys(true);
+    eprintln!(
+        "Press and release the key at the US A position (Q on French AZERTY) within 15 seconds."
+    );
+    let deadline = Instant::now() + Duration::from_secs(15);
+    let mut saw_press = false;
+    let mut saw_release = false;
+    while Instant::now() < deadline && !saw_release {
+        glfw.wait_events_timeout(0.1);
+        for (_, event) in glfw::flush_messages(events) {
+            match event {
+                glfw::WindowEvent::Key(glfw::Key::A, _, glfw::Action::Press, _) => {
+                    saw_press = true;
+                }
+                glfw::WindowEvent::Key(glfw::Key::A, _, glfw::Action::Release, _) => {
+                    saw_release = true;
+                }
+                _ => {}
+            }
+        }
+    }
+
+    let first_read = window.get_key(glfw::Key::A);
+    let second_read = window.get_key(glfw::Key::A);
+    window.set_sticky_keys(false);
+    let qualified = saw_press
+        && saw_release
+        && first_read == glfw::Action::Press
+        && second_read == glfw::Action::Release;
+
+    json!({
+        "qualified": qualified,
+        "stage": "input",
+        "focused": window.is_focused(),
+        "saw_press": saw_press,
+        "saw_release": saw_release,
+        "first_read": format!("{first_read:?}"),
+        "second_read": format!("{second_read:?}"),
+    })
+}
+
+#[cfg(target_os = "linux")]
+struct WaylandProbeBuffer(*mut c_void);
+
+#[cfg(target_os = "linux")]
+unsafe extern "C" {
+    fn vmnl_map_wayland_probe(
+        display: *mut c_void,
+        surface: *mut c_void,
+        width: i32,
+        height: i32,
+        error: *mut i32,
+    ) -> *mut c_void;
+    fn vmnl_destroy_wayland_probe_buffer(buffer: *mut c_void);
+}
+
+#[cfg(target_os = "linux")]
+impl Drop for WaylandProbeBuffer {
+    fn drop(&mut self) {
+        // SAFETY: The helper returned this live wl_buffer; it is destroyed before GLFW ends.
+        unsafe { vmnl_destroy_wayland_probe_buffer(self.0) };
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn map_wayland_probe(
+    glfw: &mut glfw::Glfw,
+    window: &glfw::PWindow,
+) -> Result<WaylandProbeBuffer, String> {
+    glfw.poll_events();
+    let (width, height) = window.get_framebuffer_size();
+    let mut error = 0;
+    // SAFETY: GLFW owns both live Wayland objects for this window on this thread. The helper
+    // attaches a test-only shm buffer and returns its ownership to WaylandProbeBuffer.
+    let buffer = unsafe {
+        vmnl_map_wayland_probe(
+            glfw.get_wayland_display(),
+            window.get_wayland_window(),
+            width,
+            height,
+            &raw mut error,
+        )
+    };
+    if buffer.is_null() {
+        Err(format!(
+            "Wayland shm mapping failed: code={error}, framebuffer={width}x{height}, maximized={}",
+            window.is_maximized()
+        ))
+    } else {
+        Ok(WaylandProbeBuffer(buffer))
+    }
+}
+
+fn native_keyboard_input(
+    glfw: &mut glfw::Glfw,
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+    platform: glfw::Platform,
+) -> Value {
+    window.set_key_polling(true);
+    window.show();
+    if platform != glfw::Platform::Wayland {
+        window.focus();
+    }
+
+    let Some(ready_file) = env::var_os("VMNL_PLATFORM_READY_FILE") else {
+        return json!({
+            "qualified": false,
+            "stage": "handshake",
+            "error": "VMNL_PLATFORM_READY_FILE is missing",
+        });
+    };
+
+    #[cfg(target_os = "linux")]
+    let _wayland_buffer = if platform == glfw::Platform::Wayland {
+        match map_wayland_probe(glfw, window) {
+            Ok(buffer) => Some(buffer),
+            Err(error) => {
+                return json!({
+                    "qualified": false,
+                    "stage": "mapping",
+                    "error": error,
+                });
+            }
+        }
+    } else {
+        None
+    };
+    if platform == glfw::Platform::Wayland {
+        if let Err(error) = fs::write(&ready_file, b"MAPPED\n") {
+            return json!({
+                "qualified": false,
+                "stage": "handshake",
+                "error": error.to_string(),
+            });
+        }
+    }
+    let focus_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    while !window.is_focused() && Instant::now() < focus_deadline {
+        glfw.wait_events_timeout(0.01);
+        glfw::flush_messages(events).for_each(drop);
+    }
+    if !window.is_focused() {
+        return json!({
+            "qualified": false,
+            "stage": "focus",
+            "focused": false,
+            "hovered": window.is_hovered(),
+            "maximized": window.is_maximized(),
+            "framebuffer_size": window.get_framebuffer_size(),
+        });
+    }
+
+    if let Err(error) = fs::write(&ready_file, b"READY\n") {
+        return json!({
+            "qualified": false,
+            "stage": "handshake",
+            "error": error.to_string(),
+        });
+    }
+
+    let input_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    let mut actions = Vec::new();
+    let mut scancodes = Vec::new();
+    while actions.as_slice() != ["Press", "Release"] && Instant::now() < input_deadline {
+        glfw.wait_events_timeout(0.01);
+        for (_, event) in glfw::flush_messages(events) {
+            if let glfw::WindowEvent::Key(glfw::Key::A, scancode, action, _) = event {
+                actions.push(format!("{action:?}"));
+                scancodes.push(scancode);
+            }
+        }
+    }
+
+    let qualified = actions.as_slice() == ["Press", "Release"]
+        && scancodes.len() == 2
+        && scancodes[0] == scancodes[1]
+        && window.get_key(glfw::Key::A) == glfw::Action::Release;
+    json!({
+        "qualified": qualified,
+        "stage": "input",
+        "focused": window.is_focused(),
+        "injector": env::var("VMNL_PLATFORM_INPUT_INJECTOR")
+            .unwrap_or_else(|_| "unknown".to_owned()),
+        "actions": actions,
+        "scancodes": scancodes,
+        "final_state": format!("{:?}", window.get_key(glfw::Key::A)),
+    })
 }
 
 fn wait_then_poll(

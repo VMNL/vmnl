@@ -131,6 +131,15 @@ jobs:
             cat target/wayland-xvfb.log
             exit 1
           fi
+          openbox >target/wayland-openbox.log 2>&1 &
+          wayland_openbox_pid=$!
+          trap 'kill "$wayland_openbox_pid" "$wayland_xvfb_pid" 2>/dev/null || true' EXIT
+          for _ in {1..40}; do
+            xprop -root _NET_SUPPORTING_WM_CHECK 2>/dev/null | grep -q 'window id' && break
+            kill -0 "$wayland_openbox_pid"
+            sleep 0.25
+          done
+          xprop -root _NET_SUPPORTING_WM_CHECK | grep -q 'window id'
           runtime_dir="$RUNNER_TEMP/vmnl-weston-runtime"
           mkdir -p "$runtime_dir"
           chmod 700 "$runtime_dir"
@@ -139,7 +148,7 @@ jobs:
           weston --backend=x11 --renderer=pixman --no-config \
             --socket="$WAYLAND_DISPLAY" --idle-time=0 >target/weston.log 2>&1 &
           weston_pid=$!
-          trap 'kill "$weston_pid" "$wayland_xvfb_pid" 2>/dev/null || true' EXIT
+          trap 'kill "$weston_pid" "$wayland_openbox_pid" "$wayland_xvfb_pid" 2>/dev/null || true' EXIT
           for _ in {1..40}; do
             [[ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]] && break
             if ! kill -0 "$weston_pid"; then
@@ -183,7 +192,7 @@ jobs:
           VMNL_PLATFORM_TEST_BACKEND=x11 \
             cargo test -p vmnl-platform-tests --locked \
               --test backend_contract -- --ignored --nocapture
-      - name: Run native hidden-window probe experimentally
+      - name: Run native platform probes experimentally
         if: runner.os != 'Linux'
         continue-on-error: true
         env:
@@ -200,6 +209,7 @@ jobs:
           path: |
             target/platform-artifacts/*.jsonl
             target/wayland-xvfb.log
+            target/wayland-openbox.log
             target/weston.log
             target/xvfb.log
             target/openbox.log

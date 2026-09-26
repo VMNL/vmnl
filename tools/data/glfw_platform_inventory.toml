@@ -357,22 +357,40 @@ backends = [{ name = "wayland", status = "conditional", conditions = "Window is 
 proofs = ["test:platform_probe:null:cursor-position", "justification:focus and physical cursor movement require native interactive evidence"]
 
 [[function]]
+c_symbol = "glfwGetKeyName"
+rust_wrappers = ["glfw::get_key_name"]
+category = "input"
+introduced = "3.2"
+vmnl_usage = ["Context::get_key_name", "Context::get_scancode_name"]
+backends = [{ name = "wayland", status = "conditional", conditions = "Window::poll_events has observed a keyboard event and the key or scancode maps to a printable key in the active XKB layout.", behavior = "VMNL returns None before keyboard readiness. For a known scancode it resolves the named key first, avoiding the bundled GLFW 3.4 Wayland backend error on non-printable keys; unmapped scancodes use the backend query. Printable keys return an owned UTF-8 active-layout name.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_VALUE", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "None before keyboard readiness or for invalid, unmapped or non-printable input", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "x11", status = "conditional", conditions = "The key or scancode maps to a printable key in the active XKB layout.", behavior = "Returns an owned UTF-8 copy of the active-layout key name; may return null when XKB is unavailable.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_VALUE", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "None for invalid, unmapped or non-printable input", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "win32-cocoa", status = "conditional", conditions = "The key or scancode maps to a printable key in the active system layout.", behavior = "Returns an owned UTF-8 copy of the active-layout key name.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_VALUE", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "None for invalid, unmapped or non-printable input", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "null", status = "supported", conditions = "The fixed Null mapping contains a printable key or scancode.", behavior = "Returns the deterministic built-in printable name used by the Null backend.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_VALUE", "GLFW_INVALID_ENUM"], sentinel = "None for invalid, unmapped or non-printable input", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:keyboard-metadata", "test:vmnl_instance::context::tests::wayland_non_printable_scancode_avoids_raw_name_lookup", "justification:native names require an active platform keyboard layout"]
+
+[[function]]
+c_symbol = "glfwGetKeyScancode"
+rust_wrappers = ["glfw::get_key_scancode"]
+category = "input"
+introduced = "3.3"
+vmnl_usage = ["Context::get_key_scancode", "Context::get_scancode_name"]
+backends = [{ name = "all", status = "conditional", conditions = "GLFW is initialized and the named key has an active platform mapping.", behavior = "Returns the platform-specific scancode for the named key.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM"], sentinel = "None when the key is unsupported; VMNL rejects Key::Unknown before the call", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:keyboard-metadata", "test:window::input::keyboard::all_tracked_keys_round_trip_through_glfw", "justification:native scancode values require the active backend mapping"]
+
+[[function]]
 c_symbol = "glfwGetInputMode"
-rust_wrappers = ["PWindow::does_store_lock_key_mods", "PWindow::get_cursor_mode", "PWindow::has_sticky_mouse_buttons", "PWindow::uses_raw_mouse_motion"]
+rust_wrappers = ["PWindow::does_store_lock_key_mods", "PWindow::get_cursor_mode", "PWindow::has_sticky_keys", "PWindow::has_sticky_mouse_buttons", "PWindow::uses_raw_mouse_motion"]
 category = "input"
 introduced = "3.0"
-vmnl_usage = ["Window::is_lock_key_modifier_reporting_enabled", "Window::is_raw_mouse_motion_enabled", "Window::is_sticky_mouse_buttons_enabled"]
-backends = [{ name = "all", status = "supported", conditions = "Live window and a valid input-mode selector.", behavior = "Returns GLFW's stored cursor, sticky mouse-button, lock-key modifier or raw-motion mode; effective cursor and raw-motion behavior can differ while unfocused or unsupported.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM"], sentinel = "Zero on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
-proofs = ["test:platform_probe:null:cursor-modes", "test:platform_probe:null:mouse-input-modes", "test:platform_probe:null:raw-mouse-motion", "test:platform_probe:wayland:mouse-input-modes", "test:platform_probe:x11:mouse-input-modes"]
+vmnl_usage = ["Window::is_lock_key_modifier_reporting_enabled", "Window::is_raw_mouse_motion_enabled", "Window::is_sticky_keys_enabled", "Window::is_sticky_mouse_buttons_enabled"]
+backends = [{ name = "all", status = "supported", conditions = "Live window and a valid input-mode selector.", behavior = "Returns GLFW's stored cursor, sticky key/button, lock-key modifier or raw-motion mode; effective cursor and raw-motion behavior can differ while unfocused or unsupported.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM"], sentinel = "Zero on error", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:cursor-modes", "test:platform_probe:null:keyboard-input-modes", "test:platform_probe:null:mouse-input-modes", "test:platform_probe:null:raw-mouse-motion", "test:platform_probe:wayland:keyboard-input-modes", "test:platform_probe:wayland:mouse-input-modes", "test:platform_probe:x11:keyboard-input-modes", "test:platform_probe:x11:mouse-input-modes"]
 
 [[function]]
 c_symbol = "glfwSetInputMode"
-rust_wrappers = ["glfw_backend::set_cursor_mode", "PWindow::set_cursor_mode", "PWindow::set_raw_mouse_motion", "PWindow::set_sticky_mouse_buttons", "PWindow::set_store_lock_key_mods"]
+rust_wrappers = ["glfw_backend::set_cursor_mode", "PWindow::set_cursor_mode", "PWindow::set_raw_mouse_motion", "PWindow::set_sticky_keys", "PWindow::set_sticky_mouse_buttons", "PWindow::set_store_lock_key_mods"]
 category = "input"
 introduced = "3.0"
-vmnl_usage = ["Window::set_cursor_mode", "Window::set_lock_key_modifier_reporting", "Window::set_raw_mouse_motion", "Window::set_sticky_mouse_buttons"]
-backends = [{ name = "wayland", status = "conditional", conditions = "Live window; pointer focus and compositor pointer-constraint/relative-pointer protocols are available when required by the cursor/raw mode.", behavior = "Stores sticky and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor; disabled/captured become effective when the pointer enters. Raw motion affects relative motion only in disabled mode.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_FEATURE_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "Stored cursor/raw mode may not become effective", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "x11", status = "conditional", conditions = "Live window; focus is required for cursor confinement and XInput 2 for raw motion.", behavior = "Stores sticky and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor; other cursor modes apply disabled/captured confinement while focused. Raw motion affects disabled mode only.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_FEATURE_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "Stored cursor/raw mode may not become effective", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "win32", status = "conditional", conditions = "Live window; focus is required for disabled/captured confinement.", behavior = "Stores sticky and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor; raw motion affects disabled mode only.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_FEATURE_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "Stored cursor mode may not become effective while unfocused", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "cocoa", status = "conditional", conditions = "Live window; normal or disabled cursor mode is requested and raw motion is not enabled when configuring those modes.", behavior = "Stores sticky and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor. Captured mode emits GLFW_FEATURE_UNIMPLEMENTED; raw motion is unsupported.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_FEATURE_UNAVAILABLE", "GLFW_FEATURE_UNIMPLEMENTED", "GLFW_PLATFORM_ERROR"], sentinel = "Unsupported cursor/raw option has no native effect", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "null", status = "supported", conditions = "Live Null window.", behavior = "Stores sticky, lock-key, effective cursor and raw-motion modes without a physical cursor. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "No physical effect", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
-proofs = ["test:platform_probe:null:cursor-modes", "test:platform_probe:null:mouse-input-modes", "test:platform_probe:null:raw-mouse-motion", "test:platform_probe:wayland:mouse-input-modes", "test:platform_probe:x11:mouse-input-modes", "test:window::input::cursor_mode::cursor_modes_map_to_their_effective_glfw_mode", "justification:native confinement and raw deltas require pointer focus and physical motion"]
+vmnl_usage = ["Window::set_cursor_mode", "Window::set_lock_key_modifier_reporting", "Window::set_raw_mouse_motion", "Window::set_sticky_keys", "Window::set_sticky_mouse_buttons"]
+backends = [{ name = "wayland", status = "conditional", conditions = "Live window; pointer focus and compositor pointer-constraint/relative-pointer protocols are available when required by the cursor/raw mode.", behavior = "Stores sticky key/button and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor; disabled/captured become effective when the pointer enters. Raw motion affects relative motion only in disabled mode.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_FEATURE_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "Stored cursor/raw mode may not become effective", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "x11", status = "conditional", conditions = "Live window; focus is required for cursor confinement and XInput 2 for raw motion.", behavior = "Stores sticky key/button and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor; other cursor modes apply disabled/captured confinement while focused. Raw motion affects disabled mode only.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_FEATURE_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "Stored cursor/raw mode may not become effective", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "win32", status = "conditional", conditions = "Live window; focus is required for disabled/captured confinement.", behavior = "Stores sticky key/button and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor; raw motion affects disabled mode only.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_FEATURE_UNAVAILABLE", "GLFW_PLATFORM_ERROR"], sentinel = "Stored cursor mode may not become effective while unfocused", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "cocoa", status = "conditional", conditions = "Live window; normal or disabled cursor mode is requested and raw motion is not enabled when configuring those modes.", behavior = "Stores sticky key/button and lock-key modes in GLFW core. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor. Captured mode emits GLFW_FEATURE_UNIMPLEMENTED; raw motion is unsupported.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_FEATURE_UNAVAILABLE", "GLFW_FEATURE_UNIMPLEMENTED", "GLFW_PLATFORM_ERROR"], sentinel = "Unsupported cursor/raw option has no native effect", source = "https://www.glfw.org/docs/3.4/group__input.html" }, { name = "null", status = "supported", conditions = "Live Null window.", behavior = "Stores sticky key/button, lock-key, effective cursor and raw-motion modes without a physical cursor. VMNL maps requested Hidden mode to GLFW normal mode plus a transparent cursor.", errors = ["GLFW_NOT_INITIALIZED", "GLFW_INVALID_ENUM", "GLFW_PLATFORM_ERROR"], sentinel = "No physical effect", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
+proofs = ["test:platform_probe:null:cursor-modes", "test:platform_probe:null:keyboard-input-modes", "test:platform_probe:null:mouse-input-modes", "test:platform_probe:null:raw-mouse-motion", "test:platform_probe:wayland:keyboard-input-modes", "test:platform_probe:wayland:mouse-input-modes", "test:platform_probe:x11:keyboard-input-modes", "test:platform_probe:x11:mouse-input-modes", "test:window::input::cursor_mode::cursor_modes_map_to_their_effective_glfw_mode", "justification:native sticky latches, confinement and raw deltas require physical input or pointer focus"]
 
 [[function]]
 c_symbol = "glfwRawMouseMotionSupported"
@@ -417,7 +435,7 @@ category = "events"
 introduced = "3.0"
 vmnl_usage = ["Window::wait_events"]
 backends = [{ name = "all", status = "supported", conditions = "Called from the platform main thread where required.", behavior = "Waits for native events.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "Returns on failure", source = "https://www.glfw.org/docs/3.4/group__window.html" }]
-proofs = ["test:platform_probe:null:wait-events-then-poll"]
+proofs = ["test:platform_probe:null:wait-events-then-poll", "test:platform_probe:null:keyboard-wait-events-then-poll", "test:platform_probe:wayland:keyboard-wait-events-then-poll", "test:platform_probe:x11:keyboard-wait-events-then-poll"]
 
 [[function]]
 c_symbol = "glfwWaitEventsTimeout"
@@ -426,7 +444,7 @@ category = "events"
 introduced = "3.2"
 vmnl_usage = ["Window::wait_events_timeout"]
 backends = [{ name = "all", status = "supported", conditions = "Timeout is finite and non-negative.", behavior = "Waits until an event or timeout.", errors = ["GLFW_INVALID_VALUE", "GLFW_PLATFORM_ERROR"], sentinel = "Returns on failure", source = "https://www.glfw.org/docs/3.4/group__window.html" }]
-proofs = ["test:platform_probe:null:wait-events-timeout-then-poll"]
+proofs = ["test:platform_probe:null:wait-events-timeout-then-poll", "test:platform_probe:null:keyboard-wait-events-timeout-then-poll", "test:platform_probe:wayland:keyboard-wait-events-timeout-then-poll", "test:platform_probe:x11:keyboard-wait-events-timeout-then-poll"]
 
 [[function]]
 c_symbol = "glfwPostEmptyEvent"
@@ -507,7 +525,7 @@ c_symbol = "glfwSetCharCallback"
 rust_wrappers = ["PWindow::set_char_polling"]
 category = "callbacks"
 introduced = "3.0"
-vmnl_usage = ["Window::set_char_polling"]
+vmnl_usage = ["Window::is_char_polling_enabled", "Window::set_char_polling"]
 backends = [{ name = "all", status = "supported", conditions = "Live window.", behavior = "Installs character callback.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "null previous callback", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
 proofs = ["justification:callback registration is backend-neutral"]
 
@@ -516,7 +534,7 @@ c_symbol = "glfwSetCharModsCallback"
 rust_wrappers = ["PWindow::set_char_mods_polling"]
 category = "callbacks"
 introduced = "3.1"
-vmnl_usage = ["Window::set_char_mods_polling"]
+vmnl_usage = ["Window::is_char_mods_polling_enabled", "Window::set_char_mods_polling"]
 backends = [{ name = "all", status = "supported", conditions = "Live window.", behavior = "Installs modified-character callback.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "null previous callback", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
 proofs = ["justification:callback registration is backend-neutral"]
 
@@ -525,7 +543,7 @@ c_symbol = "glfwSetKeyCallback"
 rust_wrappers = ["PWindow::set_key_polling"]
 category = "callbacks"
 introduced = "3.0"
-vmnl_usage = ["KeyboardState", "Window::set_key_polling"]
+vmnl_usage = ["KeyboardState", "Window::is_key_polling_enabled", "Window::set_key_polling"]
 backends = [{ name = "all", status = "supported", conditions = "Live window.", behavior = "Installs key callback.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "null previous callback", source = "https://www.glfw.org/docs/3.4/group__input.html" }]
 proofs = ["justification:callback registration is backend-neutral"]
 

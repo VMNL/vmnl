@@ -10,7 +10,7 @@
 | `PresentMode` | `Auto`: `Mailbox` → `Immediate` → `FifoRelaxed` → `Fifo` among supported modes |
 | `RenderMode` | `PerObject`; `Batched` currently falls back to it |
 | `Input`, `KeyboardState`, `MouseState` | All states inactive |
-| Window sticky mouse buttons / lock-key modifier reporting | Disabled |
+| Window sticky keys / sticky mouse buttons / lock-key modifier reporting | Disabled |
 | `CursorMode` / new window cursor | `Normal`; backend default cursor; raw mouse motion disabled |
 | `CursorBuilder` | hotspot `(0, 0)`; diagnostic hotspot marker disabled |
 | `Modifiers` | `NONE` |

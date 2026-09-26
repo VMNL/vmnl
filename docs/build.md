@@ -139,8 +139,8 @@ See the [API change protocol](api/maintenance/api_change_protocol.md).
 
 Platform recipes never install system packages. `test-platform-null` requires no display server.
 `test-platform-wayland` requires an already running Wayland compositor and a matching
-`WAYLAND_DISPLAY`; CI uses Weston with Pixman, nested under a dedicated Xvfb server whose X11
-input seat satisfies the `wl_seat` requirement in GLFW 3.4.
+`WAYLAND_DISPLAY`; CI uses Weston with Pixman, nested under Xvfb with Openbox. Xvfb's X11 input
+seat satisfies the `wl_seat` requirement in GLFW 3.4.
 `test-platform-x11` requires `DISPLAY` and
 an EWMH-capable window manager; CI uses Xvfb with Openbox. These probes do not initialize Vulkan.
 

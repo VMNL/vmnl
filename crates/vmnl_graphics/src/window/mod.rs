@@ -23,7 +23,7 @@ pub use event::{Event, EventKind};
 pub(crate) use input::CursorImage;
 pub use input::{
     Cursor, CursorBuilder, CursorMode, Input, Key, KeyboardState, Modifiers, MouseButton,
-    MouseState, StandardCursor, StandardCursorBuilder,
+    MouseState, Scancode, StandardCursor, StandardCursorBuilder,
 };
 pub use monitors::{MonitorInfo, Monitors, VideoMode};
 use vulkano::{

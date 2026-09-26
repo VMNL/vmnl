@@ -33,6 +33,7 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | struct | `vmnl::Monitors` | [Monitors](../reference/window/monitors/monitors.md) | [Rustdoc](../../../target/doc/vmnl/struct.Monitors.html) | [GPU window runtime](../../../tests/gpu/tests/window_runtime.rs) |
 | struct | `vmnl::Modifiers` | [Modifiers](../reference/window/input/modifiers.md) | [Rustdoc](../../../target/doc/vmnl/struct.Modifiers.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::MouseState` | [MouseState](../reference/window/input/mouse_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.MouseState.html) | [API input](../../../tests/api/tests/input.rs) |
+| struct | `vmnl::Scancode` | [Scancode](../reference/window/input/scancode.md) | [Rustdoc](../../../target/doc/vmnl/struct.Scancode.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::StandardCursorBuilder` | [StandardCursorBuilder](../reference/window/input/standard_cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.StandardCursorBuilder.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::VMNLError` | [VMNLError](../reference/errors/vmnl_error.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLError.html) | [API errors](../../../tests/api/tests/errors.rs) |
 | struct | `vmnl::VMNLErrorLocation` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLErrorLocation.html) | [API errors](../../../tests/api/tests/errors.rs) |

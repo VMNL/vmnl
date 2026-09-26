@@ -26,6 +26,13 @@ impl Window {
         self.inner.set_char_polling(enabled);
     }
 
+    /// Returns whether text input events are delivered by [`poll_events`](Self::poll_events).
+    #[inline]
+    #[must_use]
+    pub const fn is_char_polling_enabled(&self) -> bool {
+        self.inner.is_char_polling_enabled()
+    }
+
     /// Enables or disables delivery of mouse-button events from [`poll_events`](Self::poll_events).
     ///
     /// Internal mouse-button state tracking remains active when delivery is disabled.
@@ -241,7 +248,19 @@ impl Window {
         self.inner.set_key_polling(enabled);
     }
 
-    /// Enables or disables polling for modified text input events.
+    /// Returns whether key events are delivered by [`poll_events`](Self::poll_events).
+    ///
+    /// Internal key-state tracking remains active when delivery is disabled.
+    #[inline]
+    #[must_use]
+    pub const fn is_key_polling_enabled(&self) -> bool {
+        self.inner.is_key_polling_enabled()
+    }
+
+    /// Enables or disables polling for legacy modified-text input events.
+    ///
+    /// GLFW deprecated this event source. Prefer ordinary text events together with key events for
+    /// new code.
     ///
     /// # Arguments
     /// - `enabled`: `true` to receive modified text input events, `false` to stop receiving them.
@@ -259,6 +278,17 @@ impl Window {
     #[inline]
     pub fn set_char_mods_polling(&mut self, enabled: bool) {
         self.inner.set_char_mods_polling(enabled);
+    }
+
+    /// Returns whether legacy modified-text events are delivered by
+    /// [`poll_events`](Self::poll_events).
+    ///
+    /// GLFW deprecated this event source. Prefer [`set_char_polling`](Self::set_char_polling)
+    /// together with [`set_key_polling`](Self::set_key_polling) for new code.
+    #[inline]
+    #[must_use]
+    pub const fn is_char_mods_polling_enabled(&self) -> bool {
+        self.inner.is_char_mods_polling_enabled()
     }
 
     /// Enables or disables polling for refresh events.
