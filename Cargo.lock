@@ -3,6 +3,13 @@
 version = 4
 
 [[package]]
+name = "all_shapes"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
 name = "as-raw-xcb-connection"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -103,7 +110,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "d2_shapes"
+name = "d2_shapes_circle"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
+name = "d2_shapes_line"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
+name = "d2_shapes_rect"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
+name = "d2_shapes_triangle"
 version = "0.1.0"
 dependencies = [
  "vmnl",
