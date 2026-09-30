@@ -5,7 +5,7 @@
 
 use vmnl::{
     common::{BufferMemoryPreference, Rgba},
-    d2::{Anchor, LineCap, Shape, Vector2f, Vertex2D},
+    d2::{Shape, Vector2f, Vertex2D},
     Context, Key, PresentMode, RenderMode, VMNLResult, Window,
 };
 
@@ -46,41 +46,6 @@ fn main() -> VMNLResult<()> {
         .build(&context)?;
 
     let pentagon = indexed_pentagon(&context)?;
-    let triangle = Shape::triangle_from_vertices([
-        vertex(560.0, 120.0, Rgba::rgba(255, 255, 255, 190)),
-        vertex(820.0, 180.0, Rgba::rgba(255, 180, 0, 190)),
-        vertex(640.0, 360.0, Rgba::rgba(0, 220, 255, 190)),
-    ])
-    .buffer_memory_preference(BufferMemoryPreference::Device)
-    .build(&context)?;
-    let centered = Shape::rect(180.0, 100.0)
-        .position(660.0, 470.0)
-        .color(Rgba::rgba(255, 90, 90, 220))
-        .anchor(Anchor::Center)
-        .rotation(30.0)
-        .build(&context)?;
-    let custom_origin = Shape::rect(160.0, 90.0)
-        .position(450.0, 500.0)
-        .color(Rgba::rgba(90, 180, 255, 220))
-        .origin(20.0, 70.0)
-        .rotation(-25.0)
-        .buffer_memory_preference(BufferMemoryPreference::Host)
-        .build(&context)?;
-    let line_butt = Shape::line(v2(80.0, 620.0), v2(280.0, 640.0))
-        .color(Rgba::YELLOW)
-        .width(24.0)
-        .cap(LineCap::Butt)
-        .build(&context)?;
-    let line_round = Shape::line(v2(380.0, 620.0), v2(580.0, 640.0))
-        .color(Rgba::CYAN)
-        .width(24.0)
-        .cap(LineCap::Round)
-        .build(&context)?;
-    let line_square = Shape::line(v2(680.0, 620.0), v2(880.0, 640.0))
-        .color(Rgba::MAGENTA)
-        .width(24.0)
-        .cap(LineCap::Square)
-        .build(&context)?;
 
     println!("Press Escape to close. Render mode alternates between PerObject and Batched.");
     let mut frame = 0_u64;
@@ -94,19 +59,7 @@ fn main() -> VMNLResult<()> {
         } else {
             RenderMode::Batched
         };
-        window
-            .render()
-            .mode(mode)
-            .draw2d([
-                &pentagon,
-                &triangle,
-                &centered,
-                &custom_origin,
-                &line_butt,
-                &line_round,
-                &line_square,
-            ])
-            .submit()?;
+        window.render().mode(mode).draw2d([&pentagon]).submit()?;
         frame = frame.wrapping_add(1);
     }
 
