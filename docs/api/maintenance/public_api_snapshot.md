@@ -346,6 +346,19 @@ impl core::marker::Unpin for vmnl::d2::LineBuilder
 impl core::marker::UnsafeUnpin for vmnl::d2::LineBuilder
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::LineBuilder
 impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::LineBuilder
+pub struct vmnl::d2::PolygonBuilder
+impl vmnl::d2::PolygonBuilder
+pub fn vmnl::d2::PolygonBuilder::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
+pub fn vmnl::d2::PolygonBuilder::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::d2::Shape>
+pub fn vmnl::d2::PolygonBuilder::color<C>(self, C) -> Self where C: core::convert::Into<vmnl::common::Rgba>
+pub fn vmnl::d2::PolygonBuilder::vertex_colors<I, C>(self, I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = C>, C: core::convert::Into<vmnl::common::Rgba>
+impl core::marker::Freeze for vmnl::d2::PolygonBuilder
+impl core::marker::Send for vmnl::d2::PolygonBuilder
+impl core::marker::Sync for vmnl::d2::PolygonBuilder
+impl core::marker::Unpin for vmnl::d2::PolygonBuilder
+impl core::marker::UnsafeUnpin for vmnl::d2::PolygonBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::PolygonBuilder
+impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::PolygonBuilder
 pub struct vmnl::d2::RectBuilder
 impl vmnl::d2::RectBuilder
 pub fn vmnl::d2::RectBuilder::anchor(self, vmnl::d2::Anchor) -> Self
@@ -378,6 +391,8 @@ pub fn vmnl::d2::Shape::circle(f32) -> vmnl::d2::EllipseBuilder
 pub fn vmnl::d2::Shape::ellipse(f32, f32) -> vmnl::d2::EllipseBuilder
 pub fn vmnl::d2::Shape::indexed<V, I>(V, I) -> vmnl::d2::IndexedShapeBuilder where V: core::convert::Into<alloc::vec::Vec<vmnl::d2::Vertex2D>>, I: core::convert::Into<alloc::vec::Vec<u32>>
 pub fn vmnl::d2::Shape::line(vmnl::d2::Vector2f, vmnl::d2::Vector2f) -> vmnl::d2::LineBuilder
+pub fn vmnl::d2::Shape::polygon<P>(P) -> vmnl::d2::PolygonBuilder where P: core::convert::Into<alloc::vec::Vec<vmnl::d2::Vector2f>>
+pub fn vmnl::d2::Shape::polygon_from_vertices<V>(V) -> vmnl::d2::PolygonBuilder where V: core::convert::Into<alloc::vec::Vec<vmnl::d2::Vertex2D>>
 pub fn vmnl::d2::Shape::rect(f32, f32) -> vmnl::d2::RectBuilder
 pub fn vmnl::d2::Shape::triangle(vmnl::d2::Vector2f, vmnl::d2::Vector2f, vmnl::d2::Vector2f) -> vmnl::d2::TriangleBuilder
 pub fn vmnl::d2::Shape::triangle_from_vertices([vmnl::d2::Vertex2D; 3]) -> vmnl::d2::TriangleBuilder

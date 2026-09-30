@@ -6,7 +6,7 @@ Import path: `vmnl::d2::Vertex2D`. Status: experimental value type.
 
 ## Purpose and use cases
 
-Defines one public 2D vertex with position and 8-bit color for indexed/triangle shape builders.
+Defines one public 2D vertex with position and 8-bit color for indexed, triangle, and polygon shape builders.
 
 ## Public API
 

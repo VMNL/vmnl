@@ -5,6 +5,7 @@
 | [`Shape`](shape.md) | GPU-backed drawable and builder entry points |
 | [`EllipseBuilder`](ellipse_builder.md) | Filled ellipse / circle |
 | [`IndexedShapeBuilder`](indexed_shape_builder.md) | Arbitrary triangle-indexed geometry |
+| [`PolygonBuilder`](polygon_builder.md) | Filled strictly convex boundary with automatic triangulation |
 | [`TriangleBuilder`](triangle_builder.md) | Three-vertex triangle |
 | [`RectBuilder`](rect_builder.md) | Positioned/rotated rectangle |
 | [`Anchor`](anchor.md) | Rectangle rotation pivot |

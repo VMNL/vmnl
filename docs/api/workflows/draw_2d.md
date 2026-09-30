@@ -21,3 +21,8 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 Full programs: [`shapes`](../../../examples/d2/shapes/src/main.rs) and [`advanced_geometry`](../../../examples/d2/advanced_geometry/src/main.rs). See [`Shape`](../reference/d2/shapes/shape.md) and [`FrameRenderer`](../reference/window/rendering/frame_renderer.md).
+
+Use [`Shape::polygon`](../reference/d2/shapes/polygon_builder.md) for an ordered
+strictly convex boundary without supplying indices. The advanced geometry example
+demonstrates per-vertex colors and alternates both rendering modes. Use
+`Shape::indexed` when controlling triangulation explicitly.

@@ -20,18 +20,15 @@ fn vertex(x: f32, y: f32, color: Rgba) -> Vertex2D {
     }
 }
 
-fn indexed_pentagon(context: &Context) -> VMNLResult<Shape> {
-    Shape::indexed(
-        [
-            vertex(220.0, 360.0, Rgba::WHITE),
-            vertex(220.0, 180.0, Rgba::RED),
-            vertex(390.0, 305.0, Rgba::YELLOW),
-            vertex(325.0, 505.0, Rgba::GREEN),
-            vertex(115.0, 505.0, Rgba::CYAN),
-            vertex(50.0, 305.0, Rgba::BLUE),
-        ],
-        [0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 1],
-    )
+fn polygon_pentagon(context: &Context) -> VMNLResult<Shape> {
+    Shape::polygon([
+        v2(220.0, 180.0),
+        v2(390.0, 305.0),
+        v2(325.0, 505.0),
+        v2(115.0, 505.0),
+        v2(50.0, 305.0),
+    ])
+    .vertex_colors([Rgba::RED, Rgba::YELLOW, Rgba::GREEN, Rgba::CYAN, Rgba::BLUE])
     .buffer_memory_preference(BufferMemoryPreference::Host)
     .build(context)
 }
@@ -45,7 +42,7 @@ fn main() -> VMNLResult<()> {
         .present_mode(PresentMode::Auto)
         .build(&context)?;
 
-    let pentagon = indexed_pentagon(&context)?;
+    let pentagon = polygon_pentagon(&context)?;
     let triangle = Shape::triangle_from_vertices([
         vertex(560.0, 120.0, Rgba::rgba(255, 255, 255, 190)),
         vertex(820.0, 180.0, Rgba::rgba(255, 180, 0, 190)),
