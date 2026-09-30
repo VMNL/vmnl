@@ -102,9 +102,10 @@ requires the exact native GLFW event sequence before timeout. The Wayland path i
 the parent Xvfb server into Weston's X11 backend; it does not qualify a standalone Wayland
 compositor seat.
 The Wayland NoApi probe attaches a zero-filled shm buffer so its surface can be mapped without
-Vulkan. It signals MAPPED after attaching the buffer; the parent clicks the center of the focused
-Weston X11 window, identified by WM_CLASS, until GLFW confirms keyboard focus and signals READY.
-MAPPED alone never authorizes keyboard injection.
+Vulkan. It signals MAPPED after attaching the buffer; the parent finds the Weston X11 window by
+WM_CLASS and clicks its center until GLFW confirms keyboard focus and signals READY. Before
+injection, the parent also requires Weston to hold the parent X11 keyboard focus and reacquires it
+if necessary. MAPPED or Wayland READY alone never authorizes keyboard injection.
 
 Win32 uses `SendInput` and Cocoa uses `CGEventPost` for the same scenario. Their native probes
 remain visible but non-blocking until ten consecutive successful runs use the same runner image,
