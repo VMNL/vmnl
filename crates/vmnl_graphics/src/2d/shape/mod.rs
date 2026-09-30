@@ -3,6 +3,7 @@
 
 //! Shape utilities for the VMNL library.
 
+mod circle;
 mod arc;
 mod ellipse;
 mod indexed;
@@ -14,7 +15,7 @@ mod validation;
 use super::{Drawable2D, GpuVertex2D, RenderItem2D, Vector2f, Vertex2D};
 use crate::{
     common::{BlendMode, GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey},
-    d2::shape::arc::ArcBuilder,
+    d2::shape::{arc::ArcBuilder, circle::CircleBuilder},
 };
 pub use ellipse::EllipseBuilder;
 pub use indexed::IndexedShapeBuilder;
@@ -25,6 +26,8 @@ pub use triangle::TriangleBuilder;
 /// Types of shape data that can be rendered in VMNL.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub(crate) enum ShapeKind {
+    /// Circle-like shape.
+    Circle,
     /// Filled ellipse shape.
     Ellipse,
     /// Filled arc shape.
@@ -94,11 +97,8 @@ impl Shape {
     /// # }
     /// ```
     #[must_use]
-    pub fn circle(radius: f32) -> EllipseBuilder {
-        EllipseBuilder::new(Vector2f {
-            x: radius,
-            y: radius,
-        })
+    pub fn circle(radius: f32) -> CircleBuilder {
+        CircleBuilder::new(radius).filled(true)
     }
 
     /// Create a filled ellipse builder with a required radius.
@@ -148,8 +148,8 @@ impl Shape {
     /// # }
     /// ```
     #[must_use]
-    pub fn arc(radius: f32, start: f32, sweep: f32) -> ArcBuilder {
-        ArcBuilder::new(radius, start, sweep)
+    pub fn arc(radius: f32, start: f32, sweep: f32) -> CircleBuilder {
+        CircleBuilder::new(radius).sector(start, sweep).width(10.0).cap(LineCap::Butt)
     }
 
     /// Create a ring builder with a required radius.
