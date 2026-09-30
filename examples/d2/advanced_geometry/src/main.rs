@@ -115,6 +115,10 @@ fn main() -> VMNLResult<()> {
     .join(LineJoin::Round)
     .color(Rgba::MAGENTA)
     .build(&context)?;
+    let line =  Shape::line(v2(0.0, 0.0), v2(100.0, 100.0))
+        .color(Rgba::WHITE)
+        .width(10.0)
+        .build(&context)?;
 
     println!("Press Escape to close. Render mode alternates between PerObject and Batched.");
     let mut frame = 0_u64;
@@ -142,6 +146,7 @@ fn main() -> VMNLResult<()> {
                 &polyline_bevel,
                 &polyline_miter,
                 &polyline_round,
+                &line,
             ])
             .submit()?;
         frame = frame.wrapping_add(1);
