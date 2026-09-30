@@ -251,11 +251,54 @@ fn x11_revert_to_name(revert_to: x11rb::protocol::xproto::InputFocus) -> &'stati
 }
 
 #[cfg(target_os = "linux")]
+fn weston_x11_window(
+    connection: &x11rb::rust_connection::RustConnection,
+    root: u32,
+) -> Result<u32, String> {
+    use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
+
+    let tree = connection
+        .query_tree(root)
+        .map_err(|error| format!("failed to query parent X11 windows: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read parent X11 windows: {error}"))?;
+    let mut weston = None;
+    for window in tree.children {
+        let class = x11_text_property(connection, window, AtomEnum::WM_CLASS);
+        let is_weston = class.as_array().is_some_and(|fields| {
+            fields
+                .iter()
+                .any(|field| field.as_str() == Some("Weston Compositor"))
+        });
+        if is_weston && weston.replace(window).is_some() {
+            return Err("multiple Weston X11 windows found".to_owned());
+        }
+    }
+    weston.ok_or_else(|| "Weston X11 window not found".to_owned())
+}
+
+#[cfg(target_os = "linux")]
+fn weston_has_x11_focus() -> Result<bool, String> {
+    use x11rb::{connection::Connection as _, protocol::xproto::ConnectionExt as _};
+
+    let (connection, screen_number) = x11rb::connect(None)
+        .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
+    let root = connection.setup().roots[screen_number].root;
+    let weston = weston_x11_window(&connection, root)?;
+    let focus = connection
+        .get_input_focus()
+        .map_err(|error| format!("failed to query parent X11 focus: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read parent X11 focus: {error}"))?;
+    Ok(focus.focus == weston)
+}
+
+#[cfg(target_os = "linux")]
 fn activate_wayland_window() -> Result<(), String> {
     use x11rb::{
         connection::Connection as _,
         protocol::{
-            xproto::{AtomEnum, ConnectionExt as _, BUTTON_PRESS_EVENT, BUTTON_RELEASE_EVENT},
+            xproto::{ConnectionExt as _, BUTTON_PRESS_EVENT, BUTTON_RELEASE_EVENT},
             xtest::ConnectionExt as _,
         },
     };
@@ -263,26 +306,10 @@ fn activate_wayland_window() -> Result<(), String> {
     let (connection, screen_number) = x11rb::connect(None)
         .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
     let root = connection.setup().roots[screen_number].root;
-    let focus = connection
-        .get_input_focus()
-        .map_err(|error| format!("failed to query Weston focus: {error}"))?
-        .reply()
-        .map_err(|error| format!("failed to read Weston focus: {error}"))?
-        .focus;
-    let class = x11_text_property(&connection, focus, AtomEnum::WM_CLASS);
-    if !class.as_array().is_some_and(|fields| {
-        fields
-            .iter()
-            .any(|field| field.as_str() == Some("Weston Compositor"))
-    }) {
-        return Err(format!(
-            "refusing to click X11 focus {}: expected Weston Compositor, got {class}",
-            x11_window_id(focus)
-        ));
-    }
+    let weston = weston_x11_window(&connection, root)?;
 
     let geometry = connection
-        .get_geometry(focus)
+        .get_geometry(weston)
         .map_err(|error| format!("failed to query Weston geometry: {error}"))?
         .reply()
         .map_err(|error| format!("failed to read Weston geometry: {error}"))?;
@@ -291,7 +318,7 @@ fn activate_wayland_window() -> Result<(), String> {
     let center_y = i16::try_from(geometry.height / 2)
         .map_err(|_| "Weston window height is too large for X11 pointer coordinates".to_owned())?;
     let position = connection
-        .translate_coordinates(focus, root, center_x, center_y)
+        .translate_coordinates(weston, root, center_x, center_y)
         .map_err(|error| format!("failed to translate Weston center: {error}"))?
         .reply()
         .map_err(|error| format!("failed to read Weston center: {error}"))?;
@@ -336,16 +363,28 @@ fn wait_until_ready(child: &mut Child, ready_file: &Path, backend: &str) -> Resu
             Err(error) => return Err(format!("failed to read platform probe signal: {error}")),
         };
         if signal == "READY\n" {
+            #[cfg(target_os = "linux")]
+            if backend == "wayland" {
+                if weston_has_x11_focus()? {
+                    return Ok(());
+                }
+            } else {
+                return Ok(());
+            }
+            #[cfg(not(target_os = "linux"))]
             return Ok(());
         }
         #[cfg(target_os = "linux")]
-        if backend == "wayland" && signal == "MAPPED\n" && Instant::now() >= next_activation {
+        if backend == "wayland"
+            && matches!(signal.as_str(), "MAPPED\n" | "READY\n")
+            && Instant::now() >= next_activation
+        {
             activate_wayland_window()?;
             next_activation = Instant::now() + Duration::from_millis(250);
         }
         if Instant::now() >= deadline {
             return Err(format!(
-                "platform probe did not emit READY within 7 seconds; signal={signal:?}"
+                "platform probe did not become injection-ready within 7 seconds; signal={signal:?}"
             ));
         }
         thread::sleep(PROCESS_POLL_INTERVAL);
