@@ -39,6 +39,8 @@
 | struct | `vmnl::d2::IndexedShapeBuilder` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html) |
 | struct | `vmnl::d2::LineBuilder` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.LineBuilder.html) |
 | enum | `vmnl::d2::LineCap` | [LineCap](../reference/d2/shapes/line_cap.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.LineCap.html) |
+| enum | `vmnl::d2::LineJoin` | [LineJoin](../reference/d2/shapes/line_join.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.LineJoin.html) |
+| struct | `vmnl::d2::PolylineBuilder` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html) |
 | struct | `vmnl::d2::RectBuilder` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.RectBuilder.html) |
 | struct | `vmnl::d2::RenderItem2D` | [RenderItem2D](../reference/d2/render_item_2d.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.RenderItem2D.html) |
 | struct | `vmnl::d2::Shape` | [Shape](../reference/d2/shapes/shape.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.Shape.html) |

@@ -5,6 +5,8 @@
 3. Append one or more `draw2d` passes; call order is preserved.
 4. Call `submit` and handle resize/out-of-date errors according to the application loop.
 
+Build a connected stroke with [`Shape::polyline`](../reference/d2/shapes/shape.md) and configure its caps, joins, and color mode with [`PolylineBuilder`](../reference/d2/shapes/polyline_builder.md). The [advanced geometry example](../../../examples/d2/advanced_geometry/src/main.rs) shows bevel, miter, and round joins.
+
 ```rust,no_run
 # extern crate vmnl;
 use vmnl::{Context, Window};
