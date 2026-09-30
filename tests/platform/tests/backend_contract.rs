@@ -254,27 +254,40 @@ fn x11_revert_to_name(revert_to: x11rb::protocol::xproto::InputFocus) -> &'stati
 fn weston_x11_window(
     connection: &x11rb::rust_connection::RustConnection,
     root: u32,
-) -> Result<u32, String> {
+) -> Result<Option<u32>, String> {
     use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
 
-    let tree = connection
-        .query_tree(root)
-        .map_err(|error| format!("failed to query parent X11 windows: {error}"))?
-        .reply()
-        .map_err(|error| format!("failed to read parent X11 windows: {error}"))?;
+    let mut pending = vec![root];
     let mut weston = None;
-    for window in tree.children {
-        let class = x11_text_property(connection, window, AtomEnum::WM_CLASS);
-        let is_weston = class.as_array().is_some_and(|fields| {
-            fields
-                .iter()
-                .any(|field| field.as_str() == Some("Weston Compositor"))
-        });
-        if is_weston && weston.replace(window).is_some() {
-            return Err("multiple Weston X11 windows found".to_owned());
+    while let Some(parent) = pending.pop() {
+        let cookie = match connection.query_tree(parent) {
+            Ok(cookie) => cookie,
+            Err(error) if parent == root => {
+                return Err(format!("failed to query parent X11 windows: {error}"));
+            }
+            Err(_) => continue,
+        };
+        let tree = match cookie.reply() {
+            Ok(tree) => tree,
+            Err(error) if parent == root => {
+                return Err(format!("failed to read parent X11 windows: {error}"));
+            }
+            Err(_) => continue,
+        };
+        for window in tree.children {
+            let class = x11_text_property(connection, window, AtomEnum::WM_CLASS);
+            let is_weston = class.as_array().is_some_and(|fields| {
+                fields
+                    .iter()
+                    .any(|field| field.as_str() == Some("Weston Compositor"))
+            });
+            if is_weston && weston.replace(window).is_some() {
+                return Err("multiple Weston X11 windows found".to_owned());
+            }
+            pending.push(window);
         }
     }
-    weston.ok_or_else(|| "Weston X11 window not found".to_owned())
+    Ok(weston)
 }
 
 #[cfg(target_os = "linux")]
@@ -284,7 +297,9 @@ fn weston_has_x11_focus() -> Result<bool, String> {
     let (connection, screen_number) = x11rb::connect(None)
         .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
     let root = connection.setup().roots[screen_number].root;
-    let weston = weston_x11_window(&connection, root)?;
+    let Some(weston) = weston_x11_window(&connection, root)? else {
+        return Ok(false);
+    };
     let focus = connection
         .get_input_focus()
         .map_err(|error| format!("failed to query parent X11 focus: {error}"))?
@@ -306,7 +321,9 @@ fn activate_wayland_window() -> Result<(), String> {
     let (connection, screen_number) = x11rb::connect(None)
         .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
     let root = connection.setup().roots[screen_number].root;
-    let weston = weston_x11_window(&connection, root)?;
+    let Some(weston) = weston_x11_window(&connection, root)? else {
+        return Ok(());
+    };
 
     let geometry = connection
         .get_geometry(weston)
