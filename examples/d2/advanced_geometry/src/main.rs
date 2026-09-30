@@ -115,7 +115,7 @@ fn main() -> VMNLResult<()> {
     .join(LineJoin::Round)
     .color(Rgba::MAGENTA)
     .build(&context)?;
-    let line =  Shape::line(v2(0.0, 0.0), v2(100.0, 100.0))
+    let line = Shape::line(v2(0.0, 0.0), v2(100.0, 100.0))
         .color(Rgba::WHITE)
         .width(10.0)
         .build(&context)?;
