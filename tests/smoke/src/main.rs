@@ -4,7 +4,7 @@
 use vmnl::{
     common::Rgba,
     d2::{Vector2f, Vertex2D},
-    d3::{Camera, Vector3f, Vertex3D},
+    d3::{Camera, Vector3f},
     raw, Input, Key, MouseButton, PresentMode, RenderMode, VMNLErrorKind, VMNLResult, Window,
 };
 
@@ -43,38 +43,6 @@ fn main() -> VMNLResult<()> {
     };
     let scaled3 = p3 * 0.25;
 
-    let mut vertices2 = [
-        Vertex2D {
-            position: Vector2f { x: 2.0, y: 0.0 },
-            color: Rgba::BLUE,
-        },
-        Vertex2D {
-            position: Vector2f { x: 1.0, y: 0.0 },
-            color: Rgba::GREEN,
-        },
-    ];
-    vertices2.sort();
-
-    let mut vertices3 = [
-        Vertex3D {
-            position: Vector3f {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
-            color: Rgba::CYAN,
-        },
-        Vertex3D {
-            position: Vector3f {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-            color: Rgba::MAGENTA,
-        },
-    ];
-    vertices3.sort();
-
     assert_eq!(from_rgb, Rgba::rgba(20, 40, 80, 255));
     assert_eq!(from_rgba, Rgba::rgba(20, 40, 80, 160));
     assert_eq!(from_new, Rgba::rgba(10, 20, 30, 40));
@@ -92,16 +60,6 @@ fn main() -> VMNLResult<()> {
             z: 2.0,
         }
     );
-    assert_eq!(vertices2[0].position, Vector2f { x: 1.0, y: 0.0 });
-    assert_eq!(
-        vertices3[0].position,
-        Vector3f {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        }
-    );
-
     let input = Input::new();
     assert!(!input.keyboard().is_down(Key::Escape));
     assert!(!input.mouse().is_down(MouseButton::Left));

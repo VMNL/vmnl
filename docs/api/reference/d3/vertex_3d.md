@@ -10,7 +10,7 @@ Defines a public mesh vertex with position and 8-bit RGBA color.
 
 ## Public API
 
-Fields: `position: Vector3f`, `color: Rgba`. `#[repr(C)]`; derives `Clone`, `Copy`, `Debug`, `Default`, `Pod`, `Zeroable`, `PartialEq`; explicit `Eq`, total `Ord`/`PartialOrd`.
+Fields: `position: Vector3f`, `color: Rgba`. `#[repr(C)]`; derives `Clone`, `Copy`, `Debug`, `Default`, `Pod`, `Zeroable`, and `PartialEq`.
 
 ## Construction, defaults, and validation
 
@@ -18,7 +18,7 @@ Literal/default construction. Mesh building validates index structure/counts, no
 
 ## Units, coordinates, and valid ranges
 
-3D units/handedness are unspecified. Color channels are `0..=255`.
+3D units/handedness are unspecified. Color channels are `0..=255`. Partial equality compares all fields; NaN position components compare unequal, including on self-comparison, and signed zeros compare equal.
 
 ## Ownership, lifecycle, and threading
 

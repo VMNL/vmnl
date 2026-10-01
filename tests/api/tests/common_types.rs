@@ -84,45 +84,54 @@ fn vectors_support_public_arithmetic() -> VMNLResult<()> {
 }
 
 #[test]
-fn public_vertices_are_orderable_by_position_then_color() -> VMNLResult<()> {
-    let mut vertices2 = [
+fn public_vertices_retain_partial_equality() -> VMNLResult<()> {
+    let vertex2 = Vertex2D {
+        position: Vector2f { x: 1.0, y: 2.0 },
+        color: Rgba::GREEN,
+    };
+    assert_eq!(
+        vertex2,
         Vertex2D {
-            position: Vector2f { x: 2.0, y: 0.0 },
-            color: Rgba::BLUE,
-        },
-        Vertex2D {
-            position: Vector2f { x: 1.0, y: 0.0 },
+            position: Vector2f { x: 1.0, y: 2.0 },
             color: Rgba::GREEN,
-        },
-    ];
-    vertices2.sort();
-    assert_eq!(vertices2[0].position, Vector2f { x: 1.0, y: 0.0 });
+        }
+    );
+    assert_ne!(
+        vertex2,
+        Vertex2D {
+            position: Vector2f { x: 1.0, y: 3.0 },
+            color: Rgba::GREEN,
+        }
+    );
 
-    let mut vertices3 = [
+    let vertex3 = Vertex3D {
+        position: Vector3f {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+        },
+        color: Rgba::CYAN,
+    };
+    assert_eq!(
+        vertex3,
         Vertex3D {
             position: Vector3f {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
+                x: 1.0,
+                y: 2.0,
+                z: 3.0,
             },
             color: Rgba::CYAN,
-        },
+        }
+    );
+    assert_ne!(
+        vertex3,
         Vertex3D {
             position: Vector3f {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
+                x: 1.0,
+                y: 2.0,
+                z: 4.0,
             },
-            color: Rgba::MAGENTA,
-        },
-    ];
-    vertices3.sort();
-    assert_eq!(
-        vertices3[0].position,
-        Vector3f {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
+            color: Rgba::CYAN,
         }
     );
 
