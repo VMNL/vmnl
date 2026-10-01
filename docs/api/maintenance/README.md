@@ -9,6 +9,8 @@ inventory checks.
   inventory and includes GLFW functions not currently exposed by VMNL.
 - [`keyboard_capability_matrix.md`](keyboard_capability_matrix.md) tracks GLFW keyboard
   capabilities through their VMNL contracts, deterministic evidence, and native qualification.
+- [`joystick_capability_matrix.md`](joystick_capability_matrix.md) tracks GLFW joystick/gamepad
+  capabilities through their VMNL contracts, deterministic evidence, and native qualification.
 
 Run `just docs-api-check` before review; run `just docs-api-update` only after an intentional
 surface, inventory, or documentation change.

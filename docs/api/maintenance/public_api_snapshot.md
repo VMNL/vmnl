@@ -887,6 +887,10 @@ pub vmnl::EventKind::FocusLost
 pub vmnl::EventKind::FramebufferResized
 pub vmnl::EventKind::FramebufferResized::height: u32
 pub vmnl::EventKind::FramebufferResized::width: u32
+pub vmnl::EventKind::JoystickConnected
+pub vmnl::EventKind::JoystickConnected::id: vmnl::JoystickId
+pub vmnl::EventKind::JoystickDisconnected
+pub vmnl::EventKind::JoystickDisconnected::id: vmnl::JoystickId
 pub vmnl::EventKind::KeyPressed
 pub vmnl::EventKind::KeyPressed::key: vmnl::Key
 pub vmnl::EventKind::KeyPressed::modifiers: vmnl::Modifiers
@@ -931,6 +935,157 @@ impl core::marker::Unpin for vmnl::EventKind
 impl core::marker::UnsafeUnpin for vmnl::EventKind
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::EventKind
 impl core::panic::unwind_safe::UnwindSafe for vmnl::EventKind
+#[repr(usize)] pub enum vmnl::GamepadAxis
+pub vmnl::GamepadAxis::LeftTrigger = 4
+pub vmnl::GamepadAxis::LeftX = 0
+pub vmnl::GamepadAxis::LeftY = 1
+pub vmnl::GamepadAxis::RightTrigger = 5
+pub vmnl::GamepadAxis::RightX = 2
+pub vmnl::GamepadAxis::RightY = 3
+impl vmnl::GamepadAxis
+pub const vmnl::GamepadAxis::COUNT: usize
+impl core::clone::Clone for vmnl::GamepadAxis
+pub fn vmnl::GamepadAxis::clone(&self) -> vmnl::GamepadAxis
+impl core::cmp::Eq for vmnl::GamepadAxis
+impl core::cmp::PartialEq for vmnl::GamepadAxis
+pub fn vmnl::GamepadAxis::eq(&self, &vmnl::GamepadAxis) -> bool
+impl core::fmt::Debug for vmnl::GamepadAxis
+pub fn vmnl::GamepadAxis::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for vmnl::GamepadAxis
+pub fn vmnl::GamepadAxis::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for vmnl::GamepadAxis
+impl core::marker::StructuralPartialEq for vmnl::GamepadAxis
+impl core::marker::Freeze for vmnl::GamepadAxis
+impl core::marker::Send for vmnl::GamepadAxis
+impl core::marker::Sync for vmnl::GamepadAxis
+impl core::marker::Unpin for vmnl::GamepadAxis
+impl core::marker::UnsafeUnpin for vmnl::GamepadAxis
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::GamepadAxis
+impl core::panic::unwind_safe::UnwindSafe for vmnl::GamepadAxis
+#[repr(usize)] pub enum vmnl::GamepadButton
+pub vmnl::GamepadButton::A = 0
+pub vmnl::GamepadButton::B = 1
+pub vmnl::GamepadButton::Back = 6
+pub vmnl::GamepadButton::DpadDown = 13
+pub vmnl::GamepadButton::DpadLeft = 14
+pub vmnl::GamepadButton::DpadRight = 12
+pub vmnl::GamepadButton::DpadUp = 11
+pub vmnl::GamepadButton::Guide = 8
+pub vmnl::GamepadButton::LeftBumper = 4
+pub vmnl::GamepadButton::LeftThumb = 9
+pub vmnl::GamepadButton::RightBumper = 5
+pub vmnl::GamepadButton::RightThumb = 10
+pub vmnl::GamepadButton::Start = 7
+pub vmnl::GamepadButton::X = 2
+pub vmnl::GamepadButton::Y = 3
+impl vmnl::GamepadButton
+pub const vmnl::GamepadButton::COUNT: usize
+impl core::clone::Clone for vmnl::GamepadButton
+pub fn vmnl::GamepadButton::clone(&self) -> vmnl::GamepadButton
+impl core::cmp::Eq for vmnl::GamepadButton
+impl core::cmp::PartialEq for vmnl::GamepadButton
+pub fn vmnl::GamepadButton::eq(&self, &vmnl::GamepadButton) -> bool
+impl core::fmt::Debug for vmnl::GamepadButton
+pub fn vmnl::GamepadButton::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for vmnl::GamepadButton
+pub fn vmnl::GamepadButton::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for vmnl::GamepadButton
+impl core::marker::StructuralPartialEq for vmnl::GamepadButton
+impl core::marker::Freeze for vmnl::GamepadButton
+impl core::marker::Send for vmnl::GamepadButton
+impl core::marker::Sync for vmnl::GamepadButton
+impl core::marker::Unpin for vmnl::GamepadButton
+impl core::marker::UnsafeUnpin for vmnl::GamepadButton
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::GamepadButton
+impl core::panic::unwind_safe::UnwindSafe for vmnl::GamepadButton
+pub enum vmnl::JoystickButtonState
+pub vmnl::JoystickButtonState::Other(u8)
+pub vmnl::JoystickButtonState::Pressed
+pub vmnl::JoystickButtonState::Released
+impl vmnl::JoystickButtonState
+pub const fn vmnl::JoystickButtonState::as_raw(self) -> u8
+pub const fn vmnl::JoystickButtonState::is_pressed(self) -> bool
+impl core::clone::Clone for vmnl::JoystickButtonState
+pub fn vmnl::JoystickButtonState::clone(&self) -> vmnl::JoystickButtonState
+impl core::cmp::Eq for vmnl::JoystickButtonState
+impl core::cmp::PartialEq for vmnl::JoystickButtonState
+pub fn vmnl::JoystickButtonState::eq(&self, &vmnl::JoystickButtonState) -> bool
+impl core::fmt::Debug for vmnl::JoystickButtonState
+pub fn vmnl::JoystickButtonState::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for vmnl::JoystickButtonState
+pub fn vmnl::JoystickButtonState::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for vmnl::JoystickButtonState
+impl core::marker::StructuralPartialEq for vmnl::JoystickButtonState
+impl core::marker::Freeze for vmnl::JoystickButtonState
+impl core::marker::Send for vmnl::JoystickButtonState
+impl core::marker::Sync for vmnl::JoystickButtonState
+impl core::marker::Unpin for vmnl::JoystickButtonState
+impl core::marker::UnsafeUnpin for vmnl::JoystickButtonState
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::JoystickButtonState
+impl core::panic::unwind_safe::UnwindSafe for vmnl::JoystickButtonState
+#[repr(i32)] pub enum vmnl::JoystickId
+pub vmnl::JoystickId::Joystick1 = 0
+pub vmnl::JoystickId::Joystick10 = 9
+pub vmnl::JoystickId::Joystick11 = 10
+pub vmnl::JoystickId::Joystick12 = 11
+pub vmnl::JoystickId::Joystick13 = 12
+pub vmnl::JoystickId::Joystick14 = 13
+pub vmnl::JoystickId::Joystick15 = 14
+pub vmnl::JoystickId::Joystick16 = 15
+pub vmnl::JoystickId::Joystick2 = 1
+pub vmnl::JoystickId::Joystick3 = 2
+pub vmnl::JoystickId::Joystick4 = 3
+pub vmnl::JoystickId::Joystick5 = 4
+pub vmnl::JoystickId::Joystick6 = 5
+pub vmnl::JoystickId::Joystick7 = 6
+pub vmnl::JoystickId::Joystick8 = 7
+pub vmnl::JoystickId::Joystick9 = 8
+impl vmnl::JoystickId
+pub const vmnl::JoystickId::COUNT: usize
+pub const fn vmnl::JoystickId::from_index(usize) -> core::option::Option<Self>
+pub const fn vmnl::JoystickId::index(self) -> usize
+impl core::clone::Clone for vmnl::JoystickId
+pub fn vmnl::JoystickId::clone(&self) -> vmnl::JoystickId
+impl core::cmp::Eq for vmnl::JoystickId
+impl core::cmp::Ord for vmnl::JoystickId
+pub fn vmnl::JoystickId::cmp(&self, &vmnl::JoystickId) -> core::cmp::Ordering
+impl core::cmp::PartialEq for vmnl::JoystickId
+pub fn vmnl::JoystickId::eq(&self, &vmnl::JoystickId) -> bool
+impl core::cmp::PartialOrd for vmnl::JoystickId
+pub fn vmnl::JoystickId::partial_cmp(&self, &vmnl::JoystickId) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for vmnl::JoystickId
+pub fn vmnl::JoystickId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for vmnl::JoystickId
+pub fn vmnl::JoystickId::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for vmnl::JoystickId
+impl core::marker::StructuralPartialEq for vmnl::JoystickId
+impl core::marker::Freeze for vmnl::JoystickId
+impl core::marker::Send for vmnl::JoystickId
+impl core::marker::Sync for vmnl::JoystickId
+impl core::marker::Unpin for vmnl::JoystickId
+impl core::marker::UnsafeUnpin for vmnl::JoystickId
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::JoystickId
+impl core::panic::unwind_safe::UnwindSafe for vmnl::JoystickId
+pub enum vmnl::JoystickStatus
+pub vmnl::JoystickStatus::Absent
+pub vmnl::JoystickStatus::NotTracked
+pub vmnl::JoystickStatus::Present
+impl core::clone::Clone for vmnl::JoystickStatus
+pub fn vmnl::JoystickStatus::clone(&self) -> vmnl::JoystickStatus
+impl core::cmp::Eq for vmnl::JoystickStatus
+impl core::cmp::PartialEq for vmnl::JoystickStatus
+pub fn vmnl::JoystickStatus::eq(&self, &vmnl::JoystickStatus) -> bool
+impl core::fmt::Debug for vmnl::JoystickStatus
+pub fn vmnl::JoystickStatus::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::JoystickStatus
+impl core::marker::StructuralPartialEq for vmnl::JoystickStatus
+impl core::marker::Freeze for vmnl::JoystickStatus
+impl core::marker::Send for vmnl::JoystickStatus
+impl core::marker::Sync for vmnl::JoystickStatus
+impl core::marker::Unpin for vmnl::JoystickStatus
+impl core::marker::UnsafeUnpin for vmnl::JoystickStatus
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::JoystickStatus
+impl core::panic::unwind_safe::UnwindSafe for vmnl::JoystickStatus
 #[repr(usize)] pub enum vmnl::Key
 pub vmnl::Key::A
 pub vmnl::Key::Apostrophe
@@ -1200,14 +1355,41 @@ impl core::marker::Unpin for vmnl::StandardCursor
 impl core::marker::UnsafeUnpin for vmnl::StandardCursor
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::StandardCursor
 impl core::panic::unwind_safe::UnwindSafe for vmnl::StandardCursor
+pub enum vmnl::StickAngleConvention
+pub vmnl::StickAngleConvention::Heading
+pub vmnl::StickAngleConvention::Math2D
+pub vmnl::StickAngleConvention::Screen2D
+impl core::clone::Clone for vmnl::StickAngleConvention
+pub fn vmnl::StickAngleConvention::clone(&self) -> vmnl::StickAngleConvention
+impl core::cmp::Eq for vmnl::StickAngleConvention
+impl core::cmp::PartialEq for vmnl::StickAngleConvention
+pub fn vmnl::StickAngleConvention::eq(&self, &vmnl::StickAngleConvention) -> bool
+impl core::fmt::Debug for vmnl::StickAngleConvention
+pub fn vmnl::StickAngleConvention::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::StickAngleConvention
+impl core::marker::StructuralPartialEq for vmnl::StickAngleConvention
+impl core::marker::Freeze for vmnl::StickAngleConvention
+impl core::marker::Send for vmnl::StickAngleConvention
+impl core::marker::Sync for vmnl::StickAngleConvention
+impl core::marker::Unpin for vmnl::StickAngleConvention
+impl core::marker::UnsafeUnpin for vmnl::StickAngleConvention
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::StickAngleConvention
+impl core::panic::unwind_safe::UnwindSafe for vmnl::StickAngleConvention
 #[non_exhaustive] pub enum vmnl::VMNLErrorKind
 pub vmnl::VMNLErrorKind::GlfwContextCreationFailed
 pub vmnl::VMNLErrorKind::GlfwInitFailed
+pub vmnl::VMNLErrorKind::GlfwInitializationConfigConflict
+pub vmnl::VMNLErrorKind::GlfwInitializationConfigConflict::active_hat_buttons: bool
+pub vmnl::VMNLErrorKind::GlfwInitializationConfigConflict::requested_hat_buttons: bool
+pub vmnl::VMNLErrorKind::GlfwInputOperationFailed
+pub vmnl::VMNLErrorKind::GlfwInputOperationFailed::message: alloc::string::String
+pub vmnl::VMNLErrorKind::GlfwInputOperationFailed::operation: &'static str
 pub vmnl::VMNLErrorKind::GlfwPlatformError
 pub vmnl::VMNLErrorKind::GlfwUnknownError
 pub vmnl::VMNLErrorKind::GlfwUnsupportedPlatform
 pub vmnl::VMNLErrorKind::GlfwVersionMismatch
 pub vmnl::VMNLErrorKind::GlfwWindowCreationFailed
+pub vmnl::VMNLErrorKind::InvalidGamepadMapping(alloc::string::String)
 pub vmnl::VMNLErrorKind::InvalidState(alloc::string::String)
 pub vmnl::VMNLErrorKind::InvalidWindowSize
 pub vmnl::VMNLErrorKind::VulkanCommandBufferCreationFailed
@@ -1286,8 +1468,8 @@ impl !core::marker::Send for vmnl::Cursor
 impl !core::marker::Sync for vmnl::Cursor
 impl core::marker::Unpin for vmnl::Cursor
 impl core::marker::UnsafeUnpin for vmnl::Cursor
-impl core::panic::unwind_safe::RefUnwindSafe for vmnl::Cursor
-impl core::panic::unwind_safe::UnwindSafe for vmnl::Cursor
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::Cursor
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::Cursor
 pub struct vmnl::CursorBuilder<'pixels>
 impl vmnl::CursorBuilder<'_>
 pub fn vmnl::CursorBuilder<'_>::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::Cursor>
@@ -1335,8 +1517,30 @@ impl<'w, 'g> core::marker::Unpin for vmnl::FrameRenderer<'w, 'g>
 impl<'w, 'g> core::marker::UnsafeUnpin for vmnl::FrameRenderer<'w, 'g>
 impl<'w, 'g> !core::panic::unwind_safe::RefUnwindSafe for vmnl::FrameRenderer<'w, 'g>
 impl<'w, 'g> !core::panic::unwind_safe::UnwindSafe for vmnl::FrameRenderer<'w, 'g>
+pub struct vmnl::GamepadState
+impl vmnl::GamepadState
+pub const fn vmnl::GamepadState::axes(&self) -> &[f32; 6]
+pub const fn vmnl::GamepadState::axis(&self, vmnl::GamepadAxis) -> f32
+pub const fn vmnl::GamepadState::button(&self, vmnl::GamepadButton) -> vmnl::JoystickButtonState
+pub const fn vmnl::GamepadState::buttons(&self) -> &[vmnl::JoystickButtonState; 15]
+pub fn vmnl::GamepadState::name(&self) -> core::option::Option<&str>
+impl core::clone::Clone for vmnl::GamepadState
+pub fn vmnl::GamepadState::clone(&self) -> vmnl::GamepadState
+impl core::cmp::PartialEq for vmnl::GamepadState
+pub fn vmnl::GamepadState::eq(&self, &vmnl::GamepadState) -> bool
+impl core::fmt::Debug for vmnl::GamepadState
+pub fn vmnl::GamepadState::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for vmnl::GamepadState
+impl core::marker::Freeze for vmnl::GamepadState
+impl core::marker::Send for vmnl::GamepadState
+impl core::marker::Sync for vmnl::GamepadState
+impl core::marker::Unpin for vmnl::GamepadState
+impl core::marker::UnsafeUnpin for vmnl::GamepadState
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::GamepadState
+impl core::panic::unwind_safe::UnwindSafe for vmnl::GamepadState
 pub struct vmnl::Input
 impl vmnl::Input
+pub const fn vmnl::Input::joystick(&self, vmnl::JoystickId) -> &vmnl::JoystickState
 pub const fn vmnl::Input::keyboard(&self) -> &vmnl::KeyboardState
 pub const fn vmnl::Input::mouse(&self) -> &vmnl::MouseState
 pub fn vmnl::Input::new() -> Self
@@ -1349,6 +1553,146 @@ impl core::marker::Unpin for vmnl::Input
 impl core::marker::UnsafeUnpin for vmnl::Input
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::Input
 impl core::panic::unwind_safe::UnwindSafe for vmnl::Input
+pub struct vmnl::InputRuntime
+impl vmnl::InputRuntime
+pub fn vmnl::InputRuntime::acquire() -> vmnl::VMNLResult<Self>
+pub const fn vmnl::InputRuntime::builder() -> vmnl::InputRuntimeBuilder
+pub fn vmnl::InputRuntime::configuration(&self) -> vmnl::InputRuntimeConfig
+pub unsafe fn vmnl::InputRuntime::joystick_user_pointer(&self, vmnl::JoystickId) -> *mut core::ffi::c_void
+pub fn vmnl::InputRuntime::poll_events(&mut self) -> alloc::vec::Vec<vmnl::Event>
+pub fn vmnl::InputRuntime::sample_joystick(&self, vmnl::JoystickId) -> vmnl::VMNLResult<core::option::Option<vmnl::JoystickSample>>
+pub fn vmnl::InputRuntime::set_joystick_callback(&mut self, impl core::ops::function::FnMut(&vmnl::Event, *mut core::ffi::c_void) + 'static)
+pub unsafe fn vmnl::InputRuntime::set_joystick_user_pointer(&self, vmnl::JoystickId, *mut core::ffi::c_void)
+pub fn vmnl::InputRuntime::unset_joystick_callback(&mut self)
+pub fn vmnl::InputRuntime::update_gamepad_mappings(&self, &str) -> vmnl::VMNLResult<()>
+impl core::marker::Freeze for vmnl::InputRuntime
+impl !core::marker::Send for vmnl::InputRuntime
+impl !core::marker::Sync for vmnl::InputRuntime
+impl core::marker::Unpin for vmnl::InputRuntime
+impl core::marker::UnsafeUnpin for vmnl::InputRuntime
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::InputRuntime
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::InputRuntime
+pub struct vmnl::InputRuntimeBuilder
+impl vmnl::InputRuntimeBuilder
+pub fn vmnl::InputRuntimeBuilder::build(self) -> vmnl::VMNLResult<vmnl::InputRuntime>
+pub const fn vmnl::InputRuntimeBuilder::hat_buttons(self, bool) -> Self
+impl core::clone::Clone for vmnl::InputRuntimeBuilder
+pub fn vmnl::InputRuntimeBuilder::clone(&self) -> vmnl::InputRuntimeBuilder
+impl core::default::Default for vmnl::InputRuntimeBuilder
+pub fn vmnl::InputRuntimeBuilder::default() -> vmnl::InputRuntimeBuilder
+impl core::fmt::Debug for vmnl::InputRuntimeBuilder
+pub fn vmnl::InputRuntimeBuilder::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::InputRuntimeBuilder
+impl core::marker::Freeze for vmnl::InputRuntimeBuilder
+impl core::marker::Send for vmnl::InputRuntimeBuilder
+impl core::marker::Sync for vmnl::InputRuntimeBuilder
+impl core::marker::Unpin for vmnl::InputRuntimeBuilder
+impl core::marker::UnsafeUnpin for vmnl::InputRuntimeBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::InputRuntimeBuilder
+impl core::panic::unwind_safe::UnwindSafe for vmnl::InputRuntimeBuilder
+pub struct vmnl::InputRuntimeConfig
+impl vmnl::InputRuntimeConfig
+pub const fn vmnl::InputRuntimeConfig::hat_buttons(self) -> bool
+impl core::clone::Clone for vmnl::InputRuntimeConfig
+pub fn vmnl::InputRuntimeConfig::clone(&self) -> vmnl::InputRuntimeConfig
+impl core::cmp::Eq for vmnl::InputRuntimeConfig
+impl core::cmp::PartialEq for vmnl::InputRuntimeConfig
+pub fn vmnl::InputRuntimeConfig::eq(&self, &vmnl::InputRuntimeConfig) -> bool
+impl core::default::Default for vmnl::InputRuntimeConfig
+pub fn vmnl::InputRuntimeConfig::default() -> Self
+impl core::fmt::Debug for vmnl::InputRuntimeConfig
+pub fn vmnl::InputRuntimeConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::InputRuntimeConfig
+impl core::marker::StructuralPartialEq for vmnl::InputRuntimeConfig
+impl core::marker::Freeze for vmnl::InputRuntimeConfig
+impl core::marker::Send for vmnl::InputRuntimeConfig
+impl core::marker::Sync for vmnl::InputRuntimeConfig
+impl core::marker::Unpin for vmnl::InputRuntimeConfig
+impl core::marker::UnsafeUnpin for vmnl::InputRuntimeConfig
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::InputRuntimeConfig
+impl core::panic::unwind_safe::UnwindSafe for vmnl::InputRuntimeConfig
+pub struct vmnl::JoystickHatState(_)
+impl vmnl::JoystickHatState
+pub const vmnl::JoystickHatState::CENTERED: Self
+pub const vmnl::JoystickHatState::DOWN: Self
+pub const vmnl::JoystickHatState::LEFT: Self
+pub const vmnl::JoystickHatState::LEFT_DOWN: Self
+pub const vmnl::JoystickHatState::LEFT_UP: Self
+pub const vmnl::JoystickHatState::RIGHT: Self
+pub const vmnl::JoystickHatState::RIGHT_DOWN: Self
+pub const vmnl::JoystickHatState::RIGHT_UP: Self
+pub const vmnl::JoystickHatState::UP: Self
+pub const fn vmnl::JoystickHatState::as_raw(self) -> u8
+pub const fn vmnl::JoystickHatState::from_raw(u8) -> Self
+pub const fn vmnl::JoystickHatState::is_down(self) -> bool
+pub const fn vmnl::JoystickHatState::is_left(self) -> bool
+pub const fn vmnl::JoystickHatState::is_right(self) -> bool
+pub const fn vmnl::JoystickHatState::is_up(self) -> bool
+impl core::clone::Clone for vmnl::JoystickHatState
+pub fn vmnl::JoystickHatState::clone(&self) -> vmnl::JoystickHatState
+impl core::cmp::Eq for vmnl::JoystickHatState
+impl core::cmp::PartialEq for vmnl::JoystickHatState
+pub fn vmnl::JoystickHatState::eq(&self, &vmnl::JoystickHatState) -> bool
+impl core::fmt::Debug for vmnl::JoystickHatState
+pub fn vmnl::JoystickHatState::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for vmnl::JoystickHatState
+pub fn vmnl::JoystickHatState::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for vmnl::JoystickHatState
+impl core::marker::StructuralPartialEq for vmnl::JoystickHatState
+impl core::marker::Freeze for vmnl::JoystickHatState
+impl core::marker::Send for vmnl::JoystickHatState
+impl core::marker::Sync for vmnl::JoystickHatState
+impl core::marker::Unpin for vmnl::JoystickHatState
+impl core::marker::UnsafeUnpin for vmnl::JoystickHatState
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::JoystickHatState
+impl core::panic::unwind_safe::UnwindSafe for vmnl::JoystickHatState
+pub struct vmnl::JoystickSample
+impl vmnl::JoystickSample
+pub fn vmnl::JoystickSample::axes(&self) -> &[f32]
+pub fn vmnl::JoystickSample::buttons(&self) -> &[vmnl::JoystickButtonState]
+pub const fn vmnl::JoystickSample::gamepad(&self) -> core::option::Option<&vmnl::GamepadState>
+pub fn vmnl::JoystickSample::guid(&self) -> core::option::Option<&str>
+pub fn vmnl::JoystickSample::hats(&self) -> &[vmnl::JoystickHatState]
+pub const fn vmnl::JoystickSample::id(&self) -> vmnl::JoystickId
+pub fn vmnl::JoystickSample::name(&self) -> core::option::Option<&str>
+impl core::clone::Clone for vmnl::JoystickSample
+pub fn vmnl::JoystickSample::clone(&self) -> vmnl::JoystickSample
+impl core::cmp::PartialEq for vmnl::JoystickSample
+pub fn vmnl::JoystickSample::eq(&self, &vmnl::JoystickSample) -> bool
+impl core::fmt::Debug for vmnl::JoystickSample
+pub fn vmnl::JoystickSample::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for vmnl::JoystickSample
+impl core::marker::Freeze for vmnl::JoystickSample
+impl core::marker::Send for vmnl::JoystickSample
+impl core::marker::Sync for vmnl::JoystickSample
+impl core::marker::Unpin for vmnl::JoystickSample
+impl core::marker::UnsafeUnpin for vmnl::JoystickSample
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::JoystickSample
+impl core::panic::unwind_safe::UnwindSafe for vmnl::JoystickSample
+pub struct vmnl::JoystickState
+impl vmnl::JoystickState
+pub fn vmnl::JoystickState::gamepad(&self) -> core::option::Option<&vmnl::GamepadState>
+pub fn vmnl::JoystickState::is_any_down(&self, &[vmnl::GamepadButton]) -> bool
+pub fn vmnl::JoystickState::is_any_pressed(&self, &[vmnl::GamepadButton]) -> bool
+pub fn vmnl::JoystickState::is_any_released(&self, &[vmnl::GamepadButton]) -> bool
+pub const fn vmnl::JoystickState::is_down(&self, vmnl::GamepadButton) -> bool
+pub const fn vmnl::JoystickState::is_pressed(&self, vmnl::GamepadButton) -> bool
+pub const fn vmnl::JoystickState::is_released(&self, vmnl::GamepadButton) -> bool
+pub fn vmnl::JoystickState::left_stick(&self) -> core::option::Option<vmnl::StickState>
+pub fn vmnl::JoystickState::right_stick(&self) -> core::option::Option<vmnl::StickState>
+pub const fn vmnl::JoystickState::sample(&self) -> core::option::Option<&vmnl::JoystickSample>
+pub const fn vmnl::JoystickState::status(&self) -> vmnl::JoystickStatus
+impl core::default::Default for vmnl::JoystickState
+pub fn vmnl::JoystickState::default() -> Self
+impl core::fmt::Debug for vmnl::JoystickState
+pub fn vmnl::JoystickState::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::JoystickState
+impl core::marker::Send for vmnl::JoystickState
+impl core::marker::Sync for vmnl::JoystickState
+impl core::marker::Unpin for vmnl::JoystickState
+impl core::marker::UnsafeUnpin for vmnl::JoystickState
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::JoystickState
+impl core::panic::unwind_safe::UnwindSafe for vmnl::JoystickState
 pub struct vmnl::KeyboardState
 impl vmnl::KeyboardState
 pub fn vmnl::KeyboardState::is_any_down(&self, &[vmnl::Key]) -> bool
@@ -1505,6 +1849,52 @@ impl core::marker::Unpin for vmnl::StandardCursorBuilder
 impl core::marker::UnsafeUnpin for vmnl::StandardCursorBuilder
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::StandardCursorBuilder
 impl core::panic::unwind_safe::UnwindSafe for vmnl::StandardCursorBuilder
+pub struct vmnl::StickConfig
+impl vmnl::StickConfig
+pub const fn vmnl::StickConfig::angle_convention(self) -> vmnl::StickAngleConvention
+pub fn vmnl::StickConfig::new(f32, vmnl::StickAngleConvention) -> vmnl::VMNLResult<Self>
+pub fn vmnl::StickConfig::process(self, f32, f32) -> vmnl::StickState
+pub const fn vmnl::StickConfig::radial_dead_zone(self) -> f32
+pub const fn vmnl::StickConfig::with_angle_convention(self, vmnl::StickAngleConvention) -> Self
+pub fn vmnl::StickConfig::with_radial_dead_zone(self, f32) -> vmnl::VMNLResult<Self>
+impl core::clone::Clone for vmnl::StickConfig
+pub fn vmnl::StickConfig::clone(&self) -> vmnl::StickConfig
+impl core::cmp::PartialEq for vmnl::StickConfig
+pub fn vmnl::StickConfig::eq(&self, &vmnl::StickConfig) -> bool
+impl core::default::Default for vmnl::StickConfig
+pub fn vmnl::StickConfig::default() -> Self
+impl core::fmt::Debug for vmnl::StickConfig
+pub fn vmnl::StickConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::StickConfig
+impl core::marker::StructuralPartialEq for vmnl::StickConfig
+impl core::marker::Freeze for vmnl::StickConfig
+impl core::marker::Send for vmnl::StickConfig
+impl core::marker::Sync for vmnl::StickConfig
+impl core::marker::Unpin for vmnl::StickConfig
+impl core::marker::UnsafeUnpin for vmnl::StickConfig
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::StickConfig
+impl core::panic::unwind_safe::UnwindSafe for vmnl::StickConfig
+pub struct vmnl::StickState
+impl vmnl::StickState
+pub fn vmnl::StickState::angle(self) -> core::option::Option<f32>
+pub const fn vmnl::StickState::magnitude(self) -> f32
+pub const fn vmnl::StickState::x(self) -> f32
+pub const fn vmnl::StickState::y(self) -> f32
+impl core::clone::Clone for vmnl::StickState
+pub fn vmnl::StickState::clone(&self) -> vmnl::StickState
+impl core::cmp::PartialEq for vmnl::StickState
+pub fn vmnl::StickState::eq(&self, &vmnl::StickState) -> bool
+impl core::fmt::Debug for vmnl::StickState
+pub fn vmnl::StickState::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::StickState
+impl core::marker::StructuralPartialEq for vmnl::StickState
+impl core::marker::Freeze for vmnl::StickState
+impl core::marker::Send for vmnl::StickState
+impl core::marker::Sync for vmnl::StickState
+impl core::marker::Unpin for vmnl::StickState
+impl core::marker::UnsafeUnpin for vmnl::StickState
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::StickState
+impl core::panic::unwind_safe::UnwindSafe for vmnl::StickState
 pub struct vmnl::VMNLError
 impl vmnl::VMNLError
 pub const fn vmnl::VMNLError::kind(&self) -> &vmnl::VMNLErrorKind
@@ -1610,6 +2000,8 @@ pub const fn vmnl::Window::is_char_mods_polling_enabled(&self) -> bool
 pub const fn vmnl::Window::is_char_polling_enabled(&self) -> bool
 pub const fn vmnl::Window::is_cursor_enter_polling_enabled(&self) -> bool
 pub const fn vmnl::Window::is_cursor_pos_polling_enabled(&self) -> bool
+pub const fn vmnl::Window::is_joystick_event_delivery_enabled(&self) -> bool
+pub const fn vmnl::Window::is_joystick_tracking_enabled(&self) -> bool
 pub const fn vmnl::Window::is_key_polling_enabled(&self) -> bool
 pub const fn vmnl::Window::is_mouse_button_polling_enabled(&self) -> bool
 pub const fn vmnl::Window::is_scroll_polling_enabled(&self) -> bool
@@ -1623,12 +2015,17 @@ pub fn vmnl::Window::set_drag_and_drop_polling(&mut self, bool)
 pub fn vmnl::Window::set_focus_polling(&mut self, bool)
 pub fn vmnl::Window::set_framebuffer_size_polling(&mut self, bool)
 pub fn vmnl::Window::set_iconify_polling(&mut self, bool)
+pub fn vmnl::Window::set_joystick_event_delivery(&mut self, bool)
+pub fn vmnl::Window::set_joystick_tracking(&mut self, bool) -> vmnl::VMNLResult<()>
 pub fn vmnl::Window::set_key_polling(&mut self, bool)
+pub fn vmnl::Window::set_left_stick_config(&mut self, vmnl::StickConfig)
 pub fn vmnl::Window::set_maximize_polling(&mut self, bool)
 pub fn vmnl::Window::set_mouse_button_polling(&mut self, bool)
 pub fn vmnl::Window::set_refresh_polling(&mut self, bool)
+pub fn vmnl::Window::set_right_stick_config(&mut self, vmnl::StickConfig)
 pub fn vmnl::Window::set_scroll_polling(&mut self, bool)
 pub fn vmnl::Window::set_size_polling(&mut self, bool)
+pub fn vmnl::Window::set_stick_configs(&mut self, vmnl::StickConfig, vmnl::StickConfig)
 pub fn vmnl::Window::unconfigure_window_polling(&mut self)
 impl vmnl::Window
 pub fn vmnl::Window::cursor(&self) -> core::option::Option<&vmnl::Cursor>
@@ -1676,8 +2073,12 @@ pub struct vmnl::WindowBuilder
 impl vmnl::WindowBuilder
 pub fn vmnl::WindowBuilder::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::Window>
 pub fn vmnl::WindowBuilder::fragment_shader(self, vmnl::ShaderSource) -> Self
+pub const fn vmnl::WindowBuilder::joystick_event_delivery(self, bool) -> Self
+pub const fn vmnl::WindowBuilder::joystick_tracking(self, bool) -> Self
+pub const fn vmnl::WindowBuilder::left_stick_config(self, vmnl::StickConfig) -> Self
 pub const fn vmnl::WindowBuilder::preferred_present_mode(self, vmnl::PresentMode) -> Self
 pub const fn vmnl::WindowBuilder::present_mode(self, vmnl::PresentMode) -> Self
+pub const fn vmnl::WindowBuilder::right_stick_config(self, vmnl::StickConfig) -> Self
 pub fn vmnl::WindowBuilder::set_clear_color<C>(self, C) -> Self where C: core::convert::Into<vmnl::common::Rgba>
 pub const fn vmnl::WindowBuilder::size(self, u32, u32) -> Self
 pub fn vmnl::WindowBuilder::size_limit(self, core::option::Option<u32>, core::option::Option<u32>, core::option::Option<u32>, core::option::Option<u32>) -> vmnl::VMNLResult<Self>

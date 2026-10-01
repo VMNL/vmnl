@@ -4,7 +4,10 @@
 //! Shareable native cursor resources.
 
 use crate::glfw_backend::NativeCursor;
-use crate::{common::Rgba, glfw_backend, Context, VMNLError, VMNLErrorKind, VMNLResult};
+use crate::{
+    common::Rgba, glfw_backend, glfw_runtime::GlfwRuntime, Context, VMNLError, VMNLErrorKind,
+    VMNLResult,
+};
 use std::fmt;
 use std::os::raw::c_int;
 use std::rc::Rc;
@@ -36,7 +39,7 @@ pub enum StandardCursor {
 
 struct CursorResource {
     native: NativeCursor,
-    _glfw: glfw::Glfw,
+    _runtime: Rc<GlfwRuntime>,
 }
 
 impl Drop for CursorResource {
@@ -81,19 +84,19 @@ impl Cursor {
     }
 
     fn from_native(context: &Context, native: NativeCursor) -> Self {
-        Self::from_native_with_glfw(context.inner.glfw.clone(), native)
+        Self::from_native_with_runtime(context.inner.glfw.clone(), native)
     }
 
-    fn from_native_with_glfw(glfw: glfw::Glfw, native: NativeCursor) -> Self {
+    fn from_native_with_runtime(runtime: Rc<GlfwRuntime>, native: NativeCursor) -> Self {
         Self {
             resource: Rc::new(CursorResource {
                 native,
-                _glfw: glfw,
+                _runtime: runtime,
             }),
         }
     }
 
-    pub(crate) fn transparent(glfw: &glfw::Glfw) -> VMNLResult<Self> {
+    pub(crate) fn transparent(runtime: &Rc<GlfwRuntime>) -> VMNLResult<Self> {
         const TRANSPARENT_PIXEL: [u8; 4] = [0; 4];
         let image = CursorImage {
             width: 1,
@@ -103,7 +106,7 @@ impl Cursor {
         };
         let native = glfw_backend::create_cursor(image, &TRANSPARENT_PIXEL)?;
 
-        Ok(Self::from_native_with_glfw(glfw.clone(), native))
+        Ok(Self::from_native_with_runtime(Rc::clone(runtime), native))
     }
 
     pub(crate) fn native(&self) -> &NativeCursor {

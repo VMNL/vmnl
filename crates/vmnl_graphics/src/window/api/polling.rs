@@ -4,8 +4,63 @@
 //! Public GLFW event polling configuration API.
 
 use crate::window::Window;
+use crate::{StickConfig, VMNLResult};
 
 impl Window {
+    /// Enables or disables this window's joystick state snapshots.
+    ///
+    /// Tracking is independent of joystick connection-event delivery. Enabling initializes
+    /// GLFW's lazy joystick query subsystem; the first snapshot is published during the next
+    /// [`poll_events`](Self::poll_events) call without inventing button transitions. Disabling
+    /// immediately clears this window's joystick snapshots and transition flags.
+    ///
+    /// # Errors
+    /// Returns a GLFW operation error if the initial joystick query fails.
+    pub fn set_joystick_tracking(&mut self, enabled: bool) -> VMNLResult<()> {
+        self.inner.set_joystick_tracking(enabled)
+    }
+
+    /// Returns whether this window samples joystick state during its event polls.
+    #[inline]
+    #[must_use]
+    pub const fn is_joystick_tracking_enabled(&self) -> bool {
+        self.inner.is_joystick_tracking_enabled()
+    }
+
+    /// Replaces this window's processed left and right stick configurations.
+    ///
+    /// These configurations affect only processed stick accessors. Raw mapped axes in
+    /// `GamepadState` remain unchanged.
+    pub fn set_stick_configs(&mut self, left: StickConfig, right: StickConfig) {
+        self.inner.handle.input.set_stick_configs(left, right);
+    }
+
+    /// Replaces the processed left-stick configuration for every slot in this window.
+    pub fn set_left_stick_config(&mut self, config: StickConfig) {
+        self.inner.handle.input.set_left_stick_config(config);
+    }
+
+    /// Replaces the processed right-stick configuration for every slot in this window.
+    pub fn set_right_stick_config(&mut self, config: StickConfig) {
+        self.inner.handle.input.set_right_stick_config(config);
+    }
+
+    /// Enables or disables delivery of joystick connection events from [`poll_events`](Self::poll_events).
+    ///
+    /// This setting is independent of joystick state tracking. Disabling delivery discards queued
+    /// joystick connection events for this window.
+    #[inline]
+    pub fn set_joystick_event_delivery(&mut self, enabled: bool) {
+        self.inner.set_joystick_event_delivery(enabled);
+    }
+
+    /// Returns whether this window receives joystick connection events.
+    #[inline]
+    #[must_use]
+    pub const fn is_joystick_event_delivery_enabled(&self) -> bool {
+        self.inner.is_joystick_event_delivery_enabled()
+    }
+
     /// Enables or disables polling for character input events.
     ///
     /// # Arguments

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 use vmnl::{
-    Context, Cursor, CursorMode, Event, EventKind, Key, MouseButton, PresentMode, StandardCursor,
-    VMNLResult, Window,
+    Context, Cursor, CursorMode, Event, EventKind, GamepadButton, JoystickId, Key, MouseButton,
+    PresentMode, StandardCursor, StickAngleConvention, StickConfig, VMNLResult, Window,
 };
 
 fn print_event(context: &Context, event: &Event) {
@@ -34,6 +34,14 @@ fn print_event(context: &Context, event: &Event) {
             *scancode,
             modifiers,
             None,
+        ),
+        EventKind::JoystickConnected { id } => println!(
+            "[joystick @ {:.6}s] connected slot={id:?}",
+            event.timestamp_seconds()
+        ),
+        EventKind::JoystickDisconnected { id } => println!(
+            "[joystick @ {:.6}s] disconnected slot={id:?}",
+            event.timestamp_seconds()
         ),
         kind => println!("[event @ {:.6}s] {kind:?}", event.timestamp_seconds()),
     }
@@ -85,6 +93,21 @@ fn print_monitor_summary(window: &Window) {
         );
     }
     println!("monitor count: {}", window.monitor().infos().len());
+}
+
+fn print_joystick_snapshot(window: &Window) {
+    let joystick = window.input().joystick(JoystickId::Joystick1);
+    if joystick.is_pressed(GamepadButton::A) {
+        println!(
+            "[gamepad] A pressed; left stick={:?}",
+            joystick
+                .left_stick()
+                .map(|stick| (stick.x(), stick.y(), stick.angle()))
+        );
+    }
+    if joystick.is_released(GamepadButton::A) {
+        println!("[gamepad] A released");
+    }
 }
 
 fn configure_runtime_window(window: &mut Window) -> VMNLResult<()> {
@@ -235,10 +258,18 @@ fn apply_keybinds(
 
 fn main() -> VMNLResult<()> {
     let context = Context::new()?;
+    let left_stick = StickConfig::default().with_radial_dead_zone(0.15)?;
+    let right_stick = StickConfig::default()
+        .with_radial_dead_zone(0.15)?
+        .with_angle_convention(StickAngleConvention::Screen2D);
     let mut window = Window::builder()
         .title("VMNL window events")
         .size(800, 600)
         .unset_configure_window_polling()
+        .joystick_event_delivery(true)
+        .joystick_tracking(true)
+        .left_stick_config(left_stick)
+        .right_stick_config(right_stick)
         .preferred_present_mode(PresentMode::Mailbox)
         .build(&context)?;
 
@@ -313,6 +344,14 @@ fn main() -> VMNLResult<()> {
         window.is_char_polling_enabled(),
         window.is_char_mods_polling_enabled(),
     );
+    println!(
+        "joystick connection event delivery: {}",
+        window.is_joystick_event_delivery_enabled()
+    );
+    println!(
+        "joystick state tracking: {}",
+        window.is_joystick_tracking_enabled()
+    );
     for key in [Key::A, Key::Semicolon, Key::Kp0, Key::Escape] {
         print_key_query(&context, key);
     }
@@ -328,6 +367,7 @@ fn main() -> VMNLResult<()> {
         for event in window.poll_events() {
             print_event(&context, &event);
         }
+        print_joystick_snapshot(&window);
         apply_keybinds(&mut window, &standard_cursor, &custom_cursor)?;
         // println!(
         //     "time={:.3} iconified={} maximized={} focused={}",

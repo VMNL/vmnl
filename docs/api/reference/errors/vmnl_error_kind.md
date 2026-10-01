@@ -14,14 +14,16 @@ Classifies initialization, windowing, Vulkan, validation, and client-state failu
 |---|---|
 | Vulkan creation | `VulkanInitFailed`, `VulkanSurfaceCreationFailed`, `VulkanSwapchainCreationFailed`, `VulkanShaderModuleCreationFailed`, `VulkanPipelineCreationFailed`, `VulkanVertexBufferCreationFailed`, `VulkanIndexBufferCreationFailed`, `VulkanFrameUboBufferCreationFailed`, `VulkanMemoryAllocationFailed`, `VulkanCommandBufferCreationFailed`, `VulkanDescriptorSetCreationFailed`, `VulkanSemaphoreCreationFailed`, `VulkanFenceCreationFailed`, `VulkanFramebufferCreationFailed`, `VulkanRenderPassCreationFailed`, `VulkanImageCreationFailed`, `VulkanImageViewCreationFailed`, `VulkanSamplerCreationFailed`, `VulkanDescriptorPoolCreationFailed`, `VulkanDescriptorSetLayoutCreationFailed`, `VulkanPipelineLayoutCreationFailed`, `VulkanShaderCompilationFailed` |
 | Vulkan runtime/status | `VulkanValidationFailed`, `VulkanUnsupportedFeature`, `VulkanOutOfMemory`, `VulkanOutOfDate`, `VulkanDeviceLost`, `VulkanSurfaceLost`, `VulkanExtensionNotPresent`, `VulkanLayerNotPresent`, `VulkanIncompatibleDriver`, `VulkanTooManyObjects`, `VulkanFormatNotSupported`, `VulkanFragmentation`, `VulkanUnknownError` |
-| GLFW | `GlfwInitFailed`, `GlfwWindowCreationFailed`, `GlfwContextCreationFailed`, `GlfwUnsupportedPlatform`, `GlfwVersionMismatch`, `GlfwPlatformError`, `GlfwUnknownError` |
-| Client/state | `InvalidWindowSize`, `InvalidState(String)` |
+| GLFW | `GlfwInitFailed`, `GlfwInitializationConfigConflict { active_hat_buttons, requested_hat_buttons }`, `GlfwInputOperationFailed { operation, message }`, `GlfwWindowCreationFailed`, `GlfwContextCreationFailed`, `GlfwUnsupportedPlatform`, `GlfwVersionMismatch`, `GlfwPlatformError`, `GlfwUnknownError` |
+| Client/state | `InvalidWindowSize`, `InvalidGamepadMapping(String)`, `InvalidState(String)` |
 
 Only `Debug` is derived. Human-readable text is provided through `VMNLError`'s `Display` implementation.
 
 ## Construction, defaults, and validation
 
-Variants are constructed directly. `InvalidState` owns application-specific detail. There is no default and no validator.
+Variants are constructed directly. `GlfwInputOperationFailed` owns the operation's backend detail;
+`InvalidGamepadMapping` owns the rejected input reason; `InvalidState` owns application-specific
+detail. There is no default and no validator.
 
 ## Units, coordinates, and valid ranges
 
@@ -29,7 +31,8 @@ Not applicable.
 
 ## Ownership, lifecycle, and threading
 
-All unit variants own no resources; `InvalidState` owns a `String`.
+Unit variants own no resources. Message-bearing variants own their strings; the initialization
+conflict carries two booleans and owns no heap data.
 
 ## Errors, panics, and failure conditions
 
@@ -37,7 +40,8 @@ Constructing a variant is infallible. The enum represents failures rather than c
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-Only `InvalidState(String)` may own a heap allocation. No GPU work occurs.
+Message-bearing variants may own heap allocations. The initialization conflict carries two booleans
+and owns no heap data. No GPU work occurs.
 
 ## Platform, Vulkan, and display constraints
 

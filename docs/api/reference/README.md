@@ -2,7 +2,8 @@
 
 | Area | Pages |
 |---|---|
-| Facade and context | [`vmnl`](facade.md), [`Context`](context.md) |
+| Facade and context | [`vmnl`](facade.md), [`Context`](context.md), [`InputRuntime`](input_runtime.md) |
+| Input | [Joystick and gamepad samples](joystick_gamepad.md) |
 | Errors | [Errors](errors/README.md) |
 | Shared values | [Common](common/README.md) |
 | Windowing | [Window](window/README.md) |

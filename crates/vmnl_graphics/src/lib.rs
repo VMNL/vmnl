@@ -13,15 +13,20 @@ pub mod d2;
 pub mod d3;
 mod exception;
 mod glfw_backend;
+mod glfw_runtime;
 /// Low-level raw graphics resources and public types.
 pub mod raw;
 mod vmnl_instance;
 mod window;
 pub use common::ShaderSource;
 pub use exception::{VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult};
+pub use glfw_runtime::{InputRuntime, InputRuntimeBuilder, InputRuntimeConfig};
 pub use vmnl_instance::Context;
 pub use window::{
-    Cursor, CursorBuilder, CursorMode, Event, EventKind, FrameRenderer, Input, Key, KeyboardState,
-    Modifiers, MonitorInfo, Monitors, MouseButton, MouseState, PresentMode, RenderMode, Scancode,
-    StandardCursor, StandardCursorBuilder, VideoMode, Window, WindowBuilder,
+    Cursor, CursorBuilder, CursorMode, Event, EventKind, FrameRenderer, GamepadAxis, GamepadButton,
+    GamepadState, Input, JoystickButtonState, JoystickHatState, JoystickId, JoystickSample,
+    JoystickState, JoystickStatus, Key, KeyboardState, Modifiers, MonitorInfo, Monitors,
+    MouseButton, MouseState, PresentMode, RenderMode, Scancode, StandardCursor,
+    StandardCursorBuilder, StickAngleConvention, StickConfig, StickState, VideoMode, Window,
+    WindowBuilder,
 };

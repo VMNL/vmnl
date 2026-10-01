@@ -5,6 +5,7 @@ members = [
     "crates/vmnl",
     "examples/d2/advanced_geometry",
     "examples/d2/shapes",
+    "examples/input/joystick_runtime",
     "examples/raw/d2_composition",
     "examples/raw/pipeline",
     "examples/raw/triangle",
