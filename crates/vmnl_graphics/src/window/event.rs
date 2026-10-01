@@ -10,9 +10,10 @@ use super::{
 
 /// A translated window event and the time at which GLFW generated it.
 ///
-/// The timestamp is measured in seconds using the same GLFW clock as
-/// [`Window::get_time`](super::Window::get_time). Calling
-/// [`Window::set_time`](super::Window::set_time) changes that clock, so timestamps are not
+/// The timestamp is measured in seconds using the GLFW clock exposed by
+/// [`Window::get_time`](super::Window::get_time). GLFW's joystick callback has no native timestamp,
+/// so VMNL samples the clock when dispatching that callback. Calling
+/// [`Window::set_time`](super::Window::set_time) changes the clock, so timestamps are not
 /// guaranteed to remain monotonic across such a call.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Event {
@@ -21,7 +22,7 @@ pub struct Event {
 }
 
 impl Event {
-    const fn new(timestamp_seconds: f64, kind: EventKind) -> Self {
+    pub(crate) const fn new(timestamp_seconds: f64, kind: EventKind) -> Self {
         Self {
             timestamp_seconds,
             kind,
@@ -133,6 +134,16 @@ pub enum EventKind {
         character: char,
         /// Modifier flags captured when the event was generated.
         modifiers: Modifiers,
+    },
+    /// A joystick was connected to the system.
+    JoystickConnected {
+        /// GLFW slot that changed; this slot may later refer to another physical device.
+        id: super::JoystickId,
+    },
+    /// A joystick was disconnected from the system.
+    JoystickDisconnected {
+        /// GLFW slot that changed; this slot may later refer to another physical device.
+        id: super::JoystickId,
     },
 }
 

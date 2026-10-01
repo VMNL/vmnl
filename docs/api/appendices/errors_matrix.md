@@ -2,10 +2,13 @@
 
 | Operation | Principal failure contract | Typical decision |
 |---|---|---|
+| `InputRuntime::acquire` / builder | GLFW initialization failure; explicit active-config conflict; active runtime owned by another thread | Use the resolved active setting or acquire/drop handles on the GLFW thread |
+| `InputRuntime::sample_joystick` / mapping update | Backend callback/query failure (`GlfwInputOperationFailed`); rejected mapping bytes (`InvalidGamepadMapping`) | Check slot/backend state or correct the mapping text |
 | `Context::new` | Vulkan initialization/device/queue/allocator categories | Abort graphics initialization or retry after environment change |
 | `WindowBuilder::build` | invalid size; GLFW/surface/swapchain/shader/render-target failures; unsupported strict present mode | Fix configuration or environment; choose preferred/portable present mode |
 | Runtime window setters | invalid size/range/aspect (`InvalidWindowSize`/`InvalidState`) | Correct input before retry |
 | Cursor position/raw-motion setters | non-finite coordinates (`InvalidState`); unsupported raw enable (`GlfwUnsupportedPlatform`) | Correct coordinates or keep raw motion disabled |
+| `StickConfig` construction | dead zone outside finite `[0, 1)` (`InvalidState`) | Choose a finite threshold in `[0, 1)` |
 | Cursor resource build/assign | invalid image/hotspot (`InvalidState`); unavailable theme shape (`GlfwUnsupportedPlatform`); native GLFW failure | Correct image data, choose another shape, or restore the default cursor |
 | Shape/mesh build | invalid/overflowing geometry; vertex/index allocation failure | Correct geometry or release/reduce resources |
 | Raw pipeline build | missing/read/compile/interface/layout/pipeline failures | Correct shaders/layout; verify device support |

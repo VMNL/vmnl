@@ -4,6 +4,7 @@
 //! Window builder and option validation utilities.
 
 use crate::common::{Rgba, ShaderSource};
+use crate::window::input::StickConfig;
 use crate::window::shaders::WindowShaders;
 use crate::window::Window;
 use crate::{Context, VMNLError, VMNLErrorKind, VMNLResult};
@@ -113,6 +114,14 @@ pub(crate) struct WindowOptions {
     pub(crate) height: u32,
     /// Whether to configure the default public event delivery sources.
     pub(crate) configure_window_polling: bool,
+    /// Whether this window receives joystick connection and disconnection events.
+    pub(crate) joystick_event_delivery: bool,
+    /// Whether this window samples joystick state while polling events.
+    pub(crate) joystick_tracking: bool,
+    /// Processing configuration for the mapped left stick.
+    pub(crate) left_stick_config: StickConfig,
+    /// Processing configuration for the mapped right stick.
+    pub(crate) right_stick_config: StickConfig,
     /// The minimum width limits for the window in pixels.
     pub(crate) min_width: Option<u32>,
     /// The minimum height limits for the window in pixels.
@@ -137,6 +146,10 @@ impl Default for WindowOptions {
             width: 800,
             height: 600,
             configure_window_polling: true,
+            joystick_event_delivery: false,
+            joystick_tracking: false,
+            left_stick_config: StickConfig::default(),
+            right_stick_config: StickConfig::default(),
             min_width: None,
             min_height: None,
             max_width: None,
@@ -189,6 +202,41 @@ pub(crate) const fn validate_window_size(width: u32, height: u32) -> VMNLResult<
 }
 
 impl WindowBuilder {
+    /// Choose whether this window receives joystick connection and disconnection events.
+    ///
+    /// Delivery is disabled by default. This option does not enable per-window joystick state
+    /// tracking; event delivery and state tracking are independent controls.
+    #[must_use]
+    pub const fn joystick_event_delivery(mut self, enabled: bool) -> Self {
+        self.options.joystick_event_delivery = enabled;
+        self
+    }
+
+    /// Choose whether this window samples joystick state during [`Window::poll_events`].
+    ///
+    /// Tracking is disabled by default. Enabling it initializes GLFW's joystick query subsystem
+    /// and adds a sample sweep of all sixteen slots to each poll. This setting is independent of
+    /// [`joystick_event_delivery`](Self::joystick_event_delivery).
+    #[must_use]
+    pub const fn joystick_tracking(mut self, enabled: bool) -> Self {
+        self.options.joystick_tracking = enabled;
+        self
+    }
+
+    /// Configure the processed left stick for each mapped gamepad in this window.
+    #[must_use]
+    pub const fn left_stick_config(mut self, config: StickConfig) -> Self {
+        self.options.left_stick_config = config;
+        self
+    }
+
+    /// Configure the processed right stick for each mapped gamepad in this window.
+    #[must_use]
+    pub const fn right_stick_config(mut self, config: StickConfig) -> Self {
+        self.options.right_stick_config = config;
+        self
+    }
+
     /// Set the window title used by the native window manager.
     ///
     /// # Arguments
@@ -567,6 +615,10 @@ mod tests {
         assert_eq!(options.width, 800);
         assert_eq!(options.height, 600);
         assert!(options.configure_window_polling);
+        assert!(!options.joystick_event_delivery);
+        assert!(!options.joystick_tracking);
+        assert_eq!(options.left_stick_config, StickConfig::default());
+        assert_eq!(options.right_stick_config, StickConfig::default());
         assert_eq!(options.min_width, None);
         assert_eq!(options.min_height, None);
         assert_eq!(options.max_width, None);
@@ -583,6 +635,10 @@ mod tests {
             .title("Custom")
             .size(1024, 768)
             .unset_configure_window_polling()
+            .joystick_event_delivery(true)
+            .joystick_tracking(true)
+            .left_stick_config(StickConfig::default())
+            .right_stick_config(StickConfig::default())
             .size_limit(Some(320), Some(240), Some(1920), Some(1080));
 
         assert!(builder.is_ok());
@@ -596,6 +652,8 @@ mod tests {
             assert_eq!(builder.options.width, 1024);
             assert_eq!(builder.options.height, 768);
             assert!(!builder.options.configure_window_polling);
+            assert!(builder.options.joystick_event_delivery);
+            assert!(builder.options.joystick_tracking);
             assert_eq!(builder.options.min_width, Some(320));
             assert_eq!(builder.options.min_height, Some(240));
             assert_eq!(builder.options.max_width, Some(1920));
@@ -617,6 +675,17 @@ mod tests {
                 PresentModeSelection::Strict(PresentMode::Mailbox)
             );
         }
+    }
+
+    #[test]
+    fn joystick_tracking_and_event_delivery_builder_options_are_independent() {
+        let tracking_only = Window::builder().joystick_tracking(true);
+        assert!(tracking_only.options.joystick_tracking);
+        assert!(!tracking_only.options.joystick_event_delivery);
+
+        let events_only = Window::builder().joystick_event_delivery(true);
+        assert!(!events_only.options.joystick_tracking);
+        assert!(events_only.options.joystick_event_delivery);
     }
 
     #[test]

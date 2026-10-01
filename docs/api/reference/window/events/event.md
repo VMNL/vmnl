@@ -6,7 +6,10 @@ Import path: `vmnl::Event`. Status: experimental, operational translated window 
 
 ## Purpose and use cases
 
-Carries one translated [`EventKind`](event_kind.md) and the GLFW time at which the native event was generated. Derives `Debug`, `Clone`, and `PartialEq`.
+Carries one translated [`EventKind`](event_kind.md) and a timestamp in GLFW time. Window events
+are returned by `Window::poll_events`; joystick connection events are returned by that method when
+the window opts in, or by `InputRuntime::poll_events` for a standalone runtime handle. Derives
+`Debug`, `Clone`, and `PartialEq`.
 
 ## Public API
 
@@ -14,12 +17,14 @@ Carries one translated [`EventKind`](event_kind.md) and the GLFW time at which t
 
 ## Construction, defaults, and validation
 
-There is no default or public constructor. Clients receive values from `Window::poll_events`.
+There is no default or public constructor. Clients receive values from event-polling methods.
 Native negative size events and native event kinds without a VMNL representation are omitted.
 
 ## Units, coordinates, and valid ranges
 
-The timestamp is in seconds on the same GLFW clock as `Window::get_time`. Calling `Window::set_time` can make later timestamps smaller; the value is not a monotonic sequence across such a call.
+The timestamp is in seconds on the GLFW clock. A joystick callback has no OS timestamp, so its
+timestamp is sampled from GLFW's clock when VMNL dispatches the callback. Calling `Window::set_time`
+can make later timestamps smaller; the value is not a monotonic sequence across such a call.
 
 ## Ownership, lifecycle, and threading
 

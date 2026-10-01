@@ -6,6 +6,7 @@
 
 mod cursor;
 mod cursor_mode;
+mod joystick;
 mod keyboard;
 mod modifiers;
 mod mouse;
@@ -13,18 +14,28 @@ mod transitions;
 pub(crate) use cursor::CursorImage;
 pub use cursor::{Cursor, CursorBuilder, StandardCursor, StandardCursorBuilder};
 pub use cursor_mode::CursorMode;
+pub(crate) use joystick::ALL_JOYSTICK_IDS;
+pub use joystick::{
+    GamepadAxis, GamepadButton, GamepadState, JoystickButtonState, JoystickHatState, JoystickId,
+    JoystickSample, JoystickState, JoystickStatus, StickAngleConvention, StickConfig, StickState,
+};
 pub use keyboard::{Key, KeyboardState, Scancode};
 pub use modifiers::Modifiers;
 pub use mouse::{MouseButton, MouseState};
 
-/// Represents the input state for the application, consisting of keyboard and mouse states.
+/// Represents one window's keyboard, mouse, and optionally tracked joystick states.
 ///
-/// Used to manage keyboard and mouse input and to provide convenient accessors for each sub-state.
+/// `Input::new()` is detached from GLFW. Joystick states remain `NotTracked` until a window opts
+/// into joystick tracking and publishes its first sample during `Window::poll_events`.
 pub struct Input {
     /// The current state of the keyboard.
     keyboard: KeyboardState,
     /// The current state of the mouse.
     mouse: MouseState,
+    /// Fixed GLFW joystick slots with per-window sample and transition history.
+    joysticks: [JoystickState; JoystickId::COUNT],
+    left_stick_config: StickConfig,
+    right_stick_config: StickConfig,
 }
 
 impl Default for Input {
@@ -80,10 +91,61 @@ impl Input {
         &self.mouse
     }
 
+    /// Returns this window's snapshot for one GLFW joystick slot.
+    ///
+    /// Slots are fixed and always addressable. If the window has not enabled tracking, the
+    /// returned state is [`JoystickStatus::NotTracked`].
+    #[inline]
+    #[must_use]
+    pub const fn joystick(&self, id: JoystickId) -> &JoystickState {
+        &self.joysticks[id.index()]
+    }
+
     /// Starts a new input batch while retaining held controls.
     pub(crate) const fn begin_batch(&mut self) {
         self.keyboard.begin_batch();
         self.mouse.begin_batch();
+        let mut index = 0;
+        while index < self.joysticks.len() {
+            self.joysticks[index].begin_batch();
+            index += 1;
+        }
+    }
+
+    pub(crate) fn apply_joystick_samples(
+        &mut self,
+        samples: [Option<JoystickSample>; JoystickId::COUNT],
+        initial: bool,
+    ) {
+        for (state, sample) in self.joysticks.iter_mut().zip(samples) {
+            state.apply_sample(sample, initial);
+        }
+    }
+
+    pub(crate) fn clear_joystick_tracking(&mut self) {
+        for state in &mut self.joysticks {
+            state.clear_tracking();
+        }
+    }
+
+    pub(crate) fn set_stick_configs(
+        &mut self,
+        left_stick_config: StickConfig,
+        right_stick_config: StickConfig,
+    ) {
+        self.left_stick_config = left_stick_config;
+        self.right_stick_config = right_stick_config;
+        for state in &mut self.joysticks {
+            state.set_stick_configs(left_stick_config, right_stick_config);
+        }
+    }
+
+    pub(crate) fn set_left_stick_config(&mut self, config: StickConfig) {
+        self.set_stick_configs(config, self.right_stick_config);
+    }
+
+    pub(crate) fn set_right_stick_config(&mut self, config: StickConfig) {
+        self.set_stick_configs(self.left_stick_config, config);
     }
 
     /// Applies one unfiltered native event to the window-owned snapshot.
@@ -101,23 +163,35 @@ impl Input {
     pub(crate) const fn clear_transitions(&mut self) {
         self.keyboard.clear_transitions();
         self.mouse.clear_transitions();
+        let mut index = 0;
+        while index < self.joysticks.len() {
+            self.joysticks[index].clear_transitions();
+            index += 1;
+        }
     }
 
-    /// Creates a new `Input` with fresh keyboard and mouse states.
+    /// Creates a detached `Input` with fresh keyboard, mouse, and joystick states.
     ///
     /// # Example
     /// ```rust
-    /// use vmnl_graphics::Input;
+    /// use vmnl_graphics::{Input, JoystickId, JoystickStatus};
     ///
     /// let input = Input::new();
     /// assert!(!input.keyboard().is_one_used());
     /// assert!(!input.mouse().is_one_used());
+    /// assert_eq!(
+    ///     input.joystick(JoystickId::Joystick1).status(),
+    ///     JoystickStatus::NotTracked
+    /// );
     /// ```
     #[must_use]
     pub fn new() -> Self {
         Self {
             keyboard: KeyboardState::default(),
             mouse: MouseState::default(),
+            joysticks: std::array::from_fn(|_| JoystickState::default()),
+            left_stick_config: StickConfig::default(),
+            right_stick_config: StickConfig::default(),
         }
     }
 }
@@ -140,5 +214,48 @@ mod tests {
 
         assert!(!input.keyboard().is_one_down());
         assert!(!input.mouse().is_one_down());
+        assert_eq!(
+            input.joystick(JoystickId::Joystick1).status(),
+            JoystickStatus::NotTracked
+        );
+    }
+
+    #[test]
+    fn joystick_snapshots_are_independent_per_input_owner() {
+        let mut first = Input::new();
+        let mut second = Input::new();
+        let sample = JoystickSample::from_native(
+            JoystickId::Joystick1,
+            Some("test pad".to_owned()),
+            None,
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Some(GamepadState::from_native(
+                Some("test pad".to_owned()),
+                [1; GamepadButton::COUNT],
+                [0.0; GamepadAxis::COUNT],
+            )),
+        );
+        let mut present = std::array::from_fn(|_| None);
+        present[JoystickId::Joystick1.index()] = Some(sample);
+
+        first.apply_joystick_samples(present, true);
+        second.apply_joystick_samples(std::array::from_fn(|_| None), true);
+
+        assert_eq!(
+            first.joystick(JoystickId::Joystick1).status(),
+            JoystickStatus::Present
+        );
+        assert!(first
+            .joystick(JoystickId::Joystick1)
+            .is_down(GamepadButton::A));
+        assert_eq!(
+            second.joystick(JoystickId::Joystick1).status(),
+            JoystickStatus::Absent
+        );
+        assert!(!second
+            .joystick(JoystickId::Joystick1)
+            .is_down(GamepadButton::A));
     }
 }

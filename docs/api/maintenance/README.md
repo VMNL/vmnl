@@ -11,6 +11,8 @@ inventory checks.
   capabilities through their VMNL contracts, deterministic evidence, and native qualification.
 - [`input_test_capability_matrix.md`](input_test_capability_matrix.md) tracks the cross-platform
   keyboard and mouse input coverage required by issue #91.
+- [`joystick_capability_matrix.md`](joystick_capability_matrix.md) tracks GLFW joystick/gamepad
+  capabilities through their VMNL contracts, deterministic evidence, and native qualification.
 
 Run `just docs-api-check` before review; run `just docs-api-update` only after an intentional
 surface, inventory, or documentation change.
