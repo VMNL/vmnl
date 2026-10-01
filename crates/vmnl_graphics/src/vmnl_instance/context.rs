@@ -90,7 +90,7 @@ impl Context {
             return None;
         }
 
-        if self.inner.glfw.get_platform() == glfw::Platform::Wayland {
+        if self.inner.glfw.glfw().get_platform() == glfw::Platform::Wayland {
             return wayland_scancode_name(
                 scancode,
                 |key| self.get_key_scancode(key),
@@ -121,7 +121,7 @@ impl Context {
     #[inline]
     #[must_use]
     pub fn is_raw_mouse_motion_supported(&self) -> bool {
-        self.inner.glfw.supports_raw_motion()
+        self.inner.glfw.glfw().supports_raw_motion()
     }
 
     /// Initialize a new `Context` required for using the graphical part of the library.
@@ -130,11 +130,15 @@ impl Context {
     /// A `VMNLResult<Self>` containing the initialized `Context` on success.
     ///
     /// # Errors
-    /// Returns a `VMNLResult::Err` if any step of the Vulkan initialization process
-    /// fails, such as instance creation, physical device selection, or logical device creation.
+    /// Returns an error if GLFW cannot initialize, another thread owns the active GLFW runtime,
+    /// or a Vulkan initialization step fails, such as instance creation, physical-device
+    /// selection, or logical-device creation.
     ///
     /// This call creates Vulkan instance/device/queue and allocator state. Its
     /// allocation count and initialization latency are not specified.
+    ///
+    /// GLFW initialization is shared with any active [`InputRuntime`](crate::InputRuntime).
+    /// Without one, this call initializes GLFW with default initialization settings.
     ///
     /// # Example
     /// ```rust,no_run

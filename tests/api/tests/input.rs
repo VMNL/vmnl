@@ -4,8 +4,9 @@
 //! Headless public input-state contracts.
 
 use vmnl::{
-    Context, Cursor, CursorBuilder, CursorMode, Event, EventKind, Input, Key, Modifiers,
-    MouseButton, Scancode, StandardCursor, StandardCursorBuilder, VMNLResult, Window,
+    Context, Cursor, CursorBuilder, CursorMode, Event, EventKind, GamepadButton, Input, JoystickId,
+    JoystickStatus, Key, Modifiers, MouseButton, Scancode, StandardCursor, StandardCursorBuilder,
+    StickAngleConvention, StickConfig, VMNLResult, Window, WindowBuilder,
 };
 
 fn assert_empty(input: &Input) {
@@ -26,6 +27,11 @@ fn assert_empty(input: &Input) {
     assert!(!mouse.is_any_down(&[MouseButton::Left, MouseButton::Right]));
     assert!(!mouse.is_one_down());
     assert!(!mouse.is_one_used());
+    let joystick = input.joystick(JoystickId::Joystick1);
+    assert_eq!(joystick.status(), JoystickStatus::NotTracked);
+    assert!(!joystick.is_down(GamepadButton::A));
+    assert!(!joystick.is_pressed(GamepadButton::A));
+    assert!(!joystick.is_released(GamepadButton::A));
 }
 
 #[test]
@@ -33,6 +39,37 @@ fn input_initial_state_is_empty_through_public_facade() -> VMNLResult<()> {
     assert_empty(&Input::new());
     assert_empty(&Input::default());
     Ok(())
+}
+
+#[test]
+fn joystick_snapshot_and_stick_configuration_are_exposed_through_public_facade() {
+    let _: fn(&mut Window, bool) -> VMNLResult<()> = Window::set_joystick_tracking;
+    let _: fn(&Window) -> bool = Window::is_joystick_tracking_enabled;
+    let _: fn(&mut Window, StickConfig, StickConfig) = Window::set_stick_configs;
+    let _: fn(&mut Window, StickConfig) = Window::set_left_stick_config;
+    let _: fn(&mut Window, StickConfig) = Window::set_right_stick_config;
+    let _: fn(WindowBuilder, bool) -> WindowBuilder = WindowBuilder::joystick_tracking;
+    let _: fn(WindowBuilder, StickConfig) -> WindowBuilder = WindowBuilder::left_stick_config;
+    let _: fn(WindowBuilder, StickConfig) -> WindowBuilder = WindowBuilder::right_stick_config;
+    let _: fn(&vmnl::JoystickState) = |state| {
+        let _ = state.sample();
+        let _ = state.gamepad();
+        let _ = state.left_stick();
+        let _ = state.right_stick();
+    };
+
+    let config_result = StickConfig::default().with_radial_dead_zone(0.25);
+    assert!(config_result.is_ok());
+    if let Ok(config) = config_result {
+        let config = config.with_angle_convention(StickAngleConvention::Heading);
+        assert_eq!(config.radial_dead_zone(), 0.25);
+        assert_eq!(config.angle_convention(), StickAngleConvention::Heading);
+        let centered = config.process(0.1, 0.0);
+        assert_eq!(
+            (centered.x(), centered.y(), centered.angle()),
+            (0.0, 0.0, None)
+        );
+    }
 }
 
 #[test]

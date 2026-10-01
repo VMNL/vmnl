@@ -124,6 +124,10 @@ stable compatibility baseline; their present behavior remains documented in the 
   inspectable.
 - Ownership, thread affinity, allocations, expensive operations, and synchronization are explicit
   or documented at their public boundary.
+- `Context` and `InputRuntime` share one GLFW runtime. Its first active owner fixes initialization
+  settings; GLFW remains initialized until the last context, runtime handle, window, or native cursor
+  owner drops. `InputRuntime` can initialize GLFW without a Vulkan instance or window, but still
+  requires a usable GLFW platform backend.
 - VMNL creates no hidden worker runtime. Any managed execution mode is opt-in and documents its
   threads, lifecycle, and shutdown behavior.
 - Determinism is claimed only for inputs and environment decisions controlled by VMNL; backend or
@@ -135,6 +139,8 @@ stable compatibility baseline; their present behavior remains documented in the 
 
 - `vmnl` re-exports the current public graphics API.
 - `vmnl_graphics` owns rendering, windowing, input, and GPU resource behavior.
+- `InputRuntime` and `Context` share the same GLFW owner; standalone input access does not create a
+  Vulkan instance or window.
 - `raw` exposes experimental lower-level VMNL pipeline, geometry, and resource control.
 - 2D rendering is available.
 - 3D public types exist, but 3D rendering is still scaffolded.

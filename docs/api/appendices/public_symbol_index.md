@@ -10,7 +10,19 @@
 | struct | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/struct.Event.html) |
 | enum | `vmnl::EventKind` | [EventKind](../reference/window/events/event_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.EventKind.html) |
 | struct | `vmnl::FrameRenderer` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [Rustdoc](../../../target/doc/vmnl/struct.FrameRenderer.html) |
+| enum | `vmnl::GamepadAxis` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.GamepadAxis.html) |
+| enum | `vmnl::GamepadButton` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.GamepadButton.html) |
+| struct | `vmnl::GamepadState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.GamepadState.html) |
 | struct | `vmnl::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl/struct.Input.html) |
+| struct | `vmnl::InputRuntime` | [InputRuntime](../reference/input_runtime.md) | [Rustdoc](../../../target/doc/vmnl/struct.InputRuntime.html) |
+| struct | `vmnl::InputRuntimeBuilder` | [InputRuntime](../reference/input_runtime.md) | [Rustdoc](../../../target/doc/vmnl/struct.InputRuntimeBuilder.html) |
+| struct | `vmnl::InputRuntimeConfig` | [InputRuntime](../reference/input_runtime.md) | [Rustdoc](../../../target/doc/vmnl/struct.InputRuntimeConfig.html) |
+| enum | `vmnl::JoystickButtonState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.JoystickButtonState.html) |
+| struct | `vmnl::JoystickHatState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickHatState.html) |
+| enum | `vmnl::JoystickId` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.JoystickId.html) |
+| struct | `vmnl::JoystickSample` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickSample.html) |
+| struct | `vmnl::JoystickState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickState.html) |
+| enum | `vmnl::JoystickStatus` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.JoystickStatus.html) |
 | enum | `vmnl::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl/enum.Key.html) |
 | struct | `vmnl::KeyboardState` | [KeyboardState](../reference/window/input/keyboard_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.KeyboardState.html) |
 | struct | `vmnl::Modifiers` | [Modifiers](../reference/window/input/modifiers.md) | [Rustdoc](../../../target/doc/vmnl/struct.Modifiers.html) |
@@ -23,6 +35,9 @@
 | struct | `vmnl::Scancode` | [Scancode](../reference/window/input/scancode.md) | [Rustdoc](../../../target/doc/vmnl/struct.Scancode.html) |
 | enum | `vmnl::StandardCursor` | [StandardCursor](../reference/window/input/standard_cursor.md) | [Rustdoc](../../../target/doc/vmnl/enum.StandardCursor.html) |
 | struct | `vmnl::StandardCursorBuilder` | [StandardCursorBuilder](../reference/window/input/standard_cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.StandardCursorBuilder.html) |
+| enum | `vmnl::StickAngleConvention` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.StickAngleConvention.html) |
+| struct | `vmnl::StickConfig` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickConfig.html) |
+| struct | `vmnl::StickState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickState.html) |
 | struct | `vmnl::VMNLError` | [VMNLError](../reference/errors/vmnl_error.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLError.html) |
 | enum | `vmnl::VMNLErrorKind` | [VMNLErrorKind](../reference/errors/vmnl_error_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.VMNLErrorKind.html) |
 | struct | `vmnl::VMNLErrorLocation` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLErrorLocation.html) |

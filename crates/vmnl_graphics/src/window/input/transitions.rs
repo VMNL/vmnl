@@ -3,6 +3,7 @@
 
 //! Fixed-size transition tracking shared by keyboard and mouse snapshots.
 
+#[derive(Debug)]
 pub(super) struct TransitionState<const N: usize> {
     down: [bool; N],
     pressed: [bool; N],
@@ -25,6 +26,10 @@ impl<const N: usize> TransitionState<N> {
     pub(super) const fn press(&mut self, index: usize) {
         self.pressed[index] = true;
         self.down[index] = true;
+    }
+
+    pub(super) const fn set_down(&mut self, index: usize, down: bool) {
+        self.down[index] = down;
     }
 
     pub(super) const fn repeat(&mut self, index: usize) {
@@ -51,6 +56,11 @@ impl<const N: usize> TransitionState<N> {
     pub(super) const fn clear_transitions(&mut self) {
         self.pressed = [false; N];
         self.released = [false; N];
+    }
+
+    pub(super) const fn reset(&mut self) {
+        self.down = [false; N];
+        self.clear_transitions();
     }
 }
 

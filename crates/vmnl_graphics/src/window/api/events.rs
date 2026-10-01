@@ -11,6 +11,9 @@ impl Window {
     ///
     /// One call defines one batch. It clears previous press/release flags, then retains every
     /// transition found while draining pending events. Held state is preserved between calls.
+    /// When joystick tracking is enabled, this window also samples its joystick slots after
+    /// draining window events; the first successful sample establishes a baseline without
+    /// transitions.
     ///
     /// # Example
     /// ```rust,no_run

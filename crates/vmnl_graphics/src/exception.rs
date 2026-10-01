@@ -142,6 +142,22 @@ pub enum VMNLErrorKind {
     VulkanUnknownError,
     /// GLFW initialization failed.
     GlfwInitFailed,
+    /// An explicit GLFW initialization setting conflicts with the active VMNL runtime.
+    GlfwInitializationConfigConflict {
+        /// Resolved joystick-hat-buttons setting of the active runtime.
+        active_hat_buttons: bool,
+        /// Requested joystick-hat-buttons setting.
+        requested_hat_buttons: bool,
+    },
+    /// A GLFW joystick or gamepad operation failed or reported an error callback.
+    GlfwInputOperationFailed {
+        /// Name of the VMNL operation that failed.
+        operation: &'static str,
+        /// GLFW callback or failure detail.
+        message: String,
+    },
+    /// A gamepad mapping string violates VMNL's input format requirements.
+    InvalidGamepadMapping(String),
     /// GLFW window creation failed.
     GlfwWindowCreationFailed,
     /// GLFW context creation failed.
@@ -339,6 +355,19 @@ impl fmt::Display for VMNLError {
             VMNLErrorKind::VulkanFragmentation => f.write_str("vulkan fragmentation"),
             VMNLErrorKind::VulkanUnknownError => f.write_str("vulkan unknown error"),
             VMNLErrorKind::GlfwInitFailed => f.write_str("glfw initialization failed"),
+            VMNLErrorKind::GlfwInitializationConfigConflict {
+                active_hat_buttons,
+                requested_hat_buttons,
+            } => write!(
+                f,
+                "glfw initialization config conflict: active hat_buttons={active_hat_buttons}, requested hat_buttons={requested_hat_buttons}"
+            ),
+            VMNLErrorKind::GlfwInputOperationFailed { operation, message } => {
+                write!(f, "glfw {operation} failed: {message}")
+            }
+            VMNLErrorKind::InvalidGamepadMapping(message) => {
+                write!(f, "invalid gamepad mapping: {message}")
+            }
             VMNLErrorKind::GlfwWindowCreationFailed => f.write_str("glfw window creation failed"),
             VMNLErrorKind::GlfwContextCreationFailed => f.write_str("glfw context creation failed"),
             VMNLErrorKind::GlfwUnsupportedPlatform => f.write_str("glfw unsupported platform"),
@@ -371,6 +400,29 @@ mod tests {
         assert_eq!(
             VMNLError::new(VMNLErrorKind::InvalidState("bad state".to_string())).to_string(),
             "invalid state: bad state"
+        );
+        assert_eq!(
+            VMNLError::new(VMNLErrorKind::GlfwInitializationConfigConflict {
+                active_hat_buttons: false,
+                requested_hat_buttons: true,
+            })
+            .to_string(),
+            "glfw initialization config conflict: active hat_buttons=false, requested hat_buttons=true"
+        );
+        assert_eq!(
+            VMNLError::new(VMNLErrorKind::GlfwInputOperationFailed {
+                operation: "joystick sample",
+                message: "PlatformError: test".to_owned(),
+            })
+            .to_string(),
+            "glfw joystick sample failed: PlatformError: test"
+        );
+        assert_eq!(
+            VMNLError::new(VMNLErrorKind::InvalidGamepadMapping(
+                "mapping text must be ASCII".to_owned(),
+            ))
+            .to_string(),
+            "invalid gamepad mapping: mapping text must be ASCII"
         );
     }
 

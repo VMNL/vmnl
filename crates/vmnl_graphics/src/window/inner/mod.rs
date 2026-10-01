@@ -50,7 +50,7 @@ pub(crate) struct VMNLWindow {
 impl VMNLWindow {
     /// Internal constructor used by `Window::from_options`.
     pub(crate) fn create(context: &Context, options: &WindowOptions) -> VMNLResult<Self> {
-        Self::new(
+        let mut window = Self::new(
             context,
             options.width,
             options.height,
@@ -58,7 +58,14 @@ impl VMNLWindow {
             &options.shaders,
             options.clear_color,
             options.present_mode,
-        )
+        )?;
+        window.set_joystick_event_delivery(options.joystick_event_delivery);
+        window
+            .handle
+            .input
+            .set_stick_configs(options.left_stick_config, options.right_stick_config);
+        window.set_joystick_tracking(options.joystick_tracking)?;
+        Ok(window)
     }
 
     /// Internal implementation backing `Window::new`.
@@ -72,7 +79,7 @@ impl VMNLWindow {
         present_mode: PresentModeSelection,
     ) -> VMNLResult<Self> {
         let vmnl_instance: Rc<VMNLInstance> = vmnl_context.inner.clone();
-        let mut glfw: ::glfw::Glfw = vmnl_instance.glfw.clone();
+        let mut glfw: ::glfw::Glfw = vmnl_instance.glfw.glfw().clone();
         glfw.window_hint(::glfw::WindowHint::ClientApi(::glfw::ClientApiHint::NoApi));
         glfw.window_hint(::glfw::WindowHint::TransparentFramebuffer(true));
         let (mut window, events_glfw): (
@@ -128,7 +135,7 @@ impl VMNLWindow {
         let previous_frame_end: Option<Box<dyn GpuFuture>> =
             Some(sync::now(vmnl_instance.device.clone()).boxed());
         let input: Input = Input::new();
-        let monitor: Monitors = Monitors::new(&mut vmnl_instance.glfw.clone());
+        let monitor: Monitors = Monitors::new(&mut glfw.clone());
         let window: Self = Self {
             handle: WindowHandle {
                 instance: glfw,
@@ -145,6 +152,10 @@ impl VMNLWindow {
                 previous_frame_end,
                 swapchain,
                 input,
+                joystick_events: Rc::default(),
+                joystick_event_subscription: None,
+                joystick_tracking_enabled: false,
+                joystick_snapshot_initialized: false,
             },
             state: WindowState {
                 is_ready: true,

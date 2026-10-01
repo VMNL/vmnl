@@ -12,7 +12,7 @@ Drives the native event queue, updates input snapshots, controls GLFW time, wake
 
 | Methods | Contract |
 |---|---|
-| `poll_events()` | Start one input batch, process pending events, update input, return `Vec<Event>`. |
+| `poll_events()` | Start one input batch, process pending events, update keyboard/mouse input, optionally sample this window's joystick snapshots, and return delivered events. |
 | `wait_events()` | Block until at least one event is pending; does not start or process a batch. |
 | `wait_events_timeout(seconds)` | Block until an event is pending or timeout; does not start or process a batch. |
 | `post_empty_event()` | Wake a waiting event loop. |
@@ -32,19 +32,30 @@ Wait timeout and GLFW time are seconds. Timer values are ticks; divide by the no
 
 ## Ownership, lifecycle, and threading
 
-Processing requires `&mut Window`. One batch is exactly one `poll_events` call: it clears the previous batch's transition flags, then applies every pending native event in order. `wait_events` and `wait_events_timeout` only wait; their pending events belong to the next `poll_events` batch. The callback is stored by GLFW/VMNL until replaced, unset, or the window runtime is dropped. Wake-up behavior across threads is platform constrained; this API method itself requires mutable window access.
+Processing requires `&mut Window`. One batch is exactly one `poll_events` call: it clears the previous
+batch's transition flags, applies every pending native event in order, then samples tracked
+joystick slots. Each window owns its own snapshot. The first successful sample establishes the
+baseline without button transitions; disconnect or mapping loss releases held mapped buttons for
+that batch. `wait_events` and `wait_events_timeout` only wait; their pending events belong to the
+next `poll_events` batch. The callback is stored by GLFW/VMNL until replaced, unset, or the window
+runtime is dropped. Wake-up behavior across threads is platform constrained; this API method itself
+requires mutable window access.
 
 ## Errors, panics, and failure conditions
 
-These methods expose no typed result. Known API, cursor, feature, and platform availability errors
-map to `GlfwUnsupportedPlatform`; unknown raw codes map to `GlfwUnknownError` and remain in the
-message. Total error conversion prevents an unknown GLFW code from being transmuted into an
-invalid Rust enum. A user callback that panics crosses GLFW's C callback boundary and may abort the
-process; callbacks must not unwind.
+`poll_events` remains infallible; sampling failures are reported through GLFW's error callback
+when provided by GLFW and otherwise logged, while the last successful snapshot is retained. Known
+API, cursor, feature, and platform availability errors map to `GlfwUnsupportedPlatform`; unknown
+raw codes map to `GlfwUnknownError` and remain in the message. Total error conversion prevents an
+unknown GLFW code from being transmuted into an invalid Rust enum. A panic in the GLFW error
+callback may still cross the C boundary; that callback must not unwind. VMNL catches joystick
+callback panics and resumes them after GLFW returns to Rust.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-`poll_events` allocates a `Vec<Event>` and may allocate callback messages. Waiting blocks the CPU thread. No GPU submission occurs.
+`poll_events` allocates a `Vec<Event>` and may allocate callback messages. When joystick tracking is
+enabled, it queries all sixteen slots and copies connected-device data. Waiting blocks the CPU
+thread. No GPU submission occurs.
 
 ## Platform, Vulkan, and display constraints
 
