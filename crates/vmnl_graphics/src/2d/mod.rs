@@ -10,7 +10,7 @@ mod vertex;
 
 pub use render_item::{Drawable2D, RenderItem2D};
 pub use shape::{
-    Anchor, EllipseBuilder, IndexedShapeBuilder, LineBuilder, LineCap, PolygonBuilder, RectBuilder,
+    Anchor, EllipseBuilder, IndexedShapeBuilder, LineBuilder, LineCap, PolygonBuilder,  LineJoin, PolylineBuilder, RectBuilder,
     Shape, TriangleBuilder,
 };
 pub use vector::Vector2f;

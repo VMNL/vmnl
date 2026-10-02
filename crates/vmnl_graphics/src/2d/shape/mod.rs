@@ -7,7 +7,9 @@ mod ellipse;
 mod indexed;
 mod line;
 mod polygon;
+mod polyline;
 mod rect;
+mod stroke;
 mod triangle;
 mod validation;
 
@@ -17,6 +19,7 @@ pub use ellipse::EllipseBuilder;
 pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
 pub use polygon::PolygonBuilder;
+pub use polyline::{LineJoin, PolylineBuilder};
 pub use rect::{Anchor, RectBuilder};
 pub use triangle::TriangleBuilder;
 
@@ -36,6 +39,8 @@ pub(crate) enum ShapeKind {
     Line,
     /// Filled polygon shape.
     Polygon,
+    /// Connected thick stroke built from an ordered point path.
+    Polyline,
 }
 
 /// Shape resource container holding vertex/index buffers and counts.
@@ -326,6 +331,42 @@ impl Shape {
         V: Into<Vec<Vertex2D>>,
     {
         PolygonBuilder::from_vertices(vertices.into())
+    /// Create a polyline builder from an ordered collection of 2D points.
+    ///
+    /// The path is open by default. Width defaults to `1.0`, cap to `Butt`,
+    /// join to `Bevel`, miter limit to `4.0`, color to opaque white, and buffer
+    /// memory preference to `Device`. Open paths require at least two points;
+    /// closed paths require at least three. Points and width use pixel-like 2D
+    /// coordinates. Invalid values and color-count mismatches fail before GPU
+    /// buffer allocation. Building generates and uploads one indexed shape.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vmnl_graphics::common::Rgba;
+    /// # use vmnl_graphics::d2::{LineCap, LineJoin, Shape, Vector2f};
+    /// # use vmnl_graphics::{Context, VMNLResult};
+    /// # fn main() -> VMNLResult<()> {
+    /// # let context = Context::new()?;
+    /// let polyline = Shape::polyline([
+    ///     Vector2f { x: 100.0, y: 100.0 },
+    ///     Vector2f { x: 220.0, y: 160.0 },
+    ///     Vector2f { x: 340.0, y: 100.0 },
+    /// ])
+    /// .width(8.0)
+    /// .cap(LineCap::Round)
+    /// .join(LineJoin::Round)
+    /// .point_colors([Rgba::RED, Rgba::YELLOW, Rgba::BLUE])
+    /// .build(&context)?;
+    /// # drop(polyline);
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[must_use]
+    pub fn polyline<P>(points: P) -> PolylineBuilder
+    where
+        P: Into<Vec<Vector2f>>,
+    {
+        PolylineBuilder::new(points.into())
     }
 }
 
