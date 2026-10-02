@@ -4,10 +4,12 @@
 //! Public 2D vector type.
 
 use bytemuck::{Pod, Zeroable};
-use std::cmp::Ordering;
 use std::ops::{AddAssign, Mul, Sub, SubAssign};
 
 /// 2D vector of `f32` values.
+///
+/// Partial equality compares components using IEEE-754 semantics: NaN is unequal to itself, and
+/// signed zeros compare equal.
 #[derive(Clone, Copy, Debug, Default, Pod, Zeroable, PartialEq)]
 #[repr(C)]
 pub struct Vector2f {
@@ -15,22 +17,6 @@ pub struct Vector2f {
     pub x: f32,
     /// Y component of the vector.
     pub y: f32,
-}
-
-impl Eq for Vector2f {}
-
-impl Ord for Vector2f {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.x
-            .total_cmp(&other.x)
-            .then_with(|| self.y.total_cmp(&other.y))
-    }
-}
-
-impl PartialOrd for Vector2f {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
 }
 
 impl Sub for Vector2f {
@@ -74,22 +60,25 @@ mod tests {
     use super::*;
 
     #[test]
-    fn vector2f_ordering_sorts_by_x_then_y() {
-        let mut values: [Vector2f; 3] = [
-            Vector2f { x: 2.0, y: 0.0 },
-            Vector2f { x: 1.0, y: 3.0 },
-            Vector2f { x: 1.0, y: 2.0 },
-        ];
+    fn vector2f_partial_eq_compares_finite_components() {
+        let value = Vector2f { x: 1.0, y: 2.0 };
 
-        values.sort();
+        assert_eq!(value, Vector2f { x: 1.0, y: 2.0 });
+        assert_ne!(value, Vector2f { x: 1.0, y: 3.0 });
+    }
 
-        assert_eq!(
-            values,
-            [
-                Vector2f { x: 1.0, y: 2.0 },
-                Vector2f { x: 1.0, y: 3.0 },
-                Vector2f { x: 2.0, y: 0.0 },
-            ]
-        );
+    #[test]
+    fn vector2f_partial_eq_treats_signed_zero_as_equal() {
+        assert_eq!(Vector2f { x: -0.0, y: 0.0 }, Vector2f { x: 0.0, y: -0.0 });
+    }
+
+    #[test]
+    fn vector2f_partial_eq_with_nan_is_not_reflexive() {
+        let value = Vector2f {
+            x: f32::NAN,
+            y: 2.0,
+        };
+
+        assert!(!value.eq(&value));
     }
 }

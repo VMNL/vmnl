@@ -473,13 +473,8 @@ impl bytemuck::pod::Pod for vmnl::d2::Vector2f
 impl bytemuck::zeroable::Zeroable for vmnl::d2::Vector2f
 impl core::clone::Clone for vmnl::d2::Vector2f
 pub fn vmnl::d2::Vector2f::clone(&self) -> vmnl::d2::Vector2f
-impl core::cmp::Eq for vmnl::d2::Vector2f
-impl core::cmp::Ord for vmnl::d2::Vector2f
-pub fn vmnl::d2::Vector2f::cmp(&self, &Self) -> core::cmp::Ordering
 impl core::cmp::PartialEq for vmnl::d2::Vector2f
 pub fn vmnl::d2::Vector2f::eq(&self, &vmnl::d2::Vector2f) -> bool
-impl core::cmp::PartialOrd for vmnl::d2::Vector2f
-pub fn vmnl::d2::Vector2f::partial_cmp(&self, &Self) -> core::option::Option<core::cmp::Ordering>
 impl core::default::Default for vmnl::d2::Vector2f
 pub fn vmnl::d2::Vector2f::default() -> vmnl::d2::Vector2f
 impl core::fmt::Debug for vmnl::d2::Vector2f
@@ -510,13 +505,8 @@ impl bytemuck::pod::Pod for vmnl::d2::Vertex2D
 impl bytemuck::zeroable::Zeroable for vmnl::d2::Vertex2D
 impl core::clone::Clone for vmnl::d2::Vertex2D
 pub fn vmnl::d2::Vertex2D::clone(&self) -> vmnl::d2::Vertex2D
-impl core::cmp::Eq for vmnl::d2::Vertex2D
-impl core::cmp::Ord for vmnl::d2::Vertex2D
-pub fn vmnl::d2::Vertex2D::cmp(&self, &Self) -> core::cmp::Ordering
 impl core::cmp::PartialEq for vmnl::d2::Vertex2D
 pub fn vmnl::d2::Vertex2D::eq(&self, &vmnl::d2::Vertex2D) -> bool
-impl core::cmp::PartialOrd for vmnl::d2::Vertex2D
-pub fn vmnl::d2::Vertex2D::partial_cmp(&self, &Self) -> core::option::Option<core::cmp::Ordering>
 impl core::default::Default for vmnl::d2::Vertex2D
 pub fn vmnl::d2::Vertex2D::default() -> vmnl::d2::Vertex2D
 impl core::fmt::Debug for vmnl::d2::Vertex2D
@@ -611,13 +601,8 @@ impl bytemuck::pod::Pod for vmnl::d3::Vector3f
 impl bytemuck::zeroable::Zeroable for vmnl::d3::Vector3f
 impl core::clone::Clone for vmnl::d3::Vector3f
 pub fn vmnl::d3::Vector3f::clone(&self) -> vmnl::d3::Vector3f
-impl core::cmp::Eq for vmnl::d3::Vector3f
-impl core::cmp::Ord for vmnl::d3::Vector3f
-pub fn vmnl::d3::Vector3f::cmp(&self, &Self) -> core::cmp::Ordering
 impl core::cmp::PartialEq for vmnl::d3::Vector3f
 pub fn vmnl::d3::Vector3f::eq(&self, &vmnl::d3::Vector3f) -> bool
-impl core::cmp::PartialOrd for vmnl::d3::Vector3f
-pub fn vmnl::d3::Vector3f::partial_cmp(&self, &Self) -> core::option::Option<core::cmp::Ordering>
 impl core::default::Default for vmnl::d3::Vector3f
 pub fn vmnl::d3::Vector3f::default() -> vmnl::d3::Vector3f
 impl core::fmt::Debug for vmnl::d3::Vector3f
@@ -648,13 +633,8 @@ impl bytemuck::pod::Pod for vmnl::d3::Vertex3D
 impl bytemuck::zeroable::Zeroable for vmnl::d3::Vertex3D
 impl core::clone::Clone for vmnl::d3::Vertex3D
 pub fn vmnl::d3::Vertex3D::clone(&self) -> vmnl::d3::Vertex3D
-impl core::cmp::Eq for vmnl::d3::Vertex3D
-impl core::cmp::Ord for vmnl::d3::Vertex3D
-pub fn vmnl::d3::Vertex3D::cmp(&self, &Self) -> core::cmp::Ordering
 impl core::cmp::PartialEq for vmnl::d3::Vertex3D
 pub fn vmnl::d3::Vertex3D::eq(&self, &vmnl::d3::Vertex3D) -> bool
-impl core::cmp::PartialOrd for vmnl::d3::Vertex3D
-pub fn vmnl::d3::Vertex3D::partial_cmp(&self, &Self) -> core::option::Option<core::cmp::Ordering>
 impl core::default::Default for vmnl::d3::Vertex3D
 pub fn vmnl::d3::Vertex3D::default() -> vmnl::d3::Vertex3D
 impl core::fmt::Debug for vmnl::d3::Vertex3D

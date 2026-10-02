@@ -10,7 +10,7 @@ Stores 2D positions, dimensions, offsets, and application-defined vector values.
 
 ## Public API
 
-Public fields: `x: f32`, `y: f32`. `#[repr(C)]`; derives `Clone`, `Copy`, `Debug`, `Default`, `Pod`, `Zeroable`, `PartialEq`; explicit `Eq`, total `Ord`/`PartialOrd`, `Sub`, `SubAssign`, `AddAssign`, and `Mul<f32>` implementations.
+Public fields: `x: f32`, `y: f32`. `#[repr(C)]`; derives `Clone`, `Copy`, `Debug`, `Default`, `Pod`, `Zeroable`, and `PartialEq`; implements `Sub`, `SubAssign`, `AddAssign`, and `Mul<f32>`.
 
 ## Construction, defaults, and validation
 
@@ -18,7 +18,7 @@ Construct with a literal. Default/zeroed value is `(0.0, 0.0)`. Every `f32` bit 
 
 ## Units, coordinates, and valid ranges
 
-Units are determined by the consuming API; 2D shape builders use pixel-like coordinates. Ordering uses `f32::total_cmp`, including deterministic ordering of NaNs and signed zero.
+Units are determined by the consuming API; 2D shape builders use pixel-like coordinates. Partial equality compares components using IEEE-754 semantics: NaN is unequal to itself, and signed zeros compare equal.
 
 ## Ownership, lifecycle, and threading
 

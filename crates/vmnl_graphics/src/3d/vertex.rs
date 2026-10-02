@@ -6,10 +6,12 @@
 use super::Vector3f;
 use crate::common::Rgba;
 use bytemuck::{Pod, Zeroable};
-use std::cmp::Ordering;
 use vulkano::pipeline::graphics::vertex_input::Vertex as VulkanoVertex;
 
 /// Public vertex with a 3D position and 8-bit RGBA color.
+///
+/// Partial equality compares all fields; position components follow IEEE-754 `f32` semantics, so
+/// NaN is unequal to itself and signed zeros compare equal.
 #[derive(Clone, Copy, Debug, Default, Pod, Zeroable, PartialEq)]
 #[repr(C)]
 pub struct Vertex3D {
@@ -40,28 +42,80 @@ impl From<Vertex3D> for GpuVertex3D {
     }
 }
 
-impl Eq for Vertex3D {}
-
-impl Ord for Vertex3D {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.position
-            .cmp(&other.position)
-            .then_with(|| self.color.r.cmp(&other.color.r))
-            .then_with(|| self.color.g.cmp(&other.color.g))
-            .then_with(|| self.color.b.cmp(&other.color.b))
-            .then_with(|| self.color.a.cmp(&other.color.a))
-    }
-}
-
-impl PartialOrd for Vertex3D {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn vertex3d_partial_eq_compares_finite_components() {
+        let value = Vertex3D {
+            position: Vector3f {
+                x: 1.0,
+                y: 2.0,
+                z: 3.0,
+            },
+            color: Rgba::WHITE,
+        };
+
+        assert_eq!(
+            value,
+            Vertex3D {
+                position: Vector3f {
+                    x: 1.0,
+                    y: 2.0,
+                    z: 3.0,
+                },
+                color: Rgba::WHITE,
+            }
+        );
+        assert_ne!(
+            value,
+            Vertex3D {
+                position: Vector3f {
+                    x: 1.0,
+                    y: 2.0,
+                    z: 4.0,
+                },
+                color: Rgba::WHITE,
+            }
+        );
+    }
+
+    #[test]
+    fn vertex3d_partial_eq_treats_signed_zero_as_equal() {
+        assert_eq!(
+            Vertex3D {
+                position: Vector3f {
+                    x: -0.0,
+                    y: 0.0,
+                    z: -0.0,
+                },
+                color: Rgba::WHITE,
+            },
+            Vertex3D {
+                position: Vector3f {
+                    x: 0.0,
+                    y: -0.0,
+                    z: 0.0,
+                },
+                color: Rgba::WHITE,
+            }
+        );
+    }
+
+    #[test]
+    fn vertex3d_partial_eq_with_nan_is_not_reflexive() {
+        let value = Vertex3D {
+            position: Vector3f {
+                x: 1.0,
+                y: 2.0,
+                z: f32::NAN,
+            },
+            color: Rgba::WHITE,
+        };
+
+        assert!(!value.eq(&value));
+    }
 
     fn assert_color_eq(actual: [f32; 4], expected: [f32; 4]) {
         for (actual, expected) in actual.into_iter().zip(expected) {

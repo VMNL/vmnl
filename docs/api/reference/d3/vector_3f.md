@@ -10,7 +10,7 @@ Stores camera/vertex coordinates and application-defined 3D values.
 
 ## Public API
 
-Fields: `x`, `y`, `z` (`f32`). `#[repr(C)]`; derives `Clone`, `Copy`, `Debug`, `Default`, `Pod`, `Zeroable`, `PartialEq`; explicit `Eq`, total `Ord`/`PartialOrd`, `Sub`, `SubAssign`, `AddAssign`, `Mul<f32>`.
+Fields: `x`, `y`, `z` (`f32`). `#[repr(C)]`; derives `Clone`, `Copy`, `Debug`, `Default`, `Pod`, `Zeroable`, and `PartialEq`; implements `Sub`, `SubAssign`, `AddAssign`, and `Mul<f32>`.
 
 ## Construction, defaults, and validation
 
@@ -18,7 +18,7 @@ Literal/default construction; zero is default. All `f32` patterns are representa
 
 ## Units, coordinates, and valid ranges
 
-World units/handedness are not specified. Ordering uses component-wise `f32::total_cmp`.
+World units/handedness are not specified. Partial equality compares components using IEEE-754 semantics: NaN is unequal to itself, and signed zeros compare equal.
 
 ## Ownership, lifecycle, and threading
 

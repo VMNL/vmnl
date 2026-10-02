@@ -10,7 +10,7 @@ Defines one public 2D vertex with position and 8-bit color for indexed, triangle
 
 ## Public API
 
-Fields: `position: Vector2f`, `color: Rgba`. `#[repr(C)]`; derives `Clone`, `Copy`, `Debug`, `Default`, `Pod`, `Zeroable`, `PartialEq`; explicit `Eq`, total `Ord`/`PartialOrd`, component-wise `Sub`, `SubAssign`, `AddAssign`, and `Mul<f32>`.
+Fields: `position: Vector2f`, `color: Rgba`. `#[repr(C)]`; derives `Clone`, `Copy`, `Debug`, `Default`, `Pod`, `Zeroable`, and `PartialEq`; implements component-wise `Sub`, `SubAssign`, `AddAssign`, and `Mul<f32>`.
 
 ## Construction, defaults, and validation
 
@@ -18,7 +18,7 @@ Construct with a literal. Default is zero position and transparent black. Geomet
 
 ## Units, coordinates, and valid ranges
 
-Position units follow the 2D shader/shape path. Color channels are `0..=255`. Ordering compares position by `total_cmp` then channels.
+Position units follow the 2D shader/shape path. Color channels are `0..=255`. Partial equality compares all fields; NaN position components compare unequal, including on self-comparison, and signed zeros compare equal.
 
 ## Ownership, lifecycle, and threading
 
