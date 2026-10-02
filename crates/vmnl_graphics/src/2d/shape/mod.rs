@@ -331,6 +331,8 @@ impl Shape {
         V: Into<Vec<Vertex2D>>,
     {
         PolygonBuilder::from_vertices(vertices.into())
+    }
+
     /// Create a polyline builder from an ordered collection of 2D points.
     ///
     /// The path is open by default. Width defaults to `1.0`, cap to `Butt`,
