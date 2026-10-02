@@ -286,6 +286,10 @@
 | `vmnl::d2::LineJoin` | `eq` | [LineJoin](../reference/d2/shapes/line_join.md) | [`eq`](../../../target/doc/vmnl/d2/enum.LineJoin.html#method.eq) |
 | `vmnl::d2::LineJoin` | `fmt` | [LineJoin](../reference/d2/shapes/line_join.md) | [`fmt`](../../../target/doc/vmnl/d2/enum.LineJoin.html#method.fmt) |
 | `vmnl::d2::LineJoin` | `hash` | [LineJoin](../reference/d2/shapes/line_join.md) | [`hash`](../../../target/doc/vmnl/d2/enum.LineJoin.html#method.hash) |
+| `vmnl::d2::PolygonBuilder` | `buffer_memory_preference` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.PolygonBuilder.html#method.buffer_memory_preference) |
+| `vmnl::d2::PolygonBuilder` | `build` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.PolygonBuilder.html#method.build) |
+| `vmnl::d2::PolygonBuilder` | `color` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`color`](../../../target/doc/vmnl/d2/struct.PolygonBuilder.html#method.color) |
+| `vmnl::d2::PolygonBuilder` | `vertex_colors` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`vertex_colors`](../../../target/doc/vmnl/d2/struct.PolygonBuilder.html#method.vertex_colors) |
 | `vmnl::d2::PolylineBuilder` | `buffer_memory_preference` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.buffer_memory_preference) |
 | `vmnl::d2::PolylineBuilder` | `build` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.build) |
 | `vmnl::d2::PolylineBuilder` | `cap` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`cap`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.cap) |
@@ -310,6 +314,8 @@
 | `vmnl::d2::Shape` | `ellipse` | [Shape](../reference/d2/shapes/shape.md) | [`ellipse`](../../../target/doc/vmnl/d2/struct.Shape.html#method.ellipse) |
 | `vmnl::d2::Shape` | `indexed` | [Shape](../reference/d2/shapes/shape.md) | [`indexed`](../../../target/doc/vmnl/d2/struct.Shape.html#method.indexed) |
 | `vmnl::d2::Shape` | `line` | [Shape](../reference/d2/shapes/shape.md) | [`line`](../../../target/doc/vmnl/d2/struct.Shape.html#method.line) |
+| `vmnl::d2::Shape` | `polygon` | [Shape](../reference/d2/shapes/shape.md) | [`polygon`](../../../target/doc/vmnl/d2/struct.Shape.html#method.polygon) |
+| `vmnl::d2::Shape` | `polygon_from_vertices` | [Shape](../reference/d2/shapes/shape.md) | [`polygon_from_vertices`](../../../target/doc/vmnl/d2/struct.Shape.html#method.polygon_from_vertices) |
 | `vmnl::d2::Shape` | `polyline` | [Shape](../reference/d2/shapes/shape.md) | [`polyline`](../../../target/doc/vmnl/d2/struct.Shape.html#method.polyline) |
 | `vmnl::d2::Shape` | `rect` | [Shape](../reference/d2/shapes/shape.md) | [`rect`](../../../target/doc/vmnl/d2/struct.Shape.html#method.rect) |
 | `vmnl::d2::Shape` | `render_item_2d` | [Shape](../reference/d2/shapes/shape.md) | [`render_item_2d`](../../../target/doc/vmnl/d2/struct.Shape.html#method.render_item_2d) |

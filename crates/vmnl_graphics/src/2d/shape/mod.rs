@@ -6,6 +6,7 @@
 mod ellipse;
 mod indexed;
 mod line;
+mod polygon;
 mod polyline;
 mod rect;
 mod stroke;
@@ -17,6 +18,7 @@ use crate::common::{BlendMode, GpuGeometry, GraphicsResourceFactory, MaterialKey
 pub use ellipse::EllipseBuilder;
 pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
+pub use polygon::PolygonBuilder;
 pub use polyline::{LineJoin, PolylineBuilder};
 pub use rect::{Anchor, RectBuilder};
 pub use triangle::TriangleBuilder;
@@ -35,6 +37,8 @@ pub(crate) enum ShapeKind {
     /// Line shape defined by two vertices.
     #[allow(dead_code)]
     Line,
+    /// Filled polygon shape.
+    Polygon,
     /// Connected thick stroke built from an ordered point path.
     Polyline,
 }
@@ -226,7 +230,6 @@ impl Shape {
     pub fn triangle(a: Vector2f, b: Vector2f, c: Vector2f) -> TriangleBuilder {
         TriangleBuilder::new(a, b, c)
     }
-
     /// Create a triangle builder from exactly three required vertices.
     ///
     /// # Arguments
@@ -287,6 +290,47 @@ impl Shape {
     #[must_use]
     pub fn line(from: Vector2f, to: Vector2f) -> LineBuilder {
         LineBuilder::new(from, to)
+    }
+
+    /// Create a filled polygon builder from ordered boundary points.
+    ///
+    /// Colors default to opaque white. The boundary is closed implicitly;
+    /// do not repeat the first point. Positions use pixel-like 2D coordinates.
+    /// This stage targets strictly convex polygons with at least three points.
+    /// Construction stores CPU data without validating geometry or allocating GPU buffers.
+    ///
+    /// # Example
+    /// ```rust
+    /// use vmnl_graphics::common::Rgba;
+    /// use vmnl_graphics::d2::{Shape, Vector2f};
+    ///
+    /// let points = [
+    ///     Vector2f { x: 0.0, y: 0.0 },
+    ///     Vector2f { x: 100.0, y: 0.0 },
+    ///     Vector2f { x: 50.0, y: 100.0 },
+    /// ];
+    /// let builder = Shape::polygon(points).color(Rgba::new(255, 0, 0, 255));
+    /// ```
+    #[must_use]
+    pub fn polygon<P>(points: P) -> PolygonBuilder
+    where
+        P: Into<Vec<Vector2f>>,
+    {
+        PolygonBuilder::new(points.into())
+    }
+
+    /// Create a filled polygon builder from ordered boundary vertices.
+    ///
+    /// Preserves supplied colors. The boundary is closed implicitly;
+    /// do not repeat the first vertex. Positions use pixel-like 2D coordinates.
+    /// This stage targets strictly convex polygons with at least three vertices.
+    /// Construction stores CPU data without validating geometry or allocating GPU buffers.
+    #[must_use]
+    pub fn polygon_from_vertices<V>(vertices: V) -> PolygonBuilder
+    where
+        V: Into<Vec<Vertex2D>>,
+    {
+        PolygonBuilder::from_vertices(vertices.into())
     }
 
     /// Create a polyline builder from an ordered collection of 2D points.

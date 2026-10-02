@@ -99,3 +99,41 @@ fn advanced_d2_geometry_submits_per_object_and_batched() -> VMNLResult<()> {
         ])
         .submit()
 }
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn polygons_submit_per_object_and_batched() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut window = Window::builder().size(800, 600).build(&context)?;
+
+    let points = [
+        vector(100.0, 100.0),
+        vector(300.0, 80.0),
+        vector(380.0, 220.0),
+        vector(250.0, 350.0),
+        vector(80.0, 250.0),
+    ];
+
+    let opaque = Shape::polygon(points).color(Rgba::CYAN).build(&context)?;
+
+    let mut translucent_vertices = points.map(|point| Vertex2D {
+        position: vector(point.x + 180.0, point.y + 60.0),
+        color: Rgba::rgba(255, 0, 255, 128),
+    });
+    translucent_vertices.reverse();
+
+    let translucent = Shape::polygon_from_vertices(translucent_vertices)
+        .buffer_memory_preference(BufferMemoryPreference::Host)
+        .build(&context)?;
+
+    for mode in [RenderMode::PerObject, RenderMode::Batched] {
+        window
+            .render()
+            .mode(mode)
+            .draw2d([&opaque, &translucent])
+            .submit()?;
+    }
+
+    Ok(())
+}

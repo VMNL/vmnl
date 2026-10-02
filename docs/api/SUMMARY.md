@@ -68,6 +68,7 @@
     - [Shape](reference/d2/shapes/shape.md)
       - [EllipseBuilder](reference/d2/shapes/ellipse_builder.md)
       - [IndexedShapeBuilder](reference/d2/shapes/indexed_shape_builder.md)
+      - [PolygonBuilder](reference/d2/shapes/polygon_builder.md)
       - [TriangleBuilder](reference/d2/shapes/triangle_builder.md)
       - [RectBuilder](reference/d2/shapes/rect_builder.md)
       - [Anchor](reference/d2/shapes/anchor.md)
