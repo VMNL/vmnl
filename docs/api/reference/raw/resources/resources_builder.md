@@ -16,6 +16,8 @@ Binds typed `Uniform` and `FrameUniform` buffers to reflected descriptor set/bin
 
 Created for a required pipeline. Reusing the same set/binding is remembered as an error. Build requires the same context/device as the pipeline and every uniform; supplied/required sets and bindings must match. If frame uniforms are bound, their swapchain image counts must match. Only `UniformBuffer` with descriptor count one is supported; missing, extra, duplicate, array, unsupported-type, and push-constant contracts are rejected.
 
+Required bindings and every supplied buffer's device are validated during `build`, including when `Uniform` and `FrameUniform` bindings are mixed. Only frame-uniform descriptor set allocation is deferred until frame recording.
+
 ## Units, coordinates, and valid ranges
 
 Set/binding numbers are shader-declared `u32` indices.
