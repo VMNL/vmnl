@@ -744,9 +744,11 @@ impl ResourcesBuilder {
     /// Builds descriptor resources compatible with the pipeline used by this builder.
     ///
     /// # Errors
-    /// Returns an error if a required binding is missing, unsupported, duplicated,
-    /// or if static descriptor set allocation fails. Descriptor sets for
-    /// `FrameUniform` bindings are allocated later during frame recording.
+    /// Returns an error if bindings are missing, extra, unsupported, or duplicated,
+    /// if a supplied buffer belongs to a different context, or if static
+    /// descriptor set allocation fails. Bindings are validated here for both
+    /// `Uniform` and `FrameUniform`; descriptor sets for `FrameUniform` bindings
+    /// are allocated later during frame recording.
     pub fn build(self, context: &Context) -> VMNLResult<Resources> {
         let Self {
             pipeline_device,
@@ -770,7 +772,7 @@ impl ResourcesBuilder {
             ))));
         }
 
-        validate_supplied_resource_bindings(&set_layouts, &bindings)?;
+        validate_supplied_resource_bindings(&pipeline_device, &set_layouts, &bindings)?;
         let required_set_count = required_descriptor_set_count_from_layouts(&set_layouts);
         let descriptor_sets = match frame_uniform_image_count {
             Some(image_count) => RawDescriptorSets::FrameUniforms {
@@ -1047,6 +1049,7 @@ fn next_frame_uniform_image_count_mismatch(
 }
 
 fn validate_supplied_resource_bindings(
+    expected_device: &Arc<Device>,
     set_layouts: &[Arc<DescriptorSetLayout>],
     supplied_sets: &BTreeMap<u32, BTreeMap<u32, ResourceBinding>>,
 ) -> VMNLResult<()> {
@@ -1066,6 +1069,37 @@ fn validate_supplied_resource_bindings(
             if !set_layout.bindings().contains_key(&binding) {
                 return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
                     "raw resources set {set} binding {binding} is not declared by the pipeline"
+                ))));
+            }
+        }
+    }
+
+    for (set_index, set_layout) in set_layouts.iter().enumerate() {
+        let set = u32::try_from(set_index)
+            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+        for (&binding, binding_layout) in set_layout.bindings() {
+            validate_raw_descriptor_binding(set, binding, binding_layout.descriptor_type)?;
+            if binding_layout.descriptor_count != 1 {
+                return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                    "raw resources set {set} binding {binding} descriptor arrays are not supported yet"
+                ))));
+            }
+
+            let resource = supplied_sets
+                .get(&set)
+                .and_then(|bindings| bindings.get(&binding))
+                .ok_or_else(|| {
+                    VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                        "raw resources missing set {set} binding {binding}"
+                    )))
+                })?;
+            let device = match resource {
+                ResourceBinding::FrameUniformBuffer { device, .. }
+                | ResourceBinding::UniformBuffer { device, .. } => device,
+            };
+            if !Arc::ptr_eq(device, expected_device) {
+                return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                    "raw resources set {set} binding {binding} must belong to this context"
                 ))));
             }
         }

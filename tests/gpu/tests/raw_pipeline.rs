@@ -36,6 +36,25 @@ void main() {
 }
 "#;
 
+const TWO_UNIFORM_VERT: &str = r#"
+#version 460
+
+layout(location = 0) in vec2 position;
+layout(location = 1) in vec4 color;
+layout(set = 0, binding = 0) uniform Tint {
+    vec4 tint;
+};
+layout(set = 0, binding = 1) uniform Offset {
+    vec4 offset;
+};
+layout(location = 0) out vec4 out_color;
+
+void main() {
+    gl_Position = vec4(position + offset.xy, 0.0, 1.0);
+    out_color = color * tint;
+}
+"#;
+
 #[repr(C)]
 #[derive(Clone, Copy, raw::Vertex, raw::Pod, raw::Zeroable)]
 struct RawVertex {
@@ -97,6 +116,109 @@ fn uniform_pipeline(window: &Window) -> VMNLResult<raw::Pipeline<RawVertex>> {
         .fragment_shader(raw::ShaderSource::Src(UNIFORM_FRAG.into()))
         .topology(raw::PrimitiveTopology::TriangleList)
         .build(window)
+}
+
+fn two_uniform_pipeline(window: &Window) -> VMNLResult<raw::Pipeline<RawVertex>> {
+    raw::Pipeline::<RawVertex>::builder()
+        .vertex_shader(raw::ShaderSource::Src(TWO_UNIFORM_VERT.into()))
+        .fragment_shader(raw::ShaderSource::Src(UNIFORM_FRAG.into()))
+        .build(window)
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn raw_frame_resources_reject_missing_bindings_at_build() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let window = Window::new(&context)?;
+    let uniform = raw::FrameUniform::builder(Tint { tint: [1.0; 4] }).build(&window)?;
+
+    for (declaration, expected) in [
+        (
+            "layout(set = 0, binding = 1)",
+            "raw resources missing set 0 binding 1",
+        ),
+        (
+            "layout(set = 1, binding = 0)",
+            "raw resources missing set 1 binding 0",
+        ),
+    ] {
+        let source = TWO_UNIFORM_VERT.replace("layout(set = 0, binding = 1)", declaration);
+        let pipeline = raw::Pipeline::<RawVertex>::builder()
+            .vertex_shader(raw::ShaderSource::Src(source))
+            .fragment_shader(raw::ShaderSource::Src(UNIFORM_FRAG.into()))
+            .build(&window)?;
+
+        assert_invalid_state(
+            raw::Resources::builder(&pipeline)
+                .frame_uniform(0, 0, &uniform)
+                .build(&context),
+            expected,
+        )?;
+    }
+
+    Ok(())
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn raw_frame_resources_reject_foreign_frame_uniform_at_build() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let window = Window::new(&context)?;
+    let pipeline = uniform_pipeline(&window)?;
+    let other = Context::new()?;
+    let other_window = Window::new(&other)?;
+    let uniform = raw::FrameUniform::builder(Tint { tint: [1.0; 4] }).build(&other_window)?;
+
+    assert_invalid_state(
+        raw::Resources::builder(&pipeline)
+            .frame_uniform(0, 0, &uniform)
+            .build(&context),
+        "raw resources set 0 binding 0 must belong to this context",
+    )
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn raw_frame_resources_reject_foreign_static_uniform_at_build() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let window = Window::new(&context)?;
+    let pipeline = two_uniform_pipeline(&window)?;
+    let uniform = raw::FrameUniform::builder(Tint { tint: [1.0; 4] }).build(&window)?;
+    let other = Context::new()?;
+    let offset = raw::Uniform::builder(Tint { tint: [0.0; 4] }).build(&other)?;
+
+    assert_invalid_state(
+        raw::Resources::builder(&pipeline)
+            .frame_uniform(0, 0, &uniform)
+            .uniform(0, 1, &offset)
+            .build(&context),
+        "raw resources set 0 binding 1 must belong to this context",
+    )
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn raw_mixed_uniform_resources_submit() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut window = Window::new(&context)?;
+    let pipeline = two_uniform_pipeline(&window)?;
+    let mut uniform = raw::FrameUniform::builder(Tint { tint: [1.0; 4] }).build(&window)?;
+    let offset = raw::Uniform::builder(Tint { tint: [0.0; 4] }).build(&context)?;
+    let resources = raw::Resources::builder(&pipeline)
+        .frame_uniform(0, 0, &uniform)
+        .uniform(0, 1, &offset)
+        .build(&context)?;
+    let geometry = triangle(&context)?;
+
+    window
+        .render()
+        .write_frame_uniform(&mut uniform, Tint { tint: [0.5; 4] })
+        .draw_raw_2d_with(&pipeline, &resources, [&geometry])
+        .submit()
 }
 
 #[test]
