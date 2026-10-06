@@ -127,6 +127,37 @@ fn two_uniform_pipeline(window: &Window) -> VMNLResult<raw::Pipeline<RawVertex>>
 
 #[test]
 #[ignore = "Requires Vulkan + GLFW display."]
+fn raw_pipeline_face_culling_modes_submit() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut window = Window::new(&context)?;
+    let geometry = triangle(&context)?;
+
+    for cull_mode in [
+        raw::CullMode::None,
+        raw::CullMode::Front,
+        raw::CullMode::Back,
+        raw::CullMode::FrontAndBack,
+    ] {
+        for front_face in [raw::FrontFace::CounterClockwise, raw::FrontFace::Clockwise] {
+            let pipeline = raw::Pipeline::<RawVertex>::builder()
+                .vertex_shader(raw::ShaderSource::Path(fixture("raw_path.vert")))
+                .fragment_shader(raw::ShaderSource::Path(fixture("raw_path.frag")))
+                .cull_mode(cull_mode)
+                .front_face(front_face)
+                .build(&window)?;
+            window
+                .render()
+                .draw_raw_2d(&pipeline, [&geometry])
+                .submit()?;
+        }
+    }
+
+    Ok(())
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
 fn raw_frame_resources_reject_missing_bindings_at_build() -> VMNLResult<()> {
     let _guard = gpu_test_guard();
     let context = Context::new()?;

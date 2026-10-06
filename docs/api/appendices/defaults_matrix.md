@@ -25,5 +25,5 @@
 | Triangle | white per vertex unless created from colored vertices; device memory preference |
 | Line | width `1.0`, butt cap, white, device memory preference |
 | Indexed shape / mesh / raw geometry / uniform | device memory preference |
-| `PipelineSpec` | shaders missing, `TriangleList`, `Opaque` |
+| `PipelineSpec` | shaders missing, `TriangleList`, `Opaque`, `CullMode::None`, `FrontFace::CounterClockwise` |
 | `GeometryBuilder` | no indices |

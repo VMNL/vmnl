@@ -675,6 +675,46 @@ impl core::marker::Unpin for vmnl::raw::BlendMode
 impl core::marker::UnsafeUnpin for vmnl::raw::BlendMode
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::BlendMode
 impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::BlendMode
+pub enum vmnl::raw::CullMode
+pub vmnl::raw::CullMode::Back
+pub vmnl::raw::CullMode::Front
+pub vmnl::raw::CullMode::FrontAndBack
+pub vmnl::raw::CullMode::None
+impl core::clone::Clone for vmnl::raw::CullMode
+pub fn vmnl::raw::CullMode::clone(&self) -> vmnl::raw::CullMode
+impl core::cmp::Eq for vmnl::raw::CullMode
+impl core::cmp::PartialEq for vmnl::raw::CullMode
+pub fn vmnl::raw::CullMode::eq(&self, &vmnl::raw::CullMode) -> bool
+impl core::fmt::Debug for vmnl::raw::CullMode
+pub fn vmnl::raw::CullMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::CullMode
+impl core::marker::StructuralPartialEq for vmnl::raw::CullMode
+impl core::marker::Freeze for vmnl::raw::CullMode
+impl core::marker::Send for vmnl::raw::CullMode
+impl core::marker::Sync for vmnl::raw::CullMode
+impl core::marker::Unpin for vmnl::raw::CullMode
+impl core::marker::UnsafeUnpin for vmnl::raw::CullMode
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::CullMode
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::CullMode
+pub enum vmnl::raw::FrontFace
+pub vmnl::raw::FrontFace::Clockwise
+pub vmnl::raw::FrontFace::CounterClockwise
+impl core::clone::Clone for vmnl::raw::FrontFace
+pub fn vmnl::raw::FrontFace::clone(&self) -> vmnl::raw::FrontFace
+impl core::cmp::Eq for vmnl::raw::FrontFace
+impl core::cmp::PartialEq for vmnl::raw::FrontFace
+pub fn vmnl::raw::FrontFace::eq(&self, &vmnl::raw::FrontFace) -> bool
+impl core::fmt::Debug for vmnl::raw::FrontFace
+pub fn vmnl::raw::FrontFace::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::FrontFace
+impl core::marker::StructuralPartialEq for vmnl::raw::FrontFace
+impl core::marker::Freeze for vmnl::raw::FrontFace
+impl core::marker::Send for vmnl::raw::FrontFace
+impl core::marker::Sync for vmnl::raw::FrontFace
+impl core::marker::Unpin for vmnl::raw::FrontFace
+impl core::marker::UnsafeUnpin for vmnl::raw::FrontFace
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::FrontFace
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::FrontFace
 pub enum vmnl::raw::PrimitiveTopology
 pub vmnl::raw::PrimitiveTopology::LineList
 pub vmnl::raw::PrimitiveTopology::LineStrip
@@ -781,7 +821,11 @@ impl<TVertex> vmnl::raw::PipelineSpec<TVertex>
 pub fn vmnl::raw::PipelineSpec<TVertex>::blend_mode(self, vmnl::raw::BlendMode) -> Self
 pub const fn vmnl::raw::PipelineSpec<TVertex>::blend_mode_value(&self) -> vmnl::raw::BlendMode
 pub fn vmnl::raw::PipelineSpec<TVertex>::build(self, &vmnl::Window) -> vmnl::VMNLResult<vmnl::raw::Pipeline<TVertex>> where TVertex: vmnl::raw::BufferContents + vmnl::raw::Vertex + 'static
+pub fn vmnl::raw::PipelineSpec<TVertex>::cull_mode(self, vmnl::raw::CullMode) -> Self
+pub const fn vmnl::raw::PipelineSpec<TVertex>::cull_mode_value(&self) -> vmnl::raw::CullMode
 pub fn vmnl::raw::PipelineSpec<TVertex>::fragment_shader(self, vmnl::ShaderSource) -> Self
+pub fn vmnl::raw::PipelineSpec<TVertex>::front_face(self, vmnl::raw::FrontFace) -> Self
+pub const fn vmnl::raw::PipelineSpec<TVertex>::front_face_value(&self) -> vmnl::raw::FrontFace
 pub fn vmnl::raw::PipelineSpec<TVertex>::topology(self, vmnl::raw::PrimitiveTopology) -> Self
 pub const fn vmnl::raw::PipelineSpec<TVertex>::topology_value(&self) -> vmnl::raw::PrimitiveTopology
 pub fn vmnl::raw::PipelineSpec<TVertex>::vertex_shader(self, vmnl::ShaderSource) -> Self

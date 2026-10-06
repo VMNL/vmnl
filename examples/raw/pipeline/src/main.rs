@@ -7,6 +7,14 @@ use vmnl::{common::BufferMemoryPreference, raw, Context, Key, PresentMode, VMNLR
 
 const VERT_PATH: &str = "examples/raw/pipeline/shaders/raw.vert";
 const FRAG_PATH: &str = "examples/raw/pipeline/shaders/raw.frag";
+const CULL_MODES: [raw::CullMode; 4] = [
+    raw::CullMode::None,
+    raw::CullMode::Front,
+    raw::CullMode::Back,
+    raw::CullMode::FrontAndBack,
+];
+const FRONT_FACES: [raw::FrontFace; 2] =
+    [raw::FrontFace::CounterClockwise, raw::FrontFace::Clockwise];
 
 #[repr(C)]
 #[derive(Clone, Copy, raw::Vertex, raw::Pod, raw::Zeroable)]
@@ -28,16 +36,23 @@ fn shader_source(path: &str) -> raw::ShaderSource {
     raw::ShaderSource::Path(PathBuf::from(path))
 }
 
+fn pipeline_spec(
+    topology: raw::PrimitiveTopology,
+    blend_mode: raw::BlendMode,
+) -> raw::PipelineSpec<RawVertex> {
+    raw::Pipeline::<RawVertex>::builder()
+        .vertex_shader(shader_source(VERT_PATH))
+        .fragment_shader(shader_source(FRAG_PATH))
+        .topology(topology)
+        .blend_mode(blend_mode)
+}
+
 fn pipeline(
     window: &Window,
     topology: raw::PrimitiveTopology,
     blend_mode: raw::BlendMode,
 ) -> VMNLResult<raw::Pipeline<RawVertex>> {
-    let spec = raw::Pipeline::<RawVertex>::builder()
-        .vertex_shader(shader_source(VERT_PATH))
-        .fragment_shader(shader_source(FRAG_PATH))
-        .topology(topology)
-        .blend_mode(blend_mode);
+    let spec = pipeline_spec(topology, blend_mode);
 
     println!(
         "pipeline: topology={:?} blend={:?}",
@@ -47,10 +62,41 @@ fn pipeline(
     spec.build(window)
 }
 
+fn triangle_pipelines(window: &Window) -> VMNLResult<Vec<raw::Pipeline<RawVertex>>> {
+    CULL_MODES
+        .into_iter()
+        .flat_map(|cull_mode| FRONT_FACES.map(|front_face| (cull_mode, front_face)))
+        .map(|(cull_mode, front_face)| {
+            pipeline_spec(raw::PrimitiveTopology::TriangleList, raw::BlendMode::Alpha)
+                .cull_mode(cull_mode)
+                .front_face(front_face)
+                .build(window)
+        })
+        .collect()
+}
+
+fn select_faces(window: &mut Window, cull_index: &mut usize, front_index: &mut usize) {
+    let keyboard = window.input().keyboard();
+    let is_cull_pressed = keyboard.is_pressed(Key::C);
+    let is_front_pressed = keyboard.is_pressed(Key::F);
+    if is_cull_pressed {
+        *cull_index = (*cull_index + 1) % CULL_MODES.len();
+    }
+    if is_front_pressed {
+        *front_index = (*front_index + 1) % FRONT_FACES.len();
+    }
+    if is_cull_pressed || is_front_pressed {
+        window.set_title(&format!(
+            "VMNL raw_pipeline - {:?} / {:?} (C: cull, F: winding)",
+            CULL_MODES[*cull_index], FRONT_FACES[*front_index]
+        ));
+    }
+}
+
 fn main() -> VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::builder()
-        .title("VMNL raw_pipeline")
+        .title("VMNL raw_pipeline - None / CounterClockwise (C: cull, F: winding)")
         .size(1000, 700)
         .present_mode(PresentMode::Auto)
         .build(&context)?;
@@ -70,11 +116,7 @@ fn main() -> VMNLResult<()> {
         raw::PrimitiveTopology::LineStrip,
         raw::BlendMode::Opaque,
     )?;
-    let triangle_list_pipeline = pipeline(
-        &window,
-        raw::PrimitiveTopology::TriangleList,
-        raw::BlendMode::Alpha,
-    )?;
+    let triangle_list_pipelines = triangle_pipelines(&window)?;
     let triangle_strip_pipeline = pipeline(
         &window,
         raw::PrimitiveTopology::TriangleStrip,
@@ -112,7 +154,7 @@ fn main() -> VMNLResult<()> {
         vertex(0.70, 0.20, [0.0, 0.0, 1.0, 0.70]),
         vertex(0.10, 0.20, [1.0, 1.0, 1.0, 0.70]),
     ])
-    .indices([0, 1, 2, 0, 2, 3])
+    .indices([0, 1, 2, 0, 3, 2])
     .buffer_memory_preference(BufferMemoryPreference::Host)
     .build(&context)?;
 
@@ -124,9 +166,12 @@ fn main() -> VMNLResult<()> {
     ])
     .build(&context)?;
 
-    println!("Press Escape to close.");
+    let mut cull_index = 0;
+    let mut front_index = 0;
+    println!("C: cycle culling; F: reverse front-face winding; Escape: close.");
     while window.is_open() {
         for _ in window.poll_events() {}
+        select_faces(&mut window, &mut cull_index, &mut front_index);
         if window.input().keyboard().is_pressed(Key::Escape) {
             window.close();
         }
@@ -135,7 +180,10 @@ fn main() -> VMNLResult<()> {
             .draw_raw_2d(&points_pipeline, [&points])
             .draw_raw_2d(&line_list_pipeline, [&line_list])
             .draw_raw_2d(&line_strip_pipeline, [&line_strip])
-            .draw_raw_2d(&triangle_list_pipeline, [&triangle_list])
+            .draw_raw_2d(
+                &triangle_list_pipelines[cull_index * FRONT_FACES.len() + front_index],
+                [&triangle_list],
+            )
             .draw_raw_2d(&triangle_strip_pipeline, [&triangle_strip])
             .submit()?;
     }

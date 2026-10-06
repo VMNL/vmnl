@@ -27,7 +27,9 @@ use vulkano::pipeline::graphics::input_assembly::{
     InputAssemblyState, PrimitiveTopology as VulkanoPrimitiveTopology,
 };
 use vulkano::pipeline::graphics::multisample::MultisampleState;
-use vulkano::pipeline::graphics::rasterization::RasterizationState;
+use vulkano::pipeline::graphics::rasterization::{
+    CullMode as VulkanoCullMode, FrontFace as VulkanoFrontFace, RasterizationState,
+};
 use vulkano::pipeline::graphics::vertex_input::{
     Vertex as VulkanoVertex, VertexBuffersCollection, VertexDefinition,
 };
@@ -130,6 +132,36 @@ pub enum BlendMode {
     Alpha,
 }
 
+/// Triangle faces discarded by a raw pipeline.
+///
+/// [`FrontFace`] determines which triangles are front-facing. Culling does not
+/// discard point or line primitives. [`PipelineSpec`] defaults to [`Self::None`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CullMode {
+    /// Keep both front-facing and back-facing triangles.
+    None,
+    /// Discard front-facing triangles.
+    Front,
+    /// Discard back-facing triangles.
+    Back,
+    /// Discard all triangles.
+    FrontAndBack,
+}
+
+/// Triangle winding considered front-facing by a raw pipeline.
+///
+/// Winding is evaluated in framebuffer coordinates after the shader and viewport
+/// transformations, not directly from the application's vertex positions.
+/// This also controls the fragment shader's `gl_FrontFacing` input when culling
+/// is disabled. [`PipelineSpec`] defaults to [`Self::CounterClockwise`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FrontFace {
+    /// Treat triangles with positive signed framebuffer area as front-facing.
+    CounterClockwise,
+    /// Treat triangles with negative signed framebuffer area as front-facing.
+    Clockwise,
+}
+
 /// Builder/specification for a raw graphics pipeline.
 #[derive(Clone, Debug)]
 pub struct PipelineSpec<TVertex> {
@@ -137,6 +169,8 @@ pub struct PipelineSpec<TVertex> {
     fragment_shader: Option<ShaderSource>,
     topology: PrimitiveTopology,
     blend_mode: BlendMode,
+    cull_mode: CullMode,
+    front_face: FrontFace,
     _vertex: PhantomData<TVertex>,
 }
 
@@ -147,6 +181,8 @@ impl<TVertex> Default for PipelineSpec<TVertex> {
             fragment_shader: None,
             topology: PrimitiveTopology::TriangleList,
             blend_mode: BlendMode::Opaque,
+            cull_mode: CullMode::None,
+            front_face: FrontFace::CounterClockwise,
             _vertex: PhantomData,
         }
     }
@@ -181,6 +217,21 @@ impl<TVertex> PipelineSpec<TVertex> {
         self
     }
 
+    /// Sets which triangle faces are discarded. Defaults to [`CullMode::None`].
+    #[must_use]
+    pub fn cull_mode(mut self, cull_mode: CullMode) -> Self {
+        self.cull_mode = cull_mode;
+        self
+    }
+
+    /// Sets the front-facing winding in framebuffer coordinates.
+    /// Defaults to [`FrontFace::CounterClockwise`].
+    #[must_use]
+    pub fn front_face(mut self, front_face: FrontFace) -> Self {
+        self.front_face = front_face;
+        self
+    }
+
     /// Returns the configured primitive topology.
     #[must_use]
     pub const fn topology_value(&self) -> PrimitiveTopology {
@@ -191,6 +242,18 @@ impl<TVertex> PipelineSpec<TVertex> {
     #[must_use]
     pub const fn blend_mode_value(&self) -> BlendMode {
         self.blend_mode
+    }
+
+    /// Returns the configured triangle culling mode.
+    #[must_use]
+    pub const fn cull_mode_value(&self) -> CullMode {
+        self.cull_mode
+    }
+
+    /// Returns the configured front-facing winding.
+    #[must_use]
+    pub const fn front_face_value(&self) -> FrontFace {
+        self.front_face
     }
 
     /// Builds the raw pipeline against a window render pass.
@@ -263,7 +326,7 @@ impl<TVertex> PipelineSpec<TVertex> {
                     ..Default::default()
                 }),
                 viewport_state: Some(ViewportState::default()),
-                rasterization_state: Some(RasterizationState::default()),
+                rasterization_state: Some(raw_rasterization_state(self.cull_mode, self.front_face)),
                 multisample_state: Some(MultisampleState::default()),
                 color_blend_state: Some(color_blend_state(self.blend_mode)),
                 dynamic_state: [DynamicState::Viewport].into_iter().collect(),
@@ -1325,6 +1388,22 @@ fn compile_shader(
         .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderModuleCreationFailed))
 }
 
+fn raw_rasterization_state(cull_mode: CullMode, front_face: FrontFace) -> RasterizationState {
+    RasterizationState {
+        cull_mode: match cull_mode {
+            CullMode::None => VulkanoCullMode::None,
+            CullMode::Front => VulkanoCullMode::Front,
+            CullMode::Back => VulkanoCullMode::Back,
+            CullMode::FrontAndBack => VulkanoCullMode::FrontAndBack,
+        },
+        front_face: match front_face {
+            FrontFace::CounterClockwise => VulkanoFrontFace::CounterClockwise,
+            FrontFace::Clockwise => VulkanoFrontFace::Clockwise,
+        },
+        ..Default::default()
+    }
+}
+
 fn color_blend_state(blend_mode: BlendMode) -> ColorBlendState {
     match blend_mode {
         BlendMode::Opaque => {
@@ -1360,6 +1439,36 @@ mod tests {
 
         assert_eq!(spec.topology_value(), PrimitiveTopology::TriangleList);
         assert_eq!(spec.blend_mode_value(), BlendMode::Opaque);
+    }
+
+    #[test]
+    fn raw_rasterization_preserves_face_selection_and_other_defaults() {
+        for (cull_mode, expected_cull_mode) in [
+            (CullMode::None, VulkanoCullMode::None),
+            (CullMode::Front, VulkanoCullMode::Front),
+            (CullMode::Back, VulkanoCullMode::Back),
+            (CullMode::FrontAndBack, VulkanoCullMode::FrontAndBack),
+        ] {
+            for (front_face, expected_front_face) in [
+                (
+                    FrontFace::CounterClockwise,
+                    VulkanoFrontFace::CounterClockwise,
+                ),
+                (FrontFace::Clockwise, VulkanoFrontFace::Clockwise),
+            ] {
+                let state = raw_rasterization_state(cull_mode, front_face);
+                assert_eq!(state.cull_mode, expected_cull_mode);
+                assert_eq!(state.front_face, expected_front_face);
+                assert_eq!(
+                    state.polygon_mode,
+                    vulkano::pipeline::graphics::rasterization::PolygonMode::Fill
+                );
+                assert_eq!(state.line_width.to_bits(), 1.0_f32.to_bits());
+                assert!(!state.depth_clamp_enable);
+                assert!(!state.rasterizer_discard_enable);
+                assert!(state.depth_bias.is_none());
+            }
+        }
     }
 
     #[test]

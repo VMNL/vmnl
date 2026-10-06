@@ -6,19 +6,19 @@ Import path: `vmnl::raw::PipelineSpec<TVertex>`. Status: experimental, operation
 
 ## Purpose and use cases
 
-Configures shaders, topology, blending, and vertex type before Vulkan pipeline construction.
+Configures shaders, topology, blending, triangle culling, front-face winding, and vertex type before Vulkan pipeline construction.
 
 ## Public API
 
-`vertex_shader`, `fragment_shader`, `topology`, `blend_mode`, `topology_value`, `blend_mode_value`, and `build(&Window)`. Implements `Default`; derives `Clone` and `Debug`.
+`vertex_shader`, `fragment_shader`, `topology`, `blend_mode`, `cull_mode`, `front_face`, `topology_value`, `blend_mode_value`, `cull_mode_value`, `front_face_value`, and `build(&Window)`. Implements `Default`; derives `Clone` and `Debug`.
 
 ## Construction, defaults, and validation
 
-Defaults: no shaders, `TriangleList`, `Opaque`. Both shaders are required. Build requires `TVertex: BufferContents + Vertex + 'static`; entry point `main`; compatible vertex inputs; only single uniform-buffer descriptors; no descriptor arrays/push constants.
+Defaults: no shaders, `TriangleList`, `Opaque`, `CullMode::None`, `FrontFace::CounterClockwise`. Both shaders are required. Build requires `TVertex: BufferContents + Vertex + 'static`; entry point `main`; compatible vertex inputs; only single uniform-buffer descriptors; no descriptor arrays/push constants. All culling/winding combinations are valid and require no optional device feature. Their setters/getters do not allocate or submit GPU work.
 
 ## Units, coordinates, and valid ranges
 
-Shader-defined. Descriptor set/binding indices are reflected from GLSL.
+Shader-defined. Descriptor set/binding indices are reflected from GLSL. Front-face winding is evaluated in framebuffer coordinates after shader/viewport transformations; culling applies to triangle primitives. The selection is fixed at pipeline construction.
 
 ## Ownership, lifecycle, and threading
 
@@ -59,4 +59,4 @@ fn main() -> vmnl::VMNLResult<()> {
 }
 ```
 
-Related: [`Pipeline`](pipeline.md), [`PrimitiveTopology`](primitive_topology.md), and [`BlendMode`](blend_mode.md).
+Related: [`Pipeline`](pipeline.md), [`PrimitiveTopology`](primitive_topology.md), [`BlendMode`](blend_mode.md), [`CullMode`](cull_mode.md), and [`FrontFace`](front_face.md).

@@ -97,6 +97,8 @@
       - [PipelineSpec](reference/raw/pipeline/pipeline_spec.md)
       - [PrimitiveTopology](reference/raw/pipeline/primitive_topology.md)
       - [BlendMode](reference/raw/pipeline/blend_mode.md)
+      - [CullMode](reference/raw/pipeline/cull_mode.md)
+      - [FrontFace](reference/raw/pipeline/front_face.md)
     - [Geometry](reference/raw/geometry/README.md)
       - [Geometry](reference/raw/geometry/geometry.md)
       - [GeometryBuilder](reference/raw/geometry/geometry_builder.md)

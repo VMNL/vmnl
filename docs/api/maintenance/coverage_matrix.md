@@ -19,6 +19,8 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | enum | `vmnl::d2::LineCap` | [LineCap](../reference/d2/shapes/line_cap.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.LineCap.html) | [2D shapes example](../../../examples/d2/shapes/src/main.rs) |
 | enum | `vmnl::d2::LineJoin` | [LineJoin](../reference/d2/shapes/line_join.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.LineJoin.html) | [2D shape API](../../../tests/api/tests/d2_shapes.rs) |
 | enum | `vmnl::raw::BlendMode` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.BlendMode.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
+| enum | `vmnl::raw::CullMode` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.CullMode.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
+| enum | `vmnl::raw::FrontFace` | [FrontFace](../reference/raw/pipeline/front_face.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.FrontFace.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
 | enum | `vmnl::raw::PrimitiveTopology` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
 | macro | `vmnl::raw::Pod` | [Pod derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Pod.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
 | macro | `vmnl::raw::Vertex` | [Vertex derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Vertex.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
