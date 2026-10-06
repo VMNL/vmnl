@@ -8,6 +8,37 @@ use vmnl::{common::BufferMemoryPreference, raw, PresentMode, RenderMode, VMNLRes
 struct RawSpecVertex;
 
 #[test]
+fn raw_pipeline_spec_preserves_face_defaults() -> VMNLResult<()> {
+    let spec = raw::Pipeline::<RawSpecVertex>::builder();
+    assert_eq!(spec.cull_mode_value(), raw::CullMode::None);
+    assert_eq!(spec.front_face_value(), raw::FrontFace::CounterClockwise);
+
+    Ok(())
+}
+
+#[test]
+fn raw_pipeline_spec_exposes_face_culling() -> VMNLResult<()> {
+    for cull_mode in [
+        raw::CullMode::None,
+        raw::CullMode::Front,
+        raw::CullMode::Back,
+        raw::CullMode::FrontAndBack,
+    ] {
+        for front_face in [raw::FrontFace::CounterClockwise, raw::FrontFace::Clockwise] {
+            let spec = raw::Pipeline::<RawSpecVertex>::builder()
+                .cull_mode(cull_mode)
+                .front_face(front_face);
+            assert_eq!(spec.cull_mode_value(), cull_mode);
+            assert_eq!(spec.front_face_value(), front_face);
+            assert_eq!(spec.topology_value(), raw::PrimitiveTopology::TriangleList);
+            assert_eq!(spec.blend_mode_value(), raw::BlendMode::Opaque);
+        }
+    }
+
+    Ok(())
+}
+
+#[test]
 fn raw_shader_sources_store_inline_or_path_inputs() -> VMNLResult<()> {
     let inline = raw::ShaderSource::Src("#version 460\nvoid main() {}".to_string());
     let path = raw::ShaderSource::Path(PathBuf::from("shader.vert"));
