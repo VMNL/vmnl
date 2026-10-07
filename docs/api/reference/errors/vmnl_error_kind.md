@@ -16,6 +16,7 @@ Classifies initialization, windowing, Vulkan, validation, and client-state failu
 | Vulkan runtime/status | `VulkanValidationFailed`, `VulkanUnsupportedFeature`, `VulkanOutOfMemory`, `VulkanOutOfDate`, `VulkanDeviceLost`, `VulkanSurfaceLost`, `VulkanExtensionNotPresent`, `VulkanLayerNotPresent`, `VulkanIncompatibleDriver`, `VulkanTooManyObjects`, `VulkanFormatNotSupported`, `VulkanFragmentation`, `VulkanUnknownError` |
 | GLFW | `GlfwInitFailed`, `GlfwInitializationConfigConflict { active_hat_buttons, requested_hat_buttons }`, `GlfwInputOperationFailed { operation, message }`, `GlfwWindowCreationFailed`, `GlfwContextCreationFailed`, `GlfwUnsupportedPlatform`, `GlfwVersionMismatch`, `GlfwPlatformError`, `GlfwUnknownError` |
 | Client/state | `InvalidWindowSize`, `InvalidGamepadMapping(String)`, `InvalidState(String)` |
+| Device requirements | `DeviceRequirementsNotMet { required_features: Vec<DeviceFeature> }` |
 
 Only `Debug` is derived. Human-readable text is provided through `VMNLError`'s `Display` implementation.
 
@@ -25,6 +26,8 @@ Variants are constructed directly. `GlfwInputOperationFailed` owns the operation
 `InvalidGamepadMapping` owns the rejected input reason; `InvalidState` owns application-specific
 detail. There is no default and no validator.
 
+`DeviceRequirementsNotMet` carries all requested features in first-request order when no baseline-compatible GPU supports their combination; individual features may still be supported separately on different devices.
+
 ## Units, coordinates, and valid ranges
 
 Not applicable.
@@ -33,6 +36,7 @@ Not applicable.
 
 Unit variants own no resources. Message-bearing variants own their strings; the initialization
 conflict carries two booleans and owns no heap data.
+`DeviceRequirementsNotMet` owns a feature vector.
 
 ## Errors, panics, and failure conditions
 
@@ -42,6 +46,7 @@ Constructing a variant is infallible. The enum represents failures rather than c
 
 Message-bearing variants may own heap allocations. The initialization conflict carries two booleans
 and owns no heap data. No GPU work occurs.
+`DeviceRequirementsNotMet` may allocate its feature vector.
 
 ## Platform, Vulkan, and display constraints
 

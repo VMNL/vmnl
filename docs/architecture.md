@@ -139,6 +139,7 @@ stable compatibility baseline; their present behavior remains documented in the 
 ## Current Implementation Boundaries
 
 - `vmnl` re-exports the current public graphics API.
+- `ContextBuilder::device(DeviceConfig)` configures required device features and exposes support/activation inspection through `Context`; GPU identity, queue and allocator selection remain automatic.
 - `vmnl_graphics` owns rendering, windowing, input, and GPU resource behavior.
 - `InputRuntime` and `Context` share the same GLFW owner; standalone input access does not create a
   Vulkan instance or window.

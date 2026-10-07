@@ -21,7 +21,7 @@ mod window;
 pub use common::ShaderSource;
 pub use exception::{VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult};
 pub use glfw_runtime::{InputRuntime, InputRuntimeBuilder, InputRuntimeConfig};
-pub use vmnl_instance::Context;
+pub use vmnl_instance::{Context, ContextBuilder, DeviceConfig, DeviceFeature};
 pub use window::{
     Cursor, CursorBuilder, CursorMode, Event, EventKind, FrameRenderer, GamepadAxis, GamepadButton,
     GamepadState, Input, JoystickButtonState, JoystickHatState, JoystickId, JoystickSample,

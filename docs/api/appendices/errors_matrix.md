@@ -5,6 +5,7 @@
 | `InputRuntime::acquire` / builder | GLFW initialization failure; explicit active-config conflict; active runtime owned by another thread | Use the resolved active setting or acquire/drop handles on the GLFW thread |
 | `InputRuntime::sample_joystick` / mapping update | Backend callback/query failure (`GlfwInputOperationFailed`); rejected mapping bytes (`InvalidGamepadMapping`) | Check slot/backend state or correct the mapping text |
 | `Context::new` | Vulkan initialization/device/queue/allocator categories | Abort graphics initialization or retry after environment change |
+| `ContextBuilder::build` | initialization categories; `DeviceRequirementsNotMet` with the complete feature list for an unsatisfied nonempty request | Require a compatible GPU or explicitly change the requested configuration; requirements are never silently dropped |
 | `WindowBuilder::build` | invalid size; GLFW/surface/swapchain/shader/render-target failures; unsupported strict present mode | Fix configuration or environment; choose preferred/portable present mode |
 | Runtime window setters | invalid size/range/aspect (`InvalidWindowSize`/`InvalidState`) | Correct input before retry |
 | Cursor position/raw-motion setters | non-finite coordinates (`InvalidState`); unsupported raw enable (`GlfwUnsupportedPlatform`) | Correct coordinates or keep raw motion disabled |
