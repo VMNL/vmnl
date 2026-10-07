@@ -3,6 +3,7 @@
 | Surface | Default |
 |---|---|
 | `BufferMemoryPreference` | `Device` |
+| `ContextBuilder` / `DeviceConfig` | automatic compatible GPU/graphics queue selection; no optional feature request |
 | `Rgba` | `(0, 0, 0, 0)`; named colors are opaque |
 | `Vector2f`, `Vector3f`, `Vertex2D`, `Vertex3D` | Component/field zero defaults |
 | `Camera` | position `(0,0,1)`, target `(0,0,0)`, up `(0,1,0)`; 3D remains scaffolded |

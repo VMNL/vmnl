@@ -15,6 +15,10 @@ layout-dependent keyboard metadata queries.
 | Member | Contract |
 |---|---|
 | `Context::new()` | Initialize Vulkan state and return `VMNLResult<Context>`. |
+| `Context::builder()` | Prepare a default CPU-only `ContextBuilder`. |
+| `Context::device_name()` | Borrow the selected GPU's diagnostic name, without allocation. |
+| `Context::is_device_feature_supported(DeviceFeature)` | Read feature support on the selected physical device. |
+| `Context::is_device_feature_enabled(DeviceFeature)` | Read activation on the context's logical device. |
 | `Context::get_key_name(Key)` | Allocate the current-layout name of a printable named key, or return `None`. |
 | `Context::get_scancode_name(Scancode)` | Allocate the current-layout name of a printable scancode, or return `None`. |
 | `Context::get_key_scancode(Key)` | Return the active platform mapping for a named key, or `None`. |
@@ -24,7 +28,11 @@ layout-dependent keyboard metadata queries.
 ## Construction, defaults, and validation
 
 `new` automatically enumerates physical devices, ranks supported candidates, and selects queues
-required by VMNL. Clients cannot currently select a device. When candidates have equal rank,
+required by VMNL. `Context::new()` is equivalent to `Context::builder().build()` and requests no
+optional device features. A `DeviceConfig` passed to `ContextBuilder::device` constrains candidates
+to GPUs supporting every required feature, then enables those features on the selected logical
+device. No requirement is silently dropped. Clients cannot currently select an explicit GPU or
+queue. When candidates have equal rank,
 selection follows backend enumeration order and is therefore not deterministic across equal-ranked
 devices. Keyboard queries are uncached and use the active layout at call time. `Key::Unknown`,
 non-printable values, invalid scancodes, and unsupported mappings return `None`. On Wayland, name
@@ -33,6 +41,10 @@ avoids calling the bundled GLFW XKB path before its state is initialized. Scanco
 available immediately. After keyboard readiness, Wayland resolves a scancode against the 120
 named-key mappings before asking GLFW for its name. This avoids a spurious backend error for
 non-printable named keys; an unmapped scancode still uses GLFW's scancode query.
+
+Supported and enabled features are distinct: an unrequested optional feature can be supported but
+disabled. Feature activation is immutable for the device lifetime. The device name is diagnostic
+metadata, not a unique or persistent identifier. Other devices' capabilities are not exposed.
 
 ## Units, coordinates, and valid ranges
 
@@ -49,6 +61,11 @@ logical-device creation, unsupported requirements, or allocator setup. Errors ar
 `VMNLResult`; no public panic contract is specified. Keyboard queries expose GLFW's null or unknown
 sentinel as `None`; backend failures are reported through the configured GLFW error callback.
 
+Nonempty requirements with no compatible GPU produce `DeviceRequirementsNotMet` carrying the
+complete requested feature list. Empty defaults preserve `VulkanUnsupportedFeature` when no
+compatible GPU exists. Capability filtering occurs after instance creation but before device
+creation; initialization objects are released on failure.
+
 ## Allocation, transfers, synchronization, and GPU cost
 
 `new` creates Vulkan instance/device/queue and allocator state. Exact allocation count,
@@ -57,6 +74,9 @@ specified. Successful name queries allocate one owned `String`; scancode queries
 `get_scancode_name` may query up to 120 key-to-scancode mappings on Wayland; the other backends
 keep the direct scancode lookup.
 No keyboard query performs GPU work, transfer, synchronization, or waiting.
+
+The builder prepares CPU configuration without initializing GLFW/Vulkan. Device name and feature
+inspection borrow immutable backend metadata without allocation, GPU submission or waiting.
 
 ## Platform, Vulkan, and display constraints
 
@@ -82,4 +102,4 @@ fn main() -> vmnl::VMNLResult<()> {
 }
 ```
 
-Related: [`WindowBuilder`](window/window_builder.md), [`BufferMemoryPreference`](common/buffer_memory_preference.md), and [`VMNLResult`](errors/vmnl_result.md).
+Related: [`ContextBuilder`](context_builder.md), [`DeviceConfig`](device_config.md), [`DeviceFeature`](device_feature.md), [`WindowBuilder`](window/window_builder.md), [`BufferMemoryPreference`](common/buffer_memory_preference.md), and [`VMNLResult`](errors/vmnl_result.md).

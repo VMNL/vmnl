@@ -919,6 +919,26 @@ impl core::marker::Unpin for vmnl::CursorMode
 impl core::marker::UnsafeUnpin for vmnl::CursorMode
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::CursorMode
 impl core::panic::unwind_safe::UnwindSafe for vmnl::CursorMode
+#[non_exhaustive] pub enum vmnl::DeviceFeature
+pub vmnl::DeviceFeature::FillModeNonSolid
+pub vmnl::DeviceFeature::LargePoints
+pub vmnl::DeviceFeature::WideLines
+impl core::clone::Clone for vmnl::DeviceFeature
+pub fn vmnl::DeviceFeature::clone(&self) -> vmnl::DeviceFeature
+impl core::cmp::Eq for vmnl::DeviceFeature
+impl core::cmp::PartialEq for vmnl::DeviceFeature
+pub fn vmnl::DeviceFeature::eq(&self, &vmnl::DeviceFeature) -> bool
+impl core::fmt::Debug for vmnl::DeviceFeature
+pub fn vmnl::DeviceFeature::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::DeviceFeature
+impl core::marker::StructuralPartialEq for vmnl::DeviceFeature
+impl core::marker::Freeze for vmnl::DeviceFeature
+impl core::marker::Send for vmnl::DeviceFeature
+impl core::marker::Sync for vmnl::DeviceFeature
+impl core::marker::Unpin for vmnl::DeviceFeature
+impl core::marker::UnsafeUnpin for vmnl::DeviceFeature
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::DeviceFeature
+impl core::panic::unwind_safe::UnwindSafe for vmnl::DeviceFeature
 pub enum vmnl::EventKind
 pub vmnl::EventKind::Closed
 pub vmnl::EventKind::FocusGained
@@ -1240,6 +1260,8 @@ impl core::marker::UnsafeUnpin for vmnl::StandardCursor
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::StandardCursor
 impl core::panic::unwind_safe::UnwindSafe for vmnl::StandardCursor
 #[non_exhaustive] pub enum vmnl::VMNLErrorKind
+pub vmnl::VMNLErrorKind::DeviceRequirementsNotMet
+pub vmnl::VMNLErrorKind::DeviceRequirementsNotMet::required_features: alloc::vec::Vec<vmnl::DeviceFeature>
 pub vmnl::VMNLErrorKind::GlfwContextCreationFailed
 pub vmnl::VMNLErrorKind::GlfwInitFailed
 pub vmnl::VMNLErrorKind::GlfwPlatformError
@@ -1295,9 +1317,13 @@ impl core::panic::unwind_safe::RefUnwindSafe for vmnl::VMNLErrorKind
 impl core::panic::unwind_safe::UnwindSafe for vmnl::VMNLErrorKind
 pub struct vmnl::Context
 impl vmnl::Context
+pub fn vmnl::Context::builder() -> vmnl::ContextBuilder
+pub fn vmnl::Context::device_name(&self) -> &str
 pub fn vmnl::Context::get_key_name(&self, vmnl::Key) -> core::option::Option<alloc::string::String>
 pub fn vmnl::Context::get_key_scancode(&self, vmnl::Key) -> core::option::Option<vmnl::Scancode>
 pub fn vmnl::Context::get_scancode_name(&self, vmnl::Scancode) -> core::option::Option<alloc::string::String>
+pub fn vmnl::Context::is_device_feature_enabled(&self, vmnl::DeviceFeature) -> bool
+pub fn vmnl::Context::is_device_feature_supported(&self, vmnl::DeviceFeature) -> bool
 pub fn vmnl::Context::is_raw_mouse_motion_supported(&self) -> bool
 pub fn vmnl::Context::new() -> vmnl::VMNLResult<Self>
 impl core::clone::Clone for vmnl::Context
@@ -1309,6 +1335,24 @@ impl core::marker::Unpin for vmnl::Context
 impl core::marker::UnsafeUnpin for vmnl::Context
 impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::Context
 impl !core::panic::unwind_safe::UnwindSafe for vmnl::Context
+pub struct vmnl::ContextBuilder
+impl vmnl::ContextBuilder
+pub fn vmnl::ContextBuilder::build(self) -> vmnl::VMNLResult<vmnl::Context>
+pub fn vmnl::ContextBuilder::device(self, vmnl::DeviceConfig) -> Self
+pub const fn vmnl::ContextBuilder::device_config(&self) -> &vmnl::DeviceConfig
+impl core::clone::Clone for vmnl::ContextBuilder
+pub fn vmnl::ContextBuilder::clone(&self) -> vmnl::ContextBuilder
+impl core::default::Default for vmnl::ContextBuilder
+pub fn vmnl::ContextBuilder::default() -> vmnl::ContextBuilder
+impl core::fmt::Debug for vmnl::ContextBuilder
+pub fn vmnl::ContextBuilder::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::ContextBuilder
+impl core::marker::Send for vmnl::ContextBuilder
+impl core::marker::Sync for vmnl::ContextBuilder
+impl core::marker::Unpin for vmnl::ContextBuilder
+impl core::marker::UnsafeUnpin for vmnl::ContextBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::ContextBuilder
+impl core::panic::unwind_safe::UnwindSafe for vmnl::ContextBuilder
 pub struct vmnl::Cursor
 impl vmnl::Cursor
 pub const fn vmnl::Cursor::rgba8(u32, u32, &[u8]) -> vmnl::CursorBuilder<'_>
@@ -1339,6 +1383,24 @@ impl<'pixels> core::marker::Unpin for vmnl::CursorBuilder<'pixels>
 impl<'pixels> core::marker::UnsafeUnpin for vmnl::CursorBuilder<'pixels>
 impl<'pixels> core::panic::unwind_safe::RefUnwindSafe for vmnl::CursorBuilder<'pixels>
 impl<'pixels> core::panic::unwind_safe::UnwindSafe for vmnl::CursorBuilder<'pixels>
+pub struct vmnl::DeviceConfig
+impl vmnl::DeviceConfig
+pub fn vmnl::DeviceConfig::require_feature(self, vmnl::DeviceFeature) -> Self
+pub fn vmnl::DeviceConfig::require_features(self, impl core::iter::traits::collect::IntoIterator<Item = vmnl::DeviceFeature>) -> Self
+pub fn vmnl::DeviceConfig::required_features(&self) -> &[vmnl::DeviceFeature]
+impl core::clone::Clone for vmnl::DeviceConfig
+pub fn vmnl::DeviceConfig::clone(&self) -> vmnl::DeviceConfig
+impl core::default::Default for vmnl::DeviceConfig
+pub fn vmnl::DeviceConfig::default() -> vmnl::DeviceConfig
+impl core::fmt::Debug for vmnl::DeviceConfig
+pub fn vmnl::DeviceConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::DeviceConfig
+impl core::marker::Send for vmnl::DeviceConfig
+impl core::marker::Sync for vmnl::DeviceConfig
+impl core::marker::Unpin for vmnl::DeviceConfig
+impl core::marker::UnsafeUnpin for vmnl::DeviceConfig
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::DeviceConfig
+impl core::panic::unwind_safe::UnwindSafe for vmnl::DeviceConfig
 pub struct vmnl::Event
 impl vmnl::Event
 pub fn vmnl::Event::into_kind(self) -> vmnl::EventKind

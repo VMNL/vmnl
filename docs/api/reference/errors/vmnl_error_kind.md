@@ -16,12 +16,13 @@ Classifies initialization, windowing, Vulkan, validation, and client-state failu
 | Vulkan runtime/status | `VulkanValidationFailed`, `VulkanUnsupportedFeature`, `VulkanOutOfMemory`, `VulkanOutOfDate`, `VulkanDeviceLost`, `VulkanSurfaceLost`, `VulkanExtensionNotPresent`, `VulkanLayerNotPresent`, `VulkanIncompatibleDriver`, `VulkanTooManyObjects`, `VulkanFormatNotSupported`, `VulkanFragmentation`, `VulkanUnknownError` |
 | GLFW | `GlfwInitFailed`, `GlfwWindowCreationFailed`, `GlfwContextCreationFailed`, `GlfwUnsupportedPlatform`, `GlfwVersionMismatch`, `GlfwPlatformError`, `GlfwUnknownError` |
 | Client/state | `InvalidWindowSize`, `InvalidState(String)` |
+| Device requirements | `DeviceRequirementsNotMet { required_features: Vec<DeviceFeature> }` |
 
 Only `Debug` is derived. Human-readable text is provided through `VMNLError`'s `Display` implementation.
 
 ## Construction, defaults, and validation
 
-Variants are constructed directly. `InvalidState` owns application-specific detail. There is no default and no validator.
+Variants are constructed directly. `InvalidState` owns application-specific detail. `DeviceRequirementsNotMet` carries all requested features in first-request order when no baseline-compatible GPU supports their combination; individual features may still be supported separately on different devices. There is no default and no validator.
 
 ## Units, coordinates, and valid ranges
 
@@ -29,7 +30,7 @@ Not applicable.
 
 ## Ownership, lifecycle, and threading
 
-All unit variants own no resources; `InvalidState` owns a `String`.
+All unit variants own no resources; `InvalidState` owns a `String` and `DeviceRequirementsNotMet` owns a feature vector.
 
 ## Errors, panics, and failure conditions
 
@@ -37,7 +38,7 @@ Constructing a variant is infallible. The enum represents failures rather than c
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-Only `InvalidState(String)` may own a heap allocation. No GPU work occurs.
+`InvalidState(String)` and `DeviceRequirementsNotMet` may own heap allocations. No GPU work occurs.
 
 ## Platform, Vulkan, and display constraints
 

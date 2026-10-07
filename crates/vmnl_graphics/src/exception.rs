@@ -3,6 +3,7 @@
 
 //! Exception handling for the VMNL library, defining custom error types and result aliases.
 
+use crate::DeviceFeature;
 use std::{error::Error, fmt, panic::Location};
 
 /// Represents the location in the source code where a VMNL error occurred.
@@ -118,6 +119,14 @@ pub enum VMNLErrorKind {
     VulkanValidationFailed,
     /// Vulkan unsupported feature encountered.
     VulkanUnsupportedFeature,
+    /// No physical device meets the baseline graphics and requested feature requirements.
+    ///
+    /// Features are required together on one device; this does not imply that
+    /// each listed feature is individually unavailable on every physical device.
+    DeviceRequirementsNotMet {
+        /// The complete requested feature set, in first-request order.
+        required_features: Vec<DeviceFeature>,
+    },
     /// Vulkan out of memory.
     VulkanOutOfMemory,
     /// Vulkan out of date (e.g., swapchain out of date).
@@ -327,6 +336,10 @@ impl fmt::Display for VMNLError {
             }
             VMNLErrorKind::VulkanValidationFailed => f.write_str("vulkan validation failed"),
             VMNLErrorKind::VulkanUnsupportedFeature => f.write_str("vulkan unsupported feature"),
+            VMNLErrorKind::DeviceRequirementsNotMet { required_features } => write!(
+                f,
+                "no compatible Vulkan device satisfies required features: {required_features:?}"
+            ),
             VMNLErrorKind::VulkanOutOfMemory => f.write_str("vulkan out of memory"),
             VMNLErrorKind::VulkanDeviceLost => f.write_str("vulkan device lost"),
             VMNLErrorKind::VulkanSurfaceLost => f.write_str("vulkan surface lost"),

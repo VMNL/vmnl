@@ -3,12 +3,22 @@
 
 | Owner | Method | Canonical page | Rustdoc method |
 |---|---|---|---|
+| `vmnl::Context` | `builder` | [Context](../reference/context.md) | [`builder`](../../../target/doc/vmnl/struct.Context.html#method.builder) |
 | `vmnl::Context` | `clone` | [Context](../reference/context.md) | [`clone`](../../../target/doc/vmnl/struct.Context.html#method.clone) |
+| `vmnl::Context` | `device_name` | [Context](../reference/context.md) | [`device_name`](../../../target/doc/vmnl/struct.Context.html#method.device_name) |
 | `vmnl::Context` | `get_key_name` | [Context](../reference/context.md) | [`get_key_name`](../../../target/doc/vmnl/struct.Context.html#method.get_key_name) |
 | `vmnl::Context` | `get_key_scancode` | [Context](../reference/context.md) | [`get_key_scancode`](../../../target/doc/vmnl/struct.Context.html#method.get_key_scancode) |
 | `vmnl::Context` | `get_scancode_name` | [Context](../reference/context.md) | [`get_scancode_name`](../../../target/doc/vmnl/struct.Context.html#method.get_scancode_name) |
+| `vmnl::Context` | `is_device_feature_enabled` | [Context](../reference/context.md) | [`is_device_feature_enabled`](../../../target/doc/vmnl/struct.Context.html#method.is_device_feature_enabled) |
+| `vmnl::Context` | `is_device_feature_supported` | [Context](../reference/context.md) | [`is_device_feature_supported`](../../../target/doc/vmnl/struct.Context.html#method.is_device_feature_supported) |
 | `vmnl::Context` | `is_raw_mouse_motion_supported` | [Context](../reference/context.md) | [`is_raw_mouse_motion_supported`](../../../target/doc/vmnl/struct.Context.html#method.is_raw_mouse_motion_supported) |
 | `vmnl::Context` | `new` | [Context](../reference/context.md) | [`new`](../../../target/doc/vmnl/struct.Context.html#method.new) |
+| `vmnl::ContextBuilder` | `build` | [ContextBuilder](../reference/context_builder.md) | [`build`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.build) |
+| `vmnl::ContextBuilder` | `clone` | [ContextBuilder](../reference/context_builder.md) | [`clone`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.clone) |
+| `vmnl::ContextBuilder` | `default` | [ContextBuilder](../reference/context_builder.md) | [`default`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.default) |
+| `vmnl::ContextBuilder` | `device` | [ContextBuilder](../reference/context_builder.md) | [`device`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.device) |
+| `vmnl::ContextBuilder` | `device_config` | [ContextBuilder](../reference/context_builder.md) | [`device_config`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.device_config) |
+| `vmnl::ContextBuilder` | `fmt` | [ContextBuilder](../reference/context_builder.md) | [`fmt`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.fmt) |
 | `vmnl::Cursor` | `clone` | [Cursor](../reference/window/input/cursor.md) | [`clone`](../../../target/doc/vmnl/struct.Cursor.html#method.clone) |
 | `vmnl::Cursor` | `eq` | [Cursor](../reference/window/input/cursor.md) | [`eq`](../../../target/doc/vmnl/struct.Cursor.html#method.eq) |
 | `vmnl::Cursor` | `fmt` | [Cursor](../reference/window/input/cursor.md) | [`fmt`](../../../target/doc/vmnl/struct.Cursor.html#method.fmt) |
@@ -22,6 +32,15 @@
 | `vmnl::CursorMode` | `eq` | [CursorMode](../reference/window/input/cursor_mode.md) | [`eq`](../../../target/doc/vmnl/enum.CursorMode.html#method.eq) |
 | `vmnl::CursorMode` | `fmt` | [CursorMode](../reference/window/input/cursor_mode.md) | [`fmt`](../../../target/doc/vmnl/enum.CursorMode.html#method.fmt) |
 | `vmnl::CursorMode` | `hash` | [CursorMode](../reference/window/input/cursor_mode.md) | [`hash`](../../../target/doc/vmnl/enum.CursorMode.html#method.hash) |
+| `vmnl::DeviceConfig` | `clone` | [DeviceConfig](../reference/device_config.md) | [`clone`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.clone) |
+| `vmnl::DeviceConfig` | `default` | [DeviceConfig](../reference/device_config.md) | [`default`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.default) |
+| `vmnl::DeviceConfig` | `fmt` | [DeviceConfig](../reference/device_config.md) | [`fmt`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.fmt) |
+| `vmnl::DeviceConfig` | `require_feature` | [DeviceConfig](../reference/device_config.md) | [`require_feature`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.require_feature) |
+| `vmnl::DeviceConfig` | `require_features` | [DeviceConfig](../reference/device_config.md) | [`require_features`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.require_features) |
+| `vmnl::DeviceConfig` | `required_features` | [DeviceConfig](../reference/device_config.md) | [`required_features`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.required_features) |
+| `vmnl::DeviceFeature` | `clone` | [DeviceFeature](../reference/device_feature.md) | [`clone`](../../../target/doc/vmnl/enum.DeviceFeature.html#method.clone) |
+| `vmnl::DeviceFeature` | `eq` | [DeviceFeature](../reference/device_feature.md) | [`eq`](../../../target/doc/vmnl/enum.DeviceFeature.html#method.eq) |
+| `vmnl::DeviceFeature` | `fmt` | [DeviceFeature](../reference/device_feature.md) | [`fmt`](../../../target/doc/vmnl/enum.DeviceFeature.html#method.fmt) |
 | `vmnl::Event` | `clone` | [Event](../reference/window/events/event.md) | [`clone`](../../../target/doc/vmnl/struct.Event.html#method.clone) |
 | `vmnl::Event` | `eq` | [Event](../reference/window/events/event.md) | [`eq`](../../../target/doc/vmnl/struct.Event.html#method.eq) |
 | `vmnl::Event` | `fmt` | [Event](../reference/window/events/event.md) | [`fmt`](../../../target/doc/vmnl/struct.Event.html#method.fmt) |

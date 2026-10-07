@@ -10,6 +10,7 @@
 //! without exposing the underlying implementation details.
 
 mod allocator;
+mod config;
 mod context;
 mod device;
 mod physical_device;
@@ -20,6 +21,7 @@ mod vulkan_instance;
 mod tests;
 
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
+pub use config::{ContextBuilder, DeviceConfig, DeviceFeature};
 pub use context::Context;
 use std::{
     cell::Cell,
@@ -74,7 +76,7 @@ impl VMNLInstance {
     /// # Source
     /// <https://vulkano.rs/02-initialization/01-initialization.html#creating-an-instance>
     #[must_use = "VMNLInstance is required for Context initialization"]
-    pub(crate) fn new() -> VMNLResult<Self> {
+    pub(crate) fn new(device_config: &DeviceConfig) -> VMNLResult<Self> {
         log::debug!("initializing VMNL instance");
         let _glfw_init_guard = GLFW_INIT_LOCK.lock().map_err(|_| {
             VMNLError::new(VMNLErrorKind::InvalidState(
@@ -96,7 +98,7 @@ impl VMNLInstance {
             ..DeviceExtensions::empty()
         };
         let physical_device: Arc<PhysicalDevice> =
-            Self::select_physical_device(&instance, &device_extensions)?;
+            Self::select_physical_device(&instance, &device_extensions, device_config)?;
         let properties = physical_device.properties();
         log::debug!(
             "selected physical device: {} ({:?})",
@@ -110,6 +112,7 @@ impl VMNLInstance {
             &physical_device,
             graphics_queue_family_index,
             &device_extensions,
+            device_config,
         )?;
         let memory_allocator = Self::create_memory_allocator(&device);
         let command_buffer_allocator = Self::create_command_buffer_allocator(&device);

@@ -4,9 +4,12 @@
 | Kind | Symbol | Canonical page | Rustdoc |
 |---|---|---|---|
 | struct | `vmnl::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.Context.html) |
+| struct | `vmnl::ContextBuilder` | [ContextBuilder](../reference/context_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.ContextBuilder.html) |
 | struct | `vmnl::Cursor` | [Cursor](../reference/window/input/cursor.md) | [Rustdoc](../../../target/doc/vmnl/struct.Cursor.html) |
 | struct | `vmnl::CursorBuilder` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.CursorBuilder.html) |
 | enum | `vmnl::CursorMode` | [CursorMode](../reference/window/input/cursor_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.CursorMode.html) |
+| struct | `vmnl::DeviceConfig` | [DeviceConfig](../reference/device_config.md) | [Rustdoc](../../../target/doc/vmnl/struct.DeviceConfig.html) |
+| enum | `vmnl::DeviceFeature` | [DeviceFeature](../reference/device_feature.md) | [Rustdoc](../../../target/doc/vmnl/enum.DeviceFeature.html) |
 | struct | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/struct.Event.html) |
 | enum | `vmnl::EventKind` | [EventKind](../reference/window/events/event_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.EventKind.html) |
 | struct | `vmnl::FrameRenderer` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [Rustdoc](../../../target/doc/vmnl/struct.FrameRenderer.html) |

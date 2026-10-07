@@ -3,7 +3,10 @@
 
 use std::path::PathBuf;
 
-use vmnl::{common::BufferMemoryPreference, raw, Context, Key, PresentMode, VMNLResult, Window};
+use vmnl::{
+    common::BufferMemoryPreference, raw, Context, DeviceConfig, DeviceFeature, Key, PresentMode,
+    VMNLResult, Window,
+};
 
 const VERT_PATH: &str = "examples/raw/pipeline/shaders/raw.vert";
 const FRAG_PATH: &str = "examples/raw/pipeline/shaders/raw.frag";
@@ -94,7 +97,14 @@ fn select_faces(window: &mut Window, cull_index: &mut usize, front_index: &mut u
 }
 
 fn main() -> VMNLResult<()> {
-    let context = Context::new()?;
+    let context = Context::builder()
+        .device(DeviceConfig::default().require_feature(DeviceFeature::LargePoints))
+        .build()?;
+    println!(
+        "GPU: {}; large points enabled: {}",
+        context.device_name(),
+        context.is_device_feature_enabled(DeviceFeature::LargePoints)
+    );
     let mut window = Window::builder()
         .title("VMNL raw_pipeline - None / CounterClockwise (C: cull, F: winding)")
         .size(1000, 700)

@@ -6,8 +6,129 @@
 //! Unit tests for VMNL Vulkan context initialization helpers.
 
 use super::VMNLInstance;
-use crate::{VMNLError, VMNLErrorKind};
-use vulkano::device::{physical::PhysicalDeviceType, QueueFlags};
+use crate::{DeviceConfig, DeviceFeature, VMNLError, VMNLErrorKind, VMNLResult};
+use vulkano::device::{physical::PhysicalDeviceType, DeviceFeatures, QueueFlags};
+
+fn select_candidate(
+    candidates: impl IntoIterator<Item = (u32, DeviceFeatures)>,
+    config: &DeviceConfig,
+) -> VMNLResult<(u32, DeviceFeatures)> {
+    VMNLInstance::select_device_for_requirements(
+        candidates,
+        config,
+        |candidate, feature| feature.is_set_in(&candidate.1),
+        |candidate| candidate.0,
+    )
+}
+
+#[test]
+fn required_features_filter_candidates_before_device_priority() {
+    let config = DeviceConfig::default()
+        .require_features([DeviceFeature::FillModeNonSolid, DeviceFeature::WideLines]);
+    let selected = select_candidate(
+        [
+            (
+                1000,
+                DeviceFeatures {
+                    fill_mode_non_solid: true,
+                    ..DeviceFeatures::empty()
+                },
+            ),
+            (
+                100,
+                DeviceFeatures {
+                    fill_mode_non_solid: true,
+                    wide_lines: true,
+                    ..DeviceFeatures::empty()
+                },
+            ),
+        ],
+        &config,
+    )
+    .expect("the lower-ranked compatible device must be selected");
+    assert_eq!(selected.0, 100);
+}
+
+#[test]
+fn requested_features_must_be_supported_together_on_one_device() {
+    let config = DeviceConfig::default()
+        .require_features([DeviceFeature::FillModeNonSolid, DeviceFeature::WideLines]);
+    let error = select_candidate(
+        [
+            (
+                1000,
+                DeviceFeatures {
+                    fill_mode_non_solid: true,
+                    ..DeviceFeatures::empty()
+                },
+            ),
+            (
+                100,
+                DeviceFeatures {
+                    wide_lines: true,
+                    ..DeviceFeatures::empty()
+                },
+            ),
+        ],
+        &config,
+    )
+    .expect_err("separate devices cannot jointly satisfy feature requirements");
+    assert!(
+        matches!(error.kind(), VMNLErrorKind::DeviceRequirementsNotMet { required_features }
+        if required_features == &[DeviceFeature::FillModeNonSolid, DeviceFeature::WideLines])
+    );
+}
+
+#[test]
+fn default_requirements_preserve_priority_and_equal_rank_ordering() {
+    let config = DeviceConfig::default();
+    let selected = select_candidate(
+        [
+            (1000, DeviceFeatures::empty()),
+            (
+                100,
+                DeviceFeatures {
+                    large_points: true,
+                    ..DeviceFeatures::empty()
+                },
+            ),
+        ],
+        &config,
+    )
+    .expect("optional feature support must not change default priority");
+    assert_eq!(selected.0, 1000);
+    let tied = select_candidate(
+        [
+            (100, DeviceFeatures::empty()),
+            (
+                100,
+                DeviceFeatures {
+                    large_points: true,
+                    ..DeviceFeatures::empty()
+                },
+            ),
+        ],
+        &config,
+    )
+    .expect("equal-ranked candidates retain max_by_key's last-match behavior");
+    assert!(tied.1.large_points);
+}
+
+#[test]
+fn empty_candidate_list_preserves_default_error_and_reports_explicit_requirements() {
+    let error = select_candidate([], &DeviceConfig::default())
+        .expect_err("empty defaults retain the existing unsupported category");
+    assert!(matches!(
+        error.kind(),
+        VMNLErrorKind::VulkanUnsupportedFeature
+    ));
+    let config = DeviceConfig::default().require_feature(DeviceFeature::LargePoints);
+    let error = select_candidate([], &config).expect_err("explicit requirements must be reported");
+    assert!(
+        matches!(error.kind(), VMNLErrorKind::DeviceRequirementsNotMet { required_features }
+        if required_features == &[DeviceFeature::LargePoints])
+    );
+}
 
 #[test]
 fn queue_family_index_returns_first_graphics_family() {

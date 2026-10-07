@@ -6,6 +6,7 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 |---|---|---|---|---|
 | alias | `vmnl::VMNLResult` | [VMNLResult](../reference/errors/vmnl_result.md) | [Rustdoc](../../../target/doc/vmnl/type.VMNLResult.html) | [API errors](../../../tests/api/tests/errors.rs) |
 | enum | `vmnl::CursorMode` | [CursorMode](../reference/window/input/cursor_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.CursorMode.html) | [API input](../../../tests/api/tests/input.rs) |
+| enum | `vmnl::DeviceFeature` | [DeviceFeature](../reference/device_feature.md) | [Rustdoc](../../../target/doc/vmnl/enum.DeviceFeature.html) | [API context configuration](../../../tests/api/tests/context_config.rs) |
 | enum | `vmnl::EventKind` | [EventKind](../reference/window/events/event_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.EventKind.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl/enum.Key.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::MouseButton` | [MouseButton](../reference/window/input/mouse_button.md) | [Rustdoc](../../../target/doc/vmnl/enum.MouseButton.html) | [API input](../../../tests/api/tests/input.rs) |
@@ -26,6 +27,8 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | macro | `vmnl::raw::Vertex` | [Vertex derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Vertex.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
 | macro | `vmnl::raw::Zeroable` | [Zeroable derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Zeroable.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
 | struct | `vmnl::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.Context.html) | [GPU context](../../../tests/gpu/tests/context.rs) |
+| struct | `vmnl::ContextBuilder` | [ContextBuilder](../reference/context_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.ContextBuilder.html) | [API context configuration](../../../tests/api/tests/context_config.rs) |
+| struct | `vmnl::DeviceConfig` | [DeviceConfig](../reference/device_config.md) | [Rustdoc](../../../target/doc/vmnl/struct.DeviceConfig.html) | [API context configuration](../../../tests/api/tests/context_config.rs) |
 | struct | `vmnl::Cursor` | [Cursor](../reference/window/input/cursor.md) | [Rustdoc](../../../target/doc/vmnl/struct.Cursor.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::CursorBuilder` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.CursorBuilder.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/struct.Event.html) | [event input example](../../../examples/window/events_input/src/main.rs) |
