@@ -3,6 +3,10 @@
 
 //! Low-level raw rendering API.
 
+mod viewport;
+pub(crate) use viewport::resolve_viewport_scissor;
+pub use viewport::{Scissor, ScissorPolicy, Viewport, ViewportPolicy};
+
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -18,7 +22,7 @@ use vulkano::descriptor_set::layout::{
     DescriptorSetLayout, DescriptorSetLayoutCreateInfo, DescriptorType,
 };
 use vulkano::descriptor_set::{DescriptorSet, WriteDescriptorSet};
-use vulkano::device::Device;
+use vulkano::device::{Device, DeviceFeatures};
 use vulkano::memory::allocator::StandardMemoryAllocator;
 use vulkano::pipeline::graphics::color_blend::{
     AttachmentBlend, ColorBlendAttachmentState, ColorBlendState,
@@ -27,7 +31,10 @@ use vulkano::pipeline::graphics::input_assembly::{
     InputAssemblyState, PrimitiveTopology as VulkanoPrimitiveTopology,
 };
 use vulkano::pipeline::graphics::multisample::MultisampleState;
-use vulkano::pipeline::graphics::rasterization::RasterizationState;
+use vulkano::pipeline::graphics::rasterization::{
+    CullMode as VulkanoCullMode, FrontFace as VulkanoFrontFace, PolygonMode as VulkanoPolygonMode,
+    RasterizationState,
+};
 use vulkano::pipeline::graphics::vertex_input::{
     Vertex as VulkanoVertex, VertexBuffersCollection, VertexDefinition,
 };
@@ -45,7 +52,7 @@ use crate::common::{
     checked_draw_counts, BufferMemoryPreference, GraphicsResourceFactory, IndexBuffer, VertexBuffer,
 };
 use crate::exception::{VMNLError, VMNLErrorKind, VMNLResult};
-use crate::{Context, Window};
+use crate::{Context, DeviceFeature, LineWidthLimits, Window};
 
 const FRAME_UNIFORM_IMAGE_COUNT_MISMATCH: &str =
     "raw frame uniform image count is incompatible with current swapchain image count";
@@ -130,6 +137,55 @@ pub enum BlendMode {
     Alpha,
 }
 
+/// Triangle faces discarded by a raw pipeline.
+///
+/// [`FrontFace`] determines which triangles are front-facing. Culling does not
+/// discard point or line primitives. [`PipelineSpec`] defaults to [`Self::None`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CullMode {
+    /// Keep both front-facing and back-facing triangles.
+    None,
+    /// Discard front-facing triangles.
+    Front,
+    /// Discard back-facing triangles.
+    Back,
+    /// Discard all triangles.
+    FrontAndBack,
+}
+
+/// Triangle winding considered front-facing by a raw pipeline.
+///
+/// Winding is evaluated in framebuffer coordinates after the shader and viewport
+/// transformations, not directly from the application's vertex positions.
+/// This also controls the fragment shader's `gl_FrontFacing` input when culling
+/// is disabled. [`PipelineSpec`] defaults to [`Self::CounterClockwise`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FrontFace {
+    /// Treat triangles with positive signed framebuffer area as front-facing.
+    CounterClockwise,
+    /// Treat triangles with negative signed framebuffer area as front-facing.
+    Clockwise,
+}
+
+/// Triangle rasterization mode, independent of the primitive topology.
+///
+/// Culling still applies to triangles before their edges or vertices are rasterized.
+/// This setting has no effect on line/point input topologies, but its device-feature
+/// requirements are still checked at build. The default is [`Self::Fill`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PolygonMode {
+    /// Rasterize the triangle's surface.
+    Fill,
+    /// Rasterize triangle edges; requires [`DeviceFeature::FillModeNonSolid`].
+    Line,
+    /// Rasterize triangle vertices; size is supplied by the shader's `gl_PointSize`.
+    ///
+    /// Requires [`DeviceFeature::FillModeNonSolid`]. Portability-subset devices also
+    /// require `pointPolygons`, which VMNL cannot currently request through `DeviceConfig`.
+    /// Such devices return an explicit `InvalidState` error at build.
+    Point,
+}
+
 /// Builder/specification for a raw graphics pipeline.
 #[derive(Clone, Debug)]
 pub struct PipelineSpec<TVertex> {
@@ -137,6 +193,12 @@ pub struct PipelineSpec<TVertex> {
     fragment_shader: Option<ShaderSource>,
     topology: PrimitiveTopology,
     blend_mode: BlendMode,
+    cull_mode: CullMode,
+    front_face: FrontFace,
+    polygon_mode: PolygonMode,
+    line_width: f32,
+    viewport: ViewportPolicy,
+    scissor: ScissorPolicy,
     _vertex: PhantomData<TVertex>,
 }
 
@@ -147,6 +209,12 @@ impl<TVertex> Default for PipelineSpec<TVertex> {
             fragment_shader: None,
             topology: PrimitiveTopology::TriangleList,
             blend_mode: BlendMode::Opaque,
+            cull_mode: CullMode::None,
+            front_face: FrontFace::CounterClockwise,
+            polygon_mode: PolygonMode::Fill,
+            line_width: 1.0,
+            viewport: ViewportPolicy::FullFramebuffer,
+            scissor: ScissorPolicy::FullFramebuffer,
             _vertex: PhantomData,
         }
     }
@@ -181,6 +249,87 @@ impl<TVertex> PipelineSpec<TVertex> {
         self
     }
 
+    /// Sets which triangle faces are discarded. Defaults to [`CullMode::None`].
+    #[must_use]
+    pub fn cull_mode(mut self, cull_mode: CullMode) -> Self {
+        self.cull_mode = cull_mode;
+        self
+    }
+
+    /// Sets the front-facing winding in framebuffer coordinates.
+    /// Defaults to [`FrontFace::CounterClockwise`].
+    #[must_use]
+    pub fn front_face(mut self, front_face: FrontFace) -> Self {
+        self.front_face = front_face;
+        self
+    }
+
+    /// Sets triangle rasterization, fixed at pipeline creation. Defaults to [`PolygonMode::Fill`].
+    ///
+    /// Non-solid modes require an enabled [`DeviceFeature::FillModeNonSolid`].
+    /// This CPU-only setter does not validate or enable device features; [`Self::build`] does.
+    #[must_use]
+    pub fn polygon_mode(mut self, mode: PolygonMode) -> Self {
+        self.polygon_mode = mode;
+        self
+    }
+
+    /// Sets line width in framebuffer units. Defaults to `1.0`; fixed at pipeline creation.
+    ///
+    /// Applies to line primitives and triangle edges in [`PolygonMode::Line`].
+    /// Build requires a finite positive value within [`Context::line_width_limits`],
+    /// and enabled [`DeviceFeature::WideLines`] for any value other than `1.0`.
+    /// VMNL rejects out-of-range requests rather than clamping them. The driver may
+    /// round an in-range width; no exact pixel thickness is promised.
+    #[must_use]
+    pub fn line_width(mut self, width: f32) -> Self {
+        self.line_width = width;
+        self
+    }
+
+    /// Sets the viewport policy; defaults to the complete acquired framebuffer.
+    ///
+    /// Fixed rectangles use framebuffer pixels and persist across resize without scaling.
+    /// Build validates them before shader I/O; recording resolves and revalidates the
+    /// policy against the actual acquired image extent. No optional feature is activated.
+    #[must_use]
+    pub fn viewport(mut self, policy: ViewportPolicy) -> Self {
+        self.viewport = policy;
+        self
+    }
+
+    /// Sets the clipping policy, independently of the viewport transform.
+    /// Defaults to [`ScissorPolicy::FullFramebuffer`].
+    #[must_use]
+    pub fn scissor(mut self, policy: ScissorPolicy) -> Self {
+        self.scissor = policy;
+        self
+    }
+
+    /// Returns the configured viewport policy; use [`ViewportPolicy::resolve`] to inspect it.
+    #[must_use]
+    pub const fn viewport_value(&self) -> ViewportPolicy {
+        self.viewport
+    }
+
+    /// Returns the configured scissor policy; use [`ScissorPolicy::resolve`] to inspect it.
+    #[must_use]
+    pub const fn scissor_value(&self) -> ScissorPolicy {
+        self.scissor
+    }
+
+    /// Returns the configured triangle rasterization mode without allocating.
+    #[must_use]
+    pub const fn polygon_mode_value(&self) -> PolygonMode {
+        self.polygon_mode
+    }
+
+    /// Returns the requested line width, before device validation or driver rounding.
+    #[must_use]
+    pub const fn line_width_value(&self) -> f32 {
+        self.line_width
+    }
+
     /// Returns the configured primitive topology.
     #[must_use]
     pub const fn topology_value(&self) -> PrimitiveTopology {
@@ -193,15 +342,43 @@ impl<TVertex> PipelineSpec<TVertex> {
         self.blend_mode
     }
 
+    /// Returns the configured triangle culling mode.
+    #[must_use]
+    pub const fn cull_mode_value(&self) -> CullMode {
+        self.cull_mode
+    }
+
+    /// Returns the configured front-facing winding.
+    #[must_use]
+    pub const fn front_face_value(&self) -> FrontFace {
+        self.front_face
+    }
+
     /// Builds the raw pipeline against a window render pass.
     ///
     /// # Errors
     /// Returns an error if shaders are missing, fail to compile, declare
     /// unsupported resources or push constants, or if Vulkan pipeline creation fails.
+    /// Before shader compilation, rejects invalid widths with `InvalidLineWidth`,
+    /// disabled optional features with `DeviceFeatureNotEnabled`, and unsupported
+    /// portability-subset point polygons or invalid viewport/scissor parameters
+    /// (including device viewport limits) with `InvalidState`. No feature is activated
+    /// and no GPU is reselected by this operation.
     pub fn build(self, window: &Window) -> VMNLResult<Pipeline<TVertex>>
     where
         TVertex: BufferContents + Vertex + 'static,
     {
+        let device = window.device();
+        validate_raw_rasterization(
+            self.polygon_mode,
+            self.line_width,
+            LineWidthLimits::from_physical_device(device.physical_device()),
+            device.enabled_features(),
+            device.enabled_extensions().khr_portability_subset,
+        )?;
+
+        resolve_viewport_scissor(self.viewport, self.scissor, window.render_extent(), &device)?;
+
         let vertex_shader = self.vertex_shader.ok_or_else(|| {
             VMNLError::new(VMNLErrorKind::InvalidState(
                 "raw pipeline requires a vertex shader".into(),
@@ -213,7 +390,6 @@ impl<TVertex> PipelineSpec<TVertex> {
             ))
         })?;
 
-        let device = window.device();
         let render_pass = window.render_pass();
 
         let vs = compile_shader(device.clone(), &vertex_shader, shaderc::ShaderKind::Vertex)?;
@@ -263,10 +439,17 @@ impl<TVertex> PipelineSpec<TVertex> {
                     ..Default::default()
                 }),
                 viewport_state: Some(ViewportState::default()),
-                rasterization_state: Some(RasterizationState::default()),
+                rasterization_state: Some(raw_rasterization_state(
+                    self.cull_mode,
+                    self.front_face,
+                    self.polygon_mode,
+                    self.line_width,
+                )),
                 multisample_state: Some(MultisampleState::default()),
                 color_blend_state: Some(color_blend_state(self.blend_mode)),
-                dynamic_state: [DynamicState::Viewport].into_iter().collect(),
+                dynamic_state: [DynamicState::Viewport, DynamicState::Scissor]
+                    .into_iter()
+                    .collect(),
                 subpass: Some(subpass.into()),
                 ..vulkano::pipeline::graphics::GraphicsPipelineCreateInfo::layout(layout)
             },
@@ -277,6 +460,10 @@ impl<TVertex> PipelineSpec<TVertex> {
             inner: graphics_pipeline,
             device,
             render_pass,
+            polygon_mode: self.polygon_mode,
+            line_width: self.line_width,
+            viewport: self.viewport,
+            scissor: self.scissor,
             _vertex: PhantomData,
         })
     }
@@ -287,6 +474,10 @@ pub struct Pipeline<TVertex> {
     inner: Arc<GraphicsPipeline>,
     device: Arc<Device>,
     render_pass: Arc<RenderPass>,
+    polygon_mode: PolygonMode,
+    line_width: f32,
+    viewport: ViewportPolicy,
+    scissor: ScissorPolicy,
     _vertex: PhantomData<TVertex>,
 }
 
@@ -295,6 +486,32 @@ impl<TVertex> Pipeline<TVertex> {
     #[must_use]
     pub fn builder() -> PipelineSpec<TVertex> {
         PipelineSpec::default()
+    }
+
+    /// Returns the triangle rasterization mode used to create this pipeline.
+    #[must_use]
+    pub const fn polygon_mode_value(&self) -> PolygonMode {
+        self.polygon_mode
+    }
+
+    /// Returns the validated line width passed to Vulkan, before driver rounding.
+    ///
+    /// This is a configuration value, not a measurement of displayed pixel coverage.
+    #[must_use]
+    pub const fn line_width_value(&self) -> f32 {
+        self.line_width
+    }
+
+    /// Returns the immutable viewport policy; resolution remains extent-dependent.
+    #[must_use]
+    pub const fn viewport_value(&self) -> ViewportPolicy {
+        self.viewport
+    }
+
+    /// Returns the immutable scissor policy; resolution remains extent-dependent.
+    #[must_use]
+    pub const fn scissor_value(&self) -> ScissorPolicy {
+        self.scissor
     }
 
     pub(crate) fn render_item(&self, geometry: &Geometry<TVertex>) -> RenderItemRaw {
@@ -318,6 +535,8 @@ impl<TVertex> Pipeline<TVertex> {
             pipeline: self.inner.clone(),
             pipeline_device: self.device.clone(),
             pipeline_render_pass: self.render_pass.clone(),
+            viewport: self.viewport,
+            scissor: self.scissor,
             geometry_device: geometry.device.clone(),
             resources_device: resources.map(|resources| resources.device.clone()),
             resources_pipeline_layout: resources.map(|resources| resources.pipeline_layout.clone()),
@@ -886,6 +1105,8 @@ pub(crate) struct RenderItemRaw {
     pub(crate) pipeline: Arc<GraphicsPipeline>,
     pub(crate) pipeline_device: Arc<Device>,
     pub(crate) pipeline_render_pass: Arc<RenderPass>,
+    pub(crate) viewport: ViewportPolicy,
+    pub(crate) scissor: ScissorPolicy,
     pub(crate) geometry_device: Arc<Device>,
     pub(crate) resources_device: Option<Arc<Device>>,
     pub(crate) resources_pipeline_layout: Option<Arc<PipelineLayout>>,
@@ -1325,6 +1546,77 @@ fn compile_shader(
         .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanShaderModuleCreationFailed))
 }
 
+fn validate_raw_rasterization(
+    polygon_mode: PolygonMode,
+    line_width: f32,
+    limits: LineWidthLimits,
+    enabled_features: &DeviceFeatures,
+    is_portability_subset: bool,
+) -> VMNLResult<()> {
+    if !line_width.is_finite()
+        || line_width <= 0.0
+        || line_width < limits.min
+        || line_width > limits.max
+    {
+        return Err(VMNLError::new(VMNLErrorKind::InvalidLineWidth {
+            value: line_width,
+            min: limits.min,
+            max: limits.max,
+        }));
+    }
+
+    if polygon_mode != PolygonMode::Fill && !enabled_features.fill_mode_non_solid {
+        return Err(VMNLError::new(VMNLErrorKind::DeviceFeatureNotEnabled {
+            feature: DeviceFeature::FillModeNonSolid,
+        }));
+    }
+
+    if polygon_mode == PolygonMode::Point
+        && is_portability_subset
+        && !enabled_features.point_polygons
+    {
+        return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+            "raw point polygon mode requires pointPolygons on portability-subset devices; DeviceConfig cannot currently request it".into(),
+        )));
+    }
+
+    // Vulkan requires exactly 1.0 without wideLines; an epsilon would accept invalid widths.
+    if line_width.to_bits() != 1.0_f32.to_bits() && !enabled_features.wide_lines {
+        return Err(VMNLError::new(VMNLErrorKind::DeviceFeatureNotEnabled {
+            feature: DeviceFeature::WideLines,
+        }));
+    }
+
+    Ok(())
+}
+
+fn raw_rasterization_state(
+    cull_mode: CullMode,
+    front_face: FrontFace,
+    polygon_mode: PolygonMode,
+    line_width: f32,
+) -> RasterizationState {
+    RasterizationState {
+        cull_mode: match cull_mode {
+            CullMode::None => VulkanoCullMode::None,
+            CullMode::Front => VulkanoCullMode::Front,
+            CullMode::Back => VulkanoCullMode::Back,
+            CullMode::FrontAndBack => VulkanoCullMode::FrontAndBack,
+        },
+        front_face: match front_face {
+            FrontFace::CounterClockwise => VulkanoFrontFace::CounterClockwise,
+            FrontFace::Clockwise => VulkanoFrontFace::Clockwise,
+        },
+        polygon_mode: match polygon_mode {
+            PolygonMode::Fill => VulkanoPolygonMode::Fill,
+            PolygonMode::Line => VulkanoPolygonMode::Line,
+            PolygonMode::Point => VulkanoPolygonMode::Point,
+        },
+        line_width,
+        ..Default::default()
+    }
+}
+
 fn color_blend_state(blend_mode: BlendMode) -> ColorBlendState {
     match blend_mode {
         BlendMode::Opaque => {
@@ -1360,6 +1652,225 @@ mod tests {
 
         assert_eq!(spec.topology_value(), PrimitiveTopology::TriangleList);
         assert_eq!(spec.blend_mode_value(), BlendMode::Opaque);
+    }
+
+    #[test]
+    fn raw_rasterization_preserves_face_selection_and_other_defaults() {
+        for (cull_mode, expected_cull_mode) in [
+            (CullMode::None, VulkanoCullMode::None),
+            (CullMode::Front, VulkanoCullMode::Front),
+            (CullMode::Back, VulkanoCullMode::Back),
+            (CullMode::FrontAndBack, VulkanoCullMode::FrontAndBack),
+        ] {
+            for (front_face, expected_front_face) in [
+                (
+                    FrontFace::CounterClockwise,
+                    VulkanoFrontFace::CounterClockwise,
+                ),
+                (FrontFace::Clockwise, VulkanoFrontFace::Clockwise),
+            ] {
+                let state = raw_rasterization_state(cull_mode, front_face, PolygonMode::Fill, 1.0);
+                assert_eq!(state.cull_mode, expected_cull_mode);
+                assert_eq!(state.front_face, expected_front_face);
+                assert_eq!(
+                    state.polygon_mode,
+                    vulkano::pipeline::graphics::rasterization::PolygonMode::Fill
+                );
+                assert_eq!(state.line_width.to_bits(), 1.0_f32.to_bits());
+                assert!(!state.depth_clamp_enable);
+                assert!(!state.rasterizer_discard_enable);
+                assert!(state.depth_bias.is_none());
+            }
+        }
+    }
+
+    fn test_line_width_limits() -> LineWidthLimits {
+        LineWidthLimits {
+            min: 0.5,
+            max: 4.0,
+            granularity: 0.25,
+        }
+    }
+
+    #[test]
+    fn raw_rasterization_maps_polygon_modes_and_line_width_without_changing_other_state() {
+        for (mode, expected) in [
+            (PolygonMode::Fill, VulkanoPolygonMode::Fill),
+            (PolygonMode::Line, VulkanoPolygonMode::Line),
+            (PolygonMode::Point, VulkanoPolygonMode::Point),
+        ] {
+            for width in [0.5_f32, 1.0, 2.5, 4.0] {
+                let state =
+                    raw_rasterization_state(CullMode::Back, FrontFace::Clockwise, mode, width);
+                assert_eq!(state.polygon_mode, expected);
+                assert_eq!(state.line_width.to_bits(), width.to_bits());
+                assert_eq!(state.cull_mode, VulkanoCullMode::Back);
+                assert_eq!(state.front_face, VulkanoFrontFace::Clockwise);
+                assert!(!state.depth_clamp_enable);
+                assert!(!state.rasterizer_discard_enable);
+                assert!(state.depth_bias.is_none());
+            }
+        }
+    }
+
+    #[test]
+    fn raw_rasterization_rejects_invalid_widths_before_checking_features() {
+        for width in [
+            f32::NAN,
+            f32::INFINITY,
+            f32::NEG_INFINITY,
+            -1.0,
+            -0.0,
+            0.0,
+            0.49,
+            4.01,
+        ] {
+            let result = validate_raw_rasterization(
+                PolygonMode::Line,
+                width,
+                test_line_width_limits(),
+                &DeviceFeatures::empty(),
+                false,
+            );
+            assert!(matches!(result, Err(error) if matches!(error.kind(),
+                VMNLErrorKind::InvalidLineWidth { value, min, max }
+                if value.to_bits() == width.to_bits()
+                    && min.to_bits() == 0.5_f32.to_bits() && max.to_bits() == 4.0_f32.to_bits()
+            )));
+        }
+    }
+
+    #[test]
+    fn raw_rasterization_checks_activated_features_including_subunit_widths() {
+        let solid = DeviceFeatures::empty();
+        let non_solid = DeviceFeatures {
+            fill_mode_non_solid: true,
+            ..DeviceFeatures::empty()
+        };
+        let wide = DeviceFeatures {
+            wide_lines: true,
+            ..DeviceFeatures::empty()
+        };
+        let both = DeviceFeatures {
+            fill_mode_non_solid: true,
+            wide_lines: true,
+            ..DeviceFeatures::empty()
+        };
+        for (mode, width, features, missing) in [
+            (PolygonMode::Fill, 1.0, &solid, None),
+            (
+                PolygonMode::Line,
+                1.0,
+                &solid,
+                Some(DeviceFeature::FillModeNonSolid),
+            ),
+            (
+                PolygonMode::Point,
+                1.0,
+                &solid,
+                Some(DeviceFeature::FillModeNonSolid),
+            ),
+            (PolygonMode::Line, 1.0, &non_solid, None),
+            (PolygonMode::Point, 1.0, &non_solid, None),
+            (
+                PolygonMode::Fill,
+                0.5,
+                &solid,
+                Some(DeviceFeature::WideLines),
+            ),
+            (
+                PolygonMode::Fill,
+                4.0,
+                &solid,
+                Some(DeviceFeature::WideLines),
+            ),
+            (PolygonMode::Fill, 0.5, &wide, None),
+            (PolygonMode::Fill, 4.0, &wide, None),
+            (
+                PolygonMode::Line,
+                2.5,
+                &non_solid,
+                Some(DeviceFeature::WideLines),
+            ),
+            (
+                PolygonMode::Line,
+                2.5,
+                &wide,
+                Some(DeviceFeature::FillModeNonSolid),
+            ),
+            (PolygonMode::Line, 2.5, &both, None),
+            (PolygonMode::Point, 2.5, &both, None),
+        ] {
+            let result =
+                validate_raw_rasterization(mode, width, test_line_width_limits(), features, false);
+            match missing {
+                None => assert!(result.is_ok(), "{mode:?}, width {width}: {result:?}"),
+                Some(expected) => assert!(matches!(result, Err(error) if matches!(error.kind(),
+                    VMNLErrorKind::DeviceFeatureNotEnabled { feature } if *feature == expected))),
+            }
+        }
+        assert!(validate_raw_rasterization(
+            PolygonMode::Fill,
+            1.0,
+            LineWidthLimits {
+                min: 1.0,
+                max: 1.0,
+                granularity: 0.0
+            },
+            &solid,
+            false
+        )
+        .is_ok());
+        let zero_min = LineWidthLimits {
+            min: 0.0,
+            max: 8.0,
+            granularity: 0.007_812_5,
+        };
+        assert!(validate_raw_rasterization(PolygonMode::Fill, 0.5, zero_min, &wide, false).is_ok());
+        assert!(
+            matches!(validate_raw_rasterization(PolygonMode::Fill, 0.0, zero_min, &wide, false),
+            Err(error) if matches!(error.kind(), VMNLErrorKind::InvalidLineWidth { .. }))
+        );
+    }
+
+    #[test]
+    fn raw_rasterization_requires_wide_lines_for_float_neighbors_of_one() {
+        for bits in [1.0_f32.to_bits() - 1, 1.0_f32.to_bits() + 1] {
+            assert!(matches!(validate_raw_rasterization(PolygonMode::Fill,
+            f32::from_bits(bits), test_line_width_limits(), &DeviceFeatures::empty(), false),
+            Err(error) if matches!(error.kind(), VMNLErrorKind::DeviceFeatureNotEnabled {
+                feature: DeviceFeature::WideLines,
+            })));
+        }
+    }
+
+    #[test]
+    fn raw_point_polygons_require_portability_activation_only_on_subset_devices() {
+        for (is_subset, point_polygons, mode, succeeds) in [
+            (false, false, PolygonMode::Point, true),
+            (true, false, PolygonMode::Point, false),
+            (true, true, PolygonMode::Point, true),
+            (true, false, PolygonMode::Line, true),
+        ] {
+            let features = DeviceFeatures {
+                fill_mode_non_solid: true,
+                point_polygons,
+                ..DeviceFeatures::empty()
+            };
+            let result = validate_raw_rasterization(
+                mode,
+                1.0,
+                test_line_width_limits(),
+                &features,
+                is_subset,
+            );
+            if succeeds {
+                assert!(result.is_ok());
+            } else {
+                assert!(matches!(result, Err(error) if matches!(error.kind(),
+                    VMNLErrorKind::InvalidState(message) if message.contains("pointPolygons"))));
+            }
+        }
     }
 
     #[test]

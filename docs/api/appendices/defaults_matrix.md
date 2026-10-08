@@ -3,6 +3,7 @@
 | Surface | Default |
 |---|---|
 | `BufferMemoryPreference` | `Device` |
+| `ContextBuilder` / `DeviceConfig` | automatic compatible GPU/graphics queue selection; no optional feature request |
 | `Rgba` | `(0, 0, 0, 0)`; named colors are opaque |
 | `Vector2f`, `Vector3f`, `Vertex2D`, `Vertex3D` | Component/field zero defaults |
 | `Camera` | position `(0,0,1)`, target `(0,0,0)`, up `(0,1,0)`; 3D remains scaffolded |
@@ -25,5 +26,6 @@
 | Triangle | white per vertex unless created from colored vertices; device memory preference |
 | Line | width `1.0`, butt cap, white, device memory preference |
 | Indexed shape / mesh / raw geometry / uniform | device memory preference |
-| `PipelineSpec` | shaders missing, `TriangleList`, `Opaque` |
+| `PipelineSpec` | shaders missing, `TriangleList`, `Opaque`, `CullMode::None`, `FrontFace::CounterClockwise`, `PolygonMode::Fill`, line width `1.0`, viewport/scissor `FullFramebuffer` |
+| `ViewportPolicy` / `ScissorPolicy` | `FullFramebuffer`, resolved against the acquired image extent on each raw draw |
 | `GeometryBuilder` | no indices |

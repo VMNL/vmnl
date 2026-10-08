@@ -3,12 +3,14 @@
 | Operation | Principal failure contract | Typical decision |
 |---|---|---|
 | `Context::new` | Vulkan initialization/device/queue/allocator categories | Abort graphics initialization or retry after environment change |
+| `ContextBuilder::build` | initialization categories; `DeviceRequirementsNotMet` with the complete feature list for an unsatisfied nonempty request | Require a compatible GPU or explicitly change the requested configuration; requirements are never silently dropped |
 | `WindowBuilder::build` | invalid size; GLFW/surface/swapchain/shader/render-target failures; unsupported strict present mode | Fix configuration or environment; choose preferred/portable present mode |
 | Runtime window setters | invalid size/range/aspect (`InvalidWindowSize`/`InvalidState`) | Correct input before retry |
 | Cursor position/raw-motion setters | non-finite coordinates (`InvalidState`); unsupported raw enable (`GlfwUnsupportedPlatform`) | Correct coordinates or keep raw motion disabled |
 | Cursor resource build/assign | invalid image/hotspot (`InvalidState`); unavailable theme shape (`GlfwUnsupportedPlatform`); native GLFW failure | Correct image data, choose another shape, or restore the default cursor |
 | Shape/mesh build | invalid/overflowing geometry; vertex/index allocation failure | Correct geometry or release/reduce resources |
-| Raw pipeline build | missing/read/compile/interface/layout/pipeline failures | Correct shaders/layout; verify device support |
+| Raw pipeline build | `InvalidLineWidth` / `DeviceFeatureNotEnabled` / portability point-polygon or viewport/scissor `InvalidState` before shader I/O; missing/read/compile/interface/layout/pipeline failures | Use valid numeric values and viewport device limits; request required device features before context creation; correct shaders/layout |
+| Viewport/scissor policy resolution | `InvalidState` for invalid viewport numbers/ranges/full dimensions or signed scissor sum overflow | Correct framebuffer-pixel values; headless resolution does not validate device viewport limits |
 | Raw geometry/uniform build | invalid counts/indices or buffer allocation | Correct data/reduce allocation |
 | Raw resources build | context/device/layout/set/binding/type/array/duplicate/missing mismatch; descriptor allocation | Align shader and resource contract |
 | Frame submit | 3D scaffold `InvalidState`; device/render-pass/resource mismatch; out-of-date/zero-size; record/submit/present/device errors | Never submit 3D; retry transient resize; rebuild/terminate on hard device failure |

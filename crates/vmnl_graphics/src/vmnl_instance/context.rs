@@ -6,7 +6,7 @@
 //! This module exposes the `Context` wrapper around the internal Vulkan
 //! instance state.
 
-use super::VMNLInstance;
+use super::{ContextBuilder, DeviceFeature, LineWidthLimits, VMNLInstance};
 use crate::{Key, KeyboardState, Scancode, VMNLResult};
 use std::rc::Rc;
 
@@ -38,8 +38,9 @@ fn wayland_scancode_name(
 /// It is responsible for initializing and managing the Vulkan resources required for rendering operations
 /// and provides a high-level interface for the graphical part of the library.
 ///
-/// Device and queue selection are automatic. VMNL ranks supported physical
-/// devices, but does not expose a client override. When multiple candidates
+/// Device and queue selection are automatic. [`ContextBuilder`] can require
+/// optional device features; VMNL ranks only candidates meeting all requirements.
+/// Explicit GPU/queue selection is not exposed. When multiple candidates
 /// have equal rank, the selected device follows backend enumeration order and
 /// is therefore not deterministic across equal-ranked devices.
 ///
@@ -53,6 +54,46 @@ pub struct Context {
 }
 
 impl Context {
+    /// Prepares the default CPU-side configuration without initializing GLFW or Vulkan.
+    #[must_use]
+    pub fn builder() -> ContextBuilder {
+        ContextBuilder::default()
+    }
+
+    /// Returns the selected physical device's reported name without allocating.
+    ///
+    /// The name is diagnostic metadata, not a unique or persistent device identifier.
+    #[must_use]
+    pub fn device_name(&self) -> &str {
+        &self.inner.physical_device.properties().device_name
+    }
+
+    /// Returns the selected GPU's line-width range and granularity without allocating.
+    ///
+    /// The values are immutable and shared by context clones. Hardware support does
+    /// not imply that [`DeviceFeature::WideLines`] is enabled. Widths other than
+    /// `1.0` require activation; supported widths may be rounded by the driver.
+    #[must_use]
+    pub fn line_width_limits(&self) -> LineWidthLimits {
+        LineWidthLimits::from_physical_device(&self.inner.physical_device)
+    }
+
+    /// Returns whether the selected physical device supports this feature.
+    ///
+    /// Support does not imply activation on the logical device.
+    #[must_use]
+    pub fn is_device_feature_supported(&self, feature: DeviceFeature) -> bool {
+        feature.is_set_in(self.inner.physical_device.supported_features())
+    }
+
+    /// Returns whether this feature is enabled on the context's logical device.
+    ///
+    /// Activation is immutable for the device lifetime and shared by context clones.
+    #[must_use]
+    pub fn is_device_feature_enabled(&self, feature: DeviceFeature) -> bool {
+        feature.is_set_in(self.inner.device.enabled_features())
+    }
+
     /// Returns the active-layout name of a printable named key.
     ///
     /// The returned UTF-8 name is intended for displaying key bindings. It is not text input and
@@ -174,9 +215,7 @@ impl Context {
     /// # }
     /// ```
     pub fn new() -> VMNLResult<Self> {
-        Ok(Self {
-            inner: Rc::new(VMNLInstance::new()?),
-        })
+        Self::builder().build()
     }
 }
 
