@@ -13,7 +13,7 @@
 | Cursor resource build/assign | invalid image/hotspot (`InvalidState`); unavailable theme shape (`GlfwUnsupportedPlatform`); native GLFW failure | Correct image data, choose another shape, or restore the default cursor |
 | Shape/mesh build | invalid/overflowing geometry; vertex/index allocation failure | Correct geometry or release/reduce resources |
 | Circle-family build | `InvalidState` for invalid parameters, sector/cap mismatch, zero segments, or invalid topology/counts; generated coordinates are not rechecked and filled widths are not validated | Supply both sector and cap or neither; keep outline offsets finite/positive and generated geometry within usable bounds |
-| Raw pipeline build | missing/read/compile/interface/layout/pipeline failures | Correct shaders/layout; verify device support |
+| Raw pipeline build | `InvalidLineWidth` / `DeviceFeatureNotEnabled` / portability point-polygon `InvalidState` before shader I/O; missing/read/compile/interface/layout/pipeline failures | Use a finite positive in-range width; request required device features before context creation; correct shaders/layout |
 | Raw geometry/uniform build | invalid counts/indices or buffer allocation | Correct data/reduce allocation |
 | Raw resources build | context/device/layout/set/binding/type/array/duplicate/missing mismatch; descriptor allocation | Align shader and resource contract |
 | Frame submit | 3D scaffold `InvalidState`; device/render-pass/resource mismatch; out-of-date/zero-size; record/submit/present/device errors | Never submit 3D; retry transient resize; rebuild/terminate on hard device failure |

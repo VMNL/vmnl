@@ -16,6 +16,7 @@ const CULL_MODES: [raw::CullMode; 4] = [
     raw::CullMode::Back,
     raw::CullMode::FrontAndBack,
 ];
+const POLYGON_MODES: [raw::PolygonMode; 2] = [raw::PolygonMode::Fill, raw::PolygonMode::Line];
 const FRONT_FACES: [raw::FrontFace; 2] =
     [raw::FrontFace::CounterClockwise, raw::FrontFace::Clockwise];
 
@@ -65,48 +66,113 @@ fn pipeline(
     spec.build(window)
 }
 
-fn triangle_pipelines(window: &Window) -> VMNLResult<Vec<raw::Pipeline<RawVertex>>> {
-    CULL_MODES
-        .into_iter()
-        .flat_map(|cull_mode| FRONT_FACES.map(|front_face| (cull_mode, front_face)))
-        .map(|(cull_mode, front_face)| {
-            pipeline_spec(raw::PrimitiveTopology::TriangleList, raw::BlendMode::Alpha)
-                .cull_mode(cull_mode)
-                .front_face(front_face)
+fn triangle_pipelines(
+    window: &Window,
+    widths: &[f32],
+) -> VMNLResult<Vec<raw::Pipeline<RawVertex>>> {
+    let mut pipelines = Vec::new();
+    for cull_mode in CULL_MODES {
+        for front_face in FRONT_FACES {
+            for polygon_mode in POLYGON_MODES {
+                for &width in widths {
+                    pipelines.push(
+                        pipeline_spec(raw::PrimitiveTopology::TriangleList, raw::BlendMode::Alpha)
+                            .cull_mode(cull_mode)
+                            .front_face(front_face)
+                            .polygon_mode(polygon_mode)
+                            .line_width(width)
+                            .build(window)?,
+                    );
+                }
+            }
+        }
+    }
+    Ok(pipelines)
+}
+
+fn line_pipelines(
+    window: &Window,
+    topology: raw::PrimitiveTopology,
+    widths: &[f32],
+) -> VMNLResult<Vec<raw::Pipeline<RawVertex>>> {
+    widths
+        .iter()
+        .map(|&width| {
+            pipeline_spec(topology, raw::BlendMode::Opaque)
+                .line_width(width)
                 .build(window)
         })
         .collect()
 }
 
-fn select_faces(window: &mut Window, cull_index: &mut usize, front_index: &mut usize) {
-    let keyboard = window.input().keyboard();
-    let is_cull_pressed = keyboard.is_pressed(Key::C);
-    let is_front_pressed = keyboard.is_pressed(Key::F);
-    if is_cull_pressed {
-        *cull_index = (*cull_index + 1) % CULL_MODES.len();
+#[derive(Default)]
+struct PipelineSelection {
+    cull: usize,
+    front: usize,
+    polygon: usize,
+    width: usize,
+}
+
+impl PipelineSelection {
+    fn triangle_index(&self, width_count: usize) -> usize {
+        ((self.cull * FRONT_FACES.len() + self.front) * POLYGON_MODES.len() + self.polygon)
+            * width_count
+            + self.width
     }
-    if is_front_pressed {
-        *front_index = (*front_index + 1) % FRONT_FACES.len();
-    }
-    if is_cull_pressed || is_front_pressed {
-        window.set_title(&format!(
-            "VMNL raw_pipeline - {:?} / {:?} (C: cull, F: winding)",
-            CULL_MODES[*cull_index], FRONT_FACES[*front_index]
-        ));
+
+    fn update(&mut self, window: &mut Window, widths: &[f32]) {
+        let keyboard = window.input().keyboard();
+        let cull = keyboard.is_pressed(Key::C);
+        let front = keyboard.is_pressed(Key::F);
+        let polygon = keyboard.is_pressed(Key::P);
+        let width = keyboard.is_pressed(Key::W);
+        if cull {
+            self.cull = (self.cull + 1) % CULL_MODES.len();
+        }
+        if front {
+            self.front = (self.front + 1) % FRONT_FACES.len();
+        }
+        if polygon {
+            self.polygon = (self.polygon + 1) % POLYGON_MODES.len();
+        }
+        if width {
+            self.width = (self.width + 1) % widths.len();
+        }
+        if cull || front || polygon || width {
+            window.set_title(&format!(
+                "VMNL raw_pipeline - {:?} / {:?} / {:?} / width {} (C/F/P/W)",
+                CULL_MODES[self.cull],
+                FRONT_FACES[self.front],
+                POLYGON_MODES[self.polygon],
+                widths[self.width]
+            ));
+        }
     }
 }
 
 fn main() -> VMNLResult<()> {
     let context = Context::builder()
-        .device(DeviceConfig::default().require_feature(DeviceFeature::LargePoints))
+        .device(DeviceConfig::default().require_features([
+            DeviceFeature::LargePoints,
+            DeviceFeature::FillModeNonSolid,
+            DeviceFeature::WideLines,
+        ]))
         .build()?;
     println!(
         "GPU: {}; large points enabled: {}",
         context.device_name(),
         context.is_device_feature_enabled(DeviceFeature::LargePoints)
     );
+    let limits = context.line_width_limits();
+    let mut widths = vec![1.0];
+    if limits.max > 1.0 {
+        widths.push(limits.max.min(4.0));
+    } else if limits.min < 1.0 {
+        widths.push((limits.min + 1.0) / 2.0);
+    }
+    println!("line-width limits: {limits:?}; requested widths: {widths:?}");
     let mut window = Window::builder()
-        .title("VMNL raw_pipeline - None / CounterClockwise (C: cull, F: winding)")
+        .title("VMNL raw_pipeline - None / CounterClockwise / Fill / width 1 (C/F/P/W)")
         .size(1000, 700)
         .present_mode(PresentMode::Auto)
         .build(&context)?;
@@ -116,17 +182,9 @@ fn main() -> VMNLResult<()> {
         raw::PrimitiveTopology::PointList,
         raw::BlendMode::Opaque,
     )?;
-    let line_list_pipeline = pipeline(
-        &window,
-        raw::PrimitiveTopology::LineList,
-        raw::BlendMode::Opaque,
-    )?;
-    let line_strip_pipeline = pipeline(
-        &window,
-        raw::PrimitiveTopology::LineStrip,
-        raw::BlendMode::Opaque,
-    )?;
-    let triangle_list_pipelines = triangle_pipelines(&window)?;
+    let line_list_pipelines = line_pipelines(&window, raw::PrimitiveTopology::LineList, &widths)?;
+    let line_strip_pipelines = line_pipelines(&window, raw::PrimitiveTopology::LineStrip, &widths)?;
+    let triangle_list_pipelines = triangle_pipelines(&window, &widths)?;
     let triangle_strip_pipeline = pipeline(
         &window,
         raw::PrimitiveTopology::TriangleStrip,
@@ -176,22 +234,24 @@ fn main() -> VMNLResult<()> {
     ])
     .build(&context)?;
 
-    let mut cull_index = 0;
-    let mut front_index = 0;
-    println!("C: cycle culling; F: reverse front-face winding; Escape: close.");
+    let mut selection = PipelineSelection::default();
+    println!("C: culling; F: winding; P: fill/wireframe; W: line width; Escape: close.");
+    println!(
+        "All pipeline combinations are built before the loop; widths may be rounded by the driver."
+    );
     while window.is_open() {
         for _ in window.poll_events() {}
-        select_faces(&mut window, &mut cull_index, &mut front_index);
+        selection.update(&mut window, &widths);
         if window.input().keyboard().is_pressed(Key::Escape) {
             window.close();
         }
         window
             .render()
             .draw_raw_2d(&points_pipeline, [&points])
-            .draw_raw_2d(&line_list_pipeline, [&line_list])
-            .draw_raw_2d(&line_strip_pipeline, [&line_strip])
+            .draw_raw_2d(&line_list_pipelines[selection.width], [&line_list])
+            .draw_raw_2d(&line_strip_pipelines[selection.width], [&line_strip])
             .draw_raw_2d(
-                &triangle_list_pipelines[cull_index * FRONT_FACES.len() + front_index],
+                &triangle_list_pipelines[selection.triangle_index(widths.len())],
                 [&triangle_list],
             )
             .draw_raw_2d(&triangle_strip_pipeline, [&triangle_strip])

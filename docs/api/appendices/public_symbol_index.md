@@ -28,6 +28,7 @@
 | enum | `vmnl::JoystickStatus` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.JoystickStatus.html) |
 | enum | `vmnl::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl/enum.Key.html) |
 | struct | `vmnl::KeyboardState` | [KeyboardState](../reference/window/input/keyboard_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.KeyboardState.html) |
+| struct | `vmnl::LineWidthLimits` | [LineWidthLimits](../reference/line_width_limits.md) | [Rustdoc](../../../target/doc/vmnl/struct.LineWidthLimits.html) |
 | struct | `vmnl::Modifiers` | [Modifiers](../reference/window/input/modifiers.md) | [Rustdoc](../../../target/doc/vmnl/struct.Modifiers.html) |
 | struct | `vmnl::MonitorInfo` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [Rustdoc](../../../target/doc/vmnl/struct.MonitorInfo.html) |
 | struct | `vmnl::Monitors` | [Monitors](../reference/window/monitors/monitors.md) | [Rustdoc](../../../target/doc/vmnl/struct.Monitors.html) |
@@ -84,6 +85,7 @@
 | struct | `vmnl::raw::PipelineSpec` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.PipelineSpec.html) |
 | macro | `vmnl::raw::Pod` | [Pod derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Pod.html) |
 | trait | `vmnl::raw::Pod` | [Pod trait](../reference/raw/traits/pod.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Pod.html) |
+| enum | `vmnl::raw::PolygonMode` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PolygonMode.html) |
 | enum | `vmnl::raw::PrimitiveTopology` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html) |
 | struct | `vmnl::raw::Resources` | [Resources](../reference/raw/resources/resources.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Resources.html) |
 | struct | `vmnl::raw::ResourcesBuilder` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html) |

@@ -17,6 +17,7 @@ Classifies initialization, windowing, Vulkan, validation, and client-state failu
 | GLFW | `GlfwInitFailed`, `GlfwInitializationConfigConflict { active_hat_buttons, requested_hat_buttons }`, `GlfwInputOperationFailed { operation, message }`, `GlfwWindowCreationFailed`, `GlfwContextCreationFailed`, `GlfwUnsupportedPlatform`, `GlfwVersionMismatch`, `GlfwPlatformError`, `GlfwUnknownError` |
 | Client/state | `InvalidWindowSize`, `InvalidGamepadMapping(String)`, `InvalidState(String)` |
 | Device requirements | `DeviceRequirementsNotMet { required_features: Vec<DeviceFeature> }` |
+| Pipeline rasterization | `DeviceFeatureNotEnabled { feature: DeviceFeature }`, `InvalidLineWidth { value: f32, min: f32, max: f32 }` |
 
 Only `Debug` is derived. Human-readable text is provided through `VMNLError`'s `Display` implementation.
 
@@ -28,9 +29,11 @@ detail. There is no default and no validator.
 
 `DeviceRequirementsNotMet` carries all requested features in first-request order when no baseline-compatible GPU supports their combination; individual features may still be supported separately on different devices.
 
+`DeviceFeatureNotEnabled` identifies a feature not activated on the pipeline's device. `InvalidLineWidth` retains the requested value (including NaN/infinity) and the device range. These are build-time errors before shader compilation.
+
 ## Units, coordinates, and valid ranges
 
-Not applicable.
+Line widths and their range are in framebuffer units. Valid pipeline requests must be finite, strictly positive and within the inclusive reported range.
 
 ## Ownership, lifecycle, and threading
 

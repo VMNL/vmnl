@@ -2,7 +2,7 @@
 
 | Area | Pages |
 |---|---|
-| Facade and context | [`vmnl`](facade.md), [`Context`](context.md), [`ContextBuilder`](context_builder.md), [`DeviceConfig`](device_config.md), [`DeviceFeature`](device_feature.md), [`InputRuntime`](input_runtime.md) |
+| Facade and context | [`vmnl`](facade.md), [`Context`](context.md), [`ContextBuilder`](context_builder.md), [`DeviceConfig`](device_config.md), [`DeviceFeature`](device_feature.md), [`LineWidthLimits`](line_width_limits.md), [`InputRuntime`](input_runtime.md) |
 | Input | [Joystick and gamepad samples](joystick_gamepad.md) |
 | Errors | [Errors](errors/README.md) |
 | Shared values | [Common](common/README.md) |

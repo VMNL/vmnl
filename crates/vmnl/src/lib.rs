@@ -34,8 +34,8 @@ pub use vmnl_graphics::{
     DeviceFeature, Event, EventKind, FrameRenderer, GamepadAxis, GamepadButton, GamepadState,
     Input, InputRuntime, InputRuntimeBuilder, InputRuntimeConfig, JoystickButtonState,
     JoystickHatState, JoystickId, JoystickSample, JoystickState, JoystickStatus, Key,
-    KeyboardState, Modifiers, MonitorInfo, Monitors, MouseButton, MouseState, PresentMode,
-    RenderMode, Scancode, ShaderSource, StandardCursor, StandardCursorBuilder,
+    KeyboardState, LineWidthLimits, Modifiers, MonitorInfo, Monitors, MouseButton, MouseState,
+    PresentMode, RenderMode, Scancode, ShaderSource, StandardCursor, StandardCursorBuilder,
     StickAngleConvention, StickConfig, StickState, VMNLError, VMNLErrorKind, VMNLErrorLocation,
     VMNLResult, VideoMode, Window, WindowBuilder,
 };

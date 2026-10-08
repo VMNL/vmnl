@@ -10,7 +10,7 @@ Owns a typed Vulkan graphics pipeline created for one window's device and render
 
 ## Public API
 
-`Pipeline::<TVertex>::builder() -> PipelineSpec<TVertex>`. Fields are private; no `Clone`/`Default`.
+`Pipeline::<TVertex>::builder() -> PipelineSpec<TVertex>`, `polygon_mode_value() -> PolygonMode`, `line_width_value() -> f32`. Fields are private; no `Clone`/`Default`.
 
 ## Construction, defaults, and validation
 
@@ -18,7 +18,7 @@ Use the spec to provide both shaders and build against a `Window`. `TVertex` mus
 
 ## Units, coordinates, and valid ranges
 
-Defined by the shader and vertex layout.
+Coordinates are defined by the shader and vertex layout. The rasterization getters return the immutable mode and validated width passed at creation. Width is in framebuffer units; the getter reports configuration, not measured pixel coverage or driver rounding. It performs no allocation or GPU operation.
 
 ## Ownership, lifecycle, and threading
 

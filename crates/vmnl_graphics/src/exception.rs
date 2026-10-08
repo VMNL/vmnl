@@ -127,6 +127,20 @@ pub enum VMNLErrorKind {
         /// The complete requested feature set, in first-request order.
         required_features: Vec<DeviceFeature>,
     },
+    /// A pipeline requires an optional feature not enabled on its logical device.
+    DeviceFeatureNotEnabled {
+        /// Feature that must be requested through `DeviceConfig` before context creation.
+        feature: DeviceFeature,
+    },
+    /// A line width is non-finite, non-positive or outside the selected GPU's range.
+    InvalidLineWidth {
+        /// Requested width, in framebuffer units.
+        value: f32,
+        /// Minimum supported width (inclusive).
+        min: f32,
+        /// Maximum supported width (inclusive).
+        max: f32,
+    },
     /// Vulkan out of memory.
     VulkanOutOfMemory,
     /// Vulkan out of date (e.g., swapchain out of date).
@@ -288,6 +302,8 @@ impl VMNLError {
 
 impl fmt::Display for VMNLError {
     /// Format the error message based on the specific kind of error, providing a human-readable description.
+    // Keep the exhaustive mapping of error kinds to messages in one place.
+    #[allow(clippy::too_many_lines)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
             VMNLErrorKind::VulkanInitFailed => f.write_str("vulkan initialization failed"),
@@ -356,6 +372,15 @@ impl fmt::Display for VMNLError {
                 f,
                 "no compatible Vulkan device satisfies required features: {required_features:?}"
             ),
+            VMNLErrorKind::DeviceFeatureNotEnabled { feature } => {
+                write!(f, "device feature is not enabled: {feature:?}")
+            }
+            VMNLErrorKind::InvalidLineWidth { value, min, max } => {
+                write!(
+                    f,
+                    "line width {value} must be finite, positive and within [{min}, {max}]"
+                )
+            }
             VMNLErrorKind::VulkanOutOfMemory => f.write_str("vulkan out of memory"),
             VMNLErrorKind::VulkanDeviceLost => f.write_str("vulkan device lost"),
             VMNLErrorKind::VulkanSurfaceLost => f.write_str("vulkan surface lost"),

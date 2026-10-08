@@ -143,7 +143,7 @@ stable compatibility baseline; their present behavior remains documented in the 
 - `vmnl_graphics` owns rendering, windowing, input, and GPU resource behavior.
 - `InputRuntime` and `Context` share the same GLFW owner; standalone input access does not create a
   Vulkan instance or window.
-- `raw` exposes experimental lower-level VMNL pipeline, geometry, and resource control.
+- `raw` exposes experimental lower-level VMNL pipeline, geometry, and resource control; polygon rasterization and line width are fixed at pipeline creation and validated against enabled features and inspectable GPU limits.
 - 2D rendering is available.
 - 3D public types exist, but 3D rendering is still scaffolded.
 - Internal backend details stay out of the facade unless they are deliberate public API.

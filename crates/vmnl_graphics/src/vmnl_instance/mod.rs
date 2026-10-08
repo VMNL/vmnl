@@ -21,7 +21,7 @@ mod vulkan_instance;
 mod tests;
 
 use crate::{glfw_runtime::GlfwRuntime, VMNLResult};
-pub use config::{ContextBuilder, DeviceConfig, DeviceFeature};
+pub use config::{ContextBuilder, DeviceConfig, DeviceFeature, LineWidthLimits};
 pub use context::Context;
 use std::{cell::Cell, rc::Rc, sync::Arc};
 use vulkano::{

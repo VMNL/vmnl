@@ -18,7 +18,7 @@ Variants are values used by `DeviceConfig`, `Context::is_device_feature_supporte
 
 ## Units, coordinates, and valid ranges
 
-`FillModeNonSolid` permits line/point polygon fill modes. `WideLines` permits line widths other than `1.0`. `LargePoints` permits point sizes greater than `1.0`. Actual sizes remain subject to device limits. Enabling these capabilities alone does not add corresponding rendering parameters to `PipelineSpec`; those controls remain a separate checkpoint.
+`FillModeNonSolid` permits line/point polygon fill modes. `WideLines` permits line widths other than `1.0`. `LargePoints` permits point sizes greater than `1.0`. Actual sizes remain subject to device limits. `PipelineSpec::polygon_mode` and `line_width` use the first two capabilities. `LargePoints` permits larger shader-defined `gl_PointSize`; there is no pipeline point-size setter. Portability-subset point polygons additionally need `pointPolygons`, which VMNL cannot currently request; that combination is rejected explicitly.
 
 ## Ownership, lifecycle, and threading
 
