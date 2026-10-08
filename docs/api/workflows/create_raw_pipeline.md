@@ -3,7 +3,7 @@
 1. Define a `#[repr(C)]` vertex type and derive `Pod`, `Zeroable`, and `Vertex`.
 2. Annotate every vertex field with its Vulkan `#[format(...)]` and optional shader `#[name(...)]`.
 3. Build a window first because the pipeline is bound to its device/render pass.
-4. Supply both shader stages and optionally topology, blending, culling, front-face winding, polygon mode, and line width. Require `FillModeNonSolid` / `WideLines` through `DeviceConfig` before context creation when needed; inspect `Context::line_width_limits()` to choose a valid width.
+4. Supply both shader stages and optionally topology, blending, culling, front-face winding, polygon mode, line width, and viewport/scissor policies. Require `FillModeNonSolid` / `WideLines` through `DeviceConfig` before context creation when needed; inspect `Context::line_width_limits()` to choose a valid width. Viewport/scissor need no optional feature; see [composition and resize](compose_2d_and_raw.md#inspect-viewport-and-scissor-policies).
 5. Build and retain the pipeline for compatible geometry submissions.
 
 The canonical implementation is [`examples/raw/pipeline`](../../../examples/raw/pipeline/src/main.rs); do not copy its full shaders into documentation. Review [`PipelineSpec`](../reference/raw/pipeline/pipeline_spec.md) and [shader/layout safety](../concepts/shaders_vertex_layouts_and_safety.md).

@@ -129,6 +129,130 @@ fn two_uniform_pipeline(window: &Window) -> VMNLResult<raw::Pipeline<RawVertex>>
 
 #[test]
 #[ignore = "Requires Vulkan + GLFW display."]
+fn raw_viewport_scissor_reject_invalid_requests_before_reading_shaders() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let window = Window::new(&context)?;
+    let spec = raw::Pipeline::<RawVertex>::builder()
+        .vertex_shader(raw::ShaderSource::Path(fixture("missing-viewport.vert")))
+        .fragment_shader(raw::ShaderSource::Path(fixture("missing-viewport.frag")));
+    let viewport = raw::Viewport {
+        offset: [0.0, 0.0],
+        extent: [100.0, 100.0],
+        depth_range: [0.0, 1.0],
+    };
+    for (value, expected) in [
+        (
+            raw::Viewport {
+                extent: [0.0, 100.0],
+                ..viewport
+            },
+            "raw viewport requires finite offsets, positive finite extents and finite endpoints",
+        ),
+        (
+            raw::Viewport {
+                depth_range: [0.0, 1.1],
+                ..viewport
+            },
+            "raw viewport depth endpoints must be finite and within [0, 1]",
+        ),
+        (
+            raw::Viewport {
+                extent: [f32::MAX, 100.0],
+                ..viewport
+            },
+            "raw viewport extent exceeds the device's maximum viewport dimensions",
+        ),
+        (
+            raw::Viewport {
+                offset: [f32::MAX, 0.0],
+                ..viewport
+            },
+            "raw viewport endpoints exceed the device's viewport bounds",
+        ),
+    ] {
+        assert_invalid_state(
+            spec.clone()
+                .viewport(raw::ViewportPolicy::Fixed(value))
+                .build(&window),
+            expected,
+        )?;
+    }
+    assert_invalid_state(
+        spec.scissor(raw::ScissorPolicy::Fixed(raw::Scissor {
+            offset: [2_147_483_647, 0],
+            extent: [1, 100],
+        }))
+        .build(&window),
+        "raw scissor offset plus extent must fit signed Vulkan coordinates",
+    )
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn raw_viewport_scissor_policies_submit_mixed_passes_before_and_after_resize() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut window = Window::builder().size(640, 480).build(&context)?;
+    let geometry = triangle(&context)?;
+    let marker = vmnl::d2::Shape::rect(40.0, 40.0)
+        .position(20.0, 20.0)
+        .build(&context)?;
+    let spec = raw::Pipeline::<RawVertex>::builder()
+        .vertex_shader(raw::ShaderSource::Path(fixture("raw_path.vert")))
+        .fragment_shader(raw::ShaderSource::Path(fixture("raw_path.frag")));
+    let default = spec.clone().build(&window)?;
+    let mut pipelines = Vec::new();
+    for viewport in [
+        raw::ViewportPolicy::FullFramebuffer,
+        raw::ViewportPolicy::Fixed(raw::Viewport {
+            offset: [-20.0, 50.0],
+            extent: [320.0, 200.0],
+            depth_range: [1.0, 0.0],
+        }),
+    ] {
+        for scissor in [
+            raw::ScissorPolicy::FullFramebuffer,
+            raw::ScissorPolicy::Fixed(raw::Scissor {
+                offset: [180, 100],
+                extent: [40, 30],
+            }),
+            raw::ScissorPolicy::Fixed(raw::Scissor {
+                offset: [0, 0],
+                extent: [0, 0],
+            }),
+        ] {
+            let pipeline = spec
+                .clone()
+                .viewport(viewport)
+                .scissor(scissor)
+                .build(&window)?;
+            assert_eq!(pipeline.viewport_value(), viewport);
+            assert_eq!(pipeline.scissor_value(), scissor);
+            pipelines.push(pipeline);
+        }
+    }
+    for resized in [false, true] {
+        if resized {
+            window.set_size(800, 600)?;
+        }
+        for pipeline in &pipelines {
+            window
+                .render()
+                .draw2d([&marker])
+                .draw_raw_2d(pipeline, [&geometry])
+                .draw_raw_2d(&default, [&geometry])
+                .draw_raw_2d(pipeline, [&geometry])
+                .draw2d([&marker])
+                .draw_raw_2d(&default, [&geometry])
+                .submit()?;
+        }
+    }
+    Ok(())
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
 fn raw_rasterization_rejects_invalid_requests_before_reading_shaders() -> VMNLResult<()> {
     let _guard = gpu_test_guard();
     let context = Context::new()?;

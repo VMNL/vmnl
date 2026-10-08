@@ -10,7 +10,7 @@ Owns a typed Vulkan graphics pipeline created for one window's device and render
 
 ## Public API
 
-`Pipeline::<TVertex>::builder() -> PipelineSpec<TVertex>`, `polygon_mode_value() -> PolygonMode`, `line_width_value() -> f32`. Fields are private; no `Clone`/`Default`.
+`Pipeline::<TVertex>::builder() -> PipelineSpec<TVertex>`, `polygon_mode_value() -> PolygonMode`, `line_width_value() -> f32`, `viewport_value() -> ViewportPolicy`, `scissor_value() -> ScissorPolicy`. Fields are private; no `Clone`/`Default`.
 
 ## Construction, defaults, and validation
 
@@ -19,6 +19,8 @@ Use the spec to provide both shaders and build against a `Window`. `TVertex` mus
 ## Units, coordinates, and valid ranges
 
 Coordinates are defined by the shader and vertex layout. The rasterization getters return the immutable mode and validated width passed at creation. Width is in framebuffer units; the getter reports configuration, not measured pixel coverage or driver rounding. It performs no allocation or GPU operation.
+
+The viewport/scissor getters return immutable policies. Call `resolve(framebuffer_extent)` to inspect values for a supplied pixel extent; it does not inspect the last submitted image or device limits. Full policies follow the acquired image on each draw; fixed values persist across resize without scaling/clamping. See [`ViewportPolicy`](viewport_policy.md) and [`ScissorPolicy`](scissor_policy.md).
 
 ## Ownership, lifecycle, and threading
 

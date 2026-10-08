@@ -30,6 +30,8 @@ Passes execute in append order. Empty arrays create empty logical passes; a fram
 
 Pass element count is the const-generic `N`. Rendering coordinates follow each layer's shader contract.
 
+Every raw draw applies its own viewport/scissor policies using the actual acquired image extent. Full policies follow resize; fixed rectangles remain in framebuffer pixels. The following raw draw applies its own two policies, and a following 2D pass restores the full viewport and unclipped 2D pipeline state. No custom raw viewport/scissor leaks into subsequent draws.
+
 ## Ownership, lifecycle, and threading
 
 The builder mutably borrows `Window` and borrows draw resources for `'g`; those values must outlive submission. Setters consume and return the builder; `submit` consumes it.
@@ -41,6 +43,8 @@ The builder mutably borrows `Window` and borrows draw resources for `'g`; those 
 ## Allocation, transfers, synchronization, and GPU cost
 
 Recording passes allocates CPU vectors and clones shared GPU handles. Queued frame-uniform writes are applied during `submit` after swapchain image acquisition and before command recording; they are not ordered between draw passes. Frame-uniform resources allocate descriptor sets during command recording. `submit` performs swapchain acquisition, command recording, queue submission, synchronization, and presentation. Exact batching/performance guarantees are not specified.
+
+Viewport/scissor resolution is CPU-only and allocates nothing on success; recording sets two dynamic states per raw draw and restores the full viewport for each 2D pass. It does not rebuild pipelines on resize.
 
 ## Platform, Vulkan, and display constraints
 

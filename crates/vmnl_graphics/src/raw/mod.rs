@@ -3,6 +3,10 @@
 
 //! Low-level raw rendering API.
 
+mod viewport;
+pub(crate) use viewport::resolve_viewport_scissor;
+pub use viewport::{Scissor, ScissorPolicy, Viewport, ViewportPolicy};
+
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -193,6 +197,8 @@ pub struct PipelineSpec<TVertex> {
     front_face: FrontFace,
     polygon_mode: PolygonMode,
     line_width: f32,
+    viewport: ViewportPolicy,
+    scissor: ScissorPolicy,
     _vertex: PhantomData<TVertex>,
 }
 
@@ -207,6 +213,8 @@ impl<TVertex> Default for PipelineSpec<TVertex> {
             front_face: FrontFace::CounterClockwise,
             polygon_mode: PolygonMode::Fill,
             line_width: 1.0,
+            viewport: ViewportPolicy::FullFramebuffer,
+            scissor: ScissorPolicy::FullFramebuffer,
             _vertex: PhantomData,
         }
     }
@@ -279,6 +287,37 @@ impl<TVertex> PipelineSpec<TVertex> {
         self
     }
 
+    /// Sets the viewport policy; defaults to the complete acquired framebuffer.
+    ///
+    /// Fixed rectangles use framebuffer pixels and persist across resize without scaling.
+    /// Build validates them before shader I/O; recording resolves and revalidates the
+    /// policy against the actual acquired image extent. No optional feature is activated.
+    #[must_use]
+    pub fn viewport(mut self, policy: ViewportPolicy) -> Self {
+        self.viewport = policy;
+        self
+    }
+
+    /// Sets the clipping policy, independently of the viewport transform.
+    /// Defaults to [`ScissorPolicy::FullFramebuffer`].
+    #[must_use]
+    pub fn scissor(mut self, policy: ScissorPolicy) -> Self {
+        self.scissor = policy;
+        self
+    }
+
+    /// Returns the configured viewport policy; use [`ViewportPolicy::resolve`] to inspect it.
+    #[must_use]
+    pub const fn viewport_value(&self) -> ViewportPolicy {
+        self.viewport
+    }
+
+    /// Returns the configured scissor policy; use [`ScissorPolicy::resolve`] to inspect it.
+    #[must_use]
+    pub const fn scissor_value(&self) -> ScissorPolicy {
+        self.scissor
+    }
+
     /// Returns the configured triangle rasterization mode without allocating.
     #[must_use]
     pub const fn polygon_mode_value(&self) -> PolygonMode {
@@ -322,7 +361,8 @@ impl<TVertex> PipelineSpec<TVertex> {
     /// unsupported resources or push constants, or if Vulkan pipeline creation fails.
     /// Before shader compilation, rejects invalid widths with `InvalidLineWidth`,
     /// disabled optional features with `DeviceFeatureNotEnabled`, and unsupported
-    /// portability-subset point polygons with `InvalidState`. No feature is activated
+    /// portability-subset point polygons or invalid viewport/scissor parameters
+    /// (including device viewport limits) with `InvalidState`. No feature is activated
     /// and no GPU is reselected by this operation.
     pub fn build(self, window: &Window) -> VMNLResult<Pipeline<TVertex>>
     where
@@ -336,6 +376,8 @@ impl<TVertex> PipelineSpec<TVertex> {
             device.enabled_features(),
             device.enabled_extensions().khr_portability_subset,
         )?;
+
+        resolve_viewport_scissor(self.viewport, self.scissor, window.render_extent(), &device)?;
 
         let vertex_shader = self.vertex_shader.ok_or_else(|| {
             VMNLError::new(VMNLErrorKind::InvalidState(
@@ -405,7 +447,9 @@ impl<TVertex> PipelineSpec<TVertex> {
                 )),
                 multisample_state: Some(MultisampleState::default()),
                 color_blend_state: Some(color_blend_state(self.blend_mode)),
-                dynamic_state: [DynamicState::Viewport].into_iter().collect(),
+                dynamic_state: [DynamicState::Viewport, DynamicState::Scissor]
+                    .into_iter()
+                    .collect(),
                 subpass: Some(subpass.into()),
                 ..vulkano::pipeline::graphics::GraphicsPipelineCreateInfo::layout(layout)
             },
@@ -418,6 +462,8 @@ impl<TVertex> PipelineSpec<TVertex> {
             render_pass,
             polygon_mode: self.polygon_mode,
             line_width: self.line_width,
+            viewport: self.viewport,
+            scissor: self.scissor,
             _vertex: PhantomData,
         })
     }
@@ -430,6 +476,8 @@ pub struct Pipeline<TVertex> {
     render_pass: Arc<RenderPass>,
     polygon_mode: PolygonMode,
     line_width: f32,
+    viewport: ViewportPolicy,
+    scissor: ScissorPolicy,
     _vertex: PhantomData<TVertex>,
 }
 
@@ -454,6 +502,18 @@ impl<TVertex> Pipeline<TVertex> {
         self.line_width
     }
 
+    /// Returns the immutable viewport policy; resolution remains extent-dependent.
+    #[must_use]
+    pub const fn viewport_value(&self) -> ViewportPolicy {
+        self.viewport
+    }
+
+    /// Returns the immutable scissor policy; resolution remains extent-dependent.
+    #[must_use]
+    pub const fn scissor_value(&self) -> ScissorPolicy {
+        self.scissor
+    }
+
     pub(crate) fn render_item(&self, geometry: &Geometry<TVertex>) -> RenderItemRaw {
         self.render_item_with_resources(geometry, None)
     }
@@ -475,6 +535,8 @@ impl<TVertex> Pipeline<TVertex> {
             pipeline: self.inner.clone(),
             pipeline_device: self.device.clone(),
             pipeline_render_pass: self.render_pass.clone(),
+            viewport: self.viewport,
+            scissor: self.scissor,
             geometry_device: geometry.device.clone(),
             resources_device: resources.map(|resources| resources.device.clone()),
             resources_pipeline_layout: resources.map(|resources| resources.pipeline_layout.clone()),
@@ -1043,6 +1105,8 @@ pub(crate) struct RenderItemRaw {
     pub(crate) pipeline: Arc<GraphicsPipeline>,
     pub(crate) pipeline_device: Arc<Device>,
     pub(crate) pipeline_render_pass: Arc<RenderPass>,
+    pub(crate) viewport: ViewportPolicy,
+    pub(crate) scissor: ScissorPolicy,
     pub(crate) geometry_device: Arc<Device>,
     pub(crate) resources_device: Option<Arc<Device>>,
     pub(crate) resources_pipeline_layout: Option<Arc<PipelineLayout>>,
