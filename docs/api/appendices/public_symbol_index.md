@@ -75,9 +75,13 @@
 | enum | `vmnl::raw::PrimitiveTopology` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html) |
 | struct | `vmnl::raw::Resources` | [Resources](../reference/raw/resources/resources.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Resources.html) |
 | struct | `vmnl::raw::ResourcesBuilder` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html) |
+| struct | `vmnl::raw::Scissor` | [Scissor](../reference/raw/pipeline/scissor.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Scissor.html) |
+| enum | `vmnl::raw::ScissorPolicy` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.ScissorPolicy.html) |
 | struct | `vmnl::raw::Uniform` | [Uniform](../reference/raw/uniforms/uniform.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Uniform.html) |
 | struct | `vmnl::raw::UniformBuilder` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.UniformBuilder.html) |
 | macro | `vmnl::raw::Vertex` | [Vertex derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Vertex.html) |
 | trait | `vmnl::raw::Vertex` | [Vertex trait](../reference/raw/traits/vertex.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Vertex.html) |
+| struct | `vmnl::raw::Viewport` | [Viewport](../reference/raw/pipeline/viewport.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Viewport.html) |
+| enum | `vmnl::raw::ViewportPolicy` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.ViewportPolicy.html) |
 | macro | `vmnl::raw::Zeroable` | [Zeroable derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Zeroable.html) |
 | trait | `vmnl::raw::Zeroable` | [Zeroable trait](../reference/raw/traits/zeroable.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Zeroable.html) |
