@@ -21,7 +21,7 @@ mod vulkan_instance;
 mod tests;
 
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
-pub use config::{ContextBuilder, DeviceConfig, DeviceFeature};
+pub use config::{ContextBuilder, DeviceConfig, DeviceFeature, LineWidthLimits};
 pub use context::Context;
 use std::{
     cell::Cell,

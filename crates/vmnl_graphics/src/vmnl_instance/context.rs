@@ -6,7 +6,7 @@
 //! This module exposes the `Context` wrapper around the internal Vulkan
 //! instance state.
 
-use super::{ContextBuilder, DeviceFeature, VMNLInstance};
+use super::{ContextBuilder, DeviceFeature, LineWidthLimits, VMNLInstance};
 use crate::{Key, KeyboardState, Scancode, VMNLResult};
 use std::rc::Rc;
 
@@ -66,6 +66,16 @@ impl Context {
     #[must_use]
     pub fn device_name(&self) -> &str {
         &self.inner.physical_device.properties().device_name
+    }
+
+    /// Returns the selected GPU's line-width range and granularity without allocating.
+    ///
+    /// The values are immutable and shared by context clones. Hardware support does
+    /// not imply that [`DeviceFeature::WideLines`] is enabled. Widths other than
+    /// `1.0` require activation; supported widths may be rounded by the driver.
+    #[must_use]
+    pub fn line_width_limits(&self) -> LineWidthLimits {
+        LineWidthLimits::from_physical_device(&self.inner.physical_device)
     }
 
     /// Returns whether the selected physical device supports this feature.

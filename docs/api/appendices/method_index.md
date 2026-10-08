@@ -12,6 +12,7 @@
 | `vmnl::Context` | `is_device_feature_enabled` | [Context](../reference/context.md) | [`is_device_feature_enabled`](../../../target/doc/vmnl/struct.Context.html#method.is_device_feature_enabled) |
 | `vmnl::Context` | `is_device_feature_supported` | [Context](../reference/context.md) | [`is_device_feature_supported`](../../../target/doc/vmnl/struct.Context.html#method.is_device_feature_supported) |
 | `vmnl::Context` | `is_raw_mouse_motion_supported` | [Context](../reference/context.md) | [`is_raw_mouse_motion_supported`](../../../target/doc/vmnl/struct.Context.html#method.is_raw_mouse_motion_supported) |
+| `vmnl::Context` | `line_width_limits` | [Context](../reference/context.md) | [`line_width_limits`](../../../target/doc/vmnl/struct.Context.html#method.line_width_limits) |
 | `vmnl::Context` | `new` | [Context](../reference/context.md) | [`new`](../../../target/doc/vmnl/struct.Context.html#method.new) |
 | `vmnl::ContextBuilder` | `build` | [ContextBuilder](../reference/context_builder.md) | [`build`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.build) |
 | `vmnl::ContextBuilder` | `clone` | [ContextBuilder](../reference/context_builder.md) | [`clone`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.clone) |
@@ -78,6 +79,9 @@
 | `vmnl::KeyboardState` | `is_pressed` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_pressed`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_pressed) |
 | `vmnl::KeyboardState` | `is_released` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_released`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_released) |
 | `vmnl::KeyboardState` | `new` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`new`](../../../target/doc/vmnl/struct.KeyboardState.html#method.new) |
+| `vmnl::LineWidthLimits` | `clone` | [LineWidthLimits](../reference/line_width_limits.md) | [`clone`](../../../target/doc/vmnl/struct.LineWidthLimits.html#method.clone) |
+| `vmnl::LineWidthLimits` | `eq` | [LineWidthLimits](../reference/line_width_limits.md) | [`eq`](../../../target/doc/vmnl/struct.LineWidthLimits.html#method.eq) |
+| `vmnl::LineWidthLimits` | `fmt` | [LineWidthLimits](../reference/line_width_limits.md) | [`fmt`](../../../target/doc/vmnl/struct.LineWidthLimits.html#method.fmt) |
 | `vmnl::Modifiers` | `bitand` | [Modifiers](../reference/window/input/modifiers.md) | [`bitand`](../../../target/doc/vmnl/struct.Modifiers.html#method.bitand) |
 | `vmnl::Modifiers` | `bitand_assign` | [Modifiers](../reference/window/input/modifiers.md) | [`bitand_assign`](../../../target/doc/vmnl/struct.Modifiers.html#method.bitand_assign) |
 | `vmnl::Modifiers` | `bitor` | [Modifiers](../reference/window/input/modifiers.md) | [`bitor`](../../../target/doc/vmnl/struct.Modifiers.html#method.bitor) |
@@ -401,6 +405,8 @@
 | `vmnl::raw::GeometryBuilder` | `build` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [`build`](../../../target/doc/vmnl/raw/struct.GeometryBuilder.html#method.build) |
 | `vmnl::raw::GeometryBuilder` | `indices` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [`indices`](../../../target/doc/vmnl/raw/struct.GeometryBuilder.html#method.indices) |
 | `vmnl::raw::Pipeline` | `builder` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`builder`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.builder) |
+| `vmnl::raw::Pipeline` | `line_width_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`line_width_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.line_width_value) |
+| `vmnl::raw::Pipeline` | `polygon_mode_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`polygon_mode_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.polygon_mode_value) |
 | `vmnl::raw::PipelineSpec` | `blend_mode` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`blend_mode`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.blend_mode) |
 | `vmnl::raw::PipelineSpec` | `blend_mode_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`blend_mode_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.blend_mode_value) |
 | `vmnl::raw::PipelineSpec` | `build` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`build`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.build) |
@@ -412,9 +418,16 @@
 | `vmnl::raw::PipelineSpec` | `fragment_shader` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`fragment_shader`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.fragment_shader) |
 | `vmnl::raw::PipelineSpec` | `front_face` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`front_face`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.front_face) |
 | `vmnl::raw::PipelineSpec` | `front_face_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`front_face_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.front_face_value) |
+| `vmnl::raw::PipelineSpec` | `line_width` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`line_width`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.line_width) |
+| `vmnl::raw::PipelineSpec` | `line_width_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`line_width_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.line_width_value) |
+| `vmnl::raw::PipelineSpec` | `polygon_mode` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`polygon_mode`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.polygon_mode) |
+| `vmnl::raw::PipelineSpec` | `polygon_mode_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`polygon_mode_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.polygon_mode_value) |
 | `vmnl::raw::PipelineSpec` | `topology` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`topology`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.topology) |
 | `vmnl::raw::PipelineSpec` | `topology_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`topology_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.topology_value) |
 | `vmnl::raw::PipelineSpec` | `vertex_shader` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`vertex_shader`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.vertex_shader) |
+| `vmnl::raw::PolygonMode` | `clone` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [`clone`](../../../target/doc/vmnl/raw/enum.PolygonMode.html#method.clone) |
+| `vmnl::raw::PolygonMode` | `eq` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [`eq`](../../../target/doc/vmnl/raw/enum.PolygonMode.html#method.eq) |
+| `vmnl::raw::PolygonMode` | `fmt` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.PolygonMode.html#method.fmt) |
 | `vmnl::raw::PrimitiveTopology` | `clone` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [`clone`](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html#method.clone) |
 | `vmnl::raw::PrimitiveTopology` | `eq` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [`eq`](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html#method.eq) |
 | `vmnl::raw::PrimitiveTopology` | `fmt` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html#method.fmt) |

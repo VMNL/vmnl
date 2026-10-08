@@ -19,7 +19,7 @@ mod vmnl_instance;
 mod window;
 pub use common::ShaderSource;
 pub use exception::{VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult};
-pub use vmnl_instance::{Context, ContextBuilder, DeviceConfig, DeviceFeature};
+pub use vmnl_instance::{Context, ContextBuilder, DeviceConfig, DeviceFeature, LineWidthLimits};
 pub use window::{
     Cursor, CursorBuilder, CursorMode, Event, EventKind, FrameRenderer, Input, Key, KeyboardState,
     Modifiers, MonitorInfo, Monitors, MouseButton, MouseState, PresentMode, RenderMode, Scancode,

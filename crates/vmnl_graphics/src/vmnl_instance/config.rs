@@ -8,6 +8,32 @@ use crate::VMNLResult;
 use std::rc::Rc;
 use vulkano::device::DeviceFeatures;
 
+/// Line-width capabilities of the selected physical device, in framebuffer units.
+///
+/// These limits describe hardware support, not activation of [`DeviceFeature::WideLines`].
+/// Widths between supported increments may be rounded by the driver; the exact
+/// pixel coverage also depends on the device's line rasterization rules.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct LineWidthLimits {
+    /// Reported minimum line width (inclusive); may be zero. VMNL requires positive requests.
+    pub min: f32,
+    /// Maximum supported line width (inclusive).
+    pub max: f32,
+    /// Reported increment between supported widths. Additional widths may be supported.
+    pub granularity: f32,
+}
+
+impl LineWidthLimits {
+    pub(crate) fn from_physical_device(device: &vulkano::device::physical::PhysicalDevice) -> Self {
+        let properties = device.properties();
+        Self {
+            min: properties.line_width_range[0],
+            max: properties.line_width_range[1],
+            granularity: properties.line_width_granularity,
+        }
+    }
+}
+
 /// Optional Vulkan device functionality selectable through VMNL.
 ///
 /// Requiring a feature filters physical-device candidates and enables it on the

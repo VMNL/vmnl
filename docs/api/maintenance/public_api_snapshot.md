@@ -715,6 +715,26 @@ impl core::marker::Unpin for vmnl::raw::FrontFace
 impl core::marker::UnsafeUnpin for vmnl::raw::FrontFace
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::FrontFace
 impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::FrontFace
+pub enum vmnl::raw::PolygonMode
+pub vmnl::raw::PolygonMode::Fill
+pub vmnl::raw::PolygonMode::Line
+pub vmnl::raw::PolygonMode::Point
+impl core::clone::Clone for vmnl::raw::PolygonMode
+pub fn vmnl::raw::PolygonMode::clone(&self) -> vmnl::raw::PolygonMode
+impl core::cmp::Eq for vmnl::raw::PolygonMode
+impl core::cmp::PartialEq for vmnl::raw::PolygonMode
+pub fn vmnl::raw::PolygonMode::eq(&self, &vmnl::raw::PolygonMode) -> bool
+impl core::fmt::Debug for vmnl::raw::PolygonMode
+pub fn vmnl::raw::PolygonMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::PolygonMode
+impl core::marker::StructuralPartialEq for vmnl::raw::PolygonMode
+impl core::marker::Freeze for vmnl::raw::PolygonMode
+impl core::marker::Send for vmnl::raw::PolygonMode
+impl core::marker::Sync for vmnl::raw::PolygonMode
+impl core::marker::Unpin for vmnl::raw::PolygonMode
+impl core::marker::UnsafeUnpin for vmnl::raw::PolygonMode
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::PolygonMode
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::PolygonMode
 pub enum vmnl::raw::PrimitiveTopology
 pub vmnl::raw::PrimitiveTopology::LineList
 pub vmnl::raw::PrimitiveTopology::LineStrip
@@ -809,6 +829,8 @@ impl<TVertex> core::panic::unwind_safe::UnwindSafe for vmnl::raw::GeometryBuilde
 pub struct vmnl::raw::Pipeline<TVertex>
 impl<TVertex> vmnl::raw::Pipeline<TVertex>
 pub fn vmnl::raw::Pipeline<TVertex>::builder() -> vmnl::raw::PipelineSpec<TVertex>
+pub const fn vmnl::raw::Pipeline<TVertex>::line_width_value(&self) -> f32
+pub const fn vmnl::raw::Pipeline<TVertex>::polygon_mode_value(&self) -> vmnl::raw::PolygonMode
 impl<TVertex> core::marker::Freeze for vmnl::raw::Pipeline<TVertex>
 impl<TVertex> core::marker::Send for vmnl::raw::Pipeline<TVertex> where TVertex: core::marker::Send
 impl<TVertex> core::marker::Sync for vmnl::raw::Pipeline<TVertex> where TVertex: core::marker::Sync
@@ -826,6 +848,10 @@ pub const fn vmnl::raw::PipelineSpec<TVertex>::cull_mode_value(&self) -> vmnl::r
 pub fn vmnl::raw::PipelineSpec<TVertex>::fragment_shader(self, vmnl::ShaderSource) -> Self
 pub fn vmnl::raw::PipelineSpec<TVertex>::front_face(self, vmnl::raw::FrontFace) -> Self
 pub const fn vmnl::raw::PipelineSpec<TVertex>::front_face_value(&self) -> vmnl::raw::FrontFace
+pub fn vmnl::raw::PipelineSpec<TVertex>::line_width(self, f32) -> Self
+pub const fn vmnl::raw::PipelineSpec<TVertex>::line_width_value(&self) -> f32
+pub fn vmnl::raw::PipelineSpec<TVertex>::polygon_mode(self, vmnl::raw::PolygonMode) -> Self
+pub const fn vmnl::raw::PipelineSpec<TVertex>::polygon_mode_value(&self) -> vmnl::raw::PolygonMode
 pub fn vmnl::raw::PipelineSpec<TVertex>::topology(self, vmnl::raw::PrimitiveTopology) -> Self
 pub const fn vmnl::raw::PipelineSpec<TVertex>::topology_value(&self) -> vmnl::raw::PrimitiveTopology
 pub fn vmnl::raw::PipelineSpec<TVertex>::vertex_shader(self, vmnl::ShaderSource) -> Self
@@ -1260,6 +1286,8 @@ impl core::marker::UnsafeUnpin for vmnl::StandardCursor
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::StandardCursor
 impl core::panic::unwind_safe::UnwindSafe for vmnl::StandardCursor
 #[non_exhaustive] pub enum vmnl::VMNLErrorKind
+pub vmnl::VMNLErrorKind::DeviceFeatureNotEnabled
+pub vmnl::VMNLErrorKind::DeviceFeatureNotEnabled::feature: vmnl::DeviceFeature
 pub vmnl::VMNLErrorKind::DeviceRequirementsNotMet
 pub vmnl::VMNLErrorKind::DeviceRequirementsNotMet::required_features: alloc::vec::Vec<vmnl::DeviceFeature>
 pub vmnl::VMNLErrorKind::GlfwContextCreationFailed
@@ -1269,6 +1297,10 @@ pub vmnl::VMNLErrorKind::GlfwUnknownError
 pub vmnl::VMNLErrorKind::GlfwUnsupportedPlatform
 pub vmnl::VMNLErrorKind::GlfwVersionMismatch
 pub vmnl::VMNLErrorKind::GlfwWindowCreationFailed
+pub vmnl::VMNLErrorKind::InvalidLineWidth
+pub vmnl::VMNLErrorKind::InvalidLineWidth::max: f32
+pub vmnl::VMNLErrorKind::InvalidLineWidth::min: f32
+pub vmnl::VMNLErrorKind::InvalidLineWidth::value: f32
 pub vmnl::VMNLErrorKind::InvalidState(alloc::string::String)
 pub vmnl::VMNLErrorKind::InvalidWindowSize
 pub vmnl::VMNLErrorKind::VulkanCommandBufferCreationFailed
@@ -1325,6 +1357,7 @@ pub fn vmnl::Context::get_scancode_name(&self, vmnl::Scancode) -> core::option::
 pub fn vmnl::Context::is_device_feature_enabled(&self, vmnl::DeviceFeature) -> bool
 pub fn vmnl::Context::is_device_feature_supported(&self, vmnl::DeviceFeature) -> bool
 pub fn vmnl::Context::is_raw_mouse_motion_supported(&self) -> bool
+pub fn vmnl::Context::line_width_limits(&self) -> vmnl::LineWidthLimits
 pub fn vmnl::Context::new() -> vmnl::VMNLResult<Self>
 impl core::clone::Clone for vmnl::Context
 pub fn vmnl::Context::clone(&self) -> vmnl::Context
@@ -1473,6 +1506,25 @@ impl core::marker::Unpin for vmnl::KeyboardState
 impl core::marker::UnsafeUnpin for vmnl::KeyboardState
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::KeyboardState
 impl core::panic::unwind_safe::UnwindSafe for vmnl::KeyboardState
+pub struct vmnl::LineWidthLimits
+pub vmnl::LineWidthLimits::granularity: f32
+pub vmnl::LineWidthLimits::max: f32
+pub vmnl::LineWidthLimits::min: f32
+impl core::clone::Clone for vmnl::LineWidthLimits
+pub fn vmnl::LineWidthLimits::clone(&self) -> vmnl::LineWidthLimits
+impl core::cmp::PartialEq for vmnl::LineWidthLimits
+pub fn vmnl::LineWidthLimits::eq(&self, &vmnl::LineWidthLimits) -> bool
+impl core::fmt::Debug for vmnl::LineWidthLimits
+pub fn vmnl::LineWidthLimits::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::LineWidthLimits
+impl core::marker::StructuralPartialEq for vmnl::LineWidthLimits
+impl core::marker::Freeze for vmnl::LineWidthLimits
+impl core::marker::Send for vmnl::LineWidthLimits
+impl core::marker::Sync for vmnl::LineWidthLimits
+impl core::marker::Unpin for vmnl::LineWidthLimits
+impl core::marker::UnsafeUnpin for vmnl::LineWidthLimits
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::LineWidthLimits
+impl core::panic::unwind_safe::UnwindSafe for vmnl::LineWidthLimits
 #[repr(transparent)] pub struct vmnl::Modifiers(_)
 impl vmnl::Modifiers
 pub const vmnl::Modifiers::ALT: Self

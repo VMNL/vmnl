@@ -16,6 +16,7 @@ layout-dependent keyboard metadata queries.
 |---|---|
 | `Context::new()` | Initialize Vulkan state and return `VMNLResult<Context>`. |
 | `Context::builder()` | Prepare a default CPU-only `ContextBuilder`. |
+| `Context::line_width_limits()` | Copy the selected GPU's line-width range and granularity; this does not activate `WideLines`. |
 | `Context::device_name()` | Borrow the selected GPU's diagnostic name, without allocation. |
 | `Context::is_device_feature_supported(DeviceFeature)` | Read feature support on the selected physical device. |
 | `Context::is_device_feature_enabled(DeviceFeature)` | Read activation on the context's logical device. |
@@ -48,7 +49,7 @@ metadata, not a unique or persistent identifier. Other devices' capabilities are
 
 ## Units, coordinates, and valid ranges
 
-Not applicable.
+Line widths use framebuffer units, independently of application geometry coordinates and window logical size. `line_width_limits()` exposes the physical GPU's reported range and granularity, including a possible zero minimum; VMNL pipeline requests must still be strictly positive. Values may be rounded by the driver. The snapshot is immutable for a context's lifetime and equal across its clones.
 
 ## Ownership, lifecycle, and threading
 

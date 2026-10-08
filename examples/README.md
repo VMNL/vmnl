@@ -17,6 +17,6 @@ just build <example>
 | `window_custom_shaders` | `just run window_custom_shaders` | 2D custom shaders from files; set `VMNL_INLINE_SHADERS=1` for inline shader strings |
 | `window_wait_events` | `just run window_wait_events` | explicit blocking event wait and event-driven redraw |
 | `raw_triangle` | `just run raw_triangle` | minimal raw pipeline triangle |
-| `raw_pipeline` | `just run raw_pipeline` | explicit `LargePoints` device requirement, raw shader paths, topology variants, blend modes, indexed/non-indexed geometry; `C` cycles triangle culling and `F` switches front-face winding |
+| `raw_pipeline` | `just run raw_pipeline` | explicit `LargePoints` / `FillModeNonSolid` / `WideLines` requirements and line-width limits, raw shader paths, topology/blend variants, indexed/non-indexed geometry; `C` culling, `F` winding, `P` fill/wireframe, `W` line width |
 | `raw_uniform` | `just run raw_uniform` | animated raw pipeline resources backed by `FrameUniform` |
 | `raw_d2_composition` | `just run raw_d2_composition` | ordered 2D and alpha-blended raw passes in one frame |
