@@ -921,7 +921,7 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     } else {
         (None, None)
     };
-    let observe_weston_pointer_events =
+    let weston_all_event_masks =
         subscribe_to_weston_pointer_events(&connection, backend, weston_window)?;
     let pointer = connection
         .query_pointer(root)
@@ -956,10 +956,10 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
         Ok(None)
     };
     let leave_x11_events =
-        drain_x11_pointer_events_if_enabled(&connection, observe_weston_pointer_events)?;
+        drain_x11_pointer_events_if_enabled(&connection, weston_all_event_masks.is_some())?;
     if backend == "wayland" {
         eprintln!(
-            "wayland_hover_boundary target={target:?} original={original:?} weston_window={weston_window:?} weston_bounds={outside_weston_bounds:?} pointer_child_after_leave={:?} parent_x11_events_after_leave={leave_x11_events:?}",
+            "wayland_hover_boundary target={target:?} original={original:?} weston_window={weston_window:?} weston_bounds={outside_weston_bounds:?} all_event_masks_before_observer={weston_all_event_masks:?} pointer_child_after_leave={:?} parent_x11_events_after_leave={leave_x11_events:?}",
             leave_check.as_ref().ok().copied().flatten(),
         );
         thread::sleep(Duration::from_millis(100));
@@ -983,9 +983,9 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
         let pointer_child = confirm_x11_pointer_target(&connection, root, original, "re-entry")?;
         let pointer_ancestry = x11_window_ancestry(&connection, root, pointer_child)?;
         let reentry_x11_events =
-            drain_x11_pointer_events_if_enabled(&connection, observe_weston_pointer_events)?;
+            drain_x11_pointer_events_if_enabled(&connection, weston_all_event_masks.is_some())?;
         eprintln!(
-            "wayland_hover_boundary pointer_after_reentry={original:?} pointer_child_after_reentry={pointer_child:#x} pointer_ancestry={pointer_ancestry:?} parent_x11_events_after_reentry={reentry_x11_events:?}"
+            "wayland_hover_boundary pointer_after_reentry={original:?} pointer_child_after_reentry={pointer_child:#x} pointer_ancestry={pointer_ancestry:?} all_event_masks_before_observer={weston_all_event_masks:?} parent_x11_events_after_reentry={reentry_x11_events:?}"
         );
         leave_check?;
     }
@@ -999,15 +999,21 @@ fn subscribe_to_weston_pointer_events(
     connection: &x11rb::rust_connection::RustConnection,
     backend: &str,
     weston_window: Option<u32>,
-) -> Result<bool, String> {
+) -> Result<Option<u32>, String> {
     use x11rb::protocol::xproto::{ChangeWindowAttributesAux, ConnectionExt as _, EventMask};
 
     if backend != "wayland" {
-        return Ok(false);
+        return Ok(None);
     }
 
     let window =
         weston_window.ok_or_else(|| "could not locate the parent Weston X11 window".to_owned())?;
+    let all_event_masks = connection
+        .get_window_attributes(window)
+        .map_err(|error| format!("failed to request parent Weston event masks: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read parent Weston event masks: {error}"))?
+        .all_event_masks;
     connection
         .change_window_attributes(
             window,
@@ -1019,7 +1025,7 @@ fn subscribe_to_weston_pointer_events(
         .check()
         .map_err(|error| format!("failed to select parent Weston pointer events: {error}"))?;
     let _ = drain_x11_pointer_events(connection)?;
-    Ok(true)
+    Ok(Some(u32::from(all_event_masks)))
 }
 
 #[cfg(target_os = "linux")]
@@ -1045,11 +1051,46 @@ fn drain_x11_pointer_events(
         .poll_for_event()
         .map_err(|error| format!("failed to poll parent X11 pointer events: {error}"))?
     {
-        if matches!(
-            event,
-            Event::EnterNotify(_) | Event::LeaveNotify(_) | Event::MotionNotify(_)
-        ) {
-            events.push(format!("{event:?}"));
+        match event {
+            Event::EnterNotify(event) => events.push(format!(
+                "enter(window={:#x}, child={:#x}, root=({}, {}), local=({}, {}), state={:#06x}, mode={}, detail={}, same_screen_focus={})",
+                event.event,
+                event.child,
+                event.root_x,
+                event.root_y,
+                event.event_x,
+                event.event_y,
+                u16::from(event.state),
+                u8::from(event.mode),
+                u8::from(event.detail),
+                event.same_screen_focus,
+            )),
+            Event::LeaveNotify(event) => events.push(format!(
+                "leave(window={:#x}, child={:#x}, root=({}, {}), local=({}, {}), state={:#06x}, mode={}, detail={}, same_screen_focus={})",
+                event.event,
+                event.child,
+                event.root_x,
+                event.root_y,
+                event.event_x,
+                event.event_y,
+                u16::from(event.state),
+                u8::from(event.mode),
+                u8::from(event.detail),
+                event.same_screen_focus,
+            )),
+            Event::MotionNotify(event) => events.push(format!(
+                "motion(window={:#x}, child={:#x}, root=({}, {}), local=({}, {}), state={:#06x}, detail={}, same_screen={})",
+                event.event,
+                event.child,
+                event.root_x,
+                event.root_y,
+                event.event_x,
+                event.event_y,
+                u16::from(event.state),
+                u8::from(event.detail),
+                event.same_screen,
+            )),
+            _ => {}
         }
     }
     Ok(events)
