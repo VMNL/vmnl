@@ -894,10 +894,7 @@ fn inject_mouse_motion() -> Result<(), String> {
 fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     use x11rb::{
         connection::Connection as _,
-        protocol::{
-            xproto::{ConnectionExt as _, MOTION_NOTIFY_EVENT},
-            xtest::ConnectionExt as _,
-        },
+        protocol::{xproto::ConnectionExt as _, xtest::ConnectionExt as _},
     };
 
     let (connection, screen_number) = x11rb::connect(None)
@@ -953,14 +950,7 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
             }
             None => "X11 screen has no pointer boundary target".to_owned(),
         })?;
-    let move_to = |(x, y), label: &str| {
-        connection
-            .xtest_fake_input(MOTION_NOTIFY_EVENT, 0, 0, root, x, y, 0)
-            .map_err(|error| format!("failed to enqueue XTEST {label}: {error}"))?
-            .check()
-            .map_err(|error| format!("XTEST {label} failed: {error}"))
-    };
-    move_to(target, "pointer leave")?;
+    inject_x11_pointer_position(&connection, root, target, backend, "pointer leave")?;
     let leave_check = if backend == "wayland" {
         confirm_x11_pointer_target(&connection, root, target, "leave").map(Some)
     } else {
@@ -973,8 +963,16 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
         );
         thread::sleep(Duration::from_millis(100));
     }
-    if let Err(error) = move_to(original, "pointer re-entry") {
-        let cleanup = move_to(original, "pointer re-entry cleanup");
+    if let Err(error) =
+        inject_x11_pointer_position(&connection, root, original, backend, "pointer re-entry")
+    {
+        let cleanup = inject_x11_pointer_position(
+            &connection,
+            root,
+            original,
+            backend,
+            "pointer re-entry cleanup",
+        );
         return Err(match cleanup {
             Ok(()) => format!("{error}; cleanup re-entry succeeded"),
             Err(cleanup) => format!("{error}; cleanup re-entry failed: {cleanup}"),
@@ -991,6 +989,35 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     connection
         .flush()
         .map_err(|error| format!("failed to flush XTEST hover boundary movement: {error}"))
+}
+
+#[cfg(target_os = "linux")]
+fn inject_x11_pointer_position(
+    connection: &x11rb::rust_connection::RustConnection,
+    root: u32,
+    position: (i16, i16),
+    backend: &str,
+    label: &str,
+) -> Result<(), String> {
+    use x11rb::protocol::{
+        xproto::{ConnectionExt as _, MOTION_NOTIFY_EVENT},
+        xtest::ConnectionExt as _,
+    };
+
+    let (x, y) = position;
+    let request = if backend == "wayland" {
+        // XTEST changed root coordinates but emitted no wl_pointer boundary messages.
+        connection
+            .warp_pointer(x11rb::NONE, root, 0, 0, 0, 0, x, y)
+            .map_err(|error| format!("failed to enqueue X11 pointer warp {label}: {error}"))?
+    } else {
+        connection
+            .xtest_fake_input(MOTION_NOTIFY_EVENT, 0, 0, root, x, y, 0)
+            .map_err(|error| format!("failed to enqueue XTEST {label}: {error}"))?
+    };
+    request
+        .check()
+        .map_err(|error| format!("pointer {label} request failed: {error}"))
 }
 
 #[cfg(target_os = "linux")]
@@ -1520,8 +1547,7 @@ fn inject_mouse_scroll() -> Result<(), String> {
             units: u32,
             wheel_count: u32,
             wheel1: i32,
-            wheel2: i32,
-            wheel3: i32,
+            ...
         ) -> CGEventRef;
         fn CGEventPost(tap: u32, event: CGEventRef);
     }
@@ -1538,17 +1564,25 @@ fn inject_mouse_scroll() -> Result<(), String> {
     ];
     let input_count = inputs.len();
     for (index, (wheel_count, vertical, horizontal, name)) in inputs.into_iter().enumerate() {
-        // SAFETY: Axis 1 is vertical and axis 2 is horizontal. Ten pixels normalize to one GLFW
-        // scroll unit for precise events; the retained event is checked before posting or release.
+        // SAFETY: The variadic values match `wheel_count`; axis 1 is vertical and axis 2 is
+        // horizontal. Ten pixels normalize to one GLFW scroll unit for precise events.
         let event = unsafe {
-            CGEventCreateScrollWheelEvent(
-                std::ptr::null_mut(),
-                CG_SCROLL_EVENT_UNIT_PIXEL,
-                wheel_count,
-                vertical,
-                horizontal,
-                0,
-            )
+            if wheel_count == 1 {
+                CGEventCreateScrollWheelEvent(
+                    std::ptr::null_mut(),
+                    CG_SCROLL_EVENT_UNIT_PIXEL,
+                    wheel_count,
+                    vertical,
+                )
+            } else {
+                CGEventCreateScrollWheelEvent(
+                    std::ptr::null_mut(),
+                    CG_SCROLL_EVENT_UNIT_PIXEL,
+                    wheel_count,
+                    vertical,
+                    horizontal,
+                )
+            }
         };
         if event.is_null() {
             return Err(format!(
