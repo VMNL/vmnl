@@ -886,6 +886,7 @@ fn inject_mouse_motion() -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
+#[allow(clippy::print_stderr)]
 fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     use x11rb::{
         connection::Connection as _,
@@ -914,26 +915,7 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     let max_y = i16::try_from(screen.height_in_pixels.saturating_sub(1))
         .map_err(|_| "X11 screen height does not fit an XTEST coordinate".to_owned())?;
     let outside_weston_bounds = if backend == "wayland" {
-        let weston = weston_x11_window(&connection, root)?
-            .ok_or_else(|| "could not locate the parent Weston X11 window".to_owned())?;
-        let geometry = connection
-            .get_geometry(weston)
-            .map_err(|error| format!("failed to request Weston window geometry: {error}"))?
-            .reply()
-            .map_err(|error| format!("failed to read Weston window geometry: {error}"))?;
-        let origin = connection
-            .translate_coordinates(weston, root, 0, 0)
-            .map_err(|error| format!("failed to request Weston screen position: {error}"))?
-            .reply()
-            .map_err(|error| format!("failed to read Weston screen position: {error}"))?;
-        let left = i32::from(origin.dst_x);
-        let top = i32::from(origin.dst_y);
-        Some((
-            left,
-            top,
-            left + i32::from(geometry.width.saturating_sub(1)),
-            top + i32::from(geometry.height.saturating_sub(1)),
-        ))
+        Some(weston_x11_bounds(&connection, root)?)
     } else {
         None
     };
@@ -971,6 +953,17 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
             .map_err(|error| format!("XTEST {label} failed: {error}"))
     };
     move_to(target, "pointer leave")?;
+    let leave_check = if backend == "wayland" {
+        confirm_x11_pointer_target(&connection, root, target, "leave")
+    } else {
+        Ok(())
+    };
+    if backend == "wayland" {
+        eprintln!(
+            "wayland_hover_boundary target={target:?} original={original:?} weston_bounds={outside_weston_bounds:?} pointer_after_leave={target:?}"
+        );
+        thread::sleep(Duration::from_millis(100));
+    }
     if let Err(error) = move_to(original, "pointer re-entry") {
         let cleanup = move_to(original, "pointer re-entry cleanup");
         return Err(match cleanup {
@@ -978,9 +971,69 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
             Err(cleanup) => format!("{error}; cleanup re-entry failed: {cleanup}"),
         });
     }
+    if backend == "wayland" {
+        confirm_x11_pointer_target(&connection, root, original, "re-entry")?;
+        eprintln!("wayland_hover_boundary pointer_after_reentry={original:?}");
+        leave_check?;
+    }
     connection
         .flush()
         .map_err(|error| format!("failed to flush XTEST hover boundary movement: {error}"))
+}
+
+#[cfg(target_os = "linux")]
+fn weston_x11_bounds(
+    connection: &x11rb::rust_connection::RustConnection,
+    root: u32,
+) -> Result<(i32, i32, i32, i32), String> {
+    use x11rb::protocol::xproto::ConnectionExt as _;
+
+    let weston = weston_x11_window(connection, root)?
+        .ok_or_else(|| "could not locate the parent Weston X11 window".to_owned())?;
+    let geometry = connection
+        .get_geometry(weston)
+        .map_err(|error| format!("failed to request Weston window geometry: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read Weston window geometry: {error}"))?;
+    let origin = connection
+        .translate_coordinates(weston, root, 0, 0)
+        .map_err(|error| format!("failed to request Weston screen position: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read Weston screen position: {error}"))?;
+    let left = i32::from(origin.dst_x);
+    let top = i32::from(origin.dst_y);
+    Ok((
+        left,
+        top,
+        left + i32::from(geometry.width.saturating_sub(1)),
+        top + i32::from(geometry.height.saturating_sub(1)),
+    ))
+}
+
+#[cfg(target_os = "linux")]
+fn confirm_x11_pointer_target(
+    connection: &x11rb::rust_connection::RustConnection,
+    root: u32,
+    expected: (i16, i16),
+    phase: &str,
+) -> Result<(), String> {
+    use x11rb::{connection::Connection as _, protocol::xproto::ConnectionExt as _};
+
+    connection
+        .flush()
+        .map_err(|error| format!("failed to flush XTEST pointer {phase}: {error}"))?;
+    let pointer = connection
+        .query_pointer(root)
+        .map_err(|error| format!("failed to request pointer after {phase}: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read pointer after {phase}: {error}"))?;
+    let actual = (pointer.root_x, pointer.root_y);
+    if actual != expected {
+        return Err(format!(
+            "XTEST pointer {phase} targeted {expected:?}, but the parent pointer is at {actual:?}"
+        ));
+    }
+    Ok(())
 }
 
 #[cfg(target_os = "linux")]
@@ -1336,11 +1389,35 @@ fn inject_mouse_hover_boundary(_backend: &str) -> Result<(), String> {
             std::io::Error::last_os_error()
         ));
     }
+    let leave_check = confirm_win32_pointer_position(target, "leave");
+    thread::sleep(Duration::from_millis(100));
     // SAFETY: `original` was returned by GetCursorPos and restores the pointer to the probe.
     if unsafe { SetCursorPos(original.x, original.y) } == 0 {
         return Err(format!(
             "SetCursorPos failed while re-entering the probe window: {}",
             std::io::Error::last_os_error()
+        ));
+    }
+    confirm_win32_pointer_position((original.x, original.y), "re-entry")?;
+    leave_check
+}
+
+#[cfg(target_os = "windows")]
+fn confirm_win32_pointer_position(expected: (i32, i32), phase: &str) -> Result<(), String> {
+    use windows_sys::Win32::{Foundation::POINT, UI::WindowsAndMessaging::GetCursorPos};
+
+    let mut actual = POINT { x: 0, y: 0 };
+    // SAFETY: `actual` is writable storage for one Win32 POINT record.
+    if unsafe { GetCursorPos(&raw mut actual) } == 0 {
+        return Err(format!(
+            "GetCursorPos failed after pointer {phase}: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+    if (actual.x, actual.y) != expected {
+        return Err(format!(
+            "pointer {phase} targeted {expected:?}, but Win32 reports ({}, {})",
+            actual.x, actual.y
         ));
     }
     Ok(())
@@ -1535,6 +1612,10 @@ fn inject_mouse_hover_boundary(_backend: &str) -> Result<(), String> {
     // SAFETY: Both mouse-move references are live and retained until after they are posted.
     unsafe {
         CGEventPost(CG_HID_EVENT_TAP, leave);
+    }
+    thread::sleep(Duration::from_millis(100));
+    // SAFETY: Both mouse-move references remain live and retained until after they are posted.
+    unsafe {
         CGEventPost(CG_HID_EVENT_TAP, reenter);
         CFRelease(leave);
         CFRelease(reenter);
@@ -1639,7 +1720,7 @@ fn inject_key_shift_a() -> Result<(), String> {
         (ANSI_A_KEYCODE, false, "A release"),
         (LEFT_SHIFT_KEYCODE, false, "left Shift release"),
     ];
-    let mut events = Vec::with_capacity(sequence.len());
+    let mut events: Vec<CGEventRef> = Vec::with_capacity(sequence.len());
     for (keycode, key_down, name) in sequence {
         // SAFETY: A null source requests the default event source; keycodes and down states are
         // valid CoreGraphics keyboard event parameters.

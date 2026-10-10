@@ -147,7 +147,12 @@ direction. The hosted Xvfb mapping
 currently exposes 10 buttons. CI run
 [#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968) showed XTEST rejecting
 server button 11 (`BadValue`), so GLFW `Button7` and `Button8` are not qualified by hosted CI. The
-expanded Windows and macOS mouse probes await CI evidence. The separate scroll probe injects
+cross-platform run [#38079003041](https://github.com/VMNL/vmnl/actions/runs/38079003041) passed
+Shift+A on nested Weston and Windows, plus Windows buttons 1–5 and pointer motion. It produced no
+leave/enter callbacks on either backend; the Linux X11 stage was skipped after the Wayland failure.
+The macOS build failed before running its updated probe. Cocoa run
+[#38077590550](https://github.com/VMNL/vmnl/actions/runs/38077590550) passed all eight buttons,
+pointer motion, and leave/enter, but its scroll probe failed. The separate scroll probe injects
 vertical up/down with XTEST buttons 4/5
 and horizontal scroll with buttons 6/7, checking offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and
 `(-1, 0)` in order. Mouse probes require the pointer to hover the focused window. The Wayland path
@@ -169,8 +174,10 @@ Win32 uses `SendInput` for keyboard, button, motion, and scroll injection; `SetC
 outside and back into the window for its hover-boundary case. Cocoa uses `CGEventPost` for keyboard,
 buttons, motion, hover-boundary, and scroll injection. These probes remain visible but non-blocking
 until ten consecutive successful runs use the same runner image, GLFW revision, injector, and probe
-schema; any of those changes resets the count. Shift+A is implemented but awaits CI evidence;
-additional modifier combinations, text, and repeat cases remain outstanding on these backends.
+schema; any of those changes resets the count. Shift+A passed on nested Weston and Windows in run
+#38079003041. X11 did not run after the Wayland failure, and Cocoa's updated Shift+A probe awaits a
+successful build. The current leave/enter fix confirms the pointer reached each target and inserts
+100 ms between moves. Additional modifier combinations, text, and repeat cases remain outstanding.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored
