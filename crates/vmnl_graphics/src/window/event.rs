@@ -460,9 +460,11 @@ mod tests {
         let keys = KeyboardState::named_keys();
 
         assert_eq!(keys.len(), 120);
-        for (index, &key) in keys.iter().enumerate() {
-            let glfw_key = KeyboardState::to_glfw(key).expect("every named key has a GLFW code");
-            let scancode = Scancode::from_raw(index as i32);
+        for &key in keys {
+            let glfw_key = KeyboardState::to_glfw(key);
+            assert!(glfw_key.is_some(), "every named key has a GLFW code");
+            let glfw_key = glfw_key.unwrap_or(Key::Unknown);
+            let scancode = Scancode::from_raw(0);
 
             assert_eq!(
                 translate(&WindowEvent::Key(
@@ -755,16 +757,17 @@ mod tests {
         let keys = KeyboardState::named_keys();
         let mut pending = Vec::with_capacity(keys.len() * 2);
 
-        for (index, &key) in keys.iter().enumerate() {
-            let glfw_key = KeyboardState::to_glfw(key).expect("every named key has a GLFW code");
-            let scancode = index as i32;
+        for &key in keys {
+            let glfw_key = KeyboardState::to_glfw(key);
+            assert!(glfw_key.is_some(), "every named key has a GLFW code");
+            let glfw_key = glfw_key.unwrap_or(Key::Unknown);
             pending.push((
-                index as f64,
-                WindowEvent::Key(glfw_key, scancode, Action::Press, GlfwModifiers::empty()),
+                TIMESTAMP,
+                WindowEvent::Key(glfw_key, 0, Action::Press, GlfwModifiers::empty()),
             ));
             pending.push((
-                index as f64 + 0.5,
-                WindowEvent::Key(glfw_key, scancode, Action::Release, GlfwModifiers::empty()),
+                TIMESTAMP,
+                WindowEvent::Key(glfw_key, 0, Action::Release, GlfwModifiers::empty()),
             ));
         }
 
@@ -816,14 +819,14 @@ mod tests {
         ];
         let mut pending = Vec::with_capacity(buttons.len() * 2);
 
-        for (index, button) in buttons.into_iter().enumerate() {
+        for button in buttons.iter().copied() {
             let glfw_button = MouseState::to_glfw(button);
             pending.push((
-                index as f64,
+                TIMESTAMP,
                 WindowEvent::MouseButton(glfw_button, Action::Press, GlfwModifiers::empty()),
             ));
             pending.push((
-                index as f64 + 0.5,
+                TIMESTAMP,
                 WindowEvent::MouseButton(glfw_button, Action::Release, GlfwModifiers::empty()),
             ));
         }
