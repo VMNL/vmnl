@@ -914,10 +914,11 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
         .map_err(|_| "X11 screen width does not fit an XTEST coordinate".to_owned())?;
     let max_y = i16::try_from(screen.height_in_pixels.saturating_sub(1))
         .map_err(|_| "X11 screen height does not fit an XTEST coordinate".to_owned())?;
-    let outside_weston_bounds = if backend == "wayland" {
-        Some(weston_x11_bounds(&connection, root)?)
+    let (outside_weston_bounds, weston_window) = if backend == "wayland" {
+        let weston = weston_x11_bounds(&connection, root)?;
+        (Some(weston.bounds), Some(weston.window))
     } else {
-        None
+        (None, None)
     };
     let pointer = connection
         .query_pointer(root)
@@ -954,13 +955,14 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     };
     move_to(target, "pointer leave")?;
     let leave_check = if backend == "wayland" {
-        confirm_x11_pointer_target(&connection, root, target, "leave")
+        confirm_x11_pointer_target(&connection, root, target, "leave").map(Some)
     } else {
-        Ok(())
+        Ok(None)
     };
     if backend == "wayland" {
         eprintln!(
-            "wayland_hover_boundary target={target:?} original={original:?} weston_bounds={outside_weston_bounds:?} pointer_after_leave={target:?}"
+            "wayland_hover_boundary target={target:?} original={original:?} weston_window={weston_window:?} weston_bounds={outside_weston_bounds:?} pointer_child_after_leave={:?}",
+            leave_check.as_ref().ok().copied().flatten()
         );
         thread::sleep(Duration::from_millis(100));
     }
@@ -972,8 +974,10 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
         });
     }
     if backend == "wayland" {
-        confirm_x11_pointer_target(&connection, root, original, "re-entry")?;
-        eprintln!("wayland_hover_boundary pointer_after_reentry={original:?}");
+        let pointer_child = confirm_x11_pointer_target(&connection, root, original, "re-entry")?;
+        eprintln!(
+            "wayland_hover_boundary pointer_after_reentry={original:?} pointer_child_after_reentry={pointer_child:#x}"
+        );
         leave_check?;
     }
     connection
@@ -982,10 +986,16 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
+struct WestonWindowGeometry {
+    window: u32,
+    bounds: (i32, i32, i32, i32),
+}
+
+#[cfg(target_os = "linux")]
 fn weston_x11_bounds(
     connection: &x11rb::rust_connection::RustConnection,
     root: u32,
-) -> Result<(i32, i32, i32, i32), String> {
+) -> Result<WestonWindowGeometry, String> {
     use x11rb::protocol::xproto::ConnectionExt as _;
 
     let weston = weston_x11_window(connection, root)?
@@ -1002,12 +1012,15 @@ fn weston_x11_bounds(
         .map_err(|error| format!("failed to read Weston screen position: {error}"))?;
     let left = i32::from(origin.dst_x);
     let top = i32::from(origin.dst_y);
-    Ok((
-        left,
-        top,
-        left + i32::from(geometry.width.saturating_sub(1)),
-        top + i32::from(geometry.height.saturating_sub(1)),
-    ))
+    Ok(WestonWindowGeometry {
+        window: weston,
+        bounds: (
+            left,
+            top,
+            left + i32::from(geometry.width.saturating_sub(1)),
+            top + i32::from(geometry.height.saturating_sub(1)),
+        ),
+    })
 }
 
 #[cfg(target_os = "linux")]
@@ -1016,7 +1029,7 @@ fn confirm_x11_pointer_target(
     root: u32,
     expected: (i16, i16),
     phase: &str,
-) -> Result<(), String> {
+) -> Result<u32, String> {
     use x11rb::{connection::Connection as _, protocol::xproto::ConnectionExt as _};
 
     connection
@@ -1033,7 +1046,7 @@ fn confirm_x11_pointer_target(
             "XTEST pointer {phase} targeted {expected:?}, but the parent pointer is at {actual:?}"
         ));
     }
-    Ok(())
+    Ok(pointer.child)
 }
 
 #[cfg(target_os = "linux")]
@@ -1331,18 +1344,32 @@ fn inject_mouse_scroll() -> Result<(), String> {
 }
 
 #[cfg(target_os = "windows")]
+#[allow(clippy::print_stderr)]
 fn inject_mouse_motion() -> Result<(), String> {
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
         MOUSEEVENTF_MOVE, MOUSEEVENTF_MOVE_NOCOALESCE,
     };
 
+    let original = win32_cursor_position("before pointer movement")?;
     send_mouse_input(
         6,
         4,
         0,
         MOUSEEVENTF_MOVE | MOUSEEVENTF_MOVE_NOCOALESCE,
         "pointer movement",
-    )
+    )?;
+
+    let deadline = Instant::now() + Duration::from_millis(250);
+    let mut actual = original;
+    while Instant::now() < deadline {
+        actual = win32_cursor_position("after pointer movement")?;
+        if actual != original {
+            break;
+        }
+        thread::sleep(Duration::from_millis(10));
+    }
+    eprintln!("win32_mouse_motion original={original:?} actual={actual:?}");
+    Ok(())
 }
 
 #[cfg(target_os = "windows")]
@@ -1404,23 +1431,28 @@ fn inject_mouse_hover_boundary(_backend: &str) -> Result<(), String> {
 
 #[cfg(target_os = "windows")]
 fn confirm_win32_pointer_position(expected: (i32, i32), phase: &str) -> Result<(), String> {
+    let actual = win32_cursor_position(phase)?;
+    if actual != expected {
+        return Err(format!(
+            "pointer {phase} targeted {expected:?}, but Win32 reports {actual:?}"
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn win32_cursor_position(phase: &str) -> Result<(i32, i32), String> {
     use windows_sys::Win32::{Foundation::POINT, UI::WindowsAndMessaging::GetCursorPos};
 
     let mut actual = POINT { x: 0, y: 0 };
     // SAFETY: `actual` is writable storage for one Win32 POINT record.
     if unsafe { GetCursorPos(&raw mut actual) } == 0 {
         return Err(format!(
-            "GetCursorPos failed after pointer {phase}: {}",
+            "GetCursorPos failed {phase}: {}",
             std::io::Error::last_os_error()
         ));
     }
-    if (actual.x, actual.y) != expected {
-        return Err(format!(
-            "pointer {phase} targeted {expected:?}, but Win32 reports ({}, {})",
-            actual.x, actual.y
-        ));
-    }
-    Ok(())
+    Ok((actual.x, actual.y))
 }
 
 #[cfg(target_os = "macos")]
@@ -1699,6 +1731,8 @@ fn inject_key_shift_a() -> Result<(), String> {
     const CG_HID_EVENT_TAP: u32 = 0;
     const ANSI_A_KEYCODE: u16 = 0;
     const LEFT_SHIFT_KEYCODE: u16 = 56;
+    // Core Graphics kCGEventFlagMaskShift.
+    const CG_EVENT_FLAG_MASK_SHIFT: u64 = 0x0002_0000;
 
     #[link(name = "ApplicationServices", kind = "framework")]
     extern "C" {
@@ -1707,6 +1741,7 @@ fn inject_key_shift_a() -> Result<(), String> {
             virtual_key: u16,
             key_down: bool,
         ) -> CGEventRef;
+        fn CGEventSetFlags(event: CGEventRef, flags: u64);
         fn CGEventPost(tap: u32, event: CGEventRef);
     }
     #[link(name = "CoreFoundation", kind = "framework")]
@@ -1715,13 +1750,18 @@ fn inject_key_shift_a() -> Result<(), String> {
     }
 
     let sequence = [
-        (LEFT_SHIFT_KEYCODE, true, "left Shift press"),
-        (ANSI_A_KEYCODE, true, "A press"),
-        (ANSI_A_KEYCODE, false, "A release"),
-        (LEFT_SHIFT_KEYCODE, false, "left Shift release"),
+        (
+            LEFT_SHIFT_KEYCODE,
+            true,
+            CG_EVENT_FLAG_MASK_SHIFT,
+            "left Shift press",
+        ),
+        (ANSI_A_KEYCODE, true, CG_EVENT_FLAG_MASK_SHIFT, "A press"),
+        (ANSI_A_KEYCODE, false, CG_EVENT_FLAG_MASK_SHIFT, "A release"),
+        (LEFT_SHIFT_KEYCODE, false, 0, "left Shift release"),
     ];
     let mut events: Vec<CGEventRef> = Vec::with_capacity(sequence.len());
-    for (keycode, key_down, name) in sequence {
+    for (keycode, key_down, flags, name) in sequence {
         // SAFETY: A null source requests the default event source; keycodes and down states are
         // valid CoreGraphics keyboard event parameters.
         let event = unsafe { CGEventCreateKeyboardEvent(std::ptr::null_mut(), keycode, key_down) };
@@ -1736,6 +1776,8 @@ fn inject_key_shift_a() -> Result<(), String> {
                 "CGEventCreateKeyboardEvent returned null for {name}"
             ));
         }
+        // SAFETY: `event` is a live keyboard event; the flag mask represents its modifier state.
+        unsafe { CGEventSetFlags(event, flags) };
         events.push(event);
     }
 

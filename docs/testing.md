@@ -150,7 +150,9 @@ server button 11 (`BadValue`), so GLFW `Button7` and `Button8` are not qualified
 cross-platform run [#38079003041](https://github.com/VMNL/vmnl/actions/runs/38079003041) passed
 Shift+A on nested Weston and Windows, plus Windows buttons 1–5 and pointer motion. It produced no
 leave/enter callbacks on either backend; the Linux X11 stage was skipped after the Wayland failure.
-The macOS build failed before running its updated probe. Cocoa run
+In [run #38081083458](https://github.com/VMNL/vmnl/actions/runs/38081083458), Windows pointer
+motion emitted one event at its unchanged initial cursor position. The macOS build passed, but its
+Shift+A probe emitted four events without the Shift modifier on A. Cocoa run
 [#38077590550](https://github.com/VMNL/vmnl/actions/runs/38077590550) passed all eight buttons,
 pointer motion, and leave/enter, but its scroll probe failed. The separate scroll probe injects
 vertical up/down with XTEST buttons 4/5
@@ -175,9 +177,14 @@ outside and back into the window for its hover-boundary case. Cocoa uses `CGEven
 buttons, motion, hover-boundary, and scroll injection. These probes remain visible but non-blocking
 until ten consecutive successful runs use the same runner image, GLFW revision, injector, and probe
 schema; any of those changes resets the count. Shift+A passed on nested Weston and Windows in run
-#38079003041. X11 did not run after the Wayland failure, and Cocoa's updated Shift+A probe awaits a
-successful build. The current leave/enter fix confirms the pointer reached each target and inserts
-100 ms between moves. Additional modifier combinations, text, and repeat cases remain outstanding.
+#38079003041. X11 did not run after the Wayland failure. Cocoa's run #38081083458 delivered the
+Shift+A sequence without the Shift bit on A; the current injector sets explicit Core Graphics
+flags for the sequence. The boundary attempt still produced no callbacks on nested Weston in
+#38081083458 although parent coordinates reached `(0, 0)` outside Weston bounds `(128, 67)–(1151, 666)`
+and returned to `(646, 364)`; the next run logs the X11 child-window ID at each target.
+Win32 motion now records desktop cursor coordinates around `SendInput`; its callback remained at
+the initial position in the same run. Leave/re-entry injections remain separated by 100 ms,
+including Cocoa. Additional modifier combinations, text, and repeat cases remain outstanding.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored
