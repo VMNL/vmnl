@@ -72,6 +72,7 @@ just test-platform-compile
 just test-platform-null
 just test-platform-wayland
 just test-platform-x11
+just input-test x11
 just test-gpu
 just test
 just doctest
@@ -79,6 +80,45 @@ just doctest
 
 `just test` intentionally excludes platform, GPU/display tests, and doctests. `just validate` adds
 the portable error-conversion and GLFW Null-backend suite after smoke tests.
+
+### Native input contract
+
+Select one backend explicitly; the command checks its prerequisites and runs only the native
+backend contract:
+
+```bash
+just input-test x11
+just input-test wayland
+just input-test win32
+just input-test cocoa
+```
+
+The public VMNL `Window::poll_events()` → `Event`/`Input` scenario is a separate opt-in GPU test.
+It currently covers X11 `A`, XTEST pointer motion delivered as `MouseMoved`, each mouse button
+whose X11 server mapping is available, and vertical/horizontal scroll in both directions. It
+logs and skips mappings above the server's reported limit; the hosted Xvfb runner exposes 10
+server buttons, so GLFW `Button7` and `Button8` are not qualified there:
+
+```bash
+just input-test-vmnl x11
+```
+
+This requires the X11 prerequisites above, XTEST, and a Vulkan-capable GPU with a Vulkan loader.
+It is excluded from `just test-gpu` so running the general GPU suite does not inject input into the
+active desktop. The command fails if the display prerequisites are unavailable; GPU initialization
+and event/state assertions fail inside the test when their runtime requirements are not met.
+
+X11 needs `DISPLAY`, `xprop`, and an EWMH window manager; the probe checks XTEST when it injects
+input. Wayland needs a live `WAYLAND_DISPLAY` socket and the X11 parent display used by XTEST.
+This probe requires nested Weston using its X11 backend on that parent display; it does not run on
+a standalone Wayland seat. Windows needs an accessible interactive input desktop, and the target
+must run at the same integrity level. Cocoa checks event-posting access and reports when the
+terminal or app running `just` needs Accessibility permission.
+
+An unavailable host backend, display, compositor socket, window manager, or required permission
+fails before the input sequence runs. The native contract still fails if XTEST, focus, hover, or
+actual OS-to-GLFW event delivery is unavailable. This command is opt-in and is never part of
+`just test` or `just validate`.
 
 ## Continuous Integration
 
@@ -96,20 +136,58 @@ Quality (format -> Clippy)
 Each OS validation job reuses one Cargo target directory for compilation and every test stage; no
 target directory is cached or transferred between runners. Linux then forces the GLFW Wayland
 backend under Weston with Pixman nested on Xvfb with Openbox, then tests the GLFW X11 backend
-under Xvfb with Openbox. Both paths run a visible keyboard probe: a separate test process
-waits for the window to be focused, injects an `A` press/release pair through XTEST, and
-requires the exact native GLFW event sequence before timeout. The Wayland path injects through
-the parent Xvfb server into Weston's X11 backend; it does not qualify a standalone Wayland
-compositor seat.
+under Xvfb with Openbox. Both paths run visible keyboard and mouse probes. Separate probe
+processes wait for readiness, inject `A`, Shift+A, and left-button press/release through XTEST, and
+require the exact native GLFW event sequence before timeout. A Linux-only button probe reads the
+X11 pointer mapping and injects only server buttons within its reported limit, checking the
+resulting GLFW button press/release order and released final states. The Windows probe checks
+SendInput for GLFW buttons 1–5; the Cocoa probe checks CGEventPost for all eight GLFW button
+numbers. Both also check native pointer motion, leave/enter, and vertical/horizontal scroll
+direction. The hosted Xvfb mapping
+currently exposes 10 buttons. CI run
+[#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968) showed XTEST rejecting
+server button 11 (`BadValue`), so GLFW `Button7` and `Button8` are not qualified by hosted CI. The
+The latest cross-platform run [#38084288960](https://github.com/VMNL/vmnl/actions/runs/38084288960)
+passed quality and the build, unit, API, smoke, and Null-backend checks on all three operating
+systems. Linux stopped at the nested Weston hover-boundary case, before X11. The XTEST pointer was
+at `(0, 0)` with no root child after leaving; on re-entry at `(646, 371)`, its root child was
+`0x400175`. Weston window `0x200005` has ancestry `0x200005 → 0x400175 → root`, so the root child is
+the window-manager frame containing the Weston window. GLFW still received no enter/leave callbacks;
+the trace does not show whether Weston sent Wayland pointer events. Windows A, Shift+A, and buttons
+1–5 passed. `GetCursorPos` moved from `(166, 169)` to `(170, 172)`, but the probe captured only a
+no-op cursor event at `(80, 60)` and stopped before hover or scroll. macOS A, Shift+A, all eight
+buttons, motion, and leave/enter passed. Its scroll probe received four events, each with `dx=6`
+and `dy` values `1, -1, 0, 0`, so horizontal direction was not established. Linux failed the
+workflow; Windows and macOS native probes remain experimental and non-blocking.
+
+The scroll probe checks vertical up/down and horizontal positive/negative in order. X11 injects
+buttons 4/5 and 6/7 and expects offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and `(-1, 0)`. Cocoa's
+native delta magnitude is backend-specific, so its probe checks axis and direction. Mouse probes
+require the pointer to hover the focused window. The Wayland path injects through the parent Xvfb
+server into Weston's X11 backend; it does not qualify a standalone Wayland compositor seat.
+
+CI invokes Cargo directly for these selected backend contracts; it does not call the local
+`just input-test` recipe. Linux X11 and nested Weston runs block CI. Windows and macOS native runs
+remain visible and non-blocking until they meet the documented qualification threshold.
 The Wayland NoApi probe attaches a zero-filled shm buffer so its surface can be mapped without
 Vulkan. It signals MAPPED after attaching the buffer; the parent finds the Weston X11 window by
 WM_CLASS and clicks its center until GLFW confirms keyboard focus and signals READY. Before
 injection, the parent also requires Weston to hold the parent X11 keyboard focus and reacquires it
-if necessary. MAPPED or Wayland READY alone never authorizes keyboard injection.
+if necessary. The mouse probe drains activation clicks before READY and the parent does not issue
+another activation click after READY, so activation cannot satisfy the tested button sequence.
+MAPPED or Wayland READY alone never authorizes input injection.
 
-Win32 uses `SendInput` and Cocoa uses `CGEventPost` for the same scenario. Their native probes
-remain visible but non-blocking until ten consecutive successful runs use the same runner image,
-GLFW revision, injector, and probe schema; any of those changes resets the count.
+Win32 uses `SendInput` for keyboard, button, motion, and scroll injection; `SetCursorPos` moves
+outside and back into the window for its hover-boundary case. Cocoa uses `CGEventPost` for keyboard,
+buttons, motion, hover-boundary, and scroll injection. These probes remain visible but non-blocking
+until ten consecutive successful runs use the same runner image, GLFW revision, injector, and probe
+schema; any of those changes resets the count. The explicit Core Graphics flags fixed Cocoa Shift+A
+in run #38082851338. Scroll injections on Win32 and Cocoa are separated by 100 ms so GLFW can
+process each message before the next reversal. The current Cocoa injector uses pixel deltas on one
+vertical axis or two scroll axes and still needs CI evidence. Pointer-motion probes discard callbacks
+that report no coordinate change. The nested Weston boundary probe enables `WAYLAND_DEBUG` to record
+whether `wl_pointer` enter/leave messages arrive. Additional modifier combinations, text, repeat,
+X11, and public VMNL runtime cases remain unqualified.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored

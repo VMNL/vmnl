@@ -19,6 +19,44 @@ use std::{
 use vmnl_platform_tests::{backend_name, parse_backend, PROBE_SCHEMA_VERSION};
 
 const NATIVE_INPUT_TIMEOUT: Duration = Duration::from_secs(5);
+const X11_MOUSE_BUTTON_MAPPINGS: [(u8, &str); 8] = [
+    (1, "Button1"),
+    (2, "Button3"),
+    (3, "Button2"),
+    (8, "Button4"),
+    (9, "Button5"),
+    (10, "Button6"),
+    (11, "Button7"),
+    (12, "Button8"),
+];
+const WIN32_MOUSE_BUTTON_MAPPINGS: [(&str, &str); 5] = [
+    ("left", "Button1"),
+    ("right", "Button2"),
+    ("middle", "Button3"),
+    ("XBUTTON1", "Button4"),
+    ("XBUTTON2", "Button5"),
+];
+const COCOA_MOUSE_BUTTON_MAPPINGS: [(u8, &str); 8] = [
+    (0, "Button1"),
+    (1, "Button2"),
+    (2, "Button3"),
+    (3, "Button4"),
+    (4, "Button5"),
+    (5, "Button6"),
+    (6, "Button7"),
+    (7, "Button8"),
+];
+
+fn is_mouse_native_input(operation: &str) -> bool {
+    matches!(
+        operation,
+        "mouse-native-input"
+            | "mouse-buttons-input"
+            | "mouse-motion-input"
+            | "mouse-hover-boundary-input"
+            | "mouse-scroll-input"
+    )
+}
 
 fn main() -> ExitCode {
     let mut arguments = env::args().skip(1);
@@ -88,13 +126,18 @@ fn main() -> ExitCode {
     }
 
     glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
-    if actual == glfw::Platform::Wayland && operation == "keyboard-native-input" {
+    let native_input = matches!(
+        operation.as_str(),
+        "keyboard-native-input" | "keyboard-modifier-input"
+    ) || is_mouse_native_input(&operation);
+    if actual == glfw::Platform::Wayland && native_input {
         glfw.window_hint(WindowHint::Maximized(true));
     }
-    glfw.window_hint(WindowHint::Visible(matches!(
+    let visible = matches!(
         operation.as_str(),
-        "keyboard-native-input" | "sticky-keys-manual"
-    )));
+        "keyboard-native-input" | "keyboard-modifier-input" | "sticky-keys-manual"
+    ) || is_mouse_native_input(&operation);
+    glfw.window_hint(WindowHint::Visible(visible));
     let Some((mut window, events)) =
         glfw.create_window(160, 120, "VMNL platform probe", WindowMode::Windowed)
     else {
@@ -200,7 +243,47 @@ fn main() -> ExitCode {
         "keyboard-wait-events-timeout-then-poll" => {
             keyboard_wait_then_poll(&mut glfw, &mut window, &events, Some(0.001))
         }
-        "keyboard-native-input" => native_keyboard_input(&mut glfw, &mut window, &events, actual),
+        "keyboard-native-input" => {
+            native_keyboard_input(&mut glfw, &mut window, &events, actual, false)
+        }
+        "keyboard-modifier-input" => {
+            native_keyboard_input(&mut glfw, &mut window, &events, actual, true)
+        }
+        "mouse-native-input" => native_mouse_input(
+            &mut glfw,
+            &mut window,
+            &events,
+            actual,
+            NativeMouseProbeCase::LeftButton,
+        ),
+        "mouse-buttons-input" => native_mouse_input(
+            &mut glfw,
+            &mut window,
+            &events,
+            actual,
+            NativeMouseProbeCase::MouseButtons,
+        ),
+        "mouse-motion-input" => native_mouse_input(
+            &mut glfw,
+            &mut window,
+            &events,
+            actual,
+            NativeMouseProbeCase::PointerMovement,
+        ),
+        "mouse-hover-boundary-input" => native_mouse_input(
+            &mut glfw,
+            &mut window,
+            &events,
+            actual,
+            NativeMouseProbeCase::PointerBoundary,
+        ),
+        "mouse-scroll-input" => native_mouse_input(
+            &mut glfw,
+            &mut window,
+            &events,
+            actual,
+            NativeMouseProbeCase::ScrollAxes,
+        ),
         "sticky-keys-manual" => manual_sticky_keys(&mut glfw, &mut window, &events, actual),
         "raw-mouse-motion" => {
             let supported = glfw.supports_raw_motion();
@@ -232,10 +315,11 @@ fn main() -> ExitCode {
         }
     };
 
-    let operation_succeeded = !matches!(
+    let operation_succeeded = !(matches!(
         operation.as_str(),
         "keyboard-native-input" | "sticky-keys-manual"
-    ) || value["qualified"] == true;
+    ) || is_mouse_native_input(&operation))
+        || value["qualified"] == true;
     emit(
         &requested_name,
         Some(actual),
@@ -507,6 +591,7 @@ fn native_keyboard_input(
     window: &mut glfw::PWindow,
     events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
     platform: glfw::Platform,
+    shifted: bool,
 ) -> Value {
     window.set_key_polling(true);
     window.show();
@@ -570,32 +655,516 @@ fn native_keyboard_input(
         });
     }
 
+    let expected_event_count = if shifted { 4 } else { 2 };
     let input_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
-    let mut actions = Vec::new();
-    let mut scancodes = Vec::new();
-    while actions.as_slice() != ["Press", "Release"] && Instant::now() < input_deadline {
+    let mut observed_events = Vec::new();
+    while observed_events.len() < expected_event_count && Instant::now() < input_deadline {
         glfw.wait_events_timeout(0.01);
         for (_, event) in glfw::flush_messages(events) {
-            if let glfw::WindowEvent::Key(glfw::Key::A, scancode, action, _) = event {
-                actions.push(format!("{action:?}"));
-                scancodes.push(scancode);
+            if let glfw::WindowEvent::Key(key, scancode, action, modifiers) = event {
+                observed_events.push(json!({
+                    "key": format!("{key:?}"),
+                    "action": format!("{action:?}"),
+                    "scancode": scancode,
+                    "modifiers": modifiers.bits(),
+                }));
             }
         }
     }
 
-    let qualified = actions.as_slice() == ["Press", "Release"]
-        && scancodes.len() == 2
-        && scancodes[0] == scancodes[1]
-        && window.get_key(glfw::Key::A) == glfw::Action::Release;
+    let action_names: Vec<_> = observed_events
+        .iter()
+        .filter_map(|event| event["action"].as_str())
+        .collect();
+    let scancodes: Vec<_> = observed_events
+        .iter()
+        .filter_map(|event| event["scancode"].as_i64())
+        .collect();
+    let shift_bits = i64::from(glfw::Modifiers::Shift.bits());
+    let standard_modifier_bits = i64::from(
+        (glfw::Modifiers::Shift
+            | glfw::Modifiers::Control
+            | glfw::Modifiers::Alt
+            | glfw::Modifiers::Super)
+            .bits(),
+    );
+    let events_match = if shifted {
+        observed_events.len() == 4
+            && observed_events[0]["key"] == "LeftShift"
+            && observed_events[0]["action"] == "Press"
+            && observed_events[1]["key"] == "A"
+            && observed_events[1]["action"] == "Press"
+            && observed_events[1]["modifiers"]
+                .as_i64()
+                .is_some_and(|bits| bits & standard_modifier_bits == shift_bits)
+            && observed_events[2]["key"] == "A"
+            && observed_events[2]["action"] == "Release"
+            && observed_events[2]["modifiers"]
+                .as_i64()
+                .is_some_and(|bits| bits & standard_modifier_bits == shift_bits)
+            && observed_events[3]["key"] == "LeftShift"
+            && observed_events[3]["action"] == "Release"
+            && scancodes.len() == 4
+            && scancodes[0] == scancodes[3]
+            && scancodes[1] == scancodes[2]
+    } else {
+        observed_events.len() == 2
+            && observed_events[0]["key"] == "A"
+            && observed_events[0]["action"] == "Press"
+            && observed_events[0]["modifiers"] == 0
+            && observed_events[1]["key"] == "A"
+            && observed_events[1]["action"] == "Release"
+            && observed_events[1]["modifiers"] == 0
+            && scancodes.len() == 2
+            && scancodes[0] == scancodes[1]
+    };
+    let final_key_state = window.get_key(glfw::Key::A);
+    let final_shift_state = window.get_key(glfw::Key::LeftShift);
+    let final_states_match = final_key_state == glfw::Action::Release
+        && (!shifted || final_shift_state == glfw::Action::Release);
+    let qualified = window.is_focused() && events_match && final_states_match;
     json!({
         "qualified": qualified,
         "stage": "input",
         "focused": window.is_focused(),
         "injector": env::var("VMNL_PLATFORM_INPUT_INJECTOR")
             .unwrap_or_else(|_| "unknown".to_owned()),
-        "actions": actions,
+        "case": if shifted { "shift-a-press-release" } else { "a-press-release" },
+        "observed_events": observed_events,
+        "actions": action_names,
         "scancodes": scancodes,
-        "final_state": format!("{:?}", window.get_key(glfw::Key::A)),
+        "final_state": format!("{:?}", final_key_state),
+        "left_shift_final_state": if shifted {
+            json!(format!("{:?}", final_shift_state))
+        } else {
+            Value::Null
+        },
+        "failure_reason": if qualified {
+            Value::Null
+        } else {
+            json!(format!("expected the {} keyboard event sequence", if shifted { "Shift+A" } else { "A" }))
+        },
+    })
+}
+
+#[derive(Clone, Copy)]
+enum NativeMouseProbeCase {
+    LeftButton,
+    MouseButtons,
+    PointerMovement,
+    PointerBoundary,
+    ScrollAxes,
+}
+
+impl NativeMouseProbeCase {
+    fn name(self) -> &'static str {
+        match self {
+            Self::LeftButton => "left-button-press-release",
+            Self::MouseButtons => "eligible-mouse-buttons-press-release",
+            Self::PointerMovement => "pointer-movement",
+            Self::PointerBoundary => "pointer-leave-enter",
+            Self::ScrollAxes => "vertical-horizontal-scroll-directions",
+        }
+    }
+
+    fn expected_events(
+        self,
+        platform: glfw::Platform,
+        maximum_server_button: Option<u8>,
+    ) -> Vec<Value> {
+        match self {
+            Self::LeftButton => vec![
+                json!({"button": "Button1", "action": "Press", "modifiers": 0}),
+                json!({"button": "Button1", "action": "Release", "modifiers": 0}),
+            ],
+            Self::MouseButtons => match platform {
+                glfw::Platform::X11 | glfw::Platform::Wayland => X11_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .filter(|(server_button, _)| {
+                        maximum_server_button.is_some_and(|maximum| *server_button <= maximum)
+                    })
+                    .flat_map(|(_, button)| mouse_button_press_release(button))
+                    .collect(),
+                glfw::Platform::Win32 => WIN32_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .flat_map(|(_, button)| mouse_button_press_release(button))
+                    .collect(),
+                glfw::Platform::MacOS => COCOA_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .flat_map(|(_, button)| mouse_button_press_release(button))
+                    .collect(),
+                _ => Vec::new(),
+            },
+            Self::ScrollAxes => vec![
+                json!({"dx": 0.0, "dy": 1.0}),
+                json!({"dx": 0.0, "dy": -1.0}),
+                json!({"dx": 1.0, "dy": 0.0}),
+                json!({"dx": -1.0, "dy": 0.0}),
+            ],
+            Self::PointerMovement => Vec::new(),
+            Self::PointerBoundary => vec![json!({"entered": false}), json!({"entered": true})],
+        }
+    }
+
+    fn button_coverage(self, platform: glfw::Platform, maximum_server_button: Option<u8>) -> Value {
+        let Self::MouseButtons = self else {
+            return Value::Null;
+        };
+        match platform {
+            glfw::Platform::X11 | glfw::Platform::Wayland => {
+                let Some(maximum_server_button) = maximum_server_button else {
+                    return Value::Null;
+                };
+                let tested_mappings: Vec<Value> = X11_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .filter(|(server_button, _)| *server_button <= maximum_server_button)
+                    .map(|(server_button, glfw_button)| {
+                        json!({"server_button": server_button, "glfw_button": glfw_button})
+                    })
+                    .collect();
+                let unsupported_mappings: Vec<Value> = X11_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .filter(|(server_button, _)| *server_button > maximum_server_button)
+                    .map(|(server_button, glfw_button)| {
+                        json!({
+                            "server_button": server_button,
+                            "glfw_button": glfw_button,
+                            "reason": "server_button_exceeds_x11_pointer_mapping",
+                        })
+                    })
+                    .collect();
+                json!({
+                    "mapping_basis": "x11_pointer_mapping_length",
+                    "maximum_server_button": maximum_server_button,
+                    "all_eight_glfw_buttons_tested": unsupported_mappings.is_empty(),
+                    "tested_mappings": tested_mappings,
+                    "unsupported_mappings": unsupported_mappings,
+                })
+            }
+            glfw::Platform::Win32 => {
+                let tested_mappings: Vec<Value> = WIN32_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .map(|(native_button, glfw_button)| {
+                        json!({"native_button": native_button, "glfw_button": glfw_button})
+                    })
+                    .collect();
+                let unsupported_mappings: Vec<Value> = ["Button6", "Button7", "Button8"]
+                    .into_iter()
+                    .map(|glfw_button| {
+                        json!({
+                            "native_button": Value::Null,
+                            "glfw_button": glfw_button,
+                            "reason": "win32_sendinput_has_no_glfw_mapping",
+                        })
+                    })
+                    .collect();
+                json!({
+                    "mapping_basis": "win32_sendinput",
+                    "maximum_native_button": 5,
+                    "all_eight_glfw_buttons_tested": false,
+                    "tested_mappings": tested_mappings,
+                    "unsupported_mappings": unsupported_mappings,
+                })
+            }
+            glfw::Platform::MacOS => {
+                let tested_mappings: Vec<Value> = COCOA_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .map(|(native_button, glfw_button)| {
+                        json!({"native_button": native_button, "glfw_button": glfw_button})
+                    })
+                    .collect();
+                json!({
+                    "mapping_basis": "cocoa_cgevent_button_number",
+                    "maximum_native_button": 7,
+                    "all_eight_glfw_buttons_tested": true,
+                    "tested_mappings": tested_mappings,
+                    "unsupported_mappings": [],
+                })
+            }
+            _ => Value::Null,
+        }
+    }
+}
+
+fn mouse_button_press_release(button: &str) -> [Value; 2] {
+    [
+        json!({"button": button, "action": "Press", "modifiers": 0}),
+        json!({"button": button, "action": "Release", "modifiers": 0}),
+    ]
+}
+
+fn native_mouse_input(
+    glfw: &mut glfw::Glfw,
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+    platform: glfw::Platform,
+    case: NativeMouseProbeCase,
+) -> Value {
+    let maximum_server_button = if matches!(case, NativeMouseProbeCase::MouseButtons)
+        && matches!(platform, glfw::Platform::X11 | glfw::Platform::Wayland)
+    {
+        let parsed = env::var("VMNL_PLATFORM_X11_MAX_BUTTON")
+            .ok()
+            .and_then(|value| value.parse::<u8>().ok());
+        match parsed {
+            Some(maximum) if maximum >= 3 => Some(maximum),
+            Some(maximum) => {
+                return json!({
+                    "qualified": false,
+                    "stage": "capability",
+                    "maximum_server_button": maximum,
+                    "failure_reason": "X11 pointer mapping cannot cover server buttons 1 through 3",
+                });
+            }
+            None => {
+                return json!({
+                    "qualified": false,
+                    "stage": "capability",
+                    "failure_reason": "VMNL_PLATFORM_X11_MAX_BUTTON is missing or invalid",
+                });
+            }
+        }
+    } else {
+        None
+    };
+
+    match case {
+        NativeMouseProbeCase::LeftButton | NativeMouseProbeCase::MouseButtons => {
+            window.set_mouse_button_polling(true);
+        }
+        NativeMouseProbeCase::PointerMovement => window.set_cursor_pos_polling(true),
+        NativeMouseProbeCase::PointerBoundary => window.set_cursor_enter_polling(true),
+        NativeMouseProbeCase::ScrollAxes => window.set_scroll_polling(true),
+    }
+    window.show();
+    if platform != glfw::Platform::Wayland {
+        window.focus();
+    }
+
+    let Some(ready_file) = env::var_os("VMNL_PLATFORM_READY_FILE") else {
+        return json!({
+            "qualified": false,
+            "stage": "handshake",
+            "failure_reason": "VMNL_PLATFORM_READY_FILE is missing",
+        });
+    };
+
+    #[cfg(target_os = "linux")]
+    let _wayland_buffer = if platform == glfw::Platform::Wayland {
+        match map_wayland_probe(glfw, window) {
+            Ok(buffer) => Some(buffer),
+            Err(error) => {
+                return json!({
+                    "qualified": false,
+                    "stage": "mapping",
+                    "failure_reason": error,
+                });
+            }
+        }
+    } else {
+        None
+    };
+    if platform == glfw::Platform::Wayland {
+        if let Err(error) = fs::write(&ready_file, b"MAPPED\n") {
+            return json!({
+                "qualified": false,
+                "stage": "handshake",
+                "failure_reason": error.to_string(),
+            });
+        }
+    }
+
+    let focus_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    while !window.is_focused() && Instant::now() < focus_deadline {
+        glfw.wait_events_timeout(0.01);
+        glfw::flush_messages(events).for_each(drop);
+    }
+    if !window.is_focused() {
+        return json!({
+            "qualified": false,
+            "stage": "focus",
+            "focused": false,
+            "hovered": window.is_hovered(),
+            "cursor_position": window.get_cursor_pos(),
+            "failure_reason": "native input window did not receive focus before deadline",
+        });
+    }
+
+    if platform != glfw::Platform::Wayland {
+        let (width, height) = window.get_size();
+        window.set_cursor_pos(f64::from(width) / 2.0, f64::from(height) / 2.0);
+    }
+    let hover_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    while !(window.is_focused() && window.is_hovered()) && Instant::now() < hover_deadline {
+        glfw.wait_events_timeout(0.01);
+        glfw::flush_messages(events).for_each(drop);
+    }
+    if !window.is_focused() || !window.is_hovered() {
+        return json!({
+            "qualified": false,
+            "stage": "hover",
+            "focused": window.is_focused(),
+            "hovered": window.is_hovered(),
+            "cursor_position": window.get_cursor_pos(),
+            "failure_reason": "mouse cursor did not enter the focused input window before deadline",
+        });
+    }
+
+    glfw.poll_events();
+    glfw::flush_messages(events).for_each(drop);
+    if !window.is_focused() || !window.is_hovered() {
+        return json!({
+            "qualified": false,
+            "stage": "readiness",
+            "focused": window.is_focused(),
+            "hovered": window.is_hovered(),
+            "cursor_position": window.get_cursor_pos(),
+            "failure_reason": "focus or pointer hover was lost while draining readiness events",
+        });
+    }
+
+    let initial_cursor_position = window.get_cursor_pos();
+
+    if let Err(error) = fs::write(&ready_file, b"READY\n") {
+        return json!({
+            "qualified": false,
+            "stage": "handshake",
+            "focused": window.is_focused(),
+            "hovered": window.is_hovered(),
+            "failure_reason": error.to_string(),
+        });
+    }
+
+    let expected_events = case.expected_events(platform, maximum_server_button);
+    let expected_event_count = match case {
+        NativeMouseProbeCase::PointerMovement => 1,
+        _ => expected_events.len(),
+    };
+    let input_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    let mut observed_events = Vec::new();
+    while observed_events.len() < expected_event_count && Instant::now() < input_deadline {
+        glfw.wait_events_timeout(0.01);
+        for (_, event) in glfw::flush_messages(events) {
+            match (case, event) {
+                (
+                    NativeMouseProbeCase::LeftButton | NativeMouseProbeCase::MouseButtons,
+                    glfw::WindowEvent::MouseButton(button, action, modifiers),
+                ) => observed_events.push(json!({
+                    "button": format!("{button:?}"),
+                    "action": format!("{action:?}"),
+                    "modifiers": modifiers.bits(),
+                })),
+                (NativeMouseProbeCase::ScrollAxes, glfw::WindowEvent::Scroll(dx, dy)) => {
+                    observed_events.push(json!({"dx": dx, "dy": dy}));
+                }
+                (NativeMouseProbeCase::PointerMovement, glfw::WindowEvent::CursorPos(x, y))
+                    if (x - initial_cursor_position.0).abs() > 0.01
+                        || (y - initial_cursor_position.1).abs() > 0.01 =>
+                {
+                    observed_events.push(json!({"x": x, "y": y}));
+                }
+                (
+                    NativeMouseProbeCase::PointerBoundary,
+                    glfw::WindowEvent::CursorEnter(entered),
+                ) => {
+                    observed_events.push(json!({"entered": entered}));
+                }
+                _ => {}
+            }
+        }
+    }
+
+    let final_state = match case {
+        NativeMouseProbeCase::LeftButton => {
+            json!(format!(
+                "{:?}",
+                window.get_mouse_button(glfw::MouseButton::Button1)
+            ))
+        }
+        NativeMouseProbeCase::MouseButtons => {
+            let buttons = [
+                glfw::MouseButton::Button1,
+                glfw::MouseButton::Button2,
+                glfw::MouseButton::Button3,
+                glfw::MouseButton::Button4,
+                glfw::MouseButton::Button5,
+                glfw::MouseButton::Button6,
+                glfw::MouseButton::Button7,
+                glfw::MouseButton::Button8,
+            ];
+            json!(buttons.map(|button| format!("{:?}", window.get_mouse_button(button))))
+        }
+        NativeMouseProbeCase::PointerMovement
+        | NativeMouseProbeCase::PointerBoundary
+        | NativeMouseProbeCase::ScrollAxes => Value::Null,
+    };
+    let expected_final_state = match case {
+        NativeMouseProbeCase::LeftButton => json!("Release"),
+        NativeMouseProbeCase::MouseButtons => json!(vec!["Release"; 8]),
+        NativeMouseProbeCase::PointerMovement
+        | NativeMouseProbeCase::PointerBoundary
+        | NativeMouseProbeCase::ScrollAxes => Value::Null,
+    };
+    let events_match = match case {
+        NativeMouseProbeCase::PointerMovement => {
+            observed_events.len() == 1
+                && observed_events.first().is_some_and(|event| {
+                    let x = event["x"].as_f64();
+                    let y = event["y"].as_f64();
+                    match (platform, x, y) {
+                        (glfw::Platform::Wayland | glfw::Platform::Win32, Some(x), Some(y)) => {
+                            x > initial_cursor_position.0 && y > initial_cursor_position.1
+                        }
+                        (_, Some(x), Some(y)) => {
+                            (x - initial_cursor_position.0 - 6.0).abs() <= 0.01
+                                && (y - initial_cursor_position.1 - 4.0).abs() <= 0.01
+                        }
+                        _ => false,
+                    }
+                })
+        }
+        _ => observed_events == expected_events,
+    };
+    let cursor_position = window.get_cursor_pos();
+    let cursor_position_matches = match case {
+        NativeMouseProbeCase::PointerMovement => observed_events.first().is_some_and(|event| {
+            event["x"]
+                .as_f64()
+                .is_some_and(|x| (cursor_position.0 - x).abs() <= 0.01)
+                && event["y"]
+                    .as_f64()
+                    .is_some_and(|y| (cursor_position.1 - y).abs() <= 0.01)
+        }),
+        _ => true,
+    };
+    let qualified = window.is_focused()
+        && window.is_hovered()
+        && events_match
+        && final_state == expected_final_state
+        && cursor_position_matches;
+    json!({
+        "qualified": qualified,
+        "stage": "input",
+        "focused": window.is_focused(),
+        "hovered": window.is_hovered(),
+        "initial_cursor_position": initial_cursor_position,
+        "cursor_position": cursor_position,
+        "injected_root_delta": if matches!(case, NativeMouseProbeCase::PointerMovement) {
+            json!([6, 4])
+        } else {
+            Value::Null
+        },
+        "injector": env::var("VMNL_PLATFORM_INPUT_INJECTOR")
+            .unwrap_or_else(|_| "unknown".to_owned()),
+        "case": case.name(),
+        "button_coverage": case.button_coverage(platform, maximum_server_button),
+        "observed_events": observed_events,
+        "final_state": final_state,
+        "failure_reason": if qualified {
+            Value::Null
+        } else {
+            json!(format!("expected the {} event sequence", case.name()))
+        },
     })
 }
 

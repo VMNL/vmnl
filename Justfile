@@ -49,13 +49,21 @@ test-platform-compile:
 test-platform-null:
     @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report platform-null
 
-# Run the Wayland contract against the caller-provided compositor.
+# Run the Wayland contract against nested Weston and its parent X11 server.
 test-platform-wayland:
     VMNL_PLATFORM_TEST_BACKEND=wayland cargo test -p vmnl-platform-tests --test backend_contract -- --ignored --nocapture
 
 # Run the X11 contract against the caller-provided X server and EWMH window manager.
 test-platform-x11:
     VMNL_PLATFORM_TEST_BACKEND=x11 cargo test -p vmnl-platform-tests --test backend_contract -- --ignored --nocapture
+
+# Run one native input contract on the selected backend and active desktop.
+input-test backend:
+    python3 tools/input_test.py {{ quote(backend) }}
+
+# Run the public VMNL input path on a Vulkan-capable X11 desktop.
+input-test-vmnl backend:
+    python3 tools/input_test.py --vmnl {{ quote(backend) }}
 
 # Compile GPU tests without running them.
 [no-exit-message]
@@ -106,7 +114,7 @@ _test-report suite:
             suite_name='GPU'
             suite_scope='Vulkan + GLFW display required'
             suite_kind='tests'
-            test_command=(cargo "${color_args[@]}" test -p vmnl-gpu-tests -- --ignored)
+            test_command=(cargo "${color_args[@]}" test -p vmnl-gpu-tests -- --ignored --skip vmnl_public_native_keyboard_and_mouse_events_update_input)
             ;;
         gpu-compile)
             suite_name='GPU'

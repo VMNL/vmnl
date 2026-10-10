@@ -19,7 +19,14 @@ x11rb = { version = "0.13.2", features = ["xtest"] }
 cc = "1"
 
 [target.'cfg(target_os = "windows")'.dev-dependencies]
-windows-sys = { version = "0.61.2", features = ["Win32_UI_Input_KeyboardAndMouse"] }
+windows-sys = {
+    version = "0.61.2",
+    features = [
+        "Win32_Foundation",
+        "Win32_UI_Input_KeyboardAndMouse",
+        "Win32_UI_WindowsAndMessaging",
+    ],
+}
 
 [lints]
 workspace = true

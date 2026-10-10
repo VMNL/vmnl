@@ -111,7 +111,7 @@ jobs:
       - name: Test Wayland under Weston/Xvfb with Pixman
         if: runner.os == 'Linux'
         env:
-          VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
+          VMNL_PLATFORM_ARTIFACT_DIR: ${{ github.workspace }}/target/platform-artifacts
         run: |
           mkdir -p target/platform-artifacts
           export DISPLAY=:98
@@ -163,11 +163,12 @@ jobs:
           fi
           VMNL_PLATFORM_TEST_BACKEND=wayland \
             cargo test -p vmnl-platform-tests --locked \
-              --test backend_contract -- --ignored --nocapture
+              --test backend_contract selected_backend_contract -- \
+              --ignored --exact --nocapture
       - name: Test X11 under Xvfb with Openbox
         if: runner.os == 'Linux'
         env:
-          VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
+          VMNL_PLATFORM_ARTIFACT_DIR: ${{ github.workspace }}/target/platform-artifacts
         run: |
           mkdir -p target/platform-artifacts
           export DISPLAY=:99
@@ -191,16 +192,18 @@ jobs:
           xprop -root _NET_SUPPORTING_WM_CHECK | grep -q 'window id'
           VMNL_PLATFORM_TEST_BACKEND=x11 \
             cargo test -p vmnl-platform-tests --locked \
-              --test backend_contract -- --ignored --nocapture
+              --test backend_contract selected_backend_contract -- \
+              --ignored --exact --nocapture
       - name: Run native platform probes experimentally
         if: runner.os != 'Linux'
         continue-on-error: true
         env:
-          VMNL_PLATFORM_ARTIFACT_DIR: target/platform-artifacts
+          VMNL_PLATFORM_ARTIFACT_DIR: ${{ github.workspace }}/target/platform-artifacts
           VMNL_PLATFORM_TEST_BACKEND: ${{ matrix.backend }}
         run: >-
           cargo test -p vmnl-platform-tests --locked
-          --test backend_contract -- --ignored --nocapture
+          --test backend_contract selected_backend_contract
+          -- --ignored --exact --nocapture
       - name: Upload Linux platform records
         if: always() && runner.os == 'Linux'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
