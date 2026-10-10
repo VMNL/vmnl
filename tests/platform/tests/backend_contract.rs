@@ -26,7 +26,11 @@ static READY_FILE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 fn is_mouse_native_input(operation: &str) -> bool {
     matches!(
         operation,
-        "mouse-native-input" | "mouse-buttons-input" | "mouse-motion-input" | "mouse-scroll-input"
+        "mouse-native-input"
+            | "mouse-buttons-input"
+            | "mouse-motion-input"
+            | "mouse-hover-boundary-input"
+            | "mouse-scroll-input"
     )
 }
 
@@ -37,6 +41,7 @@ fn probe(backend: &str, operation: &str) -> Value {
             | "mouse-native-input"
             | "mouse-buttons-input"
             | "mouse-motion-input"
+            | "mouse-hover-boundary-input"
             | "mouse-scroll-input"
     ) {
         native_input_probe(backend, operation).expect("native input probe should complete")
@@ -84,7 +89,11 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
         "vmnl-platform-ready-{}-{sequence}",
         std::process::id()
     ));
-    let injector = input_injector_name(backend)?;
+    let injector = if backend == "win32" && operation == "mouse-hover-boundary-input" {
+        "set-cursor-pos"
+    } else {
+        input_injector_name(backend)?
+    };
     let result = (|| {
         let mut command = Command::new(env!("CARGO_BIN_EXE_platform_probe"));
         command
@@ -121,6 +130,7 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
                 inject_mouse_buttons(button_limit)
             }
             "mouse-motion-input" => inject_mouse_motion(),
+            "mouse-hover-boundary-input" => inject_mouse_hover_boundary(),
             "mouse-scroll-input" => inject_mouse_scroll(),
             value => Err(format!("unsupported native input operation: {value}")),
         };
@@ -815,6 +825,68 @@ fn inject_mouse_motion() -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
+fn inject_mouse_hover_boundary() -> Result<(), String> {
+    use x11rb::{
+        connection::Connection as _,
+        protocol::{
+            xproto::{ConnectionExt as _, MOTION_NOTIFY_EVENT},
+            xtest::ConnectionExt as _,
+        },
+    };
+
+    let (connection, screen_number) = x11rb::connect(None)
+        .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
+    connection
+        .xtest_get_version(2, 2)
+        .map_err(|error| format!("failed to query XTEST: {error}"))?
+        .reply()
+        .map_err(|error| format!("XTEST is unavailable: {error}"))?;
+
+    let screen = connection
+        .setup()
+        .roots
+        .get(screen_number)
+        .ok_or_else(|| format!("parent X server has no screen {screen_number}"))?;
+    let root = screen.root;
+    let max_x = i16::try_from(screen.width_in_pixels.saturating_sub(1))
+        .map_err(|_| "X11 screen width does not fit an XTEST coordinate".to_owned())?;
+    let max_y = i16::try_from(screen.height_in_pixels.saturating_sub(1))
+        .map_err(|_| "X11 screen height does not fit an XTEST coordinate".to_owned())?;
+    let pointer = connection
+        .query_pointer(root)
+        .map_err(|error| format!("failed to request the parent pointer position: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read the parent pointer position: {error}"))?;
+    let original = (pointer.root_x, pointer.root_y);
+    let target = [(0, 0), (max_x, 0), (0, max_y), (max_x, max_y)]
+        .into_iter()
+        .max_by_key(|(x, y)| {
+            let dx = i64::from(*x) - i64::from(original.0);
+            let dy = i64::from(*y) - i64::from(original.1);
+            dx * dx + dy * dy
+        })
+        .ok_or_else(|| "X11 screen has no pointer boundary target".to_owned())?;
+    let move_to = |(x, y), label: &str| {
+        connection
+            .xtest_fake_input(MOTION_NOTIFY_EVENT, 0, 0, root, x, y, 0)
+            .map_err(|error| format!("failed to enqueue XTEST {label}: {error}"))?
+            .check()
+            .map_err(|error| format!("XTEST {label} failed: {error}"))
+    };
+    move_to(target, "pointer leave")?;
+    if let Err(error) = move_to(original, "pointer re-entry") {
+        let cleanup = move_to(original, "pointer re-entry cleanup");
+        return Err(match cleanup {
+            Ok(()) => format!("{error}; cleanup re-entry succeeded"),
+            Err(cleanup) => format!("{error}; cleanup re-entry failed: {cleanup}"),
+        });
+    }
+    connection
+        .flush()
+        .map_err(|error| format!("failed to flush XTEST hover boundary movement: {error}"))
+}
+
+#[cfg(target_os = "linux")]
 fn inject_x11_button_release(
     connection: &x11rb::rust_connection::RustConnection,
     button: u8,
@@ -1071,6 +1143,60 @@ fn inject_mouse_motion() -> Result<(), String> {
     )
 }
 
+#[cfg(target_os = "windows")]
+fn inject_mouse_hover_boundary() -> Result<(), String> {
+    use windows_sys::Win32::{
+        Foundation::POINT,
+        UI::WindowsAndMessaging::{
+            GetCursorPos, GetSystemMetrics, SetCursorPos, SM_CXSCREEN, SM_CYSCREEN,
+        },
+    };
+
+    let mut original = POINT { x: 0, y: 0 };
+    // SAFETY: `original` is writable storage for one Win32 POINT record.
+    if unsafe { GetCursorPos(&raw mut original) } == 0 {
+        return Err(format!(
+            "GetCursorPos failed before hover-boundary injection: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+    // SAFETY: These indices request the primary screen dimensions and take no pointers.
+    let (width, height) = unsafe { (GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)) };
+    if width <= 0 || height <= 0 {
+        return Err(format!(
+            "invalid Win32 primary screen size: {width}x{height}"
+        ));
+    }
+    let target = [
+        (0, 0),
+        (width - 1, 0),
+        (0, height - 1),
+        (width - 1, height - 1),
+    ]
+    .into_iter()
+    .max_by_key(|(x, y)| {
+        let dx = i64::from(*x) - i64::from(original.x);
+        let dy = i64::from(*y) - i64::from(original.y);
+        dx * dx + dy * dy
+    })
+    .ok_or_else(|| "Win32 screen has no pointer boundary target".to_owned())?;
+    // SAFETY: The target is inside the primary display bounds queried above.
+    if unsafe { SetCursorPos(target.0, target.1) } == 0 {
+        return Err(format!(
+            "SetCursorPos failed while leaving the probe window: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+    // SAFETY: `original` was returned by GetCursorPos and restores the pointer to the probe.
+    if unsafe { SetCursorPos(original.x, original.y) } == 0 {
+        return Err(format!(
+            "SetCursorPos failed while re-entering the probe window: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+    Ok(())
+}
+
 #[cfg(target_os = "macos")]
 fn inject_mouse_scroll() -> Result<(), String> {
     use std::ffi::c_void;
@@ -1189,6 +1315,83 @@ fn inject_mouse_motion() -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(target_os = "macos")]
+fn inject_mouse_hover_boundary() -> Result<(), String> {
+    use std::ffi::c_void;
+
+    type CGEventRef = *mut c_void;
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct CGPoint {
+        x: f64,
+        y: f64,
+    }
+
+    const CG_HID_EVENT_TAP: u32 = 0;
+    const MOUSE_MOVED: u32 = 5;
+
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        fn CGEventCreate(source: *mut c_void) -> CGEventRef;
+        fn CGEventGetLocation(event: CGEventRef) -> CGPoint;
+        fn CGEventCreateMouseEvent(
+            source: *mut c_void,
+            mouse_type: u32,
+            mouse_cursor_position: CGPoint,
+            mouse_button: u32,
+        ) -> CGEventRef;
+        fn CGEventPost(tap: u32, event: CGEventRef);
+    }
+    #[link(name = "CoreFoundation", kind = "framework")]
+    extern "C" {
+        fn CFRelease(value: *const c_void);
+    }
+
+    // SAFETY: A null source requests the default event source. The returned event is checked
+    // before its location is queried or its retained CoreFoundation reference is released.
+    let position_event = unsafe { CGEventCreate(std::ptr::null_mut()) };
+    if position_event.is_null() {
+        return Err("CGEventCreate returned null while reading cursor position".to_owned());
+    }
+    // SAFETY: `position_event` is a live CoreGraphics event created above.
+    let original = unsafe { CGEventGetLocation(position_event) };
+    // SAFETY: `position_event` is a live retained CoreFoundation object.
+    unsafe { CFRelease(position_event) };
+    let outside = CGPoint {
+        x: original.x + 300.0,
+        y: original.y + 300.0,
+    };
+
+    // SAFETY: MOUSE_MOVED is a valid event type; both target points are finite. The returned
+    // retained references are checked before either event is posted.
+    let (leave, reenter) = unsafe {
+        (
+            CGEventCreateMouseEvent(std::ptr::null_mut(), MOUSE_MOVED, outside, 0),
+            CGEventCreateMouseEvent(std::ptr::null_mut(), MOUSE_MOVED, original, 0),
+        )
+    };
+    if leave.is_null() || reenter.is_null() {
+        // SAFETY: Any non-null event was created above with a retained CoreFoundation reference.
+        unsafe {
+            if !leave.is_null() {
+                CFRelease(leave);
+            }
+            if !reenter.is_null() {
+                CFRelease(reenter);
+            }
+        }
+        return Err("CGEventCreateMouseEvent returned null for hover boundary".to_owned());
+    }
+    // SAFETY: Both mouse-move references are live and retained until after they are posted.
+    unsafe {
+        CGEventPost(CG_HID_EVENT_TAP, leave);
+        CGEventPost(CG_HID_EVENT_TAP, reenter);
+        CFRelease(leave);
+        CFRelease(reenter);
+    }
+    Ok(())
+}
+
 #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
 fn inject_mouse_scroll() -> Result<(), String> {
     Err("native mouse scroll injection is unsupported on this OS".to_owned())
@@ -1197,6 +1400,11 @@ fn inject_mouse_scroll() -> Result<(), String> {
 #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
 fn inject_mouse_motion() -> Result<(), String> {
     Err("native pointer movement injection is unsupported on this OS".to_owned())
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+fn inject_mouse_hover_boundary() -> Result<(), String> {
+    Err("native pointer hover-boundary injection is unsupported on this OS".to_owned())
 }
 
 #[cfg(target_os = "macos")]
@@ -1460,6 +1668,7 @@ fn selected_backend_contract() {
             "keyboard-native-input",
             "mouse-native-input",
             "mouse-motion-input",
+            "mouse-hover-boundary-input",
             "mouse-buttons-input",
             "mouse-scroll-input",
         ],
@@ -1479,6 +1688,7 @@ fn selected_backend_contract() {
             "keyboard-native-input",
             "mouse-native-input",
             "mouse-motion-input",
+            "mouse-hover-boundary-input",
             "mouse-buttons-input",
             "mouse-scroll-input",
         ],
@@ -1496,6 +1706,7 @@ fn selected_backend_contract() {
             "mouse-native-input",
             "mouse-buttons-input",
             "mouse-motion-input",
+            "mouse-hover-boundary-input",
             "mouse-scroll-input",
         ],
         value => panic!("unsupported qualified backend: {value}"),
@@ -1522,6 +1733,7 @@ fn assert_operation_contract(backend: &str, operation: &str, record: &Value) {
         "keyboard-native-input" => assert_native_keyboard_input(record),
         "mouse-native-input" => assert_native_mouse_input(record),
         "mouse-motion-input" => assert_native_mouse_motion(record),
+        "mouse-hover-boundary-input" => assert_native_mouse_hover_boundary(record),
         "mouse-buttons-input" => assert_native_mouse_buttons_input(record),
         "mouse-scroll-input" => assert_native_mouse_scroll_input(record),
         _ => {}
@@ -1705,6 +1917,28 @@ fn assert_native_mouse_motion(record: &Value) {
         Some("win32") => "send-input",
         Some("cocoa") => "cg-event-post",
         value => panic!("unexpected native pointer-motion backend: {value:?}"),
+    };
+    assert_eq!(record["value"]["injector"], expected_injector);
+}
+
+fn assert_native_mouse_hover_boundary(record: &Value) {
+    assert_eq!(record["value"]["qualified"], true);
+    assert_eq!(record["value"]["stage"], "input");
+    assert_eq!(record["value"]["focused"], true);
+    assert_eq!(record["value"]["hovered"], true);
+    assert_eq!(
+        record["value"]["observed_events"],
+        serde_json::json!([{"entered": false}, {"entered": true}])
+    );
+    assert_eq!(record["value"]["case"], "pointer-leave-enter");
+    assert_eq!(record["value"]["final_state"], Value::Null);
+    assert_eq!(record["value"]["failure_reason"], Value::Null);
+    let expected_injector = match record["backend_actual"].as_str() {
+        Some("x11") => "x11-xtest",
+        Some("wayland") => "x11-xtest-parent",
+        Some("win32") => "set-cursor-pos",
+        Some("cocoa") => "cg-event-post",
+        value => panic!("unexpected native pointer-boundary backend: {value:?}"),
     };
     assert_eq!(record["value"]["injector"], expected_injector);
 }

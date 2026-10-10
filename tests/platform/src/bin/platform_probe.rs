@@ -50,7 +50,11 @@ const COCOA_MOUSE_BUTTON_MAPPINGS: [(u8, &str); 8] = [
 fn is_mouse_native_input(operation: &str) -> bool {
     matches!(
         operation,
-        "mouse-native-input" | "mouse-buttons-input" | "mouse-motion-input" | "mouse-scroll-input"
+        "mouse-native-input"
+            | "mouse-buttons-input"
+            | "mouse-motion-input"
+            | "mouse-hover-boundary-input"
+            | "mouse-scroll-input"
     )
 }
 
@@ -124,7 +128,10 @@ fn main() -> ExitCode {
     glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
     let native_input =
         matches!(operation.as_str(), "keyboard-native-input") || is_mouse_native_input(&operation);
-    if actual == glfw::Platform::Wayland && native_input {
+    if actual == glfw::Platform::Wayland
+        && native_input
+        && operation != "mouse-hover-boundary-input"
+    {
         glfw.window_hint(WindowHint::Maximized(true));
     }
     let visible = matches!(
@@ -258,6 +265,13 @@ fn main() -> ExitCode {
             &events,
             actual,
             NativeMouseProbeCase::PointerMovement,
+        ),
+        "mouse-hover-boundary-input" => native_mouse_input(
+            &mut glfw,
+            &mut window,
+            &events,
+            actual,
+            NativeMouseProbeCase::PointerBoundary,
         ),
         "mouse-scroll-input" => native_mouse_input(
             &mut glfw,
@@ -670,6 +684,7 @@ enum NativeMouseProbeCase {
     LeftButton,
     MouseButtons,
     PointerMovement,
+    PointerBoundary,
     ScrollAxes,
 }
 
@@ -679,6 +694,7 @@ impl NativeMouseProbeCase {
             Self::LeftButton => "left-button-press-release",
             Self::MouseButtons => "eligible-mouse-buttons-press-release",
             Self::PointerMovement => "pointer-movement",
+            Self::PointerBoundary => "pointer-leave-enter",
             Self::ScrollAxes => "vertical-horizontal-scroll-directions",
         }
     }
@@ -718,6 +734,7 @@ impl NativeMouseProbeCase {
                 json!({"dx": -1.0, "dy": 0.0}),
             ],
             Self::PointerMovement => Vec::new(),
+            Self::PointerBoundary => vec![json!({"entered": false}), json!({"entered": true})],
         }
     }
 
@@ -848,6 +865,7 @@ fn native_mouse_input(
             window.set_mouse_button_polling(true);
         }
         NativeMouseProbeCase::PointerMovement => window.set_cursor_pos_polling(true),
+        NativeMouseProbeCase::PointerBoundary => window.set_cursor_enter_polling(true),
         NativeMouseProbeCase::ScrollAxes => window.set_scroll_polling(true),
     }
     window.show();
@@ -950,10 +968,9 @@ fn native_mouse_input(
     }
 
     let expected_events = case.expected_events(platform, maximum_server_button);
-    let expected_event_count = if matches!(case, NativeMouseProbeCase::PointerMovement) {
-        1
-    } else {
-        expected_events.len()
+    let expected_event_count = match case {
+        NativeMouseProbeCase::PointerMovement => 1,
+        _ => expected_events.len(),
     };
     let input_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
     let mut observed_events = Vec::new();
@@ -974,6 +991,12 @@ fn native_mouse_input(
                 }
                 (NativeMouseProbeCase::PointerMovement, glfw::WindowEvent::CursorPos(x, y)) => {
                     observed_events.push(json!({"x": x, "y": y}));
+                }
+                (
+                    NativeMouseProbeCase::PointerBoundary,
+                    glfw::WindowEvent::CursorEnter(entered),
+                ) => {
+                    observed_events.push(json!({"entered": entered}));
                 }
                 _ => {}
             }
@@ -1000,12 +1023,16 @@ fn native_mouse_input(
             ];
             json!(buttons.map(|button| format!("{:?}", window.get_mouse_button(button))))
         }
-        NativeMouseProbeCase::PointerMovement | NativeMouseProbeCase::ScrollAxes => Value::Null,
+        NativeMouseProbeCase::PointerMovement
+        | NativeMouseProbeCase::PointerBoundary
+        | NativeMouseProbeCase::ScrollAxes => Value::Null,
     };
     let expected_final_state = match case {
         NativeMouseProbeCase::LeftButton => json!("Release"),
         NativeMouseProbeCase::MouseButtons => json!(vec!["Release"; 8]),
-        NativeMouseProbeCase::PointerMovement | NativeMouseProbeCase::ScrollAxes => Value::Null,
+        NativeMouseProbeCase::PointerMovement
+        | NativeMouseProbeCase::PointerBoundary
+        | NativeMouseProbeCase::ScrollAxes => Value::Null,
     };
     let events_match = match case {
         NativeMouseProbeCase::PointerMovement => {
