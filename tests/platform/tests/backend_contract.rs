@@ -39,6 +39,7 @@ fn probe(backend: &str, operation: &str) -> Value {
     let output = if matches!(
         operation,
         "keyboard-native-input"
+            | "keyboard-modifier-input"
             | "mouse-native-input"
             | "mouse-buttons-input"
             | "mouse-motion-input"
@@ -118,6 +119,7 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
         log_external_x11_focus_at_ready(backend);
         let injection = match operation {
             "keyboard-native-input" => inject_key_a(),
+            "keyboard-modifier-input" => inject_key_shift_a(),
             "mouse-native-input" => inject_mouse_left(),
             "mouse-buttons-input" => {
                 let button_limit = match backend {
@@ -131,7 +133,7 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
                 inject_mouse_buttons(button_limit)
             }
             "mouse-motion-input" => inject_mouse_motion(),
-            "mouse-hover-boundary-input" => inject_mouse_hover_boundary(),
+            "mouse-hover-boundary-input" => inject_mouse_hover_boundary(backend),
             "mouse-scroll-input" => inject_mouse_scroll(),
             value => Err(format!("unsupported native input operation: {value}")),
         };
@@ -553,7 +555,7 @@ fn input_injector_name(backend: &str) -> Result<&'static str, String> {
 }
 
 #[cfg(target_os = "linux")]
-fn inject_key_a() -> Result<(), String> {
+fn inject_key_sequence(shifted: bool) -> Result<(), String> {
     use x11rb::{
         connection::Connection as _,
         protocol::{
@@ -564,6 +566,7 @@ fn inject_key_a() -> Result<(), String> {
 
     const XK_A: u32 = 0x0041;
     const XK_A_LOWER: u32 = 0x0061;
+    const XK_SHIFT_L: u32 = 0xffe1;
 
     let (connection, _) = x11rb::connect(None)
         .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
@@ -586,29 +589,86 @@ fn inject_key_a() -> Result<(), String> {
     if keysyms_per_keycode == 0 {
         return Err("X11 returned an empty keyboard mapping".to_owned());
     }
-    let keycode_offset = mapping
+    let keycode_for_keysym = |keysym: u32, name: &str| -> Result<u8, String> {
+        let keycode_offset = mapping
+            .keysyms
+            .chunks(keysyms_per_keycode)
+            .position(|keysyms| keysyms.contains(&keysym))
+            .ok_or_else(|| format!("X11 keyboard mapping has no {name} keysym"))?;
+        let keycode = u16::from(setup.min_keycode)
+            + u16::try_from(keycode_offset)
+                .map_err(|_| format!("X11 {name} keycode offset is too large"))?;
+        u8::try_from(keycode).map_err(|_| format!("X11 {name} keycode is invalid"))
+    };
+    let a_keycode = mapping
         .keysyms
         .chunks(keysyms_per_keycode)
         .position(|keysyms| keysyms.contains(&XK_A) || keysyms.contains(&XK_A_LOWER))
         .ok_or_else(|| "X11 keyboard mapping has no A keysym".to_owned())?;
-    let keycode = u16::from(setup.min_keycode)
-        + u16::try_from(keycode_offset)
-            .map_err(|_| "X11 A keycode offset is too large".to_owned())?;
-    let keycode = u8::try_from(keycode).map_err(|_| "X11 A keycode is invalid".to_owned())?;
+    let a_keycode = u16::from(setup.min_keycode)
+        + u16::try_from(a_keycode).map_err(|_| "X11 A keycode offset is too large".to_owned())?;
+    let a_keycode = u8::try_from(a_keycode).map_err(|_| "X11 A keycode is invalid".to_owned())?;
+    let shift_keycode = if shifted {
+        Some(keycode_for_keysym(XK_SHIFT_L, "left Shift")?)
+    } else {
+        None
+    };
+    let mut sequence = Vec::with_capacity(if shifted { 4 } else { 2 });
+    if let Some(shift_keycode) = shift_keycode {
+        sequence.push((KEY_PRESS_EVENT, shift_keycode, "left Shift press"));
+    }
+    sequence.extend([
+        (KEY_PRESS_EVENT, a_keycode, "A press"),
+        (KEY_RELEASE_EVENT, a_keycode, "A release"),
+    ]);
+    if let Some(shift_keycode) = shift_keycode {
+        sequence.push((KEY_RELEASE_EVENT, shift_keycode, "left Shift release"));
+    }
 
-    connection
-        .xtest_fake_input(KEY_PRESS_EVENT, keycode, 0, 0, 0, 0, 0)
-        .map_err(|error| format!("failed to enqueue XTEST A press: {error}"))?
-        .check()
-        .map_err(|error| format!("XTEST A press failed: {error}"))?;
-    connection
-        .xtest_fake_input(KEY_RELEASE_EVENT, keycode, 0, 0, 0, 0, 0)
-        .map_err(|error| format!("failed to enqueue XTEST A release: {error}"))?
-        .check()
-        .map_err(|error| format!("XTEST A release failed: {error}"))?;
+    let fake_key = |event_type, keycode, name: &str| {
+        connection
+            .xtest_fake_input(event_type, keycode, 0, 0, 0, 0, 0)
+            .map_err(|error| format!("failed to enqueue XTEST {name}: {error}"))?
+            .check()
+            .map_err(|error| format!("XTEST {name} failed: {error}"))
+    };
+    let mut pressed_keys = Vec::new();
+    for (event_type, keycode, name) in sequence {
+        if let Err(error) = fake_key(event_type, keycode, name) {
+            let mut cleanup_errors = Vec::new();
+            for pressed_key in pressed_keys.iter().rev().copied() {
+                if let Err(cleanup_error) =
+                    fake_key(KEY_RELEASE_EVENT, pressed_key, "held-key cleanup release")
+                {
+                    cleanup_errors.push(cleanup_error);
+                }
+            }
+            let _ = connection.flush();
+            return Err(if cleanup_errors.is_empty() {
+                format!("{error}; held-key cleanup succeeded")
+            } else {
+                format!("{error}; held-key cleanup failed: {cleanup_errors:?}")
+            });
+        }
+        if event_type == KEY_PRESS_EVENT {
+            pressed_keys.push(keycode);
+        } else {
+            pressed_keys.retain(|pressed_key| *pressed_key != keycode);
+        }
+    }
     connection
         .flush()
         .map_err(|error| format!("failed to flush XTEST input: {error}"))
+}
+
+#[cfg(target_os = "linux")]
+fn inject_key_a() -> Result<(), String> {
+    inject_key_sequence(false)
+}
+
+#[cfg(target_os = "linux")]
+fn inject_key_shift_a() -> Result<(), String> {
+    inject_key_sequence(true)
 }
 
 #[cfg(target_os = "linux")]
@@ -826,7 +886,7 @@ fn inject_mouse_motion() -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
-fn inject_mouse_hover_boundary() -> Result<(), String> {
+fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     use x11rb::{
         connection::Connection as _,
         protocol::{
@@ -853,6 +913,30 @@ fn inject_mouse_hover_boundary() -> Result<(), String> {
         .map_err(|_| "X11 screen width does not fit an XTEST coordinate".to_owned())?;
     let max_y = i16::try_from(screen.height_in_pixels.saturating_sub(1))
         .map_err(|_| "X11 screen height does not fit an XTEST coordinate".to_owned())?;
+    let outside_weston_bounds = if backend == "wayland" {
+        let weston = weston_x11_window(&connection, root)?
+            .ok_or_else(|| "could not locate the parent Weston X11 window".to_owned())?;
+        let geometry = connection
+            .get_geometry(weston)
+            .map_err(|error| format!("failed to request Weston window geometry: {error}"))?
+            .reply()
+            .map_err(|error| format!("failed to read Weston window geometry: {error}"))?;
+        let origin = connection
+            .translate_coordinates(weston, root, 0, 0)
+            .map_err(|error| format!("failed to request Weston screen position: {error}"))?
+            .reply()
+            .map_err(|error| format!("failed to read Weston screen position: {error}"))?;
+        let left = i32::from(origin.dst_x);
+        let top = i32::from(origin.dst_y);
+        Some((
+            left,
+            top,
+            left + i32::from(geometry.width.saturating_sub(1)),
+            top + i32::from(geometry.height.saturating_sub(1)),
+        ))
+    } else {
+        None
+    };
     let pointer = connection
         .query_pointer(root)
         .map_err(|error| format!("failed to request the parent pointer position: {error}"))?
@@ -861,12 +945,24 @@ fn inject_mouse_hover_boundary() -> Result<(), String> {
     let original = (pointer.root_x, pointer.root_y);
     let target = [(0, 0), (max_x, 0), (0, max_y), (max_x, max_y)]
         .into_iter()
+        .filter(|(x, y)| match outside_weston_bounds {
+            Some((left, top, right, bottom)) => {
+                let (x, y) = (i32::from(*x), i32::from(*y));
+                x < left || x > right || y < top || y > bottom
+            }
+            None => true,
+        })
         .max_by_key(|(x, y)| {
             let dx = i64::from(*x) - i64::from(original.0);
             let dy = i64::from(*y) - i64::from(original.1);
             dx * dx + dy * dy
         })
-        .ok_or_else(|| "X11 screen has no pointer boundary target".to_owned())?;
+        .ok_or_else(|| match outside_weston_bounds {
+            Some(bounds) => {
+                format!("no X11 screen corner lies outside the parent Weston window {bounds:?}")
+            }
+            None => "X11 screen has no pointer boundary target".to_owned(),
+        })?;
     let move_to = |(x, y), label: &str| {
         connection
             .xtest_fake_input(MOTION_NOTIFY_EVENT, 0, 0, root, x, y, 0)
@@ -943,6 +1039,58 @@ fn inject_key_a() -> Result<(), String> {
             std::io::Error::last_os_error()
         ))
     }
+}
+
+#[cfg(target_os = "windows")]
+fn inject_key_shift_a() -> Result<(), String> {
+    use std::mem::size_of;
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
+        SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, VK_A, VK_LSHIFT,
+    };
+
+    let key = |virtual_key, key_up| INPUT {
+        r#type: INPUT_KEYBOARD,
+        Anonymous: INPUT_0 {
+            ki: KEYBDINPUT {
+                wVk: virtual_key,
+                dwFlags: if key_up { KEYEVENTF_KEYUP } else { 0 },
+                ..KEYBDINPUT::default()
+            },
+        },
+    };
+    let inputs = [
+        key(VK_LSHIFT, false),
+        key(VK_A, false),
+        key(VK_A, true),
+        key(VK_LSHIFT, true),
+    ];
+    let input_size = i32::try_from(size_of::<INPUT>())
+        .map_err(|_| "Win32 INPUT size does not fit i32".to_owned())?;
+    // SAFETY: `inputs` contains four initialized keyboard INPUT records and remains alive for the
+    // duration of the call. `input_size` is the exact size of one INPUT record.
+    let sent = unsafe { SendInput(4, inputs.as_ptr(), input_size) };
+    if sent == 4 {
+        return Ok(());
+    }
+
+    let input_error = std::io::Error::last_os_error();
+    let cleanup: Vec<INPUT> = match sent {
+        1 => vec![key(VK_LSHIFT, true)],
+        2 => vec![key(VK_A, true), key(VK_LSHIFT, true)],
+        3 => vec![key(VK_LSHIFT, true)],
+        _ => Vec::new(),
+    };
+    let cleanup_sent = if cleanup.is_empty() {
+        0
+    } else {
+        // SAFETY: `cleanup` contains initialized key-up records and remains alive for the call.
+        // Its length is bounded by two, which fits the Win32 `u32` record count.
+        unsafe { SendInput(cleanup.len() as u32, cleanup.as_ptr(), input_size) }
+    };
+    Err(format!(
+        "SendInput inserted {sent}/4 Shift+A events; cleanup inserted {cleanup_sent}/{} key-up events: {input_error}",
+        cleanup.len()
+    ))
 }
 
 #[cfg(target_os = "windows")]
@@ -1145,7 +1293,7 @@ fn inject_mouse_motion() -> Result<(), String> {
 }
 
 #[cfg(target_os = "windows")]
-fn inject_mouse_hover_boundary() -> Result<(), String> {
+fn inject_mouse_hover_boundary(_backend: &str) -> Result<(), String> {
     use windows_sys::Win32::{
         Foundation::POINT,
         UI::WindowsAndMessaging::{
@@ -1318,7 +1466,7 @@ fn inject_mouse_motion() -> Result<(), String> {
 }
 
 #[cfg(target_os = "macos")]
-fn inject_mouse_hover_boundary() -> Result<(), String> {
+fn inject_mouse_hover_boundary(_backend: &str) -> Result<(), String> {
     use std::ffi::c_void;
 
     type CGEventRef = *mut c_void;
@@ -1405,7 +1553,7 @@ fn inject_mouse_motion() -> Result<(), String> {
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
-fn inject_mouse_hover_boundary() -> Result<(), String> {
+fn inject_mouse_hover_boundary(_backend: &str) -> Result<(), String> {
     Err("native pointer hover-boundary injection is unsupported on this OS".to_owned())
 }
 
@@ -1458,6 +1606,64 @@ fn inject_key_a() -> Result<(), String> {
         CGEventPost(CG_HID_EVENT_TAP, release);
         CFRelease(press);
         CFRelease(release);
+    }
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn inject_key_shift_a() -> Result<(), String> {
+    use std::ffi::c_void;
+
+    type CGEventRef = *mut c_void;
+    const CG_HID_EVENT_TAP: u32 = 0;
+    const ANSI_A_KEYCODE: u16 = 0;
+    const LEFT_SHIFT_KEYCODE: u16 = 56;
+
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        fn CGEventCreateKeyboardEvent(
+            source: *mut c_void,
+            virtual_key: u16,
+            key_down: bool,
+        ) -> CGEventRef;
+        fn CGEventPost(tap: u32, event: CGEventRef);
+    }
+    #[link(name = "CoreFoundation", kind = "framework")]
+    extern "C" {
+        fn CFRelease(value: *const c_void);
+    }
+
+    let sequence = [
+        (LEFT_SHIFT_KEYCODE, true, "left Shift press"),
+        (ANSI_A_KEYCODE, true, "A press"),
+        (ANSI_A_KEYCODE, false, "A release"),
+        (LEFT_SHIFT_KEYCODE, false, "left Shift release"),
+    ];
+    let mut events = Vec::with_capacity(sequence.len());
+    for (keycode, key_down, name) in sequence {
+        // SAFETY: A null source requests the default event source; keycodes and down states are
+        // valid CoreGraphics keyboard event parameters.
+        let event = unsafe { CGEventCreateKeyboardEvent(std::ptr::null_mut(), keycode, key_down) };
+        if event.is_null() {
+            // SAFETY: Previously created events are live retained CoreFoundation references.
+            unsafe {
+                for event in events {
+                    CFRelease(event);
+                }
+            }
+            return Err(format!(
+                "CGEventCreateKeyboardEvent returned null for {name}"
+            ));
+        }
+        events.push(event);
+    }
+
+    // SAFETY: Each event is a valid retained keyboard event and stays live until after posting.
+    unsafe {
+        for event in events {
+            CGEventPost(CG_HID_EVENT_TAP, event);
+            CFRelease(event);
+        }
     }
     Ok(())
 }
@@ -1646,6 +1852,11 @@ fn inject_key_a() -> Result<(), String> {
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+fn inject_key_shift_a() -> Result<(), String> {
+    Err("native modifier-key injection is unsupported on this OS".to_owned())
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
 fn inject_mouse_left() -> Result<(), String> {
     Err("native mouse input injection is unsupported on this OS".to_owned())
 }
@@ -1668,6 +1879,7 @@ fn selected_backend_contract() {
             "get-opacity",
             "iconify",
             "keyboard-native-input",
+            "keyboard-modifier-input",
             "mouse-native-input",
             "mouse-motion-input",
             "mouse-hover-boundary-input",
@@ -1688,6 +1900,7 @@ fn selected_backend_contract() {
             "maximize",
             "focus",
             "keyboard-native-input",
+            "keyboard-modifier-input",
             "mouse-native-input",
             "mouse-motion-input",
             "mouse-hover-boundary-input",
@@ -1705,6 +1918,7 @@ fn selected_backend_contract() {
             "get-position",
             "focus",
             "keyboard-native-input",
+            "keyboard-modifier-input",
             "mouse-native-input",
             "mouse-buttons-input",
             "mouse-motion-input",
@@ -1733,6 +1947,7 @@ fn assert_operation_contract(backend: &str, operation: &str, record: &Value) {
             assert_keyboard_wait(record);
         }
         "keyboard-native-input" => assert_native_keyboard_input(record),
+        "keyboard-modifier-input" => assert_native_keyboard_modifier_input(record),
         "mouse-native-input" => assert_native_mouse_input(record),
         "mouse-motion-input" => assert_native_mouse_motion(record),
         "mouse-hover-boundary-input" => assert_native_mouse_hover_boundary(record),
@@ -1826,10 +2041,20 @@ fn assert_native_keyboard_input(record: &Value) {
     assert_eq!(record["value"]["qualified"], true);
     assert_eq!(record["value"]["stage"], "input");
     assert_eq!(record["value"]["focused"], true);
+    assert_eq!(record["value"]["case"], "a-press-release");
     assert_eq!(
         record["value"]["actions"],
         serde_json::json!(["Press", "Release"])
     );
+    let events = record["value"]["observed_events"]
+        .as_array()
+        .expect("native keyboard events should be an array");
+    assert_eq!(events.len(), 2);
+    for (event, action) in events.iter().zip(["Press", "Release"]) {
+        assert_eq!(event["key"], "A");
+        assert_eq!(event["action"], action);
+        assert_eq!(event["modifiers"], 0);
+    }
     assert_eq!(record["value"]["final_state"], "Release");
     let expected_injector = match record["backend_actual"].as_str() {
         Some("x11") => "x11-xtest",
@@ -1844,6 +2069,62 @@ fn assert_native_keyboard_input(record: &Value) {
         .expect("native input scancodes should be an array");
     assert_eq!(scancodes.len(), 2);
     assert_eq!(scancodes[0], scancodes[1]);
+    assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+}
+
+fn assert_native_keyboard_modifier_input(record: &Value) {
+    assert_eq!(record["value"]["qualified"], true);
+    assert_eq!(record["value"]["stage"], "input");
+    assert_eq!(record["value"]["focused"], true);
+    assert_eq!(record["value"]["case"], "shift-a-press-release");
+    let events = record["value"]["observed_events"]
+        .as_array()
+        .expect("native modifier events should be an array");
+    assert_eq!(events.len(), 4);
+    for (event, (key, action)) in events.iter().zip([
+        ("LeftShift", "Press"),
+        ("A", "Press"),
+        ("A", "Release"),
+        ("LeftShift", "Release"),
+    ]) {
+        assert_eq!(event["key"], key);
+        assert_eq!(event["action"], action);
+    }
+    let shift_mask = i64::from(glfw::Modifiers::Shift.bits());
+    let standard_modifier_mask = i64::from(
+        (glfw::Modifiers::Shift
+            | glfw::Modifiers::Control
+            | glfw::Modifiers::Alt
+            | glfw::Modifiers::Super)
+            .bits(),
+    );
+    for event in [&events[1], &events[2]] {
+        let modifiers = event["modifiers"]
+            .as_i64()
+            .expect("modified A event should report a modifier mask");
+        assert_eq!(modifiers & standard_modifier_mask, shift_mask);
+    }
+    let scancodes: Vec<_> = events
+        .iter()
+        .map(|event| {
+            event["scancode"]
+                .as_i64()
+                .expect("native key events should report scancodes")
+        })
+        .collect();
+    assert_eq!(scancodes[0], scancodes[3], "Shift scancode must be stable");
+    assert_eq!(scancodes[1], scancodes[2], "A scancode must be stable");
+    assert_eq!(record["value"]["final_state"], "Release");
+    assert_eq!(record["value"]["left_shift_final_state"], "Release");
+    assert_eq!(record["value"]["failure_reason"], Value::Null);
+    let expected_injector = match record["backend_actual"].as_str() {
+        Some("x11") => "x11-xtest",
+        Some("wayland") => "x11-xtest-parent",
+        Some("win32") => "send-input",
+        Some("cocoa") => "cg-event-post",
+        value => panic!("unexpected native modifier backend: {value:?}"),
+    };
+    assert_eq!(record["value"]["injector"], expected_injector);
     assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
 }
 

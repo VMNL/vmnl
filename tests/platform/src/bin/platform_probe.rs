@@ -126,17 +126,16 @@ fn main() -> ExitCode {
     }
 
     glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
-    let native_input =
-        matches!(operation.as_str(), "keyboard-native-input") || is_mouse_native_input(&operation);
-    if actual == glfw::Platform::Wayland
-        && native_input
-        && operation != "mouse-hover-boundary-input"
-    {
+    let native_input = matches!(
+        operation.as_str(),
+        "keyboard-native-input" | "keyboard-modifier-input"
+    ) || is_mouse_native_input(&operation);
+    if actual == glfw::Platform::Wayland && native_input {
         glfw.window_hint(WindowHint::Maximized(true));
     }
     let visible = matches!(
         operation.as_str(),
-        "keyboard-native-input" | "sticky-keys-manual"
+        "keyboard-native-input" | "keyboard-modifier-input" | "sticky-keys-manual"
     ) || is_mouse_native_input(&operation);
     glfw.window_hint(WindowHint::Visible(visible));
     let Some((mut window, events)) =
@@ -244,7 +243,12 @@ fn main() -> ExitCode {
         "keyboard-wait-events-timeout-then-poll" => {
             keyboard_wait_then_poll(&mut glfw, &mut window, &events, Some(0.001))
         }
-        "keyboard-native-input" => native_keyboard_input(&mut glfw, &mut window, &events, actual),
+        "keyboard-native-input" => {
+            native_keyboard_input(&mut glfw, &mut window, &events, actual, false)
+        }
+        "keyboard-modifier-input" => {
+            native_keyboard_input(&mut glfw, &mut window, &events, actual, true)
+        }
         "mouse-native-input" => native_mouse_input(
             &mut glfw,
             &mut window,
@@ -587,6 +591,7 @@ fn native_keyboard_input(
     window: &mut glfw::PWindow,
     events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
     platform: glfw::Platform,
+    shifted: bool,
 ) -> Value {
     window.set_key_polling(true);
     window.show();
@@ -650,32 +655,95 @@ fn native_keyboard_input(
         });
     }
 
+    let expected_event_count = if shifted { 4 } else { 2 };
     let input_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
-    let mut actions = Vec::new();
-    let mut scancodes = Vec::new();
-    while actions.as_slice() != ["Press", "Release"] && Instant::now() < input_deadline {
+    let mut observed_events = Vec::new();
+    while observed_events.len() < expected_event_count && Instant::now() < input_deadline {
         glfw.wait_events_timeout(0.01);
         for (_, event) in glfw::flush_messages(events) {
-            if let glfw::WindowEvent::Key(glfw::Key::A, scancode, action, _) = event {
-                actions.push(format!("{action:?}"));
-                scancodes.push(scancode);
+            if let glfw::WindowEvent::Key(key, scancode, action, modifiers) = event {
+                observed_events.push(json!({
+                    "key": format!("{key:?}"),
+                    "action": format!("{action:?}"),
+                    "scancode": scancode,
+                    "modifiers": modifiers.bits(),
+                }));
             }
         }
     }
 
-    let qualified = actions.as_slice() == ["Press", "Release"]
-        && scancodes.len() == 2
-        && scancodes[0] == scancodes[1]
-        && window.get_key(glfw::Key::A) == glfw::Action::Release;
+    let action_names: Vec<_> = observed_events
+        .iter()
+        .filter_map(|event| event["action"].as_str())
+        .collect();
+    let scancodes: Vec<_> = observed_events
+        .iter()
+        .filter_map(|event| event["scancode"].as_i64())
+        .collect();
+    let shift_bits = i64::from(glfw::Modifiers::Shift.bits());
+    let standard_modifier_bits = i64::from(
+        (glfw::Modifiers::Shift
+            | glfw::Modifiers::Control
+            | glfw::Modifiers::Alt
+            | glfw::Modifiers::Super)
+            .bits(),
+    );
+    let events_match = if shifted {
+        observed_events.len() == 4
+            && observed_events[0]["key"] == "LeftShift"
+            && observed_events[0]["action"] == "Press"
+            && observed_events[1]["key"] == "A"
+            && observed_events[1]["action"] == "Press"
+            && observed_events[1]["modifiers"]
+                .as_i64()
+                .is_some_and(|bits| bits & standard_modifier_bits == shift_bits)
+            && observed_events[2]["key"] == "A"
+            && observed_events[2]["action"] == "Release"
+            && observed_events[2]["modifiers"]
+                .as_i64()
+                .is_some_and(|bits| bits & standard_modifier_bits == shift_bits)
+            && observed_events[3]["key"] == "LeftShift"
+            && observed_events[3]["action"] == "Release"
+            && scancodes.len() == 4
+            && scancodes[0] == scancodes[3]
+            && scancodes[1] == scancodes[2]
+    } else {
+        observed_events.len() == 2
+            && observed_events[0]["key"] == "A"
+            && observed_events[0]["action"] == "Press"
+            && observed_events[0]["modifiers"] == 0
+            && observed_events[1]["key"] == "A"
+            && observed_events[1]["action"] == "Release"
+            && observed_events[1]["modifiers"] == 0
+            && scancodes.len() == 2
+            && scancodes[0] == scancodes[1]
+    };
+    let final_key_state = window.get_key(glfw::Key::A);
+    let final_shift_state = window.get_key(glfw::Key::LeftShift);
+    let final_states_match = final_key_state == glfw::Action::Release
+        && (!shifted || final_shift_state == glfw::Action::Release);
+    let qualified = window.is_focused() && events_match && final_states_match;
     json!({
         "qualified": qualified,
         "stage": "input",
         "focused": window.is_focused(),
         "injector": env::var("VMNL_PLATFORM_INPUT_INJECTOR")
             .unwrap_or_else(|_| "unknown".to_owned()),
-        "actions": actions,
+        "case": if shifted { "shift-a-press-release" } else { "a-press-release" },
+        "observed_events": observed_events,
+        "actions": action_names,
         "scancodes": scancodes,
-        "final_state": format!("{:?}", window.get_key(glfw::Key::A)),
+        "final_state": format!("{:?}", final_key_state),
+        "left_shift_final_state": if shifted {
+            json!(format!("{:?}", final_shift_state))
+        } else {
+            Value::Null
+        },
+        "failure_reason": if qualified {
+            Value::Null
+        } else {
+            json!(format!("expected the {} keyboard event sequence", if shifted { "Shift+A" } else { "A" }))
+        },
     })
 }
 
