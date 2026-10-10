@@ -90,7 +90,7 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
             }
         )
     })?;
-    assert_mouse_button_event(&mouse_press_events, true)?;
+    assert_mouse_button_event(&mouse_press_events, MouseButton::Left, true)?;
     assert!(window.input().mouse().is_down(MouseButton::Left));
     assert!(window.input().mouse().is_pressed(MouseButton::Left));
     assert!(!window.input().mouse().is_released(MouseButton::Left));
@@ -105,10 +105,47 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
             }
         )
     })?;
-    assert_mouse_button_event(&mouse_release_events, false)?;
+    assert_mouse_button_event(&mouse_release_events, MouseButton::Left, false)?;
     assert!(!window.input().mouse().is_down(MouseButton::Left));
     assert!(!window.input().mouse().is_pressed(MouseButton::Left));
     assert!(window.input().mouse().is_released(MouseButton::Left));
+
+    for (x11_button, vmnl_button) in [
+        (2, MouseButton::Middle),
+        (3, MouseButton::Right),
+        (8, MouseButton::Button4),
+        (9, MouseButton::Button5),
+        (10, MouseButton::Button6),
+        (11, MouseButton::Button7),
+        (12, MouseButton::Button8),
+    ] {
+        let name = format!("{vmnl_button:?}");
+        injector
+            .press_mouse_button(x11_button)
+            .map_err(invalid_state)?;
+        let press_events = poll_until(
+            &mut window,
+            &format!("{name} mouse button press"),
+            |kind| matches!(kind, EventKind::MouseButtonPressed { button, .. } if *button == vmnl_button),
+        )?;
+        assert_mouse_button_event(&press_events, vmnl_button, true)?;
+        assert!(window.input().mouse().is_down(vmnl_button));
+        assert!(window.input().mouse().is_pressed(vmnl_button));
+        assert!(!window.input().mouse().is_released(vmnl_button));
+
+        injector
+            .release_mouse_button(x11_button)
+            .map_err(invalid_state)?;
+        let release_events = poll_until(
+            &mut window,
+            &format!("{name} mouse button release"),
+            |kind| matches!(kind, EventKind::MouseButtonReleased { button, .. } if *button == vmnl_button),
+        )?;
+        assert_mouse_button_event(&release_events, vmnl_button, false)?;
+        assert!(!window.input().mouse().is_down(vmnl_button));
+        assert!(!window.input().mouse().is_pressed(vmnl_button));
+        assert!(window.input().mouse().is_released(vmnl_button));
+    }
 
     injector.scroll_vertical_up().map_err(invalid_state)?;
     let scroll_up_events = poll_until(
@@ -223,28 +260,22 @@ fn assert_key_release(events: &[Event], expected_scancode: i32) -> VMNLResult<()
     Ok(())
 }
 
-fn assert_mouse_button_event(events: &[Event], pressed: bool) -> VMNLResult<()> {
+fn assert_mouse_button_event(
+    events: &[Event],
+    expected_button: MouseButton,
+    pressed: bool,
+) -> VMNLResult<()> {
     let matching = events.iter().filter(|event| match (pressed, event.kind()) {
-        (
-            true,
-            EventKind::MouseButtonPressed {
-                button: MouseButton::Left,
-                modifiers,
-            },
-        )
-        | (
-            false,
-            EventKind::MouseButtonReleased {
-                button: MouseButton::Left,
-                modifiers,
-            },
-        ) => modifiers.is_empty(),
+        (true, EventKind::MouseButtonPressed { button, modifiers })
+        | (false, EventKind::MouseButtonReleased { button, modifiers }) => {
+            *button == expected_button && modifiers.is_empty()
+        }
         _ => false,
     });
     if matching.count() != 1 {
         return Err(invalid_state(format!(
-            "expected one left mouse button {} event: {events:?}",
-            if pressed { "press" } else { "release" }
+            "expected one {expected_button:?} mouse button {} event: {events:?}",
+            if pressed { "press" } else { "release" },
         )));
     }
     Ok(())
@@ -275,7 +306,7 @@ struct X11Injector {
     connection: x11rb::rust_connection::RustConnection,
     a_keycode: u8,
     key_is_down: bool,
-    left_button_is_down: bool,
+    mouse_button_is_down: Option<u8>,
     scroll_button_is_down: Option<u8>,
 }
 
@@ -323,7 +354,7 @@ impl X11Injector {
             connection,
             a_keycode,
             key_is_down: false,
-            left_button_is_down: false,
+            mouse_button_is_down: None,
             scroll_button_is_down: None,
         })
     }
@@ -340,13 +371,21 @@ impl X11Injector {
     }
 
     fn press_left_button(&mut self) -> Result<(), String> {
-        self.left_button_is_down = true;
-        self.fake_input(BUTTON_PRESS, BUTTON_LEFT, "left mouse button press")
+        self.press_mouse_button(BUTTON_LEFT)
     }
 
     fn release_left_button(&mut self) -> Result<(), String> {
-        self.fake_input(BUTTON_RELEASE, BUTTON_LEFT, "left mouse button release")?;
-        self.left_button_is_down = false;
+        self.release_mouse_button(BUTTON_LEFT)
+    }
+
+    fn press_mouse_button(&mut self, button: u8) -> Result<(), String> {
+        self.mouse_button_is_down = Some(button);
+        self.fake_input(BUTTON_PRESS, button, "mouse button press")
+    }
+
+    fn release_mouse_button(&mut self, button: u8) -> Result<(), String> {
+        self.fake_input(BUTTON_RELEASE, button, "mouse button release")?;
+        self.mouse_button_is_down = None;
         Ok(())
     }
 
@@ -393,8 +432,8 @@ impl Drop for X11Injector {
         if self.key_is_down {
             let _ = self.fake_input(KEY_RELEASE, self.a_keycode, "cleanup A key release");
         }
-        if self.left_button_is_down {
-            let _ = self.fake_input(BUTTON_RELEASE, BUTTON_LEFT, "cleanup mouse release");
+        if let Some(button) = self.mouse_button_is_down {
+            let _ = self.fake_input(BUTTON_RELEASE, button, "cleanup mouse release");
         }
         if let Some(button) = self.scroll_button_is_down {
             let _ = self.fake_input(BUTTON_RELEASE, button, "cleanup scroll release");

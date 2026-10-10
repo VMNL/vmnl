@@ -24,13 +24,19 @@ const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
 static READY_FILE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 fn is_mouse_native_input(operation: &str) -> bool {
-    matches!(operation, "mouse-native-input" | "mouse-scroll-input")
+    matches!(
+        operation,
+        "mouse-native-input" | "mouse-buttons-input" | "mouse-scroll-input"
+    )
 }
 
 fn probe(backend: &str, operation: &str) -> Value {
     let output = if matches!(
         operation,
-        "keyboard-native-input" | "mouse-native-input" | "mouse-scroll-input"
+        "keyboard-native-input"
+            | "mouse-native-input"
+            | "mouse-buttons-input"
+            | "mouse-scroll-input"
     ) {
         native_input_probe(backend, operation).expect("native input probe should complete")
     } else {
@@ -90,6 +96,7 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
         let injection = match operation {
             "keyboard-native-input" => inject_key_a(),
             "mouse-native-input" => inject_mouse_left(),
+            "mouse-buttons-input" => inject_mouse_buttons(),
             "mouse-scroll-input" => inject_mouse_scroll(),
             value => Err(format!("unsupported native input operation: {value}")),
         };
@@ -610,6 +617,58 @@ fn inject_mouse_left() -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
+fn inject_mouse_buttons() -> Result<(), String> {
+    use x11rb::{
+        connection::Connection as _,
+        protocol::{xproto::BUTTON_PRESS_EVENT, xtest::ConnectionExt as _},
+    };
+
+    let (connection, _) = x11rb::connect(None)
+        .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
+    connection
+        .xtest_get_version(2, 2)
+        .map_err(|error| format!("failed to query XTEST: {error}"))?
+        .reply()
+        .map_err(|error| format!("XTEST is unavailable: {error}"))?;
+
+    for (button, name) in [
+        (1, "GLFW button 1 (left)"),
+        (2, "X11 button 2 / GLFW button 3 (middle)"),
+        (3, "X11 button 3 / GLFW button 2 (right)"),
+        (8, "GLFW button 4"),
+        (9, "GLFW button 5"),
+        (10, "GLFW button 6"),
+        (11, "GLFW button 7"),
+        (12, "GLFW button 8"),
+    ] {
+        let press = connection
+            .xtest_fake_input(BUTTON_PRESS_EVENT, button, 0, 0, 0, 0, 0)
+            .map_err(|error| format!("failed to enqueue XTEST {name} press: {error}"))?
+            .check()
+            .map_err(|error| format!("XTEST {name} press failed: {error}"));
+        if let Err(error) = press {
+            let cleanup = inject_x11_button_release(&connection, button, name);
+            return Err(match cleanup {
+                Ok(()) => format!("{error}; cleanup release succeeded"),
+                Err(cleanup) => format!("{error}; cleanup release failed: {cleanup}"),
+            });
+        }
+
+        if let Err(error) = inject_x11_button_release(&connection, button, name) {
+            let cleanup = inject_x11_button_release(&connection, button, name);
+            return Err(match cleanup {
+                Ok(()) => format!("{error}; cleanup release retry succeeded"),
+                Err(cleanup) => format!("{error}; cleanup release retry failed: {cleanup}"),
+            });
+        }
+    }
+
+    connection
+        .flush()
+        .map_err(|error| format!("failed to flush XTEST mouse buttons: {error}"))
+}
+
+#[cfg(target_os = "linux")]
 fn inject_mouse_scroll() -> Result<(), String> {
     use x11rb::{
         connection::Connection as _,
@@ -773,6 +832,14 @@ fn inject_mouse_left() -> Result<(), String> {
 #[cfg(not(target_os = "linux"))]
 fn inject_mouse_scroll() -> Result<(), String> {
     Err("mouse scroll injection is implemented only with XTEST on X11".to_owned())
+}
+
+#[cfg(not(target_os = "linux"))]
+fn inject_mouse_buttons() -> Result<(), String> {
+    Err(
+        "eligible mouse-button injection is currently implemented only with XTEST on X11"
+            .to_owned(),
+    )
 }
 
 #[cfg(target_os = "macos")]
@@ -943,6 +1010,7 @@ fn selected_backend_contract() {
             "iconify",
             "keyboard-native-input",
             "mouse-native-input",
+            "mouse-buttons-input",
             "mouse-scroll-input",
         ],
         "x11" => &[
@@ -960,6 +1028,7 @@ fn selected_backend_contract() {
             "focus",
             "keyboard-native-input",
             "mouse-native-input",
+            "mouse-buttons-input",
             "mouse-scroll-input",
         ],
         "win32" | "cocoa" => &[
@@ -998,6 +1067,7 @@ fn assert_operation_contract(backend: &str, operation: &str, record: &Value) {
         }
         "keyboard-native-input" => assert_native_keyboard_input(record),
         "mouse-native-input" => assert_native_mouse_input(record),
+        "mouse-buttons-input" => assert_native_mouse_buttons_input(record),
         "mouse-scroll-input" => assert_native_mouse_scroll_input(record),
         _ => {}
     }
@@ -1129,6 +1199,49 @@ fn assert_native_mouse_input(record: &Value) {
         Some("win32") => "send-input",
         Some("cocoa") => "cg-event-post",
         value => panic!("unexpected mouse input backend: {value:?}"),
+    };
+    assert_eq!(record["value"]["injector"], expected_injector);
+}
+
+fn assert_native_mouse_buttons_input(record: &Value) {
+    assert_eq!(record["value"]["qualified"], true);
+    assert_eq!(record["value"]["stage"], "input");
+    assert_eq!(record["value"]["focused"], true);
+    assert_eq!(record["value"]["hovered"], true);
+    assert_eq!(
+        record["value"]["observed_events"],
+        serde_json::json!([
+            {"button": "Button1", "action": "Press", "modifiers": 0},
+            {"button": "Button1", "action": "Release", "modifiers": 0},
+            {"button": "Button3", "action": "Press", "modifiers": 0},
+            {"button": "Button3", "action": "Release", "modifiers": 0},
+            {"button": "Button2", "action": "Press", "modifiers": 0},
+            {"button": "Button2", "action": "Release", "modifiers": 0},
+            {"button": "Button4", "action": "Press", "modifiers": 0},
+            {"button": "Button4", "action": "Release", "modifiers": 0},
+            {"button": "Button5", "action": "Press", "modifiers": 0},
+            {"button": "Button5", "action": "Release", "modifiers": 0},
+            {"button": "Button6", "action": "Press", "modifiers": 0},
+            {"button": "Button6", "action": "Release", "modifiers": 0},
+            {"button": "Button7", "action": "Press", "modifiers": 0},
+            {"button": "Button7", "action": "Release", "modifiers": 0},
+            {"button": "Button8", "action": "Press", "modifiers": 0},
+            {"button": "Button8", "action": "Release", "modifiers": 0},
+        ])
+    );
+    assert_eq!(
+        record["value"]["case"],
+        "eligible-mouse-buttons-press-release"
+    );
+    assert_eq!(
+        record["value"]["final_state"],
+        serde_json::json!(vec!["Release"; 8])
+    );
+    assert_eq!(record["value"]["failure_reason"], Value::Null);
+    let expected_injector = match record["backend_actual"].as_str() {
+        Some("x11") => "x11-xtest",
+        Some("wayland") => "x11-xtest-parent",
+        value => panic!("unexpected native mouse-button backend: {value:?}"),
     };
     assert_eq!(record["value"]["injector"], expected_injector);
 }
