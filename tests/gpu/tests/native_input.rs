@@ -17,6 +17,8 @@ const KEY_RELEASE: u8 = x11rb::protocol::xproto::KEY_RELEASE_EVENT;
 const BUTTON_PRESS: u8 = x11rb::protocol::xproto::BUTTON_PRESS_EVENT;
 const BUTTON_RELEASE: u8 = x11rb::protocol::xproto::BUTTON_RELEASE_EVENT;
 const BUTTON_LEFT: u8 = 1;
+const BUTTON_SCROLL_UP: u8 = 4;
+const BUTTON_SCROLL_DOWN: u8 = 5;
 
 #[test]
 #[ignore = "requires Vulkan, an X11 EWMH display, XTEST, and injects native keyboard/mouse input"]
@@ -105,6 +107,22 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
     assert!(!window.input().mouse().is_down(MouseButton::Left));
     assert!(!window.input().mouse().is_pressed(MouseButton::Left));
     assert!(window.input().mouse().is_released(MouseButton::Left));
+
+    injector.scroll_vertical_up().map_err(invalid_state)?;
+    let scroll_up_events = poll_until(
+        &mut window,
+        "vertical scroll up",
+        |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 0.0 && *dy == 1.0),
+    )?;
+    assert_mouse_scroll_event(&scroll_up_events, 1.0)?;
+
+    injector.scroll_vertical_down().map_err(invalid_state)?;
+    let scroll_down_events = poll_until(
+        &mut window,
+        "vertical scroll down",
+        |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 0.0 && *dy == -1.0),
+    )?;
+    assert_mouse_scroll_event(&scroll_down_events, -1.0)?;
 
     Ok(())
 }
@@ -210,6 +228,19 @@ fn assert_mouse_button_event(events: &[Event], pressed: bool) -> VMNLResult<()> 
     Ok(())
 }
 
+fn assert_mouse_scroll_event(events: &[Event], expected_dy: f64) -> VMNLResult<()> {
+    let mut observed = events.iter().filter_map(|event| match event.kind() {
+        EventKind::MouseScrolled { dx, dy } => Some((*dx, *dy)),
+        _ => None,
+    });
+    if observed.next() != Some((0.0, expected_dy)) || observed.next().is_some() {
+        return Err(invalid_state(format!(
+            "expected exactly one vertical scroll event with dy={expected_dy}: {events:?}"
+        )));
+    }
+    Ok(())
+}
+
 fn invalid_state(message: impl Into<String>) -> VMNLError {
     VMNLError::new(VMNLErrorKind::InvalidState(message.into()))
 }
@@ -219,6 +250,7 @@ struct X11Injector {
     a_keycode: u8,
     key_is_down: bool,
     left_button_is_down: bool,
+    scroll_button_is_down: Option<u8>,
 }
 
 impl X11Injector {
@@ -266,6 +298,7 @@ impl X11Injector {
             a_keycode,
             key_is_down: false,
             left_button_is_down: false,
+            scroll_button_is_down: None,
         })
     }
 
@@ -291,6 +324,22 @@ impl X11Injector {
         Ok(())
     }
 
+    fn scroll_vertical_up(&mut self) -> Result<(), String> {
+        self.scroll(BUTTON_SCROLL_UP, "vertical scroll up")
+    }
+
+    fn scroll_vertical_down(&mut self) -> Result<(), String> {
+        self.scroll(BUTTON_SCROLL_DOWN, "vertical scroll down")
+    }
+
+    fn scroll(&mut self, button: u8, direction: &str) -> Result<(), String> {
+        self.scroll_button_is_down = Some(button);
+        self.fake_input(BUTTON_PRESS, button, &format!("{direction} press"))?;
+        self.fake_input(BUTTON_RELEASE, button, &format!("{direction} release"))?;
+        self.scroll_button_is_down = None;
+        Ok(())
+    }
+
     fn fake_input(&self, event_type: u8, detail: u8, name: &str) -> Result<(), String> {
         use x11rb::{connection::Connection as _, protocol::xtest::ConnectionExt as _};
 
@@ -312,6 +361,9 @@ impl Drop for X11Injector {
         }
         if self.left_button_is_down {
             let _ = self.fake_input(BUTTON_RELEASE, BUTTON_LEFT, "cleanup mouse release");
+        }
+        if let Some(button) = self.scroll_button_is_down {
+            let _ = self.fake_input(BUTTON_RELEASE, button, "cleanup scroll release");
         }
     }
 }

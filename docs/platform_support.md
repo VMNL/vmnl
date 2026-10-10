@@ -13,7 +13,7 @@
 
 | Platform | CI validation | Local Justfile | Status |
 |----------|---------------|----------------|--------|
-| Ubuntu Linux | Configured: build, headless tests, GLFW Null, Weston Wayland nested in Xvfb/Openbox and Xvfb/Openbox X11, including XTEST keyboard and left-button injection. | `just input-test x11`, `just input-test wayland`, and opt-in GPU-backed `just input-test-vmnl x11`. | Blocking CI path for NoApi probes; public VMNL runtime still requires a qualified Vulkan/display run. |
+| Ubuntu Linux | Configured: build, headless tests, GLFW Null, Weston Wayland nested in Xvfb/Openbox and Xvfb/Openbox X11, including XTEST keyboard, left-button, and vertical-scroll injection. | `just input-test x11`, `just input-test wayland`, and opt-in GPU-backed `just input-test-vmnl x11`. | Blocking CI path for NoApi probes; public VMNL runtime still requires a qualified Vulkan/display run. |
 | Other Linux distributions | No distribution matrix. | Best effort. | Backend guarantees remain environment-scoped. |
 | Windows | Configured: build, headless tests and GLFW Null; visible keyboard and left-button probes with `SendInput` are experimental. | `just input-test win32` on an accessible interactive desktop. | Current workflow run required; native results are non-blocking until qualified. |
 | macOS | Configured: build, headless tests and GLFW Null; visible keyboard and left-button probes with `CGEventPost` are experimental. | `just input-test cocoa` with event-posting access. | Current workflow run required; native results are non-blocking until qualified. |
@@ -27,9 +27,10 @@ package-manager paths. CI invokes Cargo directly and never invokes the bootstrap
 - Headless verification uses `just test`; it excludes GPU/display tests.
 - GLFW portability probes use `ClientApi::NoApi`; they create no Vulkan instance, surface, or GPU resource.
 - Native keyboard probes require a focused visible window. Mouse probes also require pointer hover
-  over that window and currently synthesize only the left button. X11 requires XTEST and an EWMH
-  window manager, Windows requires an accessible desktop at the same integrity level, and macOS
-  requires event-posting access.
+  over that window. Linux X11 and nested Weston additionally synthesize vertical scroll with XTEST
+  server buttons 4/5; Windows and macOS mouse probes currently synthesize only the left button.
+  X11 requires XTEST and an EWMH window manager, Windows requires an accessible desktop at the
+  same integrity level, and macOS requires event-posting access.
 - The nested Weston probe covers XTEST → Xvfb → Weston X11 backend → Wayland client input, not a
   native Wayland `libei`, portal, or `uinput` seat.
 - Compile GPU tests without a display with `just test-gpu-compile`.

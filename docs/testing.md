@@ -94,7 +94,7 @@ just input-test cocoa
 ```
 
 The public VMNL `Window::poll_events()` → `Event`/`Input` scenario is a separate opt-in GPU test.
-It currently covers an X11 `A` press/release and left-button press/release:
+It currently covers X11 `A` and left-button press/release plus vertical scroll up/down:
 
 ```bash
 just input-test-vmnl x11
@@ -133,12 +133,14 @@ Quality (format -> Clippy)
 Each OS validation job reuses one Cargo target directory for compilation and every test stage; no
 target directory is cached or transferred between runners. Linux then forces the GLFW Wayland
 backend under Weston with Pixman nested on Xvfb with Openbox, then tests the GLFW X11 backend
-under Xvfb with Openbox. Both paths run visible keyboard and mouse probes. A separate test
-process waits for readiness, injects `A` press/release and left-button press/release through
-XTEST, and requires the exact native GLFW event sequence before timeout. The mouse case also
-requires the pointer to hover the focused window and verifies the button ends released. The
-Wayland path injects through the parent Xvfb server into Weston's X11 backend; it does not qualify
-a standalone Wayland compositor seat.
+under Xvfb with Openbox. Both paths run visible keyboard and mouse probes. Separate probe
+processes wait for readiness, inject `A` and left-button press/release through XTEST, and require
+the exact native GLFW event sequence before timeout. An additional Linux-only mouse probe injects
+vertical scroll up/down with XTEST buttons 4/5 and checks offsets `(0, +1)` then `(0, -1)`. Mouse
+probes require the pointer to hover the focused window; the button case also verifies the button
+ends released. The Wayland path injects through the parent Xvfb server into Weston's X11 backend;
+it does not qualify a standalone Wayland compositor seat. The Windows and macOS native mouse
+probe currently synthesizes only the left button.
 
 CI invokes Cargo directly for these selected backend contracts; it does not call the local
 `just input-test` recipe. Linux X11 and nested Weston runs block CI. Windows and macOS native runs

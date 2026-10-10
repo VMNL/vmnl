@@ -20,6 +20,10 @@ use vmnl_platform_tests::{backend_name, parse_backend, PROBE_SCHEMA_VERSION};
 
 const NATIVE_INPUT_TIMEOUT: Duration = Duration::from_secs(5);
 
+fn is_mouse_native_input(operation: &str) -> bool {
+    matches!(operation, "mouse-native-input" | "mouse-scroll-input")
+}
+
 fn main() -> ExitCode {
     let mut arguments = env::args().skip(1);
     let Some(requested_name) = arguments.next() else {
@@ -88,17 +92,16 @@ fn main() -> ExitCode {
     }
 
     glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
-    let native_input = matches!(
-        operation.as_str(),
-        "keyboard-native-input" | "mouse-native-input"
-    );
+    let native_input =
+        matches!(operation.as_str(), "keyboard-native-input") || is_mouse_native_input(&operation);
     if actual == glfw::Platform::Wayland && native_input {
         glfw.window_hint(WindowHint::Maximized(true));
     }
-    glfw.window_hint(WindowHint::Visible(matches!(
+    let visible = matches!(
         operation.as_str(),
-        "keyboard-native-input" | "mouse-native-input" | "sticky-keys-manual"
-    )));
+        "keyboard-native-input" | "sticky-keys-manual"
+    ) || is_mouse_native_input(&operation);
+    glfw.window_hint(WindowHint::Visible(visible));
     let Some((mut window, events)) =
         glfw.create_window(160, 120, "VMNL platform probe", WindowMode::Windowed)
     else {
@@ -205,7 +208,20 @@ fn main() -> ExitCode {
             keyboard_wait_then_poll(&mut glfw, &mut window, &events, Some(0.001))
         }
         "keyboard-native-input" => native_keyboard_input(&mut glfw, &mut window, &events, actual),
-        "mouse-native-input" => native_mouse_input(&mut glfw, &mut window, &events, actual),
+        "mouse-native-input" => native_mouse_input(
+            &mut glfw,
+            &mut window,
+            &events,
+            actual,
+            NativeMouseProbeCase::LeftButton,
+        ),
+        "mouse-scroll-input" => native_mouse_input(
+            &mut glfw,
+            &mut window,
+            &events,
+            actual,
+            NativeMouseProbeCase::VerticalScroll,
+        ),
         "sticky-keys-manual" => manual_sticky_keys(&mut glfw, &mut window, &events, actual),
         "raw-mouse-motion" => {
             let supported = glfw.supports_raw_motion();
@@ -237,10 +253,11 @@ fn main() -> ExitCode {
         }
     };
 
-    let operation_succeeded = !matches!(
+    let operation_succeeded = !(matches!(
         operation.as_str(),
-        "keyboard-native-input" | "mouse-native-input" | "sticky-keys-manual"
-    ) || value["qualified"] == true;
+        "keyboard-native-input" | "sticky-keys-manual"
+    ) || is_mouse_native_input(&operation))
+        || value["qualified"] == true;
     emit(
         &requested_name,
         Some(actual),
@@ -604,13 +621,45 @@ fn native_keyboard_input(
     })
 }
 
+#[derive(Clone, Copy)]
+enum NativeMouseProbeCase {
+    LeftButton,
+    VerticalScroll,
+}
+
+impl NativeMouseProbeCase {
+    fn name(self) -> &'static str {
+        match self {
+            Self::LeftButton => "left-button-press-release",
+            Self::VerticalScroll => "vertical-scroll-up-down",
+        }
+    }
+
+    fn expected_events(self) -> Vec<Value> {
+        match self {
+            Self::LeftButton => vec![
+                json!({"button": "Button1", "action": "Press", "modifiers": 0}),
+                json!({"button": "Button1", "action": "Release", "modifiers": 0}),
+            ],
+            Self::VerticalScroll => vec![
+                json!({"dx": 0.0, "dy": 1.0}),
+                json!({"dx": 0.0, "dy": -1.0}),
+            ],
+        }
+    }
+}
+
 fn native_mouse_input(
     glfw: &mut glfw::Glfw,
     window: &mut glfw::PWindow,
     events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
     platform: glfw::Platform,
+    case: NativeMouseProbeCase,
 ) -> Value {
-    window.set_mouse_button_polling(true);
+    match case {
+        NativeMouseProbeCase::LeftButton => window.set_mouse_button_polling(true),
+        NativeMouseProbeCase::VerticalScroll => window.set_scroll_polling(true),
+    }
     window.show();
     if platform != glfw::Platform::Wayland {
         window.focus();
@@ -713,25 +762,41 @@ fn native_mouse_input(
     while observed_events.len() < 2 && Instant::now() < input_deadline {
         glfw.wait_events_timeout(0.01);
         for (_, event) in glfw::flush_messages(events) {
-            if let glfw::WindowEvent::MouseButton(button, action, modifiers) = event {
-                observed_events.push(json!({
+            match (case, event) {
+                (
+                    NativeMouseProbeCase::LeftButton,
+                    glfw::WindowEvent::MouseButton(button, action, modifiers),
+                ) => observed_events.push(json!({
                     "button": format!("{button:?}"),
                     "action": format!("{action:?}"),
                     "modifiers": modifiers.bits(),
-                }));
+                })),
+                (NativeMouseProbeCase::VerticalScroll, glfw::WindowEvent::Scroll(dx, dy)) => {
+                    observed_events.push(json!({"dx": dx, "dy": dy}));
+                }
+                _ => {}
             }
         }
     }
 
-    let final_state = window.get_mouse_button(glfw::MouseButton::Button1);
-    let expected_events = vec![
-        json!({"button": "Button1", "action": "Press", "modifiers": 0}),
-        json!({"button": "Button1", "action": "Release", "modifiers": 0}),
-    ];
+    let final_state = match case {
+        NativeMouseProbeCase::LeftButton => {
+            json!(format!(
+                "{:?}",
+                window.get_mouse_button(glfw::MouseButton::Button1)
+            ))
+        }
+        NativeMouseProbeCase::VerticalScroll => Value::Null,
+    };
+    let expected_final_state = match case {
+        NativeMouseProbeCase::LeftButton => json!("Release"),
+        NativeMouseProbeCase::VerticalScroll => Value::Null,
+    };
+    let expected_events = case.expected_events();
     let qualified = window.is_focused()
         && window.is_hovered()
         && observed_events == expected_events
-        && final_state == glfw::Action::Release;
+        && final_state == expected_final_state;
     json!({
         "qualified": qualified,
         "stage": "input",
@@ -740,13 +805,13 @@ fn native_mouse_input(
         "cursor_position": window.get_cursor_pos(),
         "injector": env::var("VMNL_PLATFORM_INPUT_INJECTOR")
             .unwrap_or_else(|_| "unknown".to_owned()),
-        "case": "left-button-press-release",
+        "case": case.name(),
         "observed_events": observed_events,
-        "final_state": format!("{final_state:?}"),
+        "final_state": final_state,
         "failure_reason": if qualified {
             Value::Null
         } else {
-            json!("expected an unmodified Button1 press/release and a released final state")
+            json!(format!("expected the {} event sequence", case.name()))
         },
     })
 }

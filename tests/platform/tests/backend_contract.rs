@@ -23,8 +23,15 @@ const NATIVE_INPUT_TIMEOUT: Duration = Duration::from_secs(7);
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
 static READY_FILE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
+fn is_mouse_native_input(operation: &str) -> bool {
+    matches!(operation, "mouse-native-input" | "mouse-scroll-input")
+}
+
 fn probe(backend: &str, operation: &str) -> Value {
-    let output = if matches!(operation, "keyboard-native-input" | "mouse-native-input") {
+    let output = if matches!(
+        operation,
+        "keyboard-native-input" | "mouse-native-input" | "mouse-scroll-input"
+    ) {
         native_input_probe(backend, operation).expect("native input probe should complete")
     } else {
         Command::new(env!("CARGO_BIN_EXE_platform_probe"))
@@ -83,6 +90,7 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
         let injection = match operation {
             "keyboard-native-input" => inject_key_a(),
             "mouse-native-input" => inject_mouse_left(),
+            "mouse-scroll-input" => inject_mouse_vertical_scroll(),
             value => Err(format!("unsupported native input operation: {value}")),
         };
         if let Err(reason) = injection {
@@ -397,7 +405,7 @@ fn wait_until_ready(
                 if weston_has_x11_focus()? {
                     return Ok(());
                 }
-                if operation == "mouse-native-input" {
+                if is_mouse_native_input(operation) {
                     return Err(
                         "Wayland probe is ready but Weston lacks parent X11 focus".to_owned()
                     );
@@ -411,7 +419,7 @@ fn wait_until_ready(
         #[cfg(target_os = "linux")]
         if backend == "wayland" && Instant::now() >= next_activation {
             let activation_needed = match signal.as_str() {
-                "MAPPED\n" if operation == "mouse-native-input" => {
+                "MAPPED\n" if is_mouse_native_input(operation) => {
                     if mouse_activation_sent {
                         !weston_has_x11_focus()?
                     } else {
@@ -420,7 +428,7 @@ fn wait_until_ready(
                     }
                 }
                 "MAPPED\n" => true,
-                "READY\n" => operation != "mouse-native-input",
+                "READY\n" => !is_mouse_native_input(operation),
                 _ => false,
             };
             if activation_needed {
@@ -584,12 +592,12 @@ fn inject_mouse_left() -> Result<(), String> {
         .check()
         .map_err(|error| format!("XTEST left-button press failed: {error}"));
     if let Err(error) = press {
-        let _ = inject_x11_button_release(&connection);
+        let _ = inject_x11_button_release(&connection, BUTTON1, "left-button");
         return Err(error);
     }
 
-    if let Err(error) = inject_x11_button_release(&connection) {
-        let cleanup = match inject_x11_button_release(&connection) {
+    if let Err(error) = inject_x11_button_release(&connection, BUTTON1, "left-button") {
+        let cleanup = match inject_x11_button_release(&connection, BUTTON1, "left-button") {
             Ok(()) => "release retry succeeded".to_owned(),
             Err(retry) => retry,
         };
@@ -602,17 +610,62 @@ fn inject_mouse_left() -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
+fn inject_mouse_vertical_scroll() -> Result<(), String> {
+    use x11rb::{
+        connection::Connection as _,
+        protocol::{xproto::BUTTON_PRESS_EVENT, xtest::ConnectionExt as _},
+    };
+
+    let (connection, _) = x11rb::connect(None)
+        .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
+    connection
+        .xtest_get_version(2, 2)
+        .map_err(|error| format!("failed to query XTEST: {error}"))?
+        .reply()
+        .map_err(|error| format!("XTEST is unavailable: {error}"))?;
+
+    for (button, direction) in [(4, "up"), (5, "down")] {
+        let name = format!("vertical scroll {direction}");
+        let press = connection
+            .xtest_fake_input(BUTTON_PRESS_EVENT, button, 0, 0, 0, 0, 0)
+            .map_err(|error| format!("failed to enqueue XTEST {name}: {error}"))?
+            .check()
+            .map_err(|error| format!("XTEST {name} failed: {error}"));
+        if let Err(error) = press {
+            let cleanup = inject_x11_button_release(&connection, button, &name);
+            return Err(match cleanup {
+                Ok(()) => format!("{error}; cleanup release succeeded"),
+                Err(cleanup) => format!("{error}; cleanup release failed: {cleanup}"),
+            });
+        }
+
+        if let Err(error) = inject_x11_button_release(&connection, button, &name) {
+            let cleanup = inject_x11_button_release(&connection, button, &name);
+            return Err(match cleanup {
+                Ok(()) => format!("{error}; cleanup release retry succeeded"),
+                Err(cleanup) => format!("{error}; cleanup release retry failed: {cleanup}"),
+            });
+        }
+    }
+
+    connection
+        .flush()
+        .map_err(|error| format!("failed to flush XTEST vertical scroll: {error}"))
+}
+
+#[cfg(target_os = "linux")]
 fn inject_x11_button_release(
     connection: &x11rb::rust_connection::RustConnection,
+    button: u8,
+    name: &str,
 ) -> Result<(), String> {
     use x11rb::protocol::{xproto::BUTTON_RELEASE_EVENT, xtest::ConnectionExt as _};
 
-    const BUTTON1: u8 = 1;
     connection
-        .xtest_fake_input(BUTTON_RELEASE_EVENT, BUTTON1, 0, 0, 0, 0, 0)
-        .map_err(|error| format!("failed to enqueue XTEST left-button release: {error}"))?
+        .xtest_fake_input(BUTTON_RELEASE_EVENT, button, 0, 0, 0, 0, 0)
+        .map_err(|error| format!("failed to enqueue XTEST {name} release: {error}"))?
         .check()
-        .map_err(|error| format!("XTEST left-button release failed: {error}"))
+        .map_err(|error| format!("XTEST {name} release failed: {error}"))
 }
 
 #[cfg(target_os = "windows")]
@@ -710,6 +763,11 @@ fn inject_mouse_left() -> Result<(), String> {
         "SendInput inserted {sent}/2 mouse events; cleanup release inserted {cleanup_sent}/1: {}",
         std::io::Error::last_os_error()
     ))
+}
+
+#[cfg(not(target_os = "linux"))]
+fn inject_mouse_vertical_scroll() -> Result<(), String> {
+    Err("vertical scroll injection is implemented only with XTEST on X11".to_owned())
 }
 
 #[cfg(target_os = "macos")]
@@ -880,6 +938,7 @@ fn selected_backend_contract() {
             "iconify",
             "keyboard-native-input",
             "mouse-native-input",
+            "mouse-scroll-input",
         ],
         "x11" => &[
             "keyboard-metadata",
@@ -896,6 +955,7 @@ fn selected_backend_contract() {
             "focus",
             "keyboard-native-input",
             "mouse-native-input",
+            "mouse-scroll-input",
         ],
         "win32" | "cocoa" => &[
             "create",
@@ -933,6 +993,7 @@ fn assert_operation_contract(backend: &str, operation: &str, record: &Value) {
         }
         "keyboard-native-input" => assert_native_keyboard_input(record),
         "mouse-native-input" => assert_native_mouse_input(record),
+        "mouse-scroll-input" => assert_native_mouse_scroll_input(record),
         _ => {}
     }
 
@@ -1063,6 +1124,26 @@ fn assert_native_mouse_input(record: &Value) {
         Some("win32") => "send-input",
         Some("cocoa") => "cg-event-post",
         value => panic!("unexpected mouse input backend: {value:?}"),
+    };
+    assert_eq!(record["value"]["injector"], expected_injector);
+}
+
+fn assert_native_mouse_scroll_input(record: &Value) {
+    assert_eq!(record["value"]["qualified"], true);
+    assert_eq!(record["value"]["stage"], "input");
+    assert_eq!(record["value"]["focused"], true);
+    assert_eq!(record["value"]["hovered"], true);
+    assert_eq!(
+        record["value"]["observed_events"],
+        serde_json::json!([{"dx": 0.0, "dy": 1.0}, {"dx": 0.0, "dy": -1.0}])
+    );
+    assert_eq!(record["value"]["case"], "vertical-scroll-up-down");
+    assert_eq!(record["value"]["final_state"], Value::Null);
+    assert_eq!(record["value"]["failure_reason"], Value::Null);
+    let expected_injector = match record["backend_actual"].as_str() {
+        Some("x11") => "x11-xtest",
+        Some("wayland") => "x11-xtest-parent",
+        value => panic!("unexpected native scroll backend: {value:?}"),
     };
     assert_eq!(record["value"]["injector"], expected_injector);
 }
