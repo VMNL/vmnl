@@ -37,6 +37,17 @@ content-area boundary. Scroll directions and coordinate tolerances are backend-s
 be recorded. Physical-device qualification, including extra mouse buttons, is separate from
 synthetic injection.
 
+## Progress in this branch
+
+- Headless unit assertions now compare every named `Key` and all eight `MouseButton` variants
+  against fixed GLFW enum values in both conversion directions.
+- Event translation assertions cover press/repeat/release for all 120 named keys, including
+  scancode and modifier preservation, and press/release for all eight mouse buttons.
+- Modeled `EventQueue` batches cover a press and release for every key/button in one batch, then
+  verify transition clearing in the next empty batch. These remain unit-level reducer checks; they
+  do not execute `Window::poll_events()` or a native backend.
+- These assertions have been added but not executed in this environment; no result is claimed.
+
 ## Keyboard named-key rows
 
 For each row, required result K1 is: press emits `KeyPressed { key: Key::<name>, scancode,
@@ -224,12 +235,8 @@ eligibility remain unqualified until measured. Never count an unavailable mappin
 | Event delivery and snapshots | Disabling one event source suppresses its event while key/button snapshots still update; sources remain independent. | Fixed enabled/disabled source combinations and expected event lists/state. | Internal delivery reducer covers sources and independent keyboard/mouse tracking; public tests cover facade accessors, not native event flow. | K/M; no end-to-end VMNL probe. |
 | Focus loss and batch boundaries | Focus loss releases held keys/buttons; transitions survive one batch and clear on the next empty batch. | Fixed event order and snapshot truth table. | Reducer tests cover representative key and mouse-button states. | K/M; current native probes test focus before injection, not VMNL focus-loss state. |
 
-## Baseline gaps to close for issue #91
+## Remaining gaps for issue #91
 
-- Add independent per-key event/state expectations for all 120 named keys and one exhaustive
-  fixed-oracle translation test; current conversion round-trip alone can miss matching forward/
-  reverse mapping errors.
-- Add per-button expected translation and applicable snapshot assertions for all eight buttons.
 - Extend native injectors/probes from A-only keyboard to every eligible key and mouse input family;
   define explicit non-injectable reasons per backend row and retain versioned diagnostics.
 - Add at least one executed public VMNL scenario through `Window::poll_events()` → `Event`/`Input`

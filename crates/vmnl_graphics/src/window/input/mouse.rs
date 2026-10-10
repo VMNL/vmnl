@@ -395,9 +395,27 @@ mod tests {
     use super::*;
 
     #[test]
-    fn all_tracked_mouse_buttons_round_trip_through_glfw() {
+    fn every_mouse_button_uses_its_fixed_glfw_mapping() {
+        let expected = [
+            (MouseButton::Left, GlfwMouseButton::Left),
+            (MouseButton::Right, GlfwMouseButton::Right),
+            (MouseButton::Middle, GlfwMouseButton::Middle),
+            (MouseButton::Button4, GlfwMouseButton::Button4),
+            (MouseButton::Button5, GlfwMouseButton::Button5),
+            (MouseButton::Button6, GlfwMouseButton::Button6),
+            (MouseButton::Button7, GlfwMouseButton::Button7),
+            (MouseButton::Button8, GlfwMouseButton::Button8),
+        ];
+
+        assert_eq!(expected.len(), ALL_MOUSE_BUTTONS.len());
+        for &(button, glfw_button) in &expected {
+            assert_eq!(MouseState::to_glfw(button), glfw_button, "{button:?}");
+            assert_eq!(MouseState::from_glfw(glfw_button), button, "{button:?}");
+        }
         for &button in ALL_MOUSE_BUTTONS {
-            assert_eq!(MouseState::from_glfw(MouseState::to_glfw(button)), button);
+            assert!(expected
+                .iter()
+                .any(|&(expected_button, _)| expected_button == button));
         }
     }
 
