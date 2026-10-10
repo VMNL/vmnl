@@ -13,10 +13,10 @@
 
 | Platform | CI validation | Local Justfile | Status |
 |----------|---------------|----------------|--------|
-| Ubuntu Linux | Configured: build, headless tests, GLFW Null, Weston Wayland nested in Xvfb/Openbox and Xvfb/Openbox X11, with XTEST `A` and Shift+A, mapped mouse buttons, pointer movement/leave/enter, and vertical/horizontal scroll. Hosted Xvfb's 10-button map reaches GLFW buttons 1–6; buttons 7–8 remain unsupported there. | `just input-test x11`, `just input-test wayland`, and opt-in GPU-backed `just input-test-vmnl x11`. | Blocking CI path for NoApi probes; public VMNL runtime still requires a qualified Vulkan/display run. |
+| Ubuntu Linux | Configured: build, headless tests, GLFW Null, Weston Wayland nested in Xvfb/Openbox and Xvfb/Openbox X11, with XTEST `A` and Shift+A, mapped mouse buttons, pointer movement/leave/enter, and vertical/horizontal scroll. Hosted Xvfb's 10-button map reaches GLFW buttons 1–6; buttons 7–8 remain unsupported there. | `just input-test x11`, `just input-test wayland`, and opt-in GPU-backed `just input-test-vmnl x11`. | Blocking CI path for NoApi probes. Run [#38084288960](https://github.com/VMNL/vmnl/actions/runs/38084288960) stopped at the Weston hover-boundary probe, before X11. Public VMNL runtime still requires a qualified Vulkan/display run. |
 | Other Linux distributions | No distribution matrix. | Best effort. | Backend guarantees remain environment-scoped. |
-| Windows | Configured: build, headless tests and GLFW Null; visible `A` and Shift+A keyboard probes, GLFW mouse buttons 1–5, pointer movement, leave/enter, and vertical/horizontal scroll probes use `SendInput`/`SetCursorPos` and are experimental. GLFW buttons 6–8 have no Win32 mapping. | `just input-test win32` on an accessible interactive desktop. | Current workflow run required; native results are non-blocking until qualified. |
-| macOS | Configured: build, headless tests and GLFW Null; visible `A` and Shift+A keyboard probes, all eight GLFW mouse buttons, pointer movement, leave/enter, and vertical/horizontal scroll probes use `CGEventPost` and are experimental. | `just input-test cocoa` with event-posting access. | Current workflow run required; native results are non-blocking until qualified. |
+| Windows | Configured: build, headless tests and GLFW Null; visible `A` and Shift+A keyboard probes, GLFW mouse buttons 1–5, pointer movement, leave/enter, and vertical/horizontal scroll probes use `SendInput`/`SetCursorPos` and are experimental. GLFW buttons 6–8 have no Win32 mapping. | `just input-test win32` on an accessible interactive desktop. | Experimental probes are non-blocking until qualified. Run [#38084288960](https://github.com/VMNL/vmnl/actions/runs/38084288960) recorded a stale no-op motion callback after desktop movement; later mouse probes did not run. |
+| macOS | Configured: build, headless tests and GLFW Null; visible `A` and Shift+A keyboard probes, all eight GLFW mouse buttons, pointer movement, leave/enter, and vertical/horizontal scroll probes use `CGEventPost` and are experimental. | `just input-test cocoa` with event-posting access. | Experimental probes are non-blocking until qualified. Run [#38084288960](https://github.com/VMNL/vmnl/actions/runs/38084288960) passed keyboard, buttons, motion, and boundary probes; the scroll probe did not distinguish horizontal direction. |
 
 `just bootstrap` invokes `./deps`, which requires `/etc/os-release` and only contains Linux
 package-manager paths. CI invokes Cargo directly and never invokes the bootstrap recipe.
@@ -30,8 +30,8 @@ package-manager paths. CI invokes Cargo directly and never invokes the bootstrap
   before injection. X11 and nested Weston inject every GLFW button mapping within the active X11
   pointer map, plus movement, leave/enter, and vertical/horizontal scroll. The hosted 10-button
   Xvfb map cannot exercise GLFW buttons 7–8. Win32 injects buttons 1–5; Cocoa injects all eight.
-  Both also probe movement, leave/enter, and vertical/horizontal scroll; these Windows/macOS results
-  still need CI evidence.
+  Both also probe movement, leave/enter, and vertical/horizontal scroll; their first CI observations
+  exist but do not yet meet the qualification threshold.
   X11 requires XTEST and an EWMH window manager, Windows requires an accessible desktop at the
   same integrity level, and macOS requires event-posting access.
 - The nested Weston probe covers XTEST → Xvfb → Weston X11 backend → Wayland client input, not a

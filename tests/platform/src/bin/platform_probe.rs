@@ -1057,7 +1057,10 @@ fn native_mouse_input(
                 (NativeMouseProbeCase::ScrollAxes, glfw::WindowEvent::Scroll(dx, dy)) => {
                     observed_events.push(json!({"dx": dx, "dy": dy}));
                 }
-                (NativeMouseProbeCase::PointerMovement, glfw::WindowEvent::CursorPos(x, y)) => {
+                (NativeMouseProbeCase::PointerMovement, glfw::WindowEvent::CursorPos(x, y))
+                    if (x - initial_cursor_position.0).abs() > 0.01
+                        || (y - initial_cursor_position.1).abs() > 0.01 =>
+                {
                     observed_events.push(json!({"x": x, "y": y}));
                 }
                 (

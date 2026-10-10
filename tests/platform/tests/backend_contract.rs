@@ -108,6 +108,10 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
             )
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
+        if backend == "wayland" && operation == "mouse-hover-boundary-input" {
+            // Expose whether the XTEST-to-Weston path sends wl_pointer enter/leave events.
+            command.env("WAYLAND_DEBUG", "1");
+        }
         let mut child = command
             .spawn()
             .map_err(|error| format!("platform probe should start: {error}"))?;
@@ -1507,8 +1511,7 @@ fn inject_mouse_scroll() -> Result<(), String> {
 
     type CGEventRef = *mut c_void;
     const CG_HID_EVENT_TAP: u32 = 0;
-    // CGScrollEventUnit uses 0 for pixels and 1 for lines.
-    const CG_SCROLL_EVENT_UNIT_LINE: u32 = 1;
+    const CG_SCROLL_EVENT_UNIT_PIXEL: u32 = 0;
 
     #[link(name = "ApplicationServices", kind = "framework")]
     extern "C" {
@@ -1528,20 +1531,20 @@ fn inject_mouse_scroll() -> Result<(), String> {
     }
 
     let inputs = [
-        (1, 0, "vertical scroll up"),
-        (-1, 0, "vertical scroll down"),
-        (0, 1, "horizontal scroll positive"),
-        (0, -1, "horizontal scroll negative"),
+        (1, 10, 0, "vertical scroll up"),
+        (1, -10, 0, "vertical scroll down"),
+        (2, 0, 10, "horizontal scroll positive"),
+        (2, 0, -10, "horizontal scroll negative"),
     ];
     let input_count = inputs.len();
-    for (index, (vertical, horizontal, name)) in inputs.into_iter().enumerate() {
-        // SAFETY: Unit 1 is CGScrollEventUnit.line; the signed axis deltas are valid inputs and
-        // the returned retained event is checked before posting or release.
+    for (index, (wheel_count, vertical, horizontal, name)) in inputs.into_iter().enumerate() {
+        // SAFETY: Axis 1 is vertical and axis 2 is horizontal. Ten pixels normalize to one GLFW
+        // scroll unit for precise events; the retained event is checked before posting or release.
         let event = unsafe {
             CGEventCreateScrollWheelEvent(
                 std::ptr::null_mut(),
-                CG_SCROLL_EVENT_UNIT_LINE,
-                2,
+                CG_SCROLL_EVENT_UNIT_PIXEL,
+                wheel_count,
                 vertical,
                 horizontal,
                 0,

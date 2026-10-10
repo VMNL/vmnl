@@ -147,16 +147,18 @@ direction. The hosted Xvfb mapping
 currently exposes 10 buttons. CI run
 [#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968) showed XTEST rejecting
 server button 11 (`BadValue`), so GLFW `Button7` and `Button8` are not qualified by hosted CI. The
-The latest cross-platform run [#38082851338](https://github.com/VMNL/vmnl/actions/runs/38082851338)
+The latest cross-platform run [#38084288960](https://github.com/VMNL/vmnl/actions/runs/38084288960)
 passed quality and the build, unit, API, smoke, and Null-backend checks on all three operating
-systems. Linux stopped at the nested Weston hover-boundary case, before X11. A and Shift+A, the
-left button, and pointer motion passed. The boundary injector confirmed the pointer at `(0, 0)` with
-no X11 child, then back at `(646, 364)` over child `0x400175`; the Weston window is `0x200005`, but
-no GLFW enter/leave callbacks arrived. The next probe records both X11 ancestry chains. Windows
-passed A, Shift+A, buttons 1–5, pointer motion, and leave/enter; `GetCursorPos` changed from
-`(166, 169)` to `(170, 172)`. Its scroll sequence omitted vertical down. macOS passed A, Shift+A,
-all eight buttons, pointer motion, and leave/enter; its scroll sequence produced only one event,
-`dx=24`. The run failed overall on Linux and Windows; Cocoa remained non-blocking.
+systems. Linux stopped at the nested Weston hover-boundary case, before X11. The XTEST pointer was
+at `(0, 0)` with no root child after leaving; on re-entry at `(646, 371)`, its root child was
+`0x400175`. Weston window `0x200005` has ancestry `0x200005 → 0x400175 → root`, so the root child is
+the window-manager frame containing the Weston window. GLFW still received no enter/leave callbacks;
+the trace does not show whether Weston sent Wayland pointer events. Windows A, Shift+A, and buttons
+1–5 passed. `GetCursorPos` moved from `(166, 169)` to `(170, 172)`, but the probe captured only a
+no-op cursor event at `(80, 60)` and stopped before hover or scroll. macOS A, Shift+A, all eight
+buttons, motion, and leave/enter passed. Its scroll probe received four events, each with `dx=6`
+and `dy` values `1, -1, 0, 0`, so horizontal direction was not established. Linux failed the
+workflow; Windows and macOS native probes remain experimental and non-blocking.
 
 The scroll probe checks vertical up/down and horizontal positive/negative in order. X11 injects
 buttons 4/5 and 6/7 and expects offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and `(-1, 0)`. Cocoa's
@@ -180,11 +182,12 @@ outside and back into the window for its hover-boundary case. Cocoa uses `CGEven
 buttons, motion, hover-boundary, and scroll injection. These probes remain visible but non-blocking
 until ten consecutive successful runs use the same runner image, GLFW revision, injector, and probe
 schema; any of those changes resets the count. The explicit Core Graphics flags fixed Cocoa Shift+A
-in run #38082851338. The current patch separates Win32 and Cocoa scroll injections by 100 ms so
-GLFW can process each message before the next reversal; it also checks Cocoa scroll direction
-without assuming a unit magnitude. The Weston boundary failure remains under investigation through
-X11 ancestry logging. Additional modifier combinations, text, repeat, X11, and public VMNL runtime
-cases remain unqualified.
+in run #38082851338. Scroll injections on Win32 and Cocoa are separated by 100 ms so GLFW can
+process each message before the next reversal. The current Cocoa injector uses pixel deltas on one
+vertical axis or two scroll axes and still needs CI evidence. Pointer-motion probes discard callbacks
+that report no coordinate change. The nested Weston boundary probe enables `WAYLAND_DEBUG` to record
+whether `wl_pointer` enter/leave messages arrive. Additional modifier combinations, text, repeat,
+X11, and public VMNL runtime cases remain unqualified.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored
