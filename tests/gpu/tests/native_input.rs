@@ -19,6 +19,8 @@ const BUTTON_RELEASE: u8 = x11rb::protocol::xproto::BUTTON_RELEASE_EVENT;
 const BUTTON_LEFT: u8 = 1;
 const BUTTON_SCROLL_UP: u8 = 4;
 const BUTTON_SCROLL_DOWN: u8 = 5;
+const BUTTON_SCROLL_POSITIVE_X: u8 = 6;
+const BUTTON_SCROLL_NEGATIVE_X: u8 = 7;
 
 #[test]
 #[ignore = "requires Vulkan, an X11 EWMH display, XTEST, and injects native keyboard/mouse input"]
@@ -114,7 +116,7 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
         "vertical scroll up",
         |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 0.0 && *dy == 1.0),
     )?;
-    assert_mouse_scroll_event(&scroll_up_events, 1.0)?;
+    assert_mouse_scroll_event(&scroll_up_events, 0.0, 1.0)?;
 
     injector.scroll_vertical_down().map_err(invalid_state)?;
     let scroll_down_events = poll_until(
@@ -122,7 +124,27 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
         "vertical scroll down",
         |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 0.0 && *dy == -1.0),
     )?;
-    assert_mouse_scroll_event(&scroll_down_events, -1.0)?;
+    assert_mouse_scroll_event(&scroll_down_events, 0.0, -1.0)?;
+
+    injector
+        .scroll_horizontal_positive()
+        .map_err(invalid_state)?;
+    let scroll_right_events = poll_until(
+        &mut window,
+        "positive horizontal scroll",
+        |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 1.0 && *dy == 0.0),
+    )?;
+    assert_mouse_scroll_event(&scroll_right_events, 1.0, 0.0)?;
+
+    injector
+        .scroll_horizontal_negative()
+        .map_err(invalid_state)?;
+    let scroll_left_events = poll_until(
+        &mut window,
+        "negative horizontal scroll",
+        |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == -1.0 && *dy == 0.0),
+    )?;
+    assert_mouse_scroll_event(&scroll_left_events, -1.0, 0.0)?;
 
     Ok(())
 }
@@ -228,14 +250,18 @@ fn assert_mouse_button_event(events: &[Event], pressed: bool) -> VMNLResult<()> 
     Ok(())
 }
 
-fn assert_mouse_scroll_event(events: &[Event], expected_dy: f64) -> VMNLResult<()> {
+fn assert_mouse_scroll_event(
+    events: &[Event],
+    expected_dx: f64,
+    expected_dy: f64,
+) -> VMNLResult<()> {
     let mut observed = events.iter().filter_map(|event| match event.kind() {
         EventKind::MouseScrolled { dx, dy } => Some((*dx, *dy)),
         _ => None,
     });
-    if observed.next() != Some((0.0, expected_dy)) || observed.next().is_some() {
+    if observed.next() != Some((expected_dx, expected_dy)) || observed.next().is_some() {
         return Err(invalid_state(format!(
-            "expected exactly one vertical scroll event with dy={expected_dy}: {events:?}"
+            "expected exactly one scroll event with dx={expected_dx}, dy={expected_dy}: {events:?}"
         )));
     }
     Ok(())
@@ -330,6 +356,14 @@ impl X11Injector {
 
     fn scroll_vertical_down(&mut self) -> Result<(), String> {
         self.scroll(BUTTON_SCROLL_DOWN, "vertical scroll down")
+    }
+
+    fn scroll_horizontal_positive(&mut self) -> Result<(), String> {
+        self.scroll(BUTTON_SCROLL_POSITIVE_X, "positive horizontal scroll")
+    }
+
+    fn scroll_horizontal_negative(&mut self) -> Result<(), String> {
+        self.scroll(BUTTON_SCROLL_NEGATIVE_X, "negative horizontal scroll")
     }
 
     fn scroll(&mut self, button: u8, direction: &str) -> Result<(), String> {

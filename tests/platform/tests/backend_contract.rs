@@ -90,7 +90,7 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
         let injection = match operation {
             "keyboard-native-input" => inject_key_a(),
             "mouse-native-input" => inject_mouse_left(),
-            "mouse-scroll-input" => inject_mouse_vertical_scroll(),
+            "mouse-scroll-input" => inject_mouse_scroll(),
             value => Err(format!("unsupported native input operation: {value}")),
         };
         if let Err(reason) = injection {
@@ -610,7 +610,7 @@ fn inject_mouse_left() -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
-fn inject_mouse_vertical_scroll() -> Result<(), String> {
+fn inject_mouse_scroll() -> Result<(), String> {
     use x11rb::{
         connection::Connection as _,
         protocol::{xproto::BUTTON_PRESS_EVENT, xtest::ConnectionExt as _},
@@ -624,23 +624,28 @@ fn inject_mouse_vertical_scroll() -> Result<(), String> {
         .reply()
         .map_err(|error| format!("XTEST is unavailable: {error}"))?;
 
-    for (button, direction) in [(4, "up"), (5, "down")] {
-        let name = format!("vertical scroll {direction}");
+    for (button, direction) in [
+        (4, "vertical scroll up"),
+        (5, "vertical scroll down"),
+        (6, "horizontal scroll positive"),
+        (7, "horizontal scroll negative"),
+    ] {
+        let name = direction;
         let press = connection
             .xtest_fake_input(BUTTON_PRESS_EVENT, button, 0, 0, 0, 0, 0)
             .map_err(|error| format!("failed to enqueue XTEST {name}: {error}"))?
             .check()
             .map_err(|error| format!("XTEST {name} failed: {error}"));
         if let Err(error) = press {
-            let cleanup = inject_x11_button_release(&connection, button, &name);
+            let cleanup = inject_x11_button_release(&connection, button, name);
             return Err(match cleanup {
                 Ok(()) => format!("{error}; cleanup release succeeded"),
                 Err(cleanup) => format!("{error}; cleanup release failed: {cleanup}"),
             });
         }
 
-        if let Err(error) = inject_x11_button_release(&connection, button, &name) {
-            let cleanup = inject_x11_button_release(&connection, button, &name);
+        if let Err(error) = inject_x11_button_release(&connection, button, name) {
+            let cleanup = inject_x11_button_release(&connection, button, name);
             return Err(match cleanup {
                 Ok(()) => format!("{error}; cleanup release retry succeeded"),
                 Err(cleanup) => format!("{error}; cleanup release retry failed: {cleanup}"),
@@ -650,7 +655,7 @@ fn inject_mouse_vertical_scroll() -> Result<(), String> {
 
     connection
         .flush()
-        .map_err(|error| format!("failed to flush XTEST vertical scroll: {error}"))
+        .map_err(|error| format!("failed to flush XTEST mouse scroll: {error}"))
 }
 
 #[cfg(target_os = "linux")]
@@ -766,8 +771,8 @@ fn inject_mouse_left() -> Result<(), String> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn inject_mouse_vertical_scroll() -> Result<(), String> {
-    Err("vertical scroll injection is implemented only with XTEST on X11".to_owned())
+fn inject_mouse_scroll() -> Result<(), String> {
+    Err("mouse scroll injection is implemented only with XTEST on X11".to_owned())
 }
 
 #[cfg(target_os = "macos")]
@@ -1135,9 +1140,17 @@ fn assert_native_mouse_scroll_input(record: &Value) {
     assert_eq!(record["value"]["hovered"], true);
     assert_eq!(
         record["value"]["observed_events"],
-        serde_json::json!([{"dx": 0.0, "dy": 1.0}, {"dx": 0.0, "dy": -1.0}])
+        serde_json::json!([
+            {"dx": 0.0, "dy": 1.0},
+            {"dx": 0.0, "dy": -1.0},
+            {"dx": 1.0, "dy": 0.0},
+            {"dx": -1.0, "dy": 0.0},
+        ])
     );
-    assert_eq!(record["value"]["case"], "vertical-scroll-up-down");
+    assert_eq!(
+        record["value"]["case"],
+        "vertical-horizontal-scroll-directions"
+    );
     assert_eq!(record["value"]["final_state"], Value::Null);
     assert_eq!(record["value"]["failure_reason"], Value::Null);
     let expected_injector = match record["backend_actual"].as_str() {

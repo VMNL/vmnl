@@ -94,7 +94,8 @@ just input-test cocoa
 ```
 
 The public VMNL `Window::poll_events()` → `Event`/`Input` scenario is a separate opt-in GPU test.
-It currently covers X11 `A` and left-button press/release plus vertical scroll up/down:
+It currently covers X11 `A`, left-button press/release, and vertical/horizontal scroll in both
+directions:
 
 ```bash
 just input-test-vmnl x11
@@ -136,9 +137,10 @@ backend under Weston with Pixman nested on Xvfb with Openbox, then tests the GLF
 under Xvfb with Openbox. Both paths run visible keyboard and mouse probes. Separate probe
 processes wait for readiness, inject `A` and left-button press/release through XTEST, and require
 the exact native GLFW event sequence before timeout. An additional Linux-only mouse probe injects
-vertical scroll up/down with XTEST buttons 4/5 and checks offsets `(0, +1)` then `(0, -1)`. Mouse
-probes require the pointer to hover the focused window; the button case also verifies the button
-ends released. The Wayland path injects through the parent Xvfb server into Weston's X11 backend;
+vertical scroll up/down with XTEST buttons 4/5 and horizontal scroll with buttons 6/7, checking
+offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and `(-1, 0)` in order. Mouse probes require the pointer to
+hover the focused window; the button case also verifies the button ends released. The Wayland path
+injects through the parent Xvfb server into Weston's X11 backend;
 it does not qualify a standalone Wayland compositor seat. The Windows and macOS native mouse
 probe currently synthesizes only the left button.
 
