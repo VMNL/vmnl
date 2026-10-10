@@ -920,6 +920,9 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     } else {
         (None, None)
     };
+    let weston_ancestry = weston_window
+        .map(|window| x11_window_ancestry(&connection, root, window))
+        .transpose()?;
     let pointer = connection
         .query_pointer(root)
         .map_err(|error| format!("failed to request the parent pointer position: {error}"))?
@@ -961,7 +964,7 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     };
     if backend == "wayland" {
         eprintln!(
-            "wayland_hover_boundary target={target:?} original={original:?} weston_window={weston_window:?} weston_bounds={outside_weston_bounds:?} pointer_child_after_leave={:?}",
+            "wayland_hover_boundary target={target:?} original={original:?} weston_window={weston_window:?} weston_ancestry={weston_ancestry:?} weston_bounds={outside_weston_bounds:?} pointer_child_after_leave={:?}",
             leave_check.as_ref().ok().copied().flatten()
         );
         thread::sleep(Duration::from_millis(100));
@@ -975,8 +978,9 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     }
     if backend == "wayland" {
         let pointer_child = confirm_x11_pointer_target(&connection, root, original, "re-entry")?;
+        let pointer_ancestry = x11_window_ancestry(&connection, root, pointer_child)?;
         eprintln!(
-            "wayland_hover_boundary pointer_after_reentry={original:?} pointer_child_after_reentry={pointer_child:#x}"
+            "wayland_hover_boundary pointer_after_reentry={original:?} pointer_child_after_reentry={pointer_child:#x} pointer_ancestry={pointer_ancestry:?}"
         );
         leave_check?;
     }
@@ -1047,6 +1051,42 @@ fn confirm_x11_pointer_target(
         ));
     }
     Ok(pointer.child)
+}
+
+#[cfg(target_os = "linux")]
+fn x11_window_ancestry(
+    connection: &x11rb::rust_connection::RustConnection,
+    root: u32,
+    window: u32,
+) -> Result<Vec<u32>, String> {
+    use x11rb::protocol::xproto::ConnectionExt as _;
+
+    let mut ancestry = Vec::new();
+    let mut current = window;
+    for _ in 0..64 {
+        ancestry.push(current);
+        if current == root {
+            return Ok(ancestry);
+        }
+        let tree = connection
+            .query_tree(current)
+            .map_err(|error| {
+                format!("failed to request parent of X11 window {current:#x}: {error}")
+            })?
+            .reply()
+            .map_err(|error| {
+                format!("failed to read parent of X11 window {current:#x}: {error}")
+            })?;
+        if tree.parent == current {
+            return Err(format!(
+                "X11 window ancestry stopped at self-parented window {current:#x} before root {root:#x}"
+            ));
+        }
+        current = tree.parent;
+    }
+    Err(format!(
+        "X11 window ancestry from {window:#x} exceeded 64 levels before root {root:#x}"
+    ))
 }
 
 #[cfg(target_os = "linux")]
@@ -1331,14 +1371,20 @@ fn send_mouse_input(
 fn inject_mouse_scroll() -> Result<(), String> {
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{MOUSEEVENTF_HWHEEL, MOUSEEVENTF_WHEEL};
 
-    for (flags, delta, name) in [
+    let inputs = [
         (MOUSEEVENTF_WHEEL, 120, "vertical scroll up"),
         (MOUSEEVENTF_WHEEL, -120, "vertical scroll down"),
         // GLFW inverts WM_MOUSEHWHEEL's horizontal delta to match X11 and Cocoa.
         (MOUSEEVENTF_HWHEEL, -120, "horizontal scroll positive"),
         (MOUSEEVENTF_HWHEEL, 120, "horizontal scroll negative"),
-    ] {
+    ];
+    let input_count = inputs.len();
+    for (index, (flags, delta, name)) in inputs.into_iter().enumerate() {
         send_mouse_input(0, 0, delta as u32, flags, name)?;
+        if index + 1 < input_count {
+            // Let GLFW's message pump handle each wheel message before the next reversal.
+            thread::sleep(Duration::from_millis(100));
+        }
     }
     Ok(())
 }
@@ -1481,12 +1527,14 @@ fn inject_mouse_scroll() -> Result<(), String> {
         fn CFRelease(value: *const c_void);
     }
 
-    for (vertical, horizontal, name) in [
+    let inputs = [
         (1, 0, "vertical scroll up"),
         (-1, 0, "vertical scroll down"),
         (0, 1, "horizontal scroll positive"),
         (0, -1, "horizontal scroll negative"),
-    ] {
+    ];
+    let input_count = inputs.len();
+    for (index, (vertical, horizontal, name)) in inputs.into_iter().enumerate() {
         // SAFETY: Unit 1 is CGScrollEventUnit.line; the signed axis deltas are valid inputs and
         // the returned retained event is checked before posting or release.
         let event = unsafe {
@@ -1508,6 +1556,9 @@ fn inject_mouse_scroll() -> Result<(), String> {
         unsafe {
             CGEventPost(CG_HID_EVENT_TAP, event);
             CFRelease(event);
+        }
+        if index + 1 < input_count {
+            thread::sleep(Duration::from_millis(100));
         }
     }
     Ok(())
@@ -2530,15 +2581,54 @@ fn assert_native_mouse_scroll_input(record: &Value) {
     assert_eq!(record["value"]["stage"], "input");
     assert_eq!(record["value"]["focused"], true);
     assert_eq!(record["value"]["hovered"], true);
-    assert_eq!(
-        record["value"]["observed_events"],
-        serde_json::json!([
-            {"dx": 0.0, "dy": 1.0},
-            {"dx": 0.0, "dy": -1.0},
-            {"dx": 1.0, "dy": 0.0},
-            {"dx": -1.0, "dy": 0.0},
-        ])
-    );
+    let expected = [
+        (0.0_f64, 1.0_f64),
+        (0.0_f64, -1.0_f64),
+        (1.0_f64, 0.0_f64),
+        (-1.0_f64, 0.0_f64),
+    ];
+    let observed = record["value"]["observed_events"]
+        .as_array()
+        .expect("scroll events should be an array");
+    if record["backend_actual"] == "cocoa" {
+        assert_eq!(observed.len(), expected.len());
+        for (event, (expected_horizontal, expected_vertical)) in observed.iter().zip(expected) {
+            let actual_horizontal = event["dx"]
+                .as_f64()
+                .expect("horizontal scroll delta should be a number");
+            let actual_vertical = event["dy"]
+                .as_f64()
+                .expect("vertical scroll delta should be a number");
+            if expected_horizontal.abs() <= f64::EPSILON {
+                assert!(actual_horizontal.abs() <= f64::EPSILON);
+            } else {
+                assert!(actual_horizontal.abs() > f64::EPSILON);
+                assert_eq!(
+                    actual_horizontal.is_sign_positive(),
+                    expected_horizontal.is_sign_positive()
+                );
+            }
+            if expected_vertical.abs() <= f64::EPSILON {
+                assert!(actual_vertical.abs() <= f64::EPSILON);
+            } else {
+                assert!(actual_vertical.abs() > f64::EPSILON);
+                assert_eq!(
+                    actual_vertical.is_sign_positive(),
+                    expected_vertical.is_sign_positive()
+                );
+            }
+        }
+    } else {
+        assert_eq!(
+            record["value"]["observed_events"],
+            serde_json::json!([
+                {"dx": 0.0, "dy": 1.0},
+                {"dx": 0.0, "dy": -1.0},
+                {"dx": 1.0, "dy": 0.0},
+                {"dx": -1.0, "dy": 0.0},
+            ])
+        );
+    }
     assert_eq!(
         record["value"]["case"],
         "vertical-horizontal-scroll-directions"

@@ -147,19 +147,22 @@ direction. The hosted Xvfb mapping
 currently exposes 10 buttons. CI run
 [#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968) showed XTEST rejecting
 server button 11 (`BadValue`), so GLFW `Button7` and `Button8` are not qualified by hosted CI. The
-cross-platform run [#38079003041](https://github.com/VMNL/vmnl/actions/runs/38079003041) passed
-Shift+A on nested Weston and Windows, plus Windows buttons 1–5 and pointer motion. It produced no
-leave/enter callbacks on either backend; the Linux X11 stage was skipped after the Wayland failure.
-In [run #38081083458](https://github.com/VMNL/vmnl/actions/runs/38081083458), Windows pointer
-motion emitted one event at its unchanged initial cursor position. The macOS build passed, but its
-Shift+A probe emitted four events without the Shift modifier on A. Cocoa run
-[#38077590550](https://github.com/VMNL/vmnl/actions/runs/38077590550) passed all eight buttons,
-pointer motion, and leave/enter, but its scroll probe failed. The separate scroll probe injects
-vertical up/down with XTEST buttons 4/5
-and horizontal scroll with buttons 6/7, checking offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and
-`(-1, 0)` in order. Mouse probes require the pointer to hover the focused window. The Wayland path
-injects through the parent Xvfb server into Weston's X11 backend;
-it does not qualify a standalone Wayland compositor seat.
+The latest cross-platform run [#38082851338](https://github.com/VMNL/vmnl/actions/runs/38082851338)
+passed quality and the build, unit, API, smoke, and Null-backend checks on all three operating
+systems. Linux stopped at the nested Weston hover-boundary case, before X11. A and Shift+A, the
+left button, and pointer motion passed. The boundary injector confirmed the pointer at `(0, 0)` with
+no X11 child, then back at `(646, 364)` over child `0x400175`; the Weston window is `0x200005`, but
+no GLFW enter/leave callbacks arrived. The next probe records both X11 ancestry chains. Windows
+passed A, Shift+A, buttons 1–5, pointer motion, and leave/enter; `GetCursorPos` changed from
+`(166, 169)` to `(170, 172)`. Its scroll sequence omitted vertical down. macOS passed A, Shift+A,
+all eight buttons, pointer motion, and leave/enter; its scroll sequence produced only one event,
+`dx=24`. The run failed overall on Linux and Windows; Cocoa remained non-blocking.
+
+The scroll probe checks vertical up/down and horizontal positive/negative in order. X11 injects
+buttons 4/5 and 6/7 and expects offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and `(-1, 0)`. Cocoa's
+native delta magnitude is backend-specific, so its probe checks axis and direction. Mouse probes
+require the pointer to hover the focused window. The Wayland path injects through the parent Xvfb
+server into Weston's X11 backend; it does not qualify a standalone Wayland compositor seat.
 
 CI invokes Cargo directly for these selected backend contracts; it does not call the local
 `just input-test` recipe. Linux X11 and nested Weston runs block CI. Windows and macOS native runs
@@ -176,15 +179,12 @@ Win32 uses `SendInput` for keyboard, button, motion, and scroll injection; `SetC
 outside and back into the window for its hover-boundary case. Cocoa uses `CGEventPost` for keyboard,
 buttons, motion, hover-boundary, and scroll injection. These probes remain visible but non-blocking
 until ten consecutive successful runs use the same runner image, GLFW revision, injector, and probe
-schema; any of those changes resets the count. Shift+A passed on nested Weston and Windows in run
-#38079003041. X11 did not run after the Wayland failure. Cocoa's run #38081083458 delivered the
-Shift+A sequence without the Shift bit on A; the current injector sets explicit Core Graphics
-flags for the sequence. The boundary attempt still produced no callbacks on nested Weston in
-#38081083458 although parent coordinates reached `(0, 0)` outside Weston bounds `(128, 67)–(1151, 666)`
-and returned to `(646, 364)`; the next run logs the X11 child-window ID at each target.
-Win32 motion now records desktop cursor coordinates around `SendInput`; its callback remained at
-the initial position in the same run. Leave/re-entry injections remain separated by 100 ms,
-including Cocoa. Additional modifier combinations, text, and repeat cases remain outstanding.
+schema; any of those changes resets the count. The explicit Core Graphics flags fixed Cocoa Shift+A
+in run #38082851338. The current patch separates Win32 and Cocoa scroll injections by 100 ms so
+GLFW can process each message before the next reversal; it also checks Cocoa scroll direction
+without assuming a unit magnitude. The Weston boundary failure remains under investigation through
+X11 ancestry logging. Additional modifier combinations, text, repeat, X11, and public VMNL runtime
+cases remain unqualified.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored
