@@ -230,26 +230,28 @@ unit/API. Native level: profile M; public VMNL end-to-end level: profile V.
 
 All eight variants have checked-in conversion, event-translation, and batch-state assertions. The
 native XTEST cases test every GLFW mapping present in the active X11 server and record mappings
-that exceed its button limit. Hosted CI's 10-button Xvfb cannot inject server buttons 11/12, so
-GLFW `Button7`/`Button8` remain unqualified there. The public Vulkan/display runtime remains
-unqualified.
+that exceed its button limit. The Win32 probe injects its five GLFW mappings through SendInput;
+the Cocoa probe injects all eight through CGEventPost. Hosted CI's 10-button Xvfb cannot inject
+server buttons 11/12, so GLFW `Button7`/`Button8` remain unqualified there. Windows and Cocoa
+results for the expanded probes await CI; the public Vulkan/display runtime remains unqualified.
 
 | VMNL button | Independent GLFW 3.4 token | Required result | Deterministic evidence at baseline | Native evidence at baseline |
 | --- | --- | --- | --- | --- |
 | `MouseButton::Left` | `GLFW_MOUSE_BUTTON_1` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 and nested Weston representative probe passed in [CI run #154](https://github.com/VMNL/vmnl/actions/runs/38058493301); public VMNL runtime not qualified. |
-| `MouseButton::Right` | `GLFW_MOUSE_BUTTON_2` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 3 is within the current CI map; the dynamic event probe awaits CI. Win32 mapping is eligible but not tested. |
-| `MouseButton::Middle` | `GLFW_MOUSE_BUTTON_3` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 2 is within the current CI map; the dynamic event probe awaits CI. Win32 mapping is eligible but not tested. |
-| `MouseButton::Button4` | `GLFW_MOUSE_BUTTON_4` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 8 is within the current CI map; the dynamic event probe awaits CI. Win32 XBUTTON1 is eligible but not tested; Cocoa mapping remains unqualified. |
-| `MouseButton::Button5` | `GLFW_MOUSE_BUTTON_5` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 9 is within the current CI map; the dynamic event probe awaits CI. Win32 XBUTTON2 is eligible but not tested; Cocoa mapping remains unqualified. |
-| `MouseButton::Button6` | `GLFW_MOUSE_BUTTON_6` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 10 is within the current CI map; the dynamic event probe awaits CI. Win32 does not expose this button through GLFW's XBUTTON1/2 mapping; Cocoa mapping remains unqualified. |
-| `MouseButton::Button7` | `GLFW_MOUSE_BUTTON_7` | M1 | Round-trip assertion exists; event/state test only covers Left | Not qualified: X11 requires server button 11, rejected by the hosted 10-button Xvfb in [CI run #38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968). Win32 does not expose it through GLFW's XBUTTON1/2 mapping; Cocoa remains unqualified. |
-| `MouseButton::Button8` | `GLFW_MOUSE_BUTTON_8` | M1 | Round-trip assertion exists; event/state test only covers Left | Not qualified: X11 requires server button 12, beyond the hosted 10-button Xvfb mapping. Win32 does not expose it through GLFW's XBUTTON1/2 mapping; Cocoa remains unqualified. |
+| `MouseButton::Right` | `GLFW_MOUSE_BUTTON_2` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 3 is within the current CI map; expanded event probe awaits CI. Win32 right-button and Cocoa button 1 mappings are implemented; expanded probes await CI. |
+| `MouseButton::Middle` | `GLFW_MOUSE_BUTTON_3` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 2 is within the current CI map; expanded event probe awaits CI. Win32 middle-button and Cocoa button 2 mappings are implemented; expanded probes await CI. |
+| `MouseButton::Button4` | `GLFW_MOUSE_BUTTON_4` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 8 is within the current CI map. Win32 XBUTTON1 and Cocoa button 3 mappings are implemented; expanded probes await CI. |
+| `MouseButton::Button5` | `GLFW_MOUSE_BUTTON_5` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 9 is within the current CI map. Win32 XBUTTON2 and Cocoa button 4 mappings are implemented; expanded probes await CI. |
+| `MouseButton::Button6` | `GLFW_MOUSE_BUTTON_6` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 10 is within the current CI map. Win32 has no mapping; Cocoa button 5 mapping is implemented and awaits CI. |
+| `MouseButton::Button7` | `GLFW_MOUSE_BUTTON_7` | M1 | Round-trip assertion exists; event/state test only covers Left | Not qualified on X11: server button 11 was rejected by hosted 10-button Xvfb in [CI run #38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968). Win32 has no mapping; Cocoa button 6 mapping is implemented and awaits CI. |
+| `MouseButton::Button8` | `GLFW_MOUSE_BUTTON_8` | M1 | Round-trip assertion exists; event/state test only covers Left | Not qualified on X11: server button 12 is beyond the hosted 10-button Xvfb mapping. Win32 has no mapping; Cocoa button 7 mapping is implemented and awaits CI. |
 
-The issue's GLFW 3.4 backend constraints apply per row: Win32 can synthesize buttons 1–5;
-X11 reserves server buttons 4–7 for scroll and maps buttons 8–12 to GLFW buttons 4–8. The hosted
-Xvfb pointer map has only 10 server buttons, so XTEST cannot qualify the last two mappings there;
-nested Weston inherits the same parent-X11 limit. Cocoa's remaining button eligibility is
-unqualified. Never count an unavailable mapping as a pass.
+The issue's GLFW 3.4 backend constraints apply per row: Win32 maps buttons 1–5; X11 reserves server
+buttons 4–7 for scroll and maps buttons 8–12 to GLFW buttons 4–8; Cocoa maps native button numbers
+0–7 to GLFW buttons 1–8. The hosted Xvfb pointer map has only 10 server buttons, so XTEST cannot
+qualify the last two mappings there; nested Weston inherits the same parent-X11 limit. The new
+Windows and Cocoa native probes still need CI evidence. Never count an unavailable mapping as a
+pass.
 
 ## Other keyboard and mouse input families
 
@@ -270,9 +272,9 @@ unqualified. Never count an unavailable mapping as a pass.
 
 ## Remaining gaps for issue #91
 
-- Expand the A-key and eligible mouse-button probes across remaining backend mappings; rerun the
-  capacity-aware Linux button probe in CI. `Button7`/`Button8` remain unqualified on the current
-  10-button Xvfb. Add the remaining native keyboard and mouse families,
+- Run the expanded eligible mouse-button probes on Win32 and Cocoa CI; rerun the capacity-aware
+  Linux button probe. `Button7`/`Button8` remain unqualified on the current 10-button Xvfb. Add the
+  remaining native keyboard and mouse families,
   including enter/leave and modifier/text/repeat cases, with explicit non-injectable reasons per
   backend row and retained diagnostics.
 - Execute the new public VMNL scenario in at least one qualified Vulkan/X11 environment and retain

@@ -74,11 +74,12 @@ fn probe(backend: &str, operation: &str) -> Value {
 
 fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> {
     let sequence = READY_FILE_SEQUENCE.fetch_add(1, Ordering::Relaxed);
-    let max_server_button = if operation == "mouse-buttons-input" {
-        Some(x11_pointer_button_count()?)
-    } else {
-        None
-    };
+    let max_server_button =
+        if operation == "mouse-buttons-input" && matches!(backend, "x11" | "wayland") {
+            Some(x11_pointer_button_count()?)
+        } else {
+            None
+        };
     let ready_file = env::temp_dir().join(format!(
         "vmnl-platform-ready-{}-{sequence}",
         std::process::id()
@@ -109,7 +110,15 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
             "keyboard-native-input" => inject_key_a(),
             "mouse-native-input" => inject_mouse_left(),
             "mouse-buttons-input" => {
-                inject_mouse_buttons(usize::from(max_server_button.unwrap_or_default()))
+                let button_limit = match backend {
+                    "x11" | "wayland" => usize::from(max_server_button.unwrap_or_default()),
+                    "win32" => 5,
+                    "cocoa" => 8,
+                    value => {
+                        return Err(format!("mouse-button injection is unsupported for {value}"))
+                    }
+                };
+                inject_mouse_buttons(button_limit)
             }
             "mouse-motion-input" => inject_mouse_motion(),
             "mouse-scroll-input" => inject_mouse_scroll(),
@@ -917,6 +926,81 @@ fn inject_mouse_left() -> Result<(), String> {
     ))
 }
 
+#[cfg(target_os = "windows")]
+fn inject_mouse_buttons(button_limit: usize) -> Result<(), String> {
+    use std::mem::size_of;
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
+        SendInput, INPUT, INPUT_0, INPUT_MOUSE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP,
+        MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP,
+        MOUSEINPUT,
+    };
+
+    const XBUTTON_DOWN: u32 = 0x0080;
+    const XBUTTON_UP: u32 = 0x0100;
+    let mappings = [
+        (MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, 0, "Button1"),
+        (MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, 0, "Button2"),
+        (MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, 0, "Button3"),
+        (XBUTTON_DOWN, XBUTTON_UP, 1, "Button4 (XBUTTON1)"),
+        (XBUTTON_DOWN, XBUTTON_UP, 2, "Button5 (XBUTTON2)"),
+    ];
+    let input_size = i32::try_from(size_of::<INPUT>())
+        .map_err(|_| "Win32 INPUT size does not fit i32".to_owned())?;
+
+    for (down_flags, up_flags, mouse_data, name) in mappings.into_iter().take(button_limit) {
+        let inputs = [
+            INPUT {
+                r#type: INPUT_MOUSE,
+                Anonymous: INPUT_0 {
+                    mi: MOUSEINPUT {
+                        mouseData: mouse_data,
+                        dwFlags: down_flags,
+                        ..MOUSEINPUT::default()
+                    },
+                },
+            },
+            INPUT {
+                r#type: INPUT_MOUSE,
+                Anonymous: INPUT_0 {
+                    mi: MOUSEINPUT {
+                        mouseData: mouse_data,
+                        dwFlags: up_flags,
+                        ..MOUSEINPUT::default()
+                    },
+                },
+            },
+        ];
+        // SAFETY: `inputs` contains two initialized mouse INPUT records and remains alive for the
+        // duration of the call. `input_size` is the exact size of one INPUT record.
+        let sent = unsafe { SendInput(2, inputs.as_ptr(), input_size) };
+        if sent != 2 {
+            let injection_error = std::io::Error::last_os_error();
+            let release = INPUT {
+                r#type: INPUT_MOUSE,
+                Anonymous: INPUT_0 {
+                    mi: MOUSEINPUT {
+                        mouseData: mouse_data,
+                        dwFlags: up_flags,
+                        ..MOUSEINPUT::default()
+                    },
+                },
+            };
+            // SAFETY: `release` is one initialized mouse INPUT record that remains alive for the call.
+            let cleanup_sent = unsafe { SendInput(1, &release, input_size) };
+            return Err(format!(
+                "SendInput inserted {sent}/2 {name} events; cleanup release inserted {cleanup_sent}/1: {injection_error}"
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+fn inject_mouse_buttons(_button_limit: usize) -> Result<(), String> {
+    Err("native mouse-button injection is unsupported on this OS".to_owned())
+}
+
 #[cfg(not(target_os = "linux"))]
 fn inject_mouse_scroll() -> Result<(), String> {
     Err("mouse scroll injection is implemented only with XTEST on X11".to_owned())
@@ -925,14 +1009,6 @@ fn inject_mouse_scroll() -> Result<(), String> {
 #[cfg(not(target_os = "linux"))]
 fn inject_mouse_motion() -> Result<(), String> {
     Err("pointer movement injection is currently implemented only with XTEST".to_owned())
-}
-
-#[cfg(not(target_os = "linux"))]
-fn inject_mouse_buttons(_max_server_button: usize) -> Result<(), String> {
-    Err(
-        "eligible mouse-button injection is currently implemented only with XTEST on X11"
-            .to_owned(),
-    )
 }
 
 #[cfg(target_os = "macos")]
@@ -1074,6 +1150,98 @@ fn inject_mouse_left() -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(target_os = "macos")]
+fn inject_mouse_buttons(button_limit: usize) -> Result<(), String> {
+    use std::ffi::c_void;
+
+    type CGEventRef = *mut c_void;
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct CGPoint {
+        x: f64,
+        y: f64,
+    }
+
+    const CG_HID_EVENT_TAP: u32 = 0;
+    const LEFT_MOUSE_DOWN: u32 = 1;
+    const LEFT_MOUSE_UP: u32 = 2;
+    const RIGHT_MOUSE_DOWN: u32 = 3;
+    const RIGHT_MOUSE_UP: u32 = 4;
+    const OTHER_MOUSE_DOWN: u32 = 25;
+    const OTHER_MOUSE_UP: u32 = 26;
+
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        fn CGEventCreate(source: *mut c_void) -> CGEventRef;
+        fn CGEventGetLocation(event: CGEventRef) -> CGPoint;
+        fn CGEventCreateMouseEvent(
+            source: *mut c_void,
+            mouse_type: u32,
+            mouse_cursor_position: CGPoint,
+            mouse_button: u32,
+        ) -> CGEventRef;
+        fn CGEventPost(tap: u32, event: CGEventRef);
+    }
+    #[link(name = "CoreFoundation", kind = "framework")]
+    extern "C" {
+        fn CFRelease(value: *const c_void);
+    }
+
+    // SAFETY: A null source requests the default event source. The returned event is checked
+    // before its location is queried or its retained CoreFoundation reference is released.
+    let position_event = unsafe { CGEventCreate(std::ptr::null_mut()) };
+    if position_event.is_null() {
+        return Err("CGEventCreate returned null while reading cursor position".to_owned());
+    }
+    // SAFETY: `position_event` is a live CoreGraphics event created above.
+    let position = unsafe { CGEventGetLocation(position_event) };
+    // SAFETY: `position_event` is a live retained CoreFoundation object.
+    unsafe { CFRelease(position_event) };
+
+    let mappings = [
+        (0, LEFT_MOUSE_DOWN, LEFT_MOUSE_UP, "Button1 (left)"),
+        (1, RIGHT_MOUSE_DOWN, RIGHT_MOUSE_UP, "Button2 (right)"),
+        (2, OTHER_MOUSE_DOWN, OTHER_MOUSE_UP, "Button3 (middle)"),
+        (3, OTHER_MOUSE_DOWN, OTHER_MOUSE_UP, "Button4"),
+        (4, OTHER_MOUSE_DOWN, OTHER_MOUSE_UP, "Button5"),
+        (5, OTHER_MOUSE_DOWN, OTHER_MOUSE_UP, "Button6"),
+        (6, OTHER_MOUSE_DOWN, OTHER_MOUSE_UP, "Button7"),
+        (7, OTHER_MOUSE_DOWN, OTHER_MOUSE_UP, "Button8"),
+    ];
+    for (button, down_type, up_type, name) in mappings.into_iter().take(button_limit) {
+        // SAFETY: The mouse button number and event types are valid CoreGraphics values. Both
+        // returned references are checked before posting and released after use.
+        let (press, release) = unsafe {
+            (
+                CGEventCreateMouseEvent(std::ptr::null_mut(), down_type, position, button),
+                CGEventCreateMouseEvent(std::ptr::null_mut(), up_type, position, button),
+            )
+        };
+        if press.is_null() || release.is_null() {
+            // SAFETY: Any non-null value was created above with a retained CoreFoundation reference.
+            unsafe {
+                if !press.is_null() {
+                    CFRelease(press);
+                }
+                if !release.is_null() {
+                    CFRelease(release);
+                }
+            }
+            return Err(format!("CGEventCreateMouseEvent returned null for {name}"));
+        }
+
+        // SAFETY: Both mouse-event references are valid and retained until after they are posted.
+        unsafe {
+            CGEventPost(CG_HID_EVENT_TAP, press);
+            CGEventPost(CG_HID_EVENT_TAP, release);
+            CFRelease(press);
+            CFRelease(release);
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
 fn inject_key_a() -> Result<(), String> {
     Err("native input injection is unsupported on this OS".to_owned())
@@ -1138,6 +1306,7 @@ fn selected_backend_contract() {
             "focus",
             "keyboard-native-input",
             "mouse-native-input",
+            "mouse-buttons-input",
         ],
         value => panic!("unsupported qualified backend: {value}"),
     };
@@ -1348,69 +1517,52 @@ fn assert_native_mouse_motion(record: &Value) {
     assert_eq!(record["value"]["injector"], expected_injector);
 }
 
+struct MouseButtonExpectations {
+    events: Vec<Value>,
+    tested: Vec<Value>,
+    unsupported: Vec<Value>,
+    all_eight: bool,
+    basis: &'static str,
+    injector: &'static str,
+}
+
+fn mouse_button_press_release(button: &str) -> [Value; 2] {
+    [
+        serde_json::json!({"button": button, "action": "Press", "modifiers": 0}),
+        serde_json::json!({"button": button, "action": "Release", "modifiers": 0}),
+    ]
+}
+
 fn assert_native_mouse_buttons_input(record: &Value) {
     assert_eq!(record["value"]["qualified"], true);
     assert_eq!(record["value"]["stage"], "input");
     assert_eq!(record["value"]["focused"], true);
     assert_eq!(record["value"]["hovered"], true);
-    let maximum_server_button = record["value"]["button_coverage"]["maximum_server_button"]
-        .as_u64()
-        .expect("X11 maximum server button should be recorded");
-    let expected_button_mappings = [
-        (1, "Button1"),
-        (2, "Button3"),
-        (3, "Button2"),
-        (8, "Button4"),
-        (9, "Button5"),
-        (10, "Button6"),
-        (11, "Button7"),
-        (12, "Button8"),
-    ];
-    let expected_events: Vec<Value> = expected_button_mappings
-        .into_iter()
-        .filter(|(server_button, _)| *server_button <= maximum_server_button)
-        .flat_map(|(_, button)| {
-            [
-                serde_json::json!({"button": button, "action": "Press", "modifiers": 0}),
-                serde_json::json!({"button": button, "action": "Release", "modifiers": 0}),
-            ]
-        })
-        .collect();
+    let expected = match record["backend_actual"].as_str() {
+        Some("x11" | "wayland") => x11_mouse_button_expectations(record),
+        Some("win32") => win32_mouse_button_expectations(),
+        Some("cocoa") => cocoa_mouse_button_expectations(),
+        value => panic!("unexpected native mouse-button backend: {value:?}"),
+    };
     assert_eq!(
         record["value"]["observed_events"],
-        serde_json::json!(expected_events)
+        serde_json::json!(expected.events)
     );
-
-    let expected_tested_mappings: Vec<Value> = expected_button_mappings
-        .into_iter()
-        .filter(|(server_button, _)| *server_button <= maximum_server_button)
-        .map(|(server_button, glfw_button)| {
-            serde_json::json!({"server_button": server_button, "glfw_button": glfw_button})
-        })
-        .collect();
-    let expected_unsupported_mappings: Vec<Value> = expected_button_mappings
-        .into_iter()
-        .filter(|(server_button, _)| *server_button > maximum_server_button)
-        .map(|(server_button, glfw_button)| {
-            serde_json::json!({
-                "server_button": server_button,
-                "glfw_button": glfw_button,
-                "reason": "server_button_exceeds_x11_pointer_mapping",
-            })
-        })
-        .collect();
-    let all_eight_glfw_buttons_tested = expected_unsupported_mappings.is_empty();
     assert_eq!(
         record["value"]["button_coverage"]["tested_mappings"],
-        serde_json::json!(expected_tested_mappings)
+        serde_json::json!(expected.tested)
+    );
+    assert_eq!(
+        record["value"]["button_coverage"]["mapping_basis"],
+        expected.basis
     );
     assert_eq!(
         record["value"]["button_coverage"]["all_eight_glfw_buttons_tested"],
-        all_eight_glfw_buttons_tested
+        expected.all_eight
     );
     assert_eq!(
         record["value"]["button_coverage"]["unsupported_mappings"],
-        serde_json::json!(expected_unsupported_mappings)
+        serde_json::json!(expected.unsupported)
     );
     assert_eq!(
         record["value"]["case"],
@@ -1421,12 +1573,124 @@ fn assert_native_mouse_buttons_input(record: &Value) {
         serde_json::json!(vec!["Release"; 8])
     );
     assert_eq!(record["value"]["failure_reason"], Value::Null);
-    let expected_injector = match record["backend_actual"].as_str() {
-        Some("x11") => "x11-xtest",
-        Some("wayland") => "x11-xtest-parent",
-        value => panic!("unexpected native mouse-button backend: {value:?}"),
-    };
-    assert_eq!(record["value"]["injector"], expected_injector);
+    assert_eq!(record["value"]["injector"], expected.injector);
+}
+
+fn x11_mouse_button_expectations(record: &Value) -> MouseButtonExpectations {
+    let maximum = record["value"]["button_coverage"]["maximum_server_button"]
+        .as_u64()
+        .expect("X11 maximum server button should be recorded");
+    let mappings: [(u8, &str); 8] = [
+        (1, "Button1"),
+        (2, "Button3"),
+        (3, "Button2"),
+        (8, "Button4"),
+        (9, "Button5"),
+        (10, "Button6"),
+        (11, "Button7"),
+        (12, "Button8"),
+    ];
+    let tested: Vec<_> = mappings
+        .into_iter()
+        .filter(|(button, _)| u64::from(*button) <= maximum)
+        .collect();
+    let unsupported: Vec<_> = mappings
+        .into_iter()
+        .filter(|(button, _)| u64::from(*button) > maximum)
+        .collect();
+    MouseButtonExpectations {
+        events: tested
+            .iter()
+            .flat_map(|(_, button)| mouse_button_press_release(button))
+            .collect(),
+        tested: tested
+            .iter()
+            .map(|(button, glfw_button)| {
+                serde_json::json!({"server_button": button, "glfw_button": glfw_button})
+            })
+            .collect(),
+        unsupported: unsupported
+            .iter()
+            .map(|(button, glfw_button)| {
+                serde_json::json!({
+                    "server_button": button,
+                    "glfw_button": glfw_button,
+                    "reason": "server_button_exceeds_x11_pointer_mapping",
+                })
+            })
+            .collect(),
+        all_eight: unsupported.is_empty(),
+        basis: "x11_pointer_mapping_length",
+        injector: if record["backend_actual"] == "x11" {
+            "x11-xtest"
+        } else {
+            "x11-xtest-parent"
+        },
+    }
+}
+
+fn win32_mouse_button_expectations() -> MouseButtonExpectations {
+    let mappings = [
+        ("left", "Button1"),
+        ("right", "Button2"),
+        ("middle", "Button3"),
+        ("XBUTTON1", "Button4"),
+        ("XBUTTON2", "Button5"),
+    ];
+    MouseButtonExpectations {
+        events: mappings
+            .iter()
+            .flat_map(|(_, button)| mouse_button_press_release(button))
+            .collect(),
+        tested: mappings
+            .iter()
+            .map(|(native_button, glfw_button)| {
+                serde_json::json!({"native_button": native_button, "glfw_button": glfw_button})
+            })
+            .collect(),
+        unsupported: ["Button6", "Button7", "Button8"]
+            .into_iter()
+            .map(|glfw_button| {
+                serde_json::json!({
+                    "native_button": Value::Null,
+                    "glfw_button": glfw_button,
+                    "reason": "win32_sendinput_has_no_glfw_mapping",
+                })
+            })
+            .collect(),
+        all_eight: false,
+        basis: "win32_sendinput",
+        injector: "send-input",
+    }
+}
+
+fn cocoa_mouse_button_expectations() -> MouseButtonExpectations {
+    let mappings: [(u8, &str); 8] = [
+        (0, "Button1"),
+        (1, "Button2"),
+        (2, "Button3"),
+        (3, "Button4"),
+        (4, "Button5"),
+        (5, "Button6"),
+        (6, "Button7"),
+        (7, "Button8"),
+    ];
+    MouseButtonExpectations {
+        events: mappings
+            .iter()
+            .flat_map(|(_, button)| mouse_button_press_release(button))
+            .collect(),
+        tested: mappings
+            .iter()
+            .map(|(native_button, glfw_button)| {
+                serde_json::json!({"native_button": native_button, "glfw_button": glfw_button})
+            })
+            .collect(),
+        unsupported: Vec::new(),
+        all_eight: true,
+        basis: "cocoa_cgevent_button_number",
+        injector: "cg-event-post",
+    }
 }
 
 fn assert_native_mouse_scroll_input(record: &Value) {

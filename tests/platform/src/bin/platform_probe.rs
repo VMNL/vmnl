@@ -29,6 +29,23 @@ const X11_MOUSE_BUTTON_MAPPINGS: [(u8, &str); 8] = [
     (11, "Button7"),
     (12, "Button8"),
 ];
+const WIN32_MOUSE_BUTTON_MAPPINGS: [(&str, &str); 5] = [
+    ("left", "Button1"),
+    ("right", "Button2"),
+    ("middle", "Button3"),
+    ("XBUTTON1", "Button4"),
+    ("XBUTTON2", "Button5"),
+];
+const COCOA_MOUSE_BUTTON_MAPPINGS: [(u8, &str); 8] = [
+    (0, "Button1"),
+    (1, "Button2"),
+    (2, "Button3"),
+    (3, "Button4"),
+    (4, "Button5"),
+    (5, "Button6"),
+    (6, "Button7"),
+    (7, "Button8"),
+];
 
 fn is_mouse_native_input(operation: &str) -> bool {
     matches!(
@@ -666,24 +683,34 @@ impl NativeMouseProbeCase {
         }
     }
 
-    fn expected_events(self, maximum_server_button: Option<u8>) -> Vec<Value> {
+    fn expected_events(
+        self,
+        platform: glfw::Platform,
+        maximum_server_button: Option<u8>,
+    ) -> Vec<Value> {
         match self {
             Self::LeftButton => vec![
                 json!({"button": "Button1", "action": "Press", "modifiers": 0}),
                 json!({"button": "Button1", "action": "Release", "modifiers": 0}),
             ],
-            Self::MouseButtons => X11_MOUSE_BUTTON_MAPPINGS
-                .into_iter()
-                .filter(|(server_button, _)| {
-                    maximum_server_button.is_some_and(|maximum| *server_button <= maximum)
-                })
-                .flat_map(|(_, button)| {
-                    [
-                        json!({"button": button, "action": "Press", "modifiers": 0}),
-                        json!({"button": button, "action": "Release", "modifiers": 0}),
-                    ]
-                })
-                .collect(),
+            Self::MouseButtons => match platform {
+                glfw::Platform::X11 | glfw::Platform::Wayland => X11_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .filter(|(server_button, _)| {
+                        maximum_server_button.is_some_and(|maximum| *server_button <= maximum)
+                    })
+                    .flat_map(|(_, button)| mouse_button_press_release(button))
+                    .collect(),
+                glfw::Platform::Win32 => WIN32_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .flat_map(|(_, button)| mouse_button_press_release(button))
+                    .collect(),
+                glfw::Platform::MacOS => COCOA_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .flat_map(|(_, button)| mouse_button_press_release(button))
+                    .collect(),
+                _ => Vec::new(),
+            },
             Self::ScrollAxes => vec![
                 json!({"dx": 0.0, "dy": 1.0}),
                 json!({"dx": 0.0, "dy": -1.0}),
@@ -694,40 +721,91 @@ impl NativeMouseProbeCase {
         }
     }
 
-    fn button_coverage(self, maximum_server_button: Option<u8>) -> Value {
+    fn button_coverage(self, platform: glfw::Platform, maximum_server_button: Option<u8>) -> Value {
         let Self::MouseButtons = self else {
             return Value::Null;
         };
-        let Some(maximum_server_button) = maximum_server_button else {
-            return Value::Null;
-        };
-
-        let tested_mappings: Vec<Value> = X11_MOUSE_BUTTON_MAPPINGS
-            .into_iter()
-            .filter(|(server_button, _)| *server_button <= maximum_server_button)
-            .map(|(server_button, glfw_button)| {
-                json!({"server_button": server_button, "glfw_button": glfw_button})
-            })
-            .collect();
-        let unsupported_mappings: Vec<Value> = X11_MOUSE_BUTTON_MAPPINGS
-            .into_iter()
-            .filter(|(server_button, _)| *server_button > maximum_server_button)
-            .map(|(server_button, glfw_button)| {
+        match platform {
+            glfw::Platform::X11 | glfw::Platform::Wayland => {
+                let Some(maximum_server_button) = maximum_server_button else {
+                    return Value::Null;
+                };
+                let tested_mappings: Vec<Value> = X11_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .filter(|(server_button, _)| *server_button <= maximum_server_button)
+                    .map(|(server_button, glfw_button)| {
+                        json!({"server_button": server_button, "glfw_button": glfw_button})
+                    })
+                    .collect();
+                let unsupported_mappings: Vec<Value> = X11_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .filter(|(server_button, _)| *server_button > maximum_server_button)
+                    .map(|(server_button, glfw_button)| {
+                        json!({
+                            "server_button": server_button,
+                            "glfw_button": glfw_button,
+                            "reason": "server_button_exceeds_x11_pointer_mapping",
+                        })
+                    })
+                    .collect();
                 json!({
-                    "server_button": server_button,
-                    "glfw_button": glfw_button,
-                    "reason": "server_button_exceeds_x11_pointer_mapping",
+                    "mapping_basis": "x11_pointer_mapping_length",
+                    "maximum_server_button": maximum_server_button,
+                    "all_eight_glfw_buttons_tested": unsupported_mappings.is_empty(),
+                    "tested_mappings": tested_mappings,
+                    "unsupported_mappings": unsupported_mappings,
                 })
-            })
-            .collect();
-        let all_eight_glfw_buttons_tested = unsupported_mappings.is_empty();
-        json!({
-            "maximum_server_button": maximum_server_button,
-            "all_eight_glfw_buttons_tested": all_eight_glfw_buttons_tested,
-            "tested_mappings": tested_mappings,
-            "unsupported_mappings": unsupported_mappings,
-        })
+            }
+            glfw::Platform::Win32 => {
+                let tested_mappings: Vec<Value> = WIN32_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .map(|(native_button, glfw_button)| {
+                        json!({"native_button": native_button, "glfw_button": glfw_button})
+                    })
+                    .collect();
+                let unsupported_mappings: Vec<Value> = ["Button6", "Button7", "Button8"]
+                    .into_iter()
+                    .map(|glfw_button| {
+                        json!({
+                            "native_button": Value::Null,
+                            "glfw_button": glfw_button,
+                            "reason": "win32_sendinput_has_no_glfw_mapping",
+                        })
+                    })
+                    .collect();
+                json!({
+                    "mapping_basis": "win32_sendinput",
+                    "maximum_native_button": 5,
+                    "all_eight_glfw_buttons_tested": false,
+                    "tested_mappings": tested_mappings,
+                    "unsupported_mappings": unsupported_mappings,
+                })
+            }
+            glfw::Platform::MacOS => {
+                let tested_mappings: Vec<Value> = COCOA_MOUSE_BUTTON_MAPPINGS
+                    .into_iter()
+                    .map(|(native_button, glfw_button)| {
+                        json!({"native_button": native_button, "glfw_button": glfw_button})
+                    })
+                    .collect();
+                json!({
+                    "mapping_basis": "cocoa_cgevent_button_number",
+                    "maximum_native_button": 7,
+                    "all_eight_glfw_buttons_tested": true,
+                    "tested_mappings": tested_mappings,
+                    "unsupported_mappings": [],
+                })
+            }
+            _ => Value::Null,
+        }
     }
+}
+
+fn mouse_button_press_release(button: &str) -> [Value; 2] {
+    [
+        json!({"button": button, "action": "Press", "modifiers": 0}),
+        json!({"button": button, "action": "Release", "modifiers": 0}),
+    ]
 }
 
 fn native_mouse_input(
@@ -737,7 +815,9 @@ fn native_mouse_input(
     platform: glfw::Platform,
     case: NativeMouseProbeCase,
 ) -> Value {
-    let maximum_server_button = if matches!(case, NativeMouseProbeCase::MouseButtons) {
+    let maximum_server_button = if matches!(case, NativeMouseProbeCase::MouseButtons)
+        && matches!(platform, glfw::Platform::X11 | glfw::Platform::Wayland)
+    {
         let parsed = env::var("VMNL_PLATFORM_X11_MAX_BUTTON")
             .ok()
             .and_then(|value| value.parse::<u8>().ok());
@@ -869,7 +949,7 @@ fn native_mouse_input(
         });
     }
 
-    let expected_events = case.expected_events(maximum_server_button);
+    let expected_events = case.expected_events(platform, maximum_server_button);
     let expected_event_count = if matches!(case, NativeMouseProbeCase::PointerMovement) {
         1
     } else {
@@ -979,7 +1059,7 @@ fn native_mouse_input(
         "injector": env::var("VMNL_PLATFORM_INPUT_INJECTOR")
             .unwrap_or_else(|_| "unknown".to_owned()),
         "case": case.name(),
-        "button_coverage": case.button_coverage(maximum_server_button),
+        "button_coverage": case.button_coverage(platform, maximum_server_button),
         "observed_events": observed_events,
         "final_state": final_state,
         "failure_reason": if qualified {
