@@ -254,8 +254,8 @@ Never count an unavailable mapping as a pass.
 | Text input | `Text(char)` carries the Unicode scalar independently of physical key events. | Fixed representative scalar literals, including non-ASCII and composed input. | Translation covers `é`; no public VMNL native path. | K; controlled layout/input method required; injector support not yet qualified. Do not enumerate all Unicode. |
 | Legacy modified text | `TextWithModifiers { character, modifiers }` preserves both fields. | Fixed character and all six expected modifier bits. | Translation covers `É` with all six bits. | K; exercise only where the backend/input method emits this deprecated GLFW callback; otherwise record why unsupported. |
 | Repeat | Repeat emits `KeyPressed { repeat: true }`, leaves the key down, and does not create another press transition. | Explicit `Action::Repeat` test value and bounded native hold. | Translation and reducer have deterministic representative tests. | K; hold a repeatable key for a bounded interval; not yet qualified. |
-| Pointer movement | `MouseMoved { x, y }` uses content-area coordinates. | Fixed coordinates; backend-specific native tolerance. | Translation preserves fractional and negative coordinates. | M; no native motion injector/probe. |
-| Pointer position | `get_cursor_position` reports content-area position; `set_cursor_position` requests the specified target subject to backend precision. | Fixed target coordinates and measured tolerance. | Public signatures and Null probe cover position; no native precision evidence. | M; focus/inside-window prerequisites; not yet qualified. |
+| Pointer movement | `MouseMoved { x, y }` uses content-area coordinates. | XTEST moves the hovered pointer by `(6, 4)` screen coordinates; X11 checks the exact content-area delta, nested Weston checks positive movement and getter/event agreement. | Translation preserves fractional and negative coordinates. | Native X11/nested Weston probe and public VMNL X11 event/state assertion added; awaiting CI. |
+| Pointer position | `get_cursor_position` reports content-area position; `set_cursor_position` requests the specified target subject to backend precision. | Compare the post-motion getter with the `MouseMoved` event. | Public signatures and Null probe cover setting; native XTEST movement now checks reported position. | Same probe and qualification status as pointer movement. |
 | Enter/leave | `MouseEntered` then `MouseLeft` when crossing the content-area boundary in each direction. | Expected ordered pair from a controlled pointer path. | Both event translations are covered. | M; no native hover probe. |
 | Vertical scroll | `MouseScrolled { dx, dy }` preserves vertical direction. | X11 buttons 4/5; GLFW 3.4 maps them to `(0, +1)` / `(0, -1)`. | Translation covers fractional values; native XTEST and public VMNL up/down assertions are checked in. | M: X11 and nested Weston passed in [CI run #38068589103](https://github.com/VMNL/vmnl/actions/runs/38068589103); V: public Vulkan/X11 runtime not yet qualified. |
 | Horizontal scroll | `MouseScrolled { dx, dy }` preserves horizontal direction. | X11 buttons 6/7; GLFW 3.4 maps them to `(+1, 0)` / `(-1, 0)`. | Translation covers fractional values; native XTEST and public VMNL direction assertions are checked in. | M: X11 and nested Weston passed in [CI run #38071107344](https://github.com/VMNL/vmnl/actions/runs/38071107344); V: public Vulkan/X11 runtime not yet qualified. |
@@ -265,8 +265,9 @@ Never count an unavailable mapping as a pass.
 ## Remaining gaps for issue #91
 
 - Expand the A-key and eligible mouse-button probes across remaining backend mappings; the new
-  Linux all-button case is awaiting CI. Add the remaining native keyboard and mouse families, with
-  explicit non-injectable reasons per backend row and retained diagnostics.
+  Linux all-button case is awaiting CI. Add the remaining native keyboard and mouse families,
+  including enter/leave and modifier/text/repeat cases, with explicit non-injectable reasons per
+  backend row and retained diagnostics.
 - Execute the new public VMNL scenario in at least one qualified Vulkan/X11 environment and retain
   its result; GPU-test compilation and direct GLFW probes do not qualify it.
 

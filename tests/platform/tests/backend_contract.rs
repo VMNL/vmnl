@@ -26,7 +26,7 @@ static READY_FILE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 fn is_mouse_native_input(operation: &str) -> bool {
     matches!(
         operation,
-        "mouse-native-input" | "mouse-buttons-input" | "mouse-scroll-input"
+        "mouse-native-input" | "mouse-buttons-input" | "mouse-motion-input" | "mouse-scroll-input"
     )
 }
 
@@ -36,6 +36,7 @@ fn probe(backend: &str, operation: &str) -> Value {
         "keyboard-native-input"
             | "mouse-native-input"
             | "mouse-buttons-input"
+            | "mouse-motion-input"
             | "mouse-scroll-input"
     ) {
         native_input_probe(backend, operation).expect("native input probe should complete")
@@ -97,6 +98,7 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
             "keyboard-native-input" => inject_key_a(),
             "mouse-native-input" => inject_mouse_left(),
             "mouse-buttons-input" => inject_mouse_buttons(),
+            "mouse-motion-input" => inject_mouse_motion(),
             "mouse-scroll-input" => inject_mouse_scroll(),
             value => Err(format!("unsupported native input operation: {value}")),
         };
@@ -718,6 +720,56 @@ fn inject_mouse_scroll() -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
+fn inject_mouse_motion() -> Result<(), String> {
+    use x11rb::{
+        connection::Connection as _,
+        protocol::{
+            xproto::{ConnectionExt as _, MOTION_NOTIFY_EVENT},
+            xtest::ConnectionExt as _,
+        },
+    };
+
+    const DELTA_X: i16 = 6;
+    const DELTA_Y: i16 = 4;
+
+    let (connection, screen_number) = x11rb::connect(None)
+        .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
+    connection
+        .xtest_get_version(2, 2)
+        .map_err(|error| format!("failed to query XTEST: {error}"))?
+        .reply()
+        .map_err(|error| format!("XTEST is unavailable: {error}"))?;
+
+    let root = connection
+        .setup()
+        .roots
+        .get(screen_number)
+        .ok_or_else(|| format!("parent X server has no screen {screen_number}"))?
+        .root;
+    let pointer = connection
+        .query_pointer(root)
+        .map_err(|error| format!("failed to request the parent pointer position: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read the parent pointer position: {error}"))?;
+    let x = pointer
+        .root_x
+        .checked_add(DELTA_X)
+        .ok_or_else(|| "target pointer X coordinate overflowed".to_owned())?;
+    let y = pointer
+        .root_y
+        .checked_add(DELTA_Y)
+        .ok_or_else(|| "target pointer Y coordinate overflowed".to_owned())?;
+    connection
+        .xtest_fake_input(MOTION_NOTIFY_EVENT, 0, 0, root, x, y, 0)
+        .map_err(|error| format!("failed to enqueue XTEST pointer movement: {error}"))?
+        .check()
+        .map_err(|error| format!("XTEST pointer movement failed: {error}"))?;
+    connection
+        .flush()
+        .map_err(|error| format!("failed to flush XTEST pointer movement: {error}"))
+}
+
+#[cfg(target_os = "linux")]
 fn inject_x11_button_release(
     connection: &x11rb::rust_connection::RustConnection,
     button: u8,
@@ -832,6 +884,11 @@ fn inject_mouse_left() -> Result<(), String> {
 #[cfg(not(target_os = "linux"))]
 fn inject_mouse_scroll() -> Result<(), String> {
     Err("mouse scroll injection is implemented only with XTEST on X11".to_owned())
+}
+
+#[cfg(not(target_os = "linux"))]
+fn inject_mouse_motion() -> Result<(), String> {
+    Err("pointer movement injection is currently implemented only with XTEST".to_owned())
 }
 
 #[cfg(not(target_os = "linux"))]
@@ -1010,6 +1067,7 @@ fn selected_backend_contract() {
             "iconify",
             "keyboard-native-input",
             "mouse-native-input",
+            "mouse-motion-input",
             "mouse-buttons-input",
             "mouse-scroll-input",
         ],
@@ -1028,6 +1086,7 @@ fn selected_backend_contract() {
             "focus",
             "keyboard-native-input",
             "mouse-native-input",
+            "mouse-motion-input",
             "mouse-buttons-input",
             "mouse-scroll-input",
         ],
@@ -1067,6 +1126,7 @@ fn assert_operation_contract(backend: &str, operation: &str, record: &Value) {
         }
         "keyboard-native-input" => assert_native_keyboard_input(record),
         "mouse-native-input" => assert_native_mouse_input(record),
+        "mouse-motion-input" => assert_native_mouse_motion(record),
         "mouse-buttons-input" => assert_native_mouse_buttons_input(record),
         "mouse-scroll-input" => assert_native_mouse_scroll_input(record),
         _ => {}
@@ -1199,6 +1259,55 @@ fn assert_native_mouse_input(record: &Value) {
         Some("win32") => "send-input",
         Some("cocoa") => "cg-event-post",
         value => panic!("unexpected mouse input backend: {value:?}"),
+    };
+    assert_eq!(record["value"]["injector"], expected_injector);
+}
+
+fn assert_native_mouse_motion(record: &Value) {
+    assert_eq!(record["value"]["qualified"], true);
+    assert_eq!(record["value"]["stage"], "input");
+    assert_eq!(record["value"]["focused"], true);
+    assert_eq!(record["value"]["hovered"], true);
+
+    let initial = record["value"]["initial_cursor_position"]
+        .as_array()
+        .expect("initial cursor position should be an array");
+    let final_position = record["value"]["cursor_position"]
+        .as_array()
+        .expect("final cursor position should be an array");
+    let observed = record["value"]["observed_events"]
+        .as_array()
+        .expect("cursor movement events should be an array");
+    assert_eq!(observed.len(), 1);
+    assert_eq!(
+        record["value"]["injected_root_delta"],
+        serde_json::json!([6, 4])
+    );
+    for (index, delta) in [6.0, 4.0].into_iter().enumerate() {
+        let initial = initial[index]
+            .as_f64()
+            .expect("initial cursor coordinate should be a number");
+        let final_coordinate = final_position[index]
+            .as_f64()
+            .expect("final cursor coordinate should be a number");
+        let event_coordinate = observed[0][if index == 0 { "x" } else { "y" }]
+            .as_f64()
+            .expect("cursor event coordinate should be a number");
+        assert!((event_coordinate - final_coordinate).abs() <= 0.01);
+        if record["backend_actual"] == "wayland" {
+            assert!(event_coordinate > initial);
+        } else {
+            assert!((final_coordinate - initial - delta).abs() <= 0.01);
+        }
+    }
+
+    assert_eq!(record["value"]["case"], "pointer-movement");
+    assert_eq!(record["value"]["final_state"], Value::Null);
+    assert_eq!(record["value"]["failure_reason"], Value::Null);
+    let expected_injector = if record["backend_actual"] == "x11" {
+        "x11-xtest"
+    } else {
+        "x11-xtest-parent"
     };
     assert_eq!(record["value"]["injector"], expected_injector);
 }

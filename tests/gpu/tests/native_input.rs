@@ -16,6 +16,7 @@ const KEY_PRESS: u8 = x11rb::protocol::xproto::KEY_PRESS_EVENT;
 const KEY_RELEASE: u8 = x11rb::protocol::xproto::KEY_RELEASE_EVENT;
 const BUTTON_PRESS: u8 = x11rb::protocol::xproto::BUTTON_PRESS_EVENT;
 const BUTTON_RELEASE: u8 = x11rb::protocol::xproto::BUTTON_RELEASE_EVENT;
+const MOTION_NOTIFY: u8 = x11rb::protocol::xproto::MOTION_NOTIFY_EVENT;
 const BUTTON_LEFT: u8 = 1;
 const BUTTON_SCROLL_UP: u8 = 4;
 const BUTTON_SCROLL_DOWN: u8 = 5;
@@ -53,7 +54,44 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
     assert!(!window.input().keyboard().is_down(Key::A));
     assert!(!window.input().mouse().is_down(MouseButton::Left));
 
+    window.set_cursor_position(120.0, 100.0)?;
+    let hover_deadline = Instant::now() + INPUT_TIMEOUT;
+    while !window.is_cursor_hovered() && Instant::now() < hover_deadline {
+        let _ = window.poll_events();
+        window.wait_events_timeout(0.02);
+    }
+    assert!(
+        window.is_cursor_hovered(),
+        "VMNL input window is not hovered"
+    );
+    let _ = window.poll_events();
+    let initial_cursor_position = window.get_cursor_position();
+
     let mut injector = X11Injector::connect().map_err(invalid_state)?;
+    injector.move_pointer_by(6, 4).map_err(invalid_state)?;
+    let expected_cursor_position = (
+        initial_cursor_position.0 + 6.0,
+        initial_cursor_position.1 + 4.0,
+    );
+    let cursor_events = poll_until(&mut window, "cursor movement", |kind| {
+        matches!(
+            kind,
+            EventKind::MouseMoved { x, y }
+                if (*x - expected_cursor_position.0).abs() <= 0.01
+                    && (*y - expected_cursor_position.1).abs() <= 0.01
+        )
+    })?;
+    assert!(cursor_events.iter().any(|event| {
+        matches!(
+            event.kind(),
+            EventKind::MouseMoved { x, y }
+                if (*x - expected_cursor_position.0).abs() <= 0.01
+                    && (*y - expected_cursor_position.1).abs() <= 0.01
+        )
+    }));
+    let cursor_position = window.get_cursor_position();
+    assert!((cursor_position.0 - expected_cursor_position.0).abs() <= 0.01);
+    assert!((cursor_position.1 - expected_cursor_position.1).abs() <= 0.01);
 
     injector.press_key_a().map_err(invalid_state)?;
     let key_press_events = poll_until(&mut window, "A key press", |kind| {
@@ -304,6 +342,7 @@ fn invalid_state(message: impl Into<String>) -> VMNLError {
 
 struct X11Injector {
     connection: x11rb::rust_connection::RustConnection,
+    root: u32,
     a_keycode: u8,
     key_is_down: bool,
     mouse_button_is_down: Option<u8>,
@@ -320,7 +359,7 @@ impl X11Injector {
             protocol::xtest::ConnectionExt as _,
         };
 
-        let (connection, _) = x11rb::connect(None)
+        let (connection, screen_number) = x11rb::connect(None)
             .map_err(|error| format!("could not connect to DISPLAY: {error}"))?;
         connection
             .xtest_get_version(2, 2)
@@ -329,6 +368,11 @@ impl X11Injector {
             .map_err(|error| format!("XTEST is unavailable: {error}"))?;
 
         let setup = connection.setup();
+        let root = setup
+            .roots
+            .get(screen_number)
+            .ok_or_else(|| format!("X11 server has no screen {screen_number}"))?
+            .root;
         let keycode_count = setup.max_keycode - setup.min_keycode + 1;
         let mapping = connection
             .get_keyboard_mapping(setup.min_keycode, keycode_count)
@@ -352,6 +396,7 @@ impl X11Injector {
 
         Ok(Self {
             connection,
+            root,
             a_keycode,
             key_is_down: false,
             mouse_button_is_down: None,
@@ -387,6 +432,36 @@ impl X11Injector {
         self.fake_input(BUTTON_RELEASE, button, "mouse button release")?;
         self.mouse_button_is_down = None;
         Ok(())
+    }
+
+    fn move_pointer_by(&self, delta_x: i16, delta_y: i16) -> Result<(), String> {
+        use x11rb::{
+            connection::Connection as _, protocol::xproto::ConnectionExt as _,
+            protocol::xtest::ConnectionExt as _,
+        };
+
+        let pointer = self
+            .connection
+            .query_pointer(self.root)
+            .map_err(|error| format!("could not request X11 pointer position: {error}"))?
+            .reply()
+            .map_err(|error| format!("could not read X11 pointer position: {error}"))?;
+        let x = pointer
+            .root_x
+            .checked_add(delta_x)
+            .ok_or_else(|| "target X11 pointer X coordinate overflowed".to_owned())?;
+        let y = pointer
+            .root_y
+            .checked_add(delta_y)
+            .ok_or_else(|| "target X11 pointer Y coordinate overflowed".to_owned())?;
+        self.connection
+            .xtest_fake_input(MOTION_NOTIFY, 0, 0, self.root, x, y, 0)
+            .map_err(|error| format!("could not enqueue XTEST pointer motion: {error}"))?
+            .check()
+            .map_err(|error| format!("XTEST pointer motion failed: {error}"))?;
+        self.connection
+            .flush()
+            .map_err(|error| format!("could not flush XTEST pointer motion: {error}"))
     }
 
     fn scroll_vertical_up(&mut self) -> Result<(), String> {

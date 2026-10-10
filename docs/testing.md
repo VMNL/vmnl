@@ -94,8 +94,8 @@ just input-test cocoa
 ```
 
 The public VMNL `Window::poll_events()` → `Event`/`Input` scenario is a separate opt-in GPU test.
-It currently covers X11 `A`, all eight mouse-button press/release pairs, and vertical/horizontal
-scroll in both directions:
+It currently covers X11 `A`, XTEST pointer motion delivered as `MouseMoved`, all eight mouse-button
+press/release pairs, and vertical/horizontal scroll in both directions:
 
 ```bash
 just input-test-vmnl x11
