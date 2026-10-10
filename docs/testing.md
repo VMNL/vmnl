@@ -147,17 +147,17 @@ direction. The hosted Xvfb mapping
 currently exposes 10 buttons. CI run
 [#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968) showed XTEST rejecting
 server button 11 (`BadValue`), so GLFW `Button7` and `Button8` are not qualified by hosted CI. The
-The latest cross-platform run [#38085840163](https://github.com/VMNL/vmnl/actions/runs/38085840163)
+The latest cross-platform run [#38087756331](https://github.com/VMNL/vmnl/actions/runs/38087756331)
 passed quality and the build, unit, API, smoke, and Null-backend checks on all three operating
-systems. Linux stopped at the nested Weston hover-boundary case, before X11. The XTEST pointer was
-at `(0, 0)` with no root child after leaving; on re-entry at `(646, 371)`, its root child was
-`0x400175`. Weston window `0x200005` has ancestry `0x200005 → 0x400175 → root`, so the root child is
-the window-manager frame containing the Weston window. The Wayland trace logged the initial
-`wl_pointer.enter` only; it logged no pointer motion, leave, or re-entry after the XTEST moves.
-Windows A, Shift+A, buttons 1–5, changed-coordinate motion, leave/enter, and all four scroll
-directions passed. macOS A, Shift+A, all eight buttons, motion, and leave/enter passed; its scroll
-probe reported vertical `dy=+1/-1`, but horizontal `dx=+0.6/+0.6`. Linux failed the workflow;
-Windows and macOS native probes remain experimental and non-blocking.
+systems. Linux stopped at the nested Weston hover-boundary case, before X11. `WarpPointer` moved
+the parent X11 pointer from `(646, 364)` to `(0, 0)` and back. The root pointer child was empty
+after leaving and was frame `0x400175` after re-entry; Weston window `0x200005` is inside that
+frame. `WAYLAND_DEBUG` logged the initial `wl_pointer.enter` only, with no subsequent motion, leave,
+or re-entry. The next probe records parent X11 enter/leave/motion events on Weston's output window
+to determine whether the X server delivered them to the backend. Windows A, Shift+A, buttons 1–5,
+changed-coordinate motion, leave/enter, and all four scroll directions passed. macOS A, Shift+A,
+all eight buttons, motion, leave/enter, and all four scroll directions passed. Linux failed the
+workflow; Windows and macOS native probes remain experimental and non-blocking.
 
 The scroll probe checks vertical up/down and horizontal positive/negative in order. X11 injects
 buttons 4/5 and 6/7 and expects offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and `(-1, 0)`. Cocoa's
@@ -183,11 +183,12 @@ until ten consecutive successful runs use the same runner image, GLFW revision, 
 schema; any of those changes resets the count. The explicit Core Graphics flags fixed Cocoa Shift+A
 in run #38082851338. Scroll injections on Win32 and Cocoa are separated by 100 ms so GLFW can
 process each message before the next reversal. Pointer-motion probes discard callbacks that report
-no coordinate change. Cocoa scroll injection uses pixel deltas and now matches the variadic
-Core Graphics signature and axis count; the horizontal sign correction needs CI evidence. The nested
-Weston boundary probe enables `WAYLAND_DEBUG` and now uses an X11 pointer warp instead of XTEST to
-compare compositor-generated pointer transitions. Additional modifier combinations, text, repeat,
-X11, and public VMNL runtime cases remain unqualified.
+no coordinate change. Cocoa scroll injection uses pixel deltas and matches the variadic Core
+Graphics signature and axis count; all four directions passed in run #38087756331. The nested
+Weston boundary probe enables `WAYLAND_DEBUG` and uses an X11 pointer warp, but that still produced
+no Wayland pointer transitions in run #38087756331. It now observes the parent X11 event stream on
+Weston's output window to identify where delivery stops. Additional modifier combinations, text,
+repeat, X11, and public VMNL runtime cases remain unqualified.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored

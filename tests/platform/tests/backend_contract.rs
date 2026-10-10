@@ -921,9 +921,8 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     } else {
         (None, None)
     };
-    let weston_ancestry = weston_window
-        .map(|window| x11_window_ancestry(&connection, root, window))
-        .transpose()?;
+    let observe_weston_pointer_events =
+        subscribe_to_weston_pointer_events(&connection, backend, weston_window)?;
     let pointer = connection
         .query_pointer(root)
         .map_err(|error| format!("failed to request the parent pointer position: {error}"))?
@@ -956,10 +955,12 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     } else {
         Ok(None)
     };
+    let leave_x11_events =
+        drain_x11_pointer_events_if_enabled(&connection, observe_weston_pointer_events)?;
     if backend == "wayland" {
         eprintln!(
-            "wayland_hover_boundary target={target:?} original={original:?} weston_window={weston_window:?} weston_ancestry={weston_ancestry:?} weston_bounds={outside_weston_bounds:?} pointer_child_after_leave={:?}",
-            leave_check.as_ref().ok().copied().flatten()
+            "wayland_hover_boundary target={target:?} original={original:?} weston_window={weston_window:?} weston_bounds={outside_weston_bounds:?} pointer_child_after_leave={:?} parent_x11_events_after_leave={leave_x11_events:?}",
+            leave_check.as_ref().ok().copied().flatten(),
         );
         thread::sleep(Duration::from_millis(100));
     }
@@ -981,14 +982,77 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     if backend == "wayland" {
         let pointer_child = confirm_x11_pointer_target(&connection, root, original, "re-entry")?;
         let pointer_ancestry = x11_window_ancestry(&connection, root, pointer_child)?;
+        let reentry_x11_events =
+            drain_x11_pointer_events_if_enabled(&connection, observe_weston_pointer_events)?;
         eprintln!(
-            "wayland_hover_boundary pointer_after_reentry={original:?} pointer_child_after_reentry={pointer_child:#x} pointer_ancestry={pointer_ancestry:?}"
+            "wayland_hover_boundary pointer_after_reentry={original:?} pointer_child_after_reentry={pointer_child:#x} pointer_ancestry={pointer_ancestry:?} parent_x11_events_after_reentry={reentry_x11_events:?}"
         );
         leave_check?;
     }
     connection
         .flush()
         .map_err(|error| format!("failed to flush XTEST hover boundary movement: {error}"))
+}
+
+#[cfg(target_os = "linux")]
+fn subscribe_to_weston_pointer_events(
+    connection: &x11rb::rust_connection::RustConnection,
+    backend: &str,
+    weston_window: Option<u32>,
+) -> Result<bool, String> {
+    use x11rb::protocol::xproto::{ChangeWindowAttributesAux, ConnectionExt as _, EventMask};
+
+    if backend != "wayland" {
+        return Ok(false);
+    }
+
+    let window =
+        weston_window.ok_or_else(|| "could not locate the parent Weston X11 window".to_owned())?;
+    connection
+        .change_window_attributes(
+            window,
+            &ChangeWindowAttributesAux::default().event_mask(
+                EventMask::ENTER_WINDOW | EventMask::LEAVE_WINDOW | EventMask::POINTER_MOTION,
+            ),
+        )
+        .map_err(|error| format!("failed to subscribe to parent Weston pointer events: {error}"))?
+        .check()
+        .map_err(|error| format!("failed to select parent Weston pointer events: {error}"))?;
+    let _ = drain_x11_pointer_events(connection)?;
+    Ok(true)
+}
+
+#[cfg(target_os = "linux")]
+fn drain_x11_pointer_events_if_enabled(
+    connection: &x11rb::rust_connection::RustConnection,
+    enabled: bool,
+) -> Result<Vec<String>, String> {
+    if enabled {
+        drain_x11_pointer_events(connection)
+    } else {
+        Ok(Vec::new())
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn drain_x11_pointer_events(
+    connection: &x11rb::rust_connection::RustConnection,
+) -> Result<Vec<String>, String> {
+    use x11rb::{connection::Connection as _, protocol::Event};
+
+    let mut events = Vec::new();
+    while let Some(event) = connection
+        .poll_for_event()
+        .map_err(|error| format!("failed to poll parent X11 pointer events: {error}"))?
+    {
+        if matches!(
+            event,
+            Event::EnterNotify(_) | Event::LeaveNotify(_) | Event::MotionNotify(_)
+        ) {
+            events.push(format!("{event:?}"));
+        }
+    }
+    Ok(events)
 }
 
 #[cfg(target_os = "linux")]
