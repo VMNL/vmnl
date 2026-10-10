@@ -43,8 +43,9 @@ just test-smoke            smoke tests
 just test-platform         portable error conversion + GLFW Null backend
 just test-platform-compile compile every platform probe without running it
 just test-platform-null    isolated GLFW Null-backend probe
-just test-platform-wayland Wayland contract; caller supplies Weston/compositor
+just test-platform-wayland Wayland contract; caller supplies nested Weston + X11 parent
 just test-platform-x11     X11 contract; caller supplies X server/window manager
+just input-test <backend>  native input contract; requires an explicit backend and active desktop
 just test-gpu-compile      compile GPU tests without running them
 just test-gpu              GPU/display tests
 just doctest               Rustdoc examples
@@ -64,6 +65,10 @@ first and use it only when those modifications are intended.
 `just hooks-install` sets this clone's `core.hooksPath` to `.githooks`. The `commit-msg` hook
 validates the subject, allowed type, optional scope, line lengths, and body separation before Git
 creates a commit. It does not modify commit messages.
+
+Use `just input-test x11|wayland|win32|cocoa` to run one native input contract. The selected
+backend must match the host; display and permission prerequisites are checked before input is
+injected. See [Testing](testing.md#native-input-contract) for backend-specific setup.
 
 ## Test Summaries
 

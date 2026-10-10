@@ -53,6 +53,10 @@ synthetic injection.
   Linux results are blocking; Windows and macOS are first experimental passes and remain
   non-blocking until the documented ten-run qualification rule is met. The Linux JSON records are
   retained in the `platform-linux-1` artifact linked from that workflow run.
+- `just input-test <backend>` checks the selected host, display, compositor/window-manager, and
+  available input-permission prerequisites before running one native contract. CI continues to
+  invoke the same selected contracts directly through Cargo: Linux X11 and nested Weston block,
+  while Win32 and Cocoa remain experimental.
 
 ## Keyboard named-key rows
 
@@ -249,8 +253,6 @@ eligibility remain unqualified until measured. Never count an unavailable mappin
   define explicit non-injectable reasons per backend row and retain versioned diagnostics.
 - Add at least one executed public VMNL scenario through `Window::poll_events()` → `Event`/`Input`
   in `tests/gpu`; compilation or direct GLFW probes do not qualify it.
-- Add the `just input-test` entry point and wire the qualified native cases into CI. Current Justfile
-  has platform test recipes but no `input-test` recipe.
 
 Existing references: [keyboard capability matrix](keyboard_capability_matrix.md),
 [GLFW portability inventory](glfw_platform_inventory.md), [platform probe contract](../../../docs/testing.md),
