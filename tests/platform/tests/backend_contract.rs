@@ -24,8 +24,8 @@ const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
 static READY_FILE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 fn probe(backend: &str, operation: &str) -> Value {
-    let output = if operation == "keyboard-native-input" {
-        native_keyboard_probe(backend).expect("native keyboard probe should complete")
+    let output = if matches!(operation, "keyboard-native-input" | "mouse-native-input") {
+        native_input_probe(backend, operation).expect("native input probe should complete")
     } else {
         Command::new(env!("CARGO_BIN_EXE_platform_probe"))
             .args([backend, operation])
@@ -58,7 +58,7 @@ fn probe(backend: &str, operation: &str) -> Value {
     serde_json::from_slice(&output.stdout).expect("platform probe should emit one JSON record")
 }
 
-fn native_keyboard_probe(backend: &str) -> Result<Output, String> {
+fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> {
     let sequence = READY_FILE_SEQUENCE.fetch_add(1, Ordering::Relaxed);
     let ready_file = env::temp_dir().join(format!(
         "vmnl-platform-ready-{}-{sequence}",
@@ -67,7 +67,7 @@ fn native_keyboard_probe(backend: &str) -> Result<Output, String> {
     let injector = input_injector_name(backend)?;
     let result = (|| {
         let mut child = Command::new(env!("CARGO_BIN_EXE_platform_probe"))
-            .args([backend, "keyboard-native-input"])
+            .args([backend, operation])
             .env("VMNL_PLATFORM_READY_FILE", &ready_file)
             .env("VMNL_PLATFORM_INPUT_INJECTOR", injector)
             .stdout(Stdio::piped())
@@ -75,12 +75,17 @@ fn native_keyboard_probe(backend: &str) -> Result<Output, String> {
             .spawn()
             .map_err(|error| format!("platform probe should start: {error}"))?;
 
-        if let Err(reason) = wait_until_ready(&mut child, &ready_file, backend) {
+        if let Err(reason) = wait_until_ready(&mut child, &ready_file, backend, operation) {
             let reason = append_external_x11_focus_diagnostic(backend, &reason);
             return Err(terminate_with_diagnostics(child, &reason));
         }
         log_external_x11_focus_at_ready(backend);
-        if let Err(reason) = inject_key_a() {
+        let injection = match operation {
+            "keyboard-native-input" => inject_key_a(),
+            "mouse-native-input" => inject_mouse_left(),
+            value => Err(format!("unsupported native input operation: {value}")),
+        };
+        if let Err(reason) = injection {
             return Err(terminate_with_diagnostics(child, &reason));
         }
 
@@ -361,12 +366,19 @@ fn activate_wayland_window() -> Result<(), String> {
         .map_err(|error| format!("failed to flush Weston activation click: {error}"))
 }
 
-fn wait_until_ready(child: &mut Child, ready_file: &Path, backend: &str) -> Result<(), String> {
+fn wait_until_ready(
+    child: &mut Child,
+    ready_file: &Path,
+    backend: &str,
+    operation: &str,
+) -> Result<(), String> {
     let deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
     #[cfg(not(target_os = "linux"))]
-    let _ = backend;
+    let _ = (backend, operation);
     #[cfg(target_os = "linux")]
     let mut next_activation = Instant::now();
+    #[cfg(target_os = "linux")]
+    let mut mouse_activation_sent = false;
     loop {
         if let Some(status) = child
             .try_wait()
@@ -385,6 +397,11 @@ fn wait_until_ready(child: &mut Child, ready_file: &Path, backend: &str) -> Resu
                 if weston_has_x11_focus()? {
                     return Ok(());
                 }
+                if operation == "mouse-native-input" {
+                    return Err(
+                        "Wayland probe is ready but Weston lacks parent X11 focus".to_owned()
+                    );
+                }
             } else {
                 return Ok(());
             }
@@ -392,11 +409,23 @@ fn wait_until_ready(child: &mut Child, ready_file: &Path, backend: &str) -> Resu
             return Ok(());
         }
         #[cfg(target_os = "linux")]
-        if backend == "wayland"
-            && matches!(signal.as_str(), "MAPPED\n" | "READY\n")
-            && Instant::now() >= next_activation
-        {
-            activate_wayland_window()?;
+        if backend == "wayland" && Instant::now() >= next_activation {
+            let activation_needed = match signal.as_str() {
+                "MAPPED\n" if operation == "mouse-native-input" => {
+                    if mouse_activation_sent {
+                        !weston_has_x11_focus()?
+                    } else {
+                        mouse_activation_sent = true;
+                        true
+                    }
+                }
+                "MAPPED\n" => true,
+                "READY\n" => operation != "mouse-native-input",
+                _ => false,
+            };
+            if activation_needed {
+                activate_wayland_window()?;
+            }
             next_activation = Instant::now() + Duration::from_millis(250);
         }
         if Instant::now() >= deadline {
@@ -532,6 +561,60 @@ fn inject_key_a() -> Result<(), String> {
         .map_err(|error| format!("failed to flush XTEST input: {error}"))
 }
 
+#[cfg(target_os = "linux")]
+fn inject_mouse_left() -> Result<(), String> {
+    use x11rb::{
+        connection::Connection as _,
+        protocol::{xproto::BUTTON_PRESS_EVENT, xtest::ConnectionExt as _},
+    };
+
+    const BUTTON1: u8 = 1;
+
+    let (connection, _) = x11rb::connect(None)
+        .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
+    connection
+        .xtest_get_version(2, 2)
+        .map_err(|error| format!("failed to query XTEST: {error}"))?
+        .reply()
+        .map_err(|error| format!("XTEST is unavailable: {error}"))?;
+
+    let press = connection
+        .xtest_fake_input(BUTTON_PRESS_EVENT, BUTTON1, 0, 0, 0, 0, 0)
+        .map_err(|error| format!("failed to enqueue XTEST left-button press: {error}"))?
+        .check()
+        .map_err(|error| format!("XTEST left-button press failed: {error}"));
+    if let Err(error) = press {
+        let _ = inject_x11_button_release(&connection);
+        return Err(error);
+    }
+
+    if let Err(error) = inject_x11_button_release(&connection) {
+        let cleanup = match inject_x11_button_release(&connection) {
+            Ok(()) => "release retry succeeded".to_owned(),
+            Err(retry) => retry,
+        };
+        return Err(format!("{error}; cleanup: {cleanup}"));
+    }
+
+    connection
+        .flush()
+        .map_err(|error| format!("failed to flush XTEST input: {error}"))
+}
+
+#[cfg(target_os = "linux")]
+fn inject_x11_button_release(
+    connection: &x11rb::rust_connection::RustConnection,
+) -> Result<(), String> {
+    use x11rb::protocol::{xproto::BUTTON_RELEASE_EVENT, xtest::ConnectionExt as _};
+
+    const BUTTON1: u8 = 1;
+    connection
+        .xtest_fake_input(BUTTON_RELEASE_EVENT, BUTTON1, 0, 0, 0, 0, 0)
+        .map_err(|error| format!("failed to enqueue XTEST left-button release: {error}"))?
+        .check()
+        .map_err(|error| format!("XTEST left-button release failed: {error}"))
+}
+
 #[cfg(target_os = "windows")]
 fn inject_key_a() -> Result<(), String> {
     use std::mem::size_of;
@@ -573,6 +656,60 @@ fn inject_key_a() -> Result<(), String> {
             std::io::Error::last_os_error()
         ))
     }
+}
+
+#[cfg(target_os = "windows")]
+fn inject_mouse_left() -> Result<(), String> {
+    use std::mem::size_of;
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
+        SendInput, INPUT, INPUT_0, INPUT_MOUSE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP,
+        MOUSEINPUT,
+    };
+
+    let inputs = [
+        INPUT {
+            r#type: INPUT_MOUSE,
+            Anonymous: INPUT_0 {
+                mi: MOUSEINPUT {
+                    dwFlags: MOUSEEVENTF_LEFTDOWN,
+                    ..MOUSEINPUT::default()
+                },
+            },
+        },
+        INPUT {
+            r#type: INPUT_MOUSE,
+            Anonymous: INPUT_0 {
+                mi: MOUSEINPUT {
+                    dwFlags: MOUSEEVENTF_LEFTUP,
+                    ..MOUSEINPUT::default()
+                },
+            },
+        },
+    ];
+    let input_size = i32::try_from(size_of::<INPUT>())
+        .map_err(|_| "Win32 INPUT size does not fit i32".to_owned())?;
+    // SAFETY: `inputs` contains two initialized mouse INPUT records and remains alive for the
+    // duration of the call. `input_size` is the exact size of one INPUT record.
+    let sent = unsafe { SendInput(2, inputs.as_ptr(), input_size) };
+    if sent == 2 {
+        return Ok(());
+    }
+
+    let release = INPUT {
+        r#type: INPUT_MOUSE,
+        Anonymous: INPUT_0 {
+            mi: MOUSEINPUT {
+                dwFlags: MOUSEEVENTF_LEFTUP,
+                ..MOUSEINPUT::default()
+            },
+        },
+    };
+    // SAFETY: `release` is one initialized mouse INPUT record that remains alive for the call.
+    let cleanup_sent = unsafe { SendInput(1, &release, input_size) };
+    Err(format!(
+        "SendInput inserted {sent}/2 mouse events; cleanup release inserted {cleanup_sent}/1: {}",
+        std::io::Error::last_os_error()
+    ))
 }
 
 #[cfg(target_os = "macos")]
@@ -628,9 +765,100 @@ fn inject_key_a() -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(target_os = "macos")]
+fn inject_mouse_left() -> Result<(), String> {
+    use std::ffi::c_void;
+
+    type CGEventRef = *mut c_void;
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct CGPoint {
+        x: f64,
+        y: f64,
+    }
+
+    const CG_HID_EVENT_TAP: u32 = 0;
+    const CG_EVENT_LEFT_MOUSE_DOWN: u32 = 1;
+    const CG_EVENT_LEFT_MOUSE_UP: u32 = 2;
+    const CG_MOUSE_BUTTON_LEFT: u32 = 0;
+
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        fn CGEventCreate(source: *mut c_void) -> CGEventRef;
+        fn CGEventGetLocation(event: CGEventRef) -> CGPoint;
+        fn CGEventCreateMouseEvent(
+            source: *mut c_void,
+            mouse_type: u32,
+            mouse_cursor_position: CGPoint,
+            mouse_button: u32,
+        ) -> CGEventRef;
+        fn CGEventPost(tap: u32, event: CGEventRef);
+    }
+    #[link(name = "CoreFoundation", kind = "framework")]
+    extern "C" {
+        fn CFRelease(value: *const c_void);
+    }
+
+    // SAFETY: A null source requests the default event source. The returned event is checked
+    // before its location is queried or its retained CoreFoundation reference is released.
+    let position_event = unsafe { CGEventCreate(std::ptr::null_mut()) };
+    if position_event.is_null() {
+        return Err("CGEventCreate returned null while reading cursor position".to_owned());
+    }
+    // SAFETY: `position_event` is a live CoreGraphics event created above.
+    let position = unsafe { CGEventGetLocation(position_event) };
+    // SAFETY: `position_event` is a live retained CoreFoundation object.
+    unsafe { CFRelease(position_event) };
+
+    // SAFETY: The location is the current global cursor position. Both returned references are
+    // checked before posting and released after use.
+    let (press, release) = unsafe {
+        (
+            CGEventCreateMouseEvent(
+                std::ptr::null_mut(),
+                CG_EVENT_LEFT_MOUSE_DOWN,
+                position,
+                CG_MOUSE_BUTTON_LEFT,
+            ),
+            CGEventCreateMouseEvent(
+                std::ptr::null_mut(),
+                CG_EVENT_LEFT_MOUSE_UP,
+                position,
+                CG_MOUSE_BUTTON_LEFT,
+            ),
+        )
+    };
+    if press.is_null() || release.is_null() {
+        // SAFETY: Any non-null value was created above with a retained CoreFoundation reference.
+        unsafe {
+            if !press.is_null() {
+                CFRelease(press);
+            }
+            if !release.is_null() {
+                CFRelease(release);
+            }
+        }
+        return Err("CGEventCreateMouseEvent returned null".to_owned());
+    }
+
+    // SAFETY: Both mouse-event references are valid and retained until after they are posted.
+    unsafe {
+        CGEventPost(CG_HID_EVENT_TAP, press);
+        CGEventPost(CG_HID_EVENT_TAP, release);
+        CFRelease(press);
+        CFRelease(release);
+    }
+    Ok(())
+}
+
 #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
 fn inject_key_a() -> Result<(), String> {
     Err("native input injection is unsupported on this OS".to_owned())
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+fn inject_mouse_left() -> Result<(), String> {
+    Err("native mouse input injection is unsupported on this OS".to_owned())
 }
 
 #[test]
@@ -651,6 +879,7 @@ fn selected_backend_contract() {
             "get-opacity",
             "iconify",
             "keyboard-native-input",
+            "mouse-native-input",
         ],
         "x11" => &[
             "keyboard-metadata",
@@ -666,6 +895,7 @@ fn selected_backend_contract() {
             "maximize",
             "focus",
             "keyboard-native-input",
+            "mouse-native-input",
         ],
         "win32" | "cocoa" => &[
             "create",
@@ -678,6 +908,7 @@ fn selected_backend_contract() {
             "get-position",
             "focus",
             "keyboard-native-input",
+            "mouse-native-input",
         ],
         value => panic!("unsupported qualified backend: {value}"),
     };
@@ -701,6 +932,7 @@ fn assert_operation_contract(backend: &str, operation: &str, record: &Value) {
             assert_keyboard_wait(record);
         }
         "keyboard-native-input" => assert_native_keyboard_input(record),
+        "mouse-native-input" => assert_native_mouse_input(record),
         _ => {}
     }
 
@@ -808,4 +1040,29 @@ fn assert_native_keyboard_input(record: &Value) {
     assert_eq!(scancodes.len(), 2);
     assert_eq!(scancodes[0], scancodes[1]);
     assert!(record["callbacks"].as_array().is_some_and(Vec::is_empty));
+}
+
+fn assert_native_mouse_input(record: &Value) {
+    assert_eq!(record["value"]["qualified"], true);
+    assert_eq!(record["value"]["stage"], "input");
+    assert_eq!(record["value"]["focused"], true);
+    assert_eq!(record["value"]["hovered"], true);
+    assert_eq!(
+        record["value"]["observed_events"],
+        serde_json::json!([
+            {"button": "Button1", "action": "Press", "modifiers": 0},
+            {"button": "Button1", "action": "Release", "modifiers": 0},
+        ])
+    );
+    assert_eq!(record["value"]["case"], "left-button-press-release");
+    assert_eq!(record["value"]["final_state"], "Release");
+    assert_eq!(record["value"]["failure_reason"], Value::Null);
+    let expected_injector = match record["backend_actual"].as_str() {
+        Some("x11") => "x11-xtest",
+        Some("wayland") => "x11-xtest-parent",
+        Some("win32") => "send-input",
+        Some("cocoa") => "cg-event-post",
+        value => panic!("unexpected mouse input backend: {value:?}"),
+    };
+    assert_eq!(record["value"]["injector"], expected_injector);
 }

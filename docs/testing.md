@@ -96,20 +96,25 @@ Quality (format -> Clippy)
 Each OS validation job reuses one Cargo target directory for compilation and every test stage; no
 target directory is cached or transferred between runners. Linux then forces the GLFW Wayland
 backend under Weston with Pixman nested on Xvfb with Openbox, then tests the GLFW X11 backend
-under Xvfb with Openbox. Both paths run a visible keyboard probe: a separate test process
-waits for the window to be focused, injects an `A` press/release pair through XTEST, and
-requires the exact native GLFW event sequence before timeout. The Wayland path injects through
-the parent Xvfb server into Weston's X11 backend; it does not qualify a standalone Wayland
-compositor seat.
+under Xvfb with Openbox. Both paths run visible keyboard and mouse probes. A separate test
+process waits for readiness, injects `A` press/release and left-button press/release through
+XTEST, and requires the exact native GLFW event sequence before timeout. The mouse case also
+requires the pointer to hover the focused window and verifies the button ends released. The
+Wayland path injects through the parent Xvfb server into Weston's X11 backend; it does not qualify
+a standalone Wayland compositor seat.
 The Wayland NoApi probe attaches a zero-filled shm buffer so its surface can be mapped without
 Vulkan. It signals MAPPED after attaching the buffer; the parent finds the Weston X11 window by
 WM_CLASS and clicks its center until GLFW confirms keyboard focus and signals READY. Before
 injection, the parent also requires Weston to hold the parent X11 keyboard focus and reacquires it
-if necessary. MAPPED or Wayland READY alone never authorizes keyboard injection.
+if necessary. The mouse probe drains activation clicks before READY and the parent does not issue
+another activation click after READY, so activation cannot satisfy the tested button sequence.
+MAPPED or Wayland READY alone never authorizes input injection.
 
-Win32 uses `SendInput` and Cocoa uses `CGEventPost` for the same scenario. Their native probes
-remain visible but non-blocking until ten consecutive successful runs use the same runner image,
-GLFW revision, injector, and probe schema; any of those changes resets the count.
+Win32 uses `SendInput` and Cocoa uses `CGEventPost` for both representative scenarios. Their native
+probes remain visible but non-blocking until ten consecutive successful runs use the same runner
+image, GLFW revision, injector, and probe schema; any of those changes resets the count. The mouse
+case covers only the left button; other buttons, movement, hover-boundary, and scroll cases remain
+outstanding.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored

@@ -88,12 +88,16 @@ fn main() -> ExitCode {
     }
 
     glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
-    if actual == glfw::Platform::Wayland && operation == "keyboard-native-input" {
+    let native_input = matches!(
+        operation.as_str(),
+        "keyboard-native-input" | "mouse-native-input"
+    );
+    if actual == glfw::Platform::Wayland && native_input {
         glfw.window_hint(WindowHint::Maximized(true));
     }
     glfw.window_hint(WindowHint::Visible(matches!(
         operation.as_str(),
-        "keyboard-native-input" | "sticky-keys-manual"
+        "keyboard-native-input" | "mouse-native-input" | "sticky-keys-manual"
     )));
     let Some((mut window, events)) =
         glfw.create_window(160, 120, "VMNL platform probe", WindowMode::Windowed)
@@ -201,6 +205,7 @@ fn main() -> ExitCode {
             keyboard_wait_then_poll(&mut glfw, &mut window, &events, Some(0.001))
         }
         "keyboard-native-input" => native_keyboard_input(&mut glfw, &mut window, &events, actual),
+        "mouse-native-input" => native_mouse_input(&mut glfw, &mut window, &events, actual),
         "sticky-keys-manual" => manual_sticky_keys(&mut glfw, &mut window, &events, actual),
         "raw-mouse-motion" => {
             let supported = glfw.supports_raw_motion();
@@ -234,7 +239,7 @@ fn main() -> ExitCode {
 
     let operation_succeeded = !matches!(
         operation.as_str(),
-        "keyboard-native-input" | "sticky-keys-manual"
+        "keyboard-native-input" | "mouse-native-input" | "sticky-keys-manual"
     ) || value["qualified"] == true;
     emit(
         &requested_name,
@@ -596,6 +601,153 @@ fn native_keyboard_input(
         "actions": actions,
         "scancodes": scancodes,
         "final_state": format!("{:?}", window.get_key(glfw::Key::A)),
+    })
+}
+
+fn native_mouse_input(
+    glfw: &mut glfw::Glfw,
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+    platform: glfw::Platform,
+) -> Value {
+    window.set_mouse_button_polling(true);
+    window.show();
+    if platform != glfw::Platform::Wayland {
+        window.focus();
+    }
+
+    let Some(ready_file) = env::var_os("VMNL_PLATFORM_READY_FILE") else {
+        return json!({
+            "qualified": false,
+            "stage": "handshake",
+            "failure_reason": "VMNL_PLATFORM_READY_FILE is missing",
+        });
+    };
+
+    #[cfg(target_os = "linux")]
+    let _wayland_buffer = if platform == glfw::Platform::Wayland {
+        match map_wayland_probe(glfw, window) {
+            Ok(buffer) => Some(buffer),
+            Err(error) => {
+                return json!({
+                    "qualified": false,
+                    "stage": "mapping",
+                    "failure_reason": error,
+                });
+            }
+        }
+    } else {
+        None
+    };
+    if platform == glfw::Platform::Wayland {
+        if let Err(error) = fs::write(&ready_file, b"MAPPED\n") {
+            return json!({
+                "qualified": false,
+                "stage": "handshake",
+                "failure_reason": error.to_string(),
+            });
+        }
+    }
+
+    let focus_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    while !window.is_focused() && Instant::now() < focus_deadline {
+        glfw.wait_events_timeout(0.01);
+        glfw::flush_messages(events).for_each(drop);
+    }
+    if !window.is_focused() {
+        return json!({
+            "qualified": false,
+            "stage": "focus",
+            "focused": false,
+            "hovered": window.is_hovered(),
+            "cursor_position": window.get_cursor_pos(),
+            "failure_reason": "native input window did not receive focus before deadline",
+        });
+    }
+
+    if platform != glfw::Platform::Wayland {
+        let (width, height) = window.get_size();
+        window.set_cursor_pos(f64::from(width) / 2.0, f64::from(height) / 2.0);
+    }
+    let hover_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    while !(window.is_focused() && window.is_hovered()) && Instant::now() < hover_deadline {
+        glfw.wait_events_timeout(0.01);
+        glfw::flush_messages(events).for_each(drop);
+    }
+    if !window.is_focused() || !window.is_hovered() {
+        return json!({
+            "qualified": false,
+            "stage": "hover",
+            "focused": window.is_focused(),
+            "hovered": window.is_hovered(),
+            "cursor_position": window.get_cursor_pos(),
+            "failure_reason": "mouse cursor did not enter the focused input window before deadline",
+        });
+    }
+
+    glfw.poll_events();
+    glfw::flush_messages(events).for_each(drop);
+    if !window.is_focused() || !window.is_hovered() {
+        return json!({
+            "qualified": false,
+            "stage": "readiness",
+            "focused": window.is_focused(),
+            "hovered": window.is_hovered(),
+            "cursor_position": window.get_cursor_pos(),
+            "failure_reason": "focus or pointer hover was lost while draining readiness events",
+        });
+    }
+
+    if let Err(error) = fs::write(&ready_file, b"READY\n") {
+        return json!({
+            "qualified": false,
+            "stage": "handshake",
+            "focused": window.is_focused(),
+            "hovered": window.is_hovered(),
+            "failure_reason": error.to_string(),
+        });
+    }
+
+    let input_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    let mut observed_events = Vec::new();
+    while observed_events.len() < 2 && Instant::now() < input_deadline {
+        glfw.wait_events_timeout(0.01);
+        for (_, event) in glfw::flush_messages(events) {
+            if let glfw::WindowEvent::MouseButton(button, action, modifiers) = event {
+                observed_events.push(json!({
+                    "button": format!("{button:?}"),
+                    "action": format!("{action:?}"),
+                    "modifiers": modifiers.bits(),
+                }));
+            }
+        }
+    }
+
+    let final_state = window.get_mouse_button(glfw::MouseButton::Button1);
+    let expected_events = vec![
+        json!({"button": "Button1", "action": "Press", "modifiers": 0}),
+        json!({"button": "Button1", "action": "Release", "modifiers": 0}),
+    ];
+    let qualified = window.is_focused()
+        && window.is_hovered()
+        && observed_events == expected_events
+        && final_state == glfw::Action::Release;
+    json!({
+        "qualified": qualified,
+        "stage": "input",
+        "focused": window.is_focused(),
+        "hovered": window.is_hovered(),
+        "cursor_position": window.get_cursor_pos(),
+        "injector": env::var("VMNL_PLATFORM_INPUT_INJECTOR")
+            .unwrap_or_else(|_| "unknown".to_owned()),
+        "case": "left-button-press-release",
+        "observed_events": observed_events,
+        "final_state": format!("{final_state:?}"),
+        "failure_reason": if qualified {
+            Value::Null
+        } else {
+            json!("expected an unmodified Button1 press/release and a released final state")
+        },
     })
 }
 

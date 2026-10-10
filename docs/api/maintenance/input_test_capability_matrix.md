@@ -18,16 +18,16 @@ presence or successful compilation.
 
 ## Native profiles and prerequisites
 
-| Profile | Backend and injector | Prerequisites and limits | Existing path at baseline |
+| Profile | Backend and injector | Prerequisites and limits | Current native path |
 | --- | --- | --- | --- |
 | K | X11 / XTEST | Visible mapped window, confirmed focus, active keyboard layout; unavailable keys and intercepted shortcuts need a recorded reason. | `keyboard-native-input` injects only A directly into GLFW. |
 | K | Nested Weston / parent X11 XTEST | Same focus/readiness checks; this exercises XTEST → Xvfb → Weston X11 backend → Wayland client, not a standalone Wayland seat. | `keyboard-native-input` injects only A directly into GLFW. |
 | K | Win32 / `SendInput` | Active desktop at matching integrity; keyboard layout and system shortcuts constrain eligible keys. | A-only probe is configured as visible, non-blocking evidence until qualification. |
 | K | Cocoa / `CGEventPost` | Active desktop; macOS may require Accessibility permission. Layout and system shortcuts constrain eligible keys. | A-only probe is configured as visible, non-blocking evidence until qualification. |
-| M | X11 / XTEST | Mapped, focused window and recorded X server button map. Server buttons 4–7 are scroll; later server buttons map to additional GLFW buttons. | No native mouse-event injector/probe is present. |
-| M | Nested Weston / parent X11 XTEST | Records nested Weston evidence only; button map and focus must be captured. Does not qualify a native Wayland seat. | No native mouse-event injector/probe is present. |
-| M | Win32 / `SendInput` | Active desktop at matching integrity. GLFW Win32 maps left/right/middle and XBUTTON1/2, so only GLFW buttons 1–5 are eligible through this mapping. | No native mouse-event injector/probe is present. |
-| M | Cocoa / `CGEventPost` | Requires an active desktop and any required Accessibility permission; actual button mapping must be established by a probe. | No native mouse-event injector/probe is present. |
+| M | X11 / XTEST | Mapped, focused, hovered window and recorded X server button map. Server buttons 4–7 are scroll; later server buttons map to additional GLFW buttons. | `mouse-native-input` injects left-button press/release; further buttons are not yet qualified. |
+| M | Nested Weston / parent X11 XTEST | Records nested Weston evidence only; button map and focus must be captured. Does not qualify a native Wayland seat. | `mouse-native-input` injects a left click through the parent X11 server after focus and hover readiness. |
+| M | Win32 / `SendInput` | Active desktop at matching integrity. GLFW Win32 maps left/right/middle and XBUTTON1/2, so only GLFW buttons 1–5 are eligible through this mapping. | `mouse-native-input` injects left-button press/release; visible probe remains experimental until qualification. |
+| M | Cocoa / `CGEventPost` | Requires an active desktop and any required Accessibility permission; remaining button mapping must be established by probes. | `mouse-native-input` injects left-button press/release; visible probe remains experimental until qualification. |
 | V | Public VMNL path | Requires a qualified Vulkan loader, GPU/driver, display, mapped and focused VMNL window. | No native input scenario currently runs through `Window::poll_events()` → `Event`/`Input`. |
 
 All native cases must use a bounded deadline, verify readiness before injection, preserve the
@@ -46,7 +46,9 @@ synthetic injection.
 - Modeled `EventQueue` batches cover a press and release for every key/button in one batch, then
   verify transition clearing in the next empty batch. These remain unit-level reducer checks; they
   do not execute `Window::poll_events()` or a native backend.
-- These assertions have been added but not executed in this environment; no result is claimed.
+- The native probe now checks one representative mouse case: focused and hovered window, ordered
+  `Button1` press/release with modifiers, released final state, injector identity, and a failure
+  reason. A passing probe still proves GLFW backend delivery only, not the public VMNL path.
 
 ## Keyboard named-key rows
 
@@ -201,11 +203,12 @@ The fixed `GLFW_MOUSE_BUTTON_N` token is the independent mapping oracle. Determi
 unit/API. Native level: profile M; public VMNL end-to-end level: profile V.
 
 At baseline, all eight variants have a checked-in conversion round-trip assertion. Event
-translation and batch state use only `MouseButton::Left`; no native mouse button event is injected.
+translation and batch state use only `MouseButton::Left`; the native probe now exercises that one
+representative button, but has not qualified the remaining rows.
 
 | VMNL button | Independent GLFW 3.4 token | Required result | Deterministic evidence at baseline | Native evidence at baseline |
 | --- | --- | --- | --- | --- |
-| `MouseButton::Left` | `GLFW_MOUSE_BUTTON_1` | M1 | Round-trip assertion exists; event/state test only covers Left | No mouse-event injector; not yet qualified |
+| `MouseButton::Left` | `GLFW_MOUSE_BUTTON_1` | M1 | Round-trip assertion exists; event/state test only covers Left | `Button1` press/release probe exists; native result not yet qualified |
 | `MouseButton::Right` | `GLFW_MOUSE_BUTTON_2` | M1 | Round-trip assertion exists; event/state test only covers Left | No mouse-event injector; not yet qualified |
 | `MouseButton::Middle` | `GLFW_MOUSE_BUTTON_3` | M1 | Round-trip assertion exists; event/state test only covers Left | No mouse-event injector; not yet qualified |
 | `MouseButton::Button4` | `GLFW_MOUSE_BUTTON_4` | M1 | Round-trip assertion exists; event/state test only covers Left | No mouse-event injector; not yet qualified |
@@ -237,7 +240,8 @@ eligibility remain unqualified until measured. Never count an unavailable mappin
 
 ## Remaining gaps for issue #91
 
-- Extend native injectors/probes from A-only keyboard to every eligible key and mouse input family;
+- Expand the A-key and left-button native representatives to every eligible key/button and other
+  input family;
   define explicit non-injectable reasons per backend row and retain versioned diagnostics.
 - Add at least one executed public VMNL scenario through `Window::poll_events()` → `Event`/`Input`
   in `tests/gpu`; compilation or direct GLFW probes do not qualify it.
