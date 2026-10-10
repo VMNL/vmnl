@@ -147,18 +147,18 @@ direction. The hosted Xvfb mapping
 currently exposes 10 buttons. CI run
 [#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968) showed XTEST rejecting
 server button 11 (`BadValue`), so GLFW `Button7` and `Button8` are not qualified by hosted CI.
-The latest cross-platform run [#38089252090](https://github.com/VMNL/vmnl/actions/runs/38089252090)
-passed quality and the build, unit, API, smoke, and Null-backend checks. Linux stopped at the
-nested Weston hover-boundary case, before X11. On Weston 13.0.0, the parent X11 observer received a
-`LeaveNotify` on the output window after the pointer moved from `(646, 364)` to `(0, 0)`, then
-`EnterNotify` and `MotionNotify` on re-entry. `WAYLAND_DEBUG` still logged only the initial
-`wl_pointer.enter`. The observer receives its own copy of selected X11 events, so this does not
-prove that the Weston process consumed them. Weston 13.0.0's [X11 backend source](https://github.com/wayland-mirror/weston/blob/13.0.0/libweston/backend-x11/x11.c)
-selects enter/leave/motion events and dispatches them, but the next probe records the server's
-pre-observer event-mask union and the event coordinates, state, mode, and detail to test whether
-this window and event sequence match that path. Windows and macOS keyboard, mouse-button, motion,
-boundary, and four-direction scroll probes passed once. Linux failed the workflow; Windows and
-macOS native probes remain experimental and non-blocking.
+The latest cross-platform run [#38090546664](https://github.com/VMNL/vmnl/actions/runs/38090546664)
+passed quality and the Windows/macOS jobs; Linux stopped at the nested Weston hover-boundary case,
+before X11. On Weston 13.0.0, the parent X11 observer received `LeaveNotify` on the output window
+at `(0, 0)`, then `EnterNotify` and `MotionNotify` at `(646, 364)`. Before the observer selected
+events, `GetWindowAttributes.all_event_masks` returned `0x00e2c07f`, which includes the
+enter/leave/pointer-motion mask bits. The crossing events had normal mode and ancestor detail;
+`WAYLAND_DEBUG` on the client still logged only the initial `wl_pointer.enter`. The mask is a union
+across X11 clients and does not identify which client selected those events or prove Weston
+consumed them. The CI launcher now enables `WAYLAND_DEBUG=server` on Weston to record protocol
+events emitted by the compositor. Windows and macOS keyboard, mouse-button, motion, boundary, and
+four-direction scroll probes passed once in this run. Linux failed the workflow; Windows and macOS
+native probes remain experimental and non-blocking.
 
 The scroll probe checks vertical up/down and horizontal positive/negative in order. X11 injects
 buttons 4/5 and 6/7 and expects offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and `(-1, 0)`. Cocoa's
@@ -185,12 +185,13 @@ schema; any of those changes resets the count. The explicit Core Graphics flags 
 in run #38082851338. Scroll injections on Win32 and Cocoa are separated by 100 ms so GLFW can
 process each message before the next reversal. Pointer-motion probes discard callbacks that report
 no coordinate change. Cocoa scroll injection uses pixel deltas and matches the variadic Core
-Graphics signature and axis count; all four directions passed in run #38089252090. The nested
-Weston boundary probe enables `WAYLAND_DEBUG` and uses an X11 pointer warp. In run #38089252090,
-the parent X11 observer saw leave/enter/motion on Weston's output window, but the Wayland client
-received no corresponding pointer protocol events. The probe now records the pre-observer event
-mask union and full crossing-event fields. Additional modifier combinations, text, repeat, X11,
-and public VMNL runtime cases remain unqualified.
+Graphics signature and axis count; all four directions passed in run #38090546664. The nested
+Weston boundary probe uses an X11 pointer warp. In run #38090546664, the parent X11 observer saw
+leave/enter/motion on Weston's output window, but the Wayland client received no corresponding
+pointer protocol events. The probe records the pre-observer event-mask union and crossing-event
+fields; Weston now runs with server-side protocol tracing to distinguish event selection from
+protocol delivery. Additional modifier combinations, text, repeat, X11, and public VMNL runtime
+cases remain unqualified.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored
