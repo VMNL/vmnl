@@ -141,11 +141,12 @@ processes wait for readiness, inject `A` and left-button press/release through X
 the exact native GLFW event sequence before timeout. A Linux-only button probe reads the X11
 pointer mapping and injects only server buttons within its reported limit, checking the resulting
 GLFW button press/release order and released final states. The Windows probe checks SendInput for
-GLFW buttons 1–5; the Cocoa probe checks CGEventPost for all eight GLFW button numbers. The hosted
-Xvfb mapping currently exposes 10 buttons. CI run
+GLFW buttons 1–5; the Cocoa probe checks CGEventPost for all eight GLFW button numbers. Both also
+check native pointer motion and vertical/horizontal scroll direction. The hosted Xvfb mapping
+currently exposes 10 buttons. CI run
 [#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968) showed XTEST rejecting
 server button 11 (`BadValue`), so GLFW `Button7` and `Button8` are not qualified by hosted CI. The
-expanded Windows and macOS button probes await CI evidence. The separate scroll probe injects
+expanded Windows and macOS mouse probes await CI evidence. The separate scroll probe injects
 vertical up/down with XTEST buttons 4/5
 and horizontal scroll with buttons 6/7, checking offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and
 `(-1, 0)` in order. Mouse probes require the pointer to hover the focused window. The Wayland path
@@ -163,11 +164,11 @@ if necessary. The mouse probe drains activation clicks before READY and the pare
 another activation click after READY, so activation cannot satisfy the tested button sequence.
 MAPPED or Wayland READY alone never authorizes input injection.
 
-Win32 uses `SendInput` and Cocoa uses `CGEventPost` for the keyboard, left-button, and eligible
-multi-button scenarios. Their native probes remain visible but non-blocking until ten consecutive
+Win32 uses `SendInput` and Cocoa uses `CGEventPost` for keyboard, left-button, eligible multi-button,
+pointer-motion, and scroll scenarios. Their native probes remain visible but non-blocking until ten consecutive
 successful runs use the same runner image, GLFW revision, injector, and probe schema; any of those
-changes resets the count. Movement, hover-boundary, and scroll cases remain outstanding on these
-backends.
+changes resets the count. Hover-boundary, modifiers, text, and repeat cases remain outstanding on
+these backends.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored

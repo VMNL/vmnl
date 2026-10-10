@@ -1014,7 +1014,7 @@ fn native_mouse_input(
                     let x = event["x"].as_f64();
                     let y = event["y"].as_f64();
                     match (platform, x, y) {
-                        (glfw::Platform::Wayland, Some(x), Some(y)) => {
+                        (glfw::Platform::Wayland | glfw::Platform::Win32, Some(x), Some(y)) => {
                             x > initial_cursor_position.0 && y > initial_cursor_position.1
                         }
                         (_, Some(x), Some(y)) => {

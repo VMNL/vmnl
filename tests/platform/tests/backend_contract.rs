@@ -1001,14 +1001,202 @@ fn inject_mouse_buttons(_button_limit: usize) -> Result<(), String> {
     Err("native mouse-button injection is unsupported on this OS".to_owned())
 }
 
-#[cfg(not(target_os = "linux"))]
-fn inject_mouse_scroll() -> Result<(), String> {
-    Err("mouse scroll injection is implemented only with XTEST on X11".to_owned())
+#[cfg(target_os = "windows")]
+fn send_mouse_input(
+    dx: i32,
+    dy: i32,
+    mouse_data: u32,
+    flags: u32,
+    name: &str,
+) -> Result<(), String> {
+    use std::mem::size_of;
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
+        SendInput, INPUT, INPUT_0, INPUT_MOUSE, MOUSEINPUT,
+    };
+
+    let input = INPUT {
+        r#type: INPUT_MOUSE,
+        Anonymous: INPUT_0 {
+            mi: MOUSEINPUT {
+                dx,
+                dy,
+                mouseData: mouse_data,
+                dwFlags: flags,
+                ..MOUSEINPUT::default()
+            },
+        },
+    };
+    let input_size = i32::try_from(size_of::<INPUT>())
+        .map_err(|_| "Win32 INPUT size does not fit i32".to_owned())?;
+    // SAFETY: `input` is one initialized mouse INPUT record and remains alive for the call.
+    let sent = unsafe { SendInput(1, &input, input_size) };
+    if sent == 1 {
+        Ok(())
+    } else {
+        Err(format!(
+            "SendInput inserted {sent}/1 {name} event: {}",
+            std::io::Error::last_os_error()
+        ))
+    }
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "windows")]
+fn inject_mouse_scroll() -> Result<(), String> {
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{MOUSEEVENTF_HWHEEL, MOUSEEVENTF_WHEEL};
+
+    for (flags, delta, name) in [
+        (MOUSEEVENTF_WHEEL, 120, "vertical scroll up"),
+        (MOUSEEVENTF_WHEEL, -120, "vertical scroll down"),
+        // GLFW inverts WM_MOUSEHWHEEL's horizontal delta to match X11 and Cocoa.
+        (MOUSEEVENTF_HWHEEL, -120, "horizontal scroll positive"),
+        (MOUSEEVENTF_HWHEEL, 120, "horizontal scroll negative"),
+    ] {
+        send_mouse_input(0, 0, delta as u32, flags, name)?;
+    }
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
 fn inject_mouse_motion() -> Result<(), String> {
-    Err("pointer movement injection is currently implemented only with XTEST".to_owned())
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
+        MOUSEEVENTF_MOVE, MOUSEEVENTF_MOVE_NOCOALESCE,
+    };
+
+    send_mouse_input(
+        6,
+        4,
+        0,
+        MOUSEEVENTF_MOVE | MOUSEEVENTF_MOVE_NOCOALESCE,
+        "pointer movement",
+    )
+}
+
+#[cfg(target_os = "macos")]
+fn inject_mouse_scroll() -> Result<(), String> {
+    use std::ffi::c_void;
+
+    type CGEventRef = *mut c_void;
+    const CG_HID_EVENT_TAP: u32 = 0;
+
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        static kCGScrollEventUnitLine: u32;
+        fn CGEventCreateScrollWheelEvent(
+            source: *mut c_void,
+            units: u32,
+            wheel_count: u32,
+            wheel1: i32,
+            wheel2: i32,
+            wheel3: i32,
+        ) -> CGEventRef;
+        fn CGEventPost(tap: u32, event: CGEventRef);
+    }
+    #[link(name = "CoreFoundation", kind = "framework")]
+    extern "C" {
+        fn CFRelease(value: *const c_void);
+    }
+
+    for (vertical, horizontal, name) in [
+        (1, 0, "vertical scroll up"),
+        (-1, 0, "vertical scroll down"),
+        (0, 1, "horizontal scroll positive"),
+        (0, -1, "horizontal scroll negative"),
+    ] {
+        // SAFETY: The system line-unit constant and signed axis deltas are valid CoreGraphics
+        // scroll-event inputs; the returned retained event is checked before posting or release.
+        let event = unsafe {
+            CGEventCreateScrollWheelEvent(
+                std::ptr::null_mut(),
+                kCGScrollEventUnitLine,
+                2,
+                vertical,
+                horizontal,
+                0,
+            )
+        };
+        if event.is_null() {
+            return Err(format!(
+                "CGEventCreateScrollWheelEvent returned null for {name}"
+            ));
+        }
+        // SAFETY: `event` is a live retained CoreGraphics object created above.
+        unsafe {
+            CGEventPost(CG_HID_EVENT_TAP, event);
+            CFRelease(event);
+        }
+    }
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn inject_mouse_motion() -> Result<(), String> {
+    use std::ffi::c_void;
+
+    type CGEventRef = *mut c_void;
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct CGPoint {
+        x: f64,
+        y: f64,
+    }
+
+    const CG_HID_EVENT_TAP: u32 = 0;
+    const MOUSE_MOVED: u32 = 5;
+
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        fn CGEventCreate(source: *mut c_void) -> CGEventRef;
+        fn CGEventGetLocation(event: CGEventRef) -> CGPoint;
+        fn CGEventCreateMouseEvent(
+            source: *mut c_void,
+            mouse_type: u32,
+            mouse_cursor_position: CGPoint,
+            mouse_button: u32,
+        ) -> CGEventRef;
+        fn CGEventPost(tap: u32, event: CGEventRef);
+    }
+    #[link(name = "CoreFoundation", kind = "framework")]
+    extern "C" {
+        fn CFRelease(value: *const c_void);
+    }
+
+    // SAFETY: A null source requests the default event source. The returned event is checked
+    // before its location is queried or its retained CoreFoundation reference is released.
+    let position_event = unsafe { CGEventCreate(std::ptr::null_mut()) };
+    if position_event.is_null() {
+        return Err("CGEventCreate returned null while reading cursor position".to_owned());
+    }
+    // SAFETY: `position_event` is a live CoreGraphics event created above.
+    let position = unsafe { CGEventGetLocation(position_event) };
+    // SAFETY: `position_event` is a live retained CoreFoundation object.
+    unsafe { CFRelease(position_event) };
+
+    let target = CGPoint {
+        x: position.x + 6.0,
+        y: position.y + 4.0,
+    };
+    // SAFETY: MOUSE_MOVED is a valid mouse event type and target is a finite point. The returned
+    // retained reference is checked before posting or release.
+    let event = unsafe { CGEventCreateMouseEvent(std::ptr::null_mut(), MOUSE_MOVED, target, 0) };
+    if event.is_null() {
+        return Err("CGEventCreateMouseEvent returned null for pointer movement".to_owned());
+    }
+    // SAFETY: `event` is a live retained CoreGraphics object created above.
+    unsafe {
+        CGEventPost(CG_HID_EVENT_TAP, event);
+        CFRelease(event);
+    }
+    Ok(())
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+fn inject_mouse_scroll() -> Result<(), String> {
+    Err("native mouse scroll injection is unsupported on this OS".to_owned())
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+fn inject_mouse_motion() -> Result<(), String> {
+    Err("native pointer movement injection is unsupported on this OS".to_owned())
 }
 
 #[cfg(target_os = "macos")]
@@ -1307,6 +1495,8 @@ fn selected_backend_contract() {
             "keyboard-native-input",
             "mouse-native-input",
             "mouse-buttons-input",
+            "mouse-motion-input",
+            "mouse-scroll-input",
         ],
         value => panic!("unsupported qualified backend: {value}"),
     };
@@ -1499,7 +1689,7 @@ fn assert_native_mouse_motion(record: &Value) {
             .as_f64()
             .expect("cursor event coordinate should be a number");
         assert!((event_coordinate - final_coordinate).abs() <= 0.01);
-        if record["backend_actual"] == "wayland" {
+        if matches!(record["backend_actual"].as_str(), Some("wayland" | "win32")) {
             assert!(event_coordinate > initial);
         } else {
             assert!((final_coordinate - initial - delta).abs() <= 0.01);
@@ -1509,10 +1699,12 @@ fn assert_native_mouse_motion(record: &Value) {
     assert_eq!(record["value"]["case"], "pointer-movement");
     assert_eq!(record["value"]["final_state"], Value::Null);
     assert_eq!(record["value"]["failure_reason"], Value::Null);
-    let expected_injector = if record["backend_actual"] == "x11" {
-        "x11-xtest"
-    } else {
-        "x11-xtest-parent"
+    let expected_injector = match record["backend_actual"].as_str() {
+        Some("x11") => "x11-xtest",
+        Some("wayland") => "x11-xtest-parent",
+        Some("win32") => "send-input",
+        Some("cocoa") => "cg-event-post",
+        value => panic!("unexpected native pointer-motion backend: {value:?}"),
     };
     assert_eq!(record["value"]["injector"], expected_injector);
 }
@@ -1716,6 +1908,8 @@ fn assert_native_mouse_scroll_input(record: &Value) {
     let expected_injector = match record["backend_actual"].as_str() {
         Some("x11") => "x11-xtest",
         Some("wayland") => "x11-xtest-parent",
+        Some("win32") => "send-input",
+        Some("cocoa") => "cg-event-post",
         value => panic!("unexpected native scroll backend: {value:?}"),
     };
     assert_eq!(record["value"]["injector"], expected_injector);
