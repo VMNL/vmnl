@@ -23,6 +23,7 @@ const NATIVE_INPUT_TIMEOUT: Duration = Duration::from_secs(7);
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
 static READY_FILE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
+#[cfg(target_os = "linux")]
 fn is_mouse_native_input(operation: &str) -> bool {
     matches!(
         operation,
@@ -1203,10 +1204,11 @@ fn inject_mouse_scroll() -> Result<(), String> {
 
     type CGEventRef = *mut c_void;
     const CG_HID_EVENT_TAP: u32 = 0;
+    // CGScrollEventUnit uses 0 for pixels and 1 for lines.
+    const CG_SCROLL_EVENT_UNIT_LINE: u32 = 1;
 
     #[link(name = "ApplicationServices", kind = "framework")]
     extern "C" {
-        static kCGScrollEventUnitLine: u32;
         fn CGEventCreateScrollWheelEvent(
             source: *mut c_void,
             units: u32,
@@ -1228,12 +1230,12 @@ fn inject_mouse_scroll() -> Result<(), String> {
         (0, 1, "horizontal scroll positive"),
         (0, -1, "horizontal scroll negative"),
     ] {
-        // SAFETY: The system line-unit constant and signed axis deltas are valid CoreGraphics
-        // scroll-event inputs; the returned retained event is checked before posting or release.
+        // SAFETY: Unit 1 is CGScrollEventUnit.line; the signed axis deltas are valid inputs and
+        // the returned retained event is checked before posting or release.
         let event = unsafe {
             CGEventCreateScrollWheelEvent(
                 std::ptr::null_mut(),
-                kCGScrollEventUnitLine,
+                CG_SCROLL_EVENT_UNIT_LINE,
                 2,
                 vertical,
                 horizontal,
