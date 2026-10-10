@@ -74,18 +74,29 @@ fn probe(backend: &str, operation: &str) -> Value {
 
 fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> {
     let sequence = READY_FILE_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    let max_server_button = if operation == "mouse-buttons-input" {
+        Some(x11_pointer_button_count()?)
+    } else {
+        None
+    };
     let ready_file = env::temp_dir().join(format!(
         "vmnl-platform-ready-{}-{sequence}",
         std::process::id()
     ));
     let injector = input_injector_name(backend)?;
     let result = (|| {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_platform_probe"))
+        let mut command = Command::new(env!("CARGO_BIN_EXE_platform_probe"));
+        command
             .args([backend, operation])
             .env("VMNL_PLATFORM_READY_FILE", &ready_file)
             .env("VMNL_PLATFORM_INPUT_INJECTOR", injector)
+            .env(
+                "VMNL_PLATFORM_X11_MAX_BUTTON",
+                max_server_button.map_or_else(String::new, |value| value.to_string()),
+            )
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
+            .stderr(Stdio::piped());
+        let mut child = command
             .spawn()
             .map_err(|error| format!("platform probe should start: {error}"))?;
 
@@ -97,7 +108,9 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
         let injection = match operation {
             "keyboard-native-input" => inject_key_a(),
             "mouse-native-input" => inject_mouse_left(),
-            "mouse-buttons-input" => inject_mouse_buttons(),
+            "mouse-buttons-input" => {
+                inject_mouse_buttons(usize::from(max_server_button.unwrap_or_default()))
+            }
             "mouse-motion-input" => inject_mouse_motion(),
             "mouse-scroll-input" => inject_mouse_scroll(),
             value => Err(format!("unsupported native input operation: {value}")),
@@ -619,7 +632,7 @@ fn inject_mouse_left() -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
-fn inject_mouse_buttons() -> Result<(), String> {
+fn inject_mouse_buttons(max_server_button: usize) -> Result<(), String> {
     use x11rb::{
         connection::Connection as _,
         protocol::{xproto::BUTTON_PRESS_EVENT, xtest::ConnectionExt as _},
@@ -642,7 +655,10 @@ fn inject_mouse_buttons() -> Result<(), String> {
         (10, "GLFW button 6"),
         (11, "GLFW button 7"),
         (12, "GLFW button 8"),
-    ] {
+    ]
+    .into_iter()
+    .filter(|(button, _)| usize::from(*button) <= max_server_button)
+    {
         let press = connection
             .xtest_fake_input(BUTTON_PRESS_EVENT, button, 0, 0, 0, 0, 0)
             .map_err(|error| format!("failed to enqueue XTEST {name} press: {error}"))?
@@ -668,6 +684,26 @@ fn inject_mouse_buttons() -> Result<(), String> {
     connection
         .flush()
         .map_err(|error| format!("failed to flush XTEST mouse buttons: {error}"))
+}
+
+#[cfg(target_os = "linux")]
+fn x11_pointer_button_count() -> Result<u8, String> {
+    use x11rb::protocol::xproto::ConnectionExt as _;
+
+    let (connection, _) = x11rb::connect(None)
+        .map_err(|error| format!("failed to connect to the parent X server: {error}"))?;
+    let mapping = connection
+        .get_pointer_mapping()
+        .map_err(|error| format!("failed to request the X11 pointer mapping: {error}"))?
+        .reply()
+        .map_err(|error| format!("failed to read the X11 pointer mapping: {error}"))?;
+    u8::try_from(mapping.map.len())
+        .map_err(|_| "X11 pointer button count does not fit u8".to_owned())
+}
+
+#[cfg(not(target_os = "linux"))]
+fn x11_pointer_button_count() -> Result<u8, String> {
+    Err("X11 pointer button count is available only on Linux".to_owned())
 }
 
 #[cfg(target_os = "linux")]
@@ -892,7 +928,7 @@ fn inject_mouse_motion() -> Result<(), String> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn inject_mouse_buttons() -> Result<(), String> {
+fn inject_mouse_buttons(_max_server_button: usize) -> Result<(), String> {
     Err(
         "eligible mouse-button injection is currently implemented only with XTEST on X11"
             .to_owned(),
@@ -1317,26 +1353,64 @@ fn assert_native_mouse_buttons_input(record: &Value) {
     assert_eq!(record["value"]["stage"], "input");
     assert_eq!(record["value"]["focused"], true);
     assert_eq!(record["value"]["hovered"], true);
+    let maximum_server_button = record["value"]["button_coverage"]["maximum_server_button"]
+        .as_u64()
+        .expect("X11 maximum server button should be recorded");
+    let expected_button_mappings = [
+        (1, "Button1"),
+        (2, "Button3"),
+        (3, "Button2"),
+        (8, "Button4"),
+        (9, "Button5"),
+        (10, "Button6"),
+        (11, "Button7"),
+        (12, "Button8"),
+    ];
+    let expected_events: Vec<Value> = expected_button_mappings
+        .into_iter()
+        .filter(|(server_button, _)| *server_button <= maximum_server_button)
+        .flat_map(|(_, button)| {
+            [
+                serde_json::json!({"button": button, "action": "Press", "modifiers": 0}),
+                serde_json::json!({"button": button, "action": "Release", "modifiers": 0}),
+            ]
+        })
+        .collect();
     assert_eq!(
         record["value"]["observed_events"],
-        serde_json::json!([
-            {"button": "Button1", "action": "Press", "modifiers": 0},
-            {"button": "Button1", "action": "Release", "modifiers": 0},
-            {"button": "Button3", "action": "Press", "modifiers": 0},
-            {"button": "Button3", "action": "Release", "modifiers": 0},
-            {"button": "Button2", "action": "Press", "modifiers": 0},
-            {"button": "Button2", "action": "Release", "modifiers": 0},
-            {"button": "Button4", "action": "Press", "modifiers": 0},
-            {"button": "Button4", "action": "Release", "modifiers": 0},
-            {"button": "Button5", "action": "Press", "modifiers": 0},
-            {"button": "Button5", "action": "Release", "modifiers": 0},
-            {"button": "Button6", "action": "Press", "modifiers": 0},
-            {"button": "Button6", "action": "Release", "modifiers": 0},
-            {"button": "Button7", "action": "Press", "modifiers": 0},
-            {"button": "Button7", "action": "Release", "modifiers": 0},
-            {"button": "Button8", "action": "Press", "modifiers": 0},
-            {"button": "Button8", "action": "Release", "modifiers": 0},
-        ])
+        serde_json::json!(expected_events)
+    );
+
+    let expected_tested_mappings: Vec<Value> = expected_button_mappings
+        .into_iter()
+        .filter(|(server_button, _)| *server_button <= maximum_server_button)
+        .map(|(server_button, glfw_button)| {
+            serde_json::json!({"server_button": server_button, "glfw_button": glfw_button})
+        })
+        .collect();
+    let expected_unsupported_mappings: Vec<Value> = expected_button_mappings
+        .into_iter()
+        .filter(|(server_button, _)| *server_button > maximum_server_button)
+        .map(|(server_button, glfw_button)| {
+            serde_json::json!({
+                "server_button": server_button,
+                "glfw_button": glfw_button,
+                "reason": "server_button_exceeds_x11_pointer_mapping",
+            })
+        })
+        .collect();
+    let all_eight_glfw_buttons_tested = expected_unsupported_mappings.is_empty();
+    assert_eq!(
+        record["value"]["button_coverage"]["tested_mappings"],
+        serde_json::json!(expected_tested_mappings)
+    );
+    assert_eq!(
+        record["value"]["button_coverage"]["all_eight_glfw_buttons_tested"],
+        all_eight_glfw_buttons_tested
+    );
+    assert_eq!(
+        record["value"]["button_coverage"]["unsupported_mappings"],
+        serde_json::json!(expected_unsupported_mappings)
     );
     assert_eq!(
         record["value"]["case"],

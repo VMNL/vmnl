@@ -94,8 +94,10 @@ just input-test cocoa
 ```
 
 The public VMNL `Window::poll_events()` → `Event`/`Input` scenario is a separate opt-in GPU test.
-It currently covers X11 `A`, XTEST pointer motion delivered as `MouseMoved`, all eight mouse-button
-press/release pairs, and vertical/horizontal scroll in both directions:
+It currently covers X11 `A`, XTEST pointer motion delivered as `MouseMoved`, each mouse button
+whose X11 server mapping is available, and vertical/horizontal scroll in both directions. It
+logs and skips mappings above the server's reported limit; the hosted Xvfb runner exposes 10
+server buttons, so GLFW `Button7` and `Button8` are not qualified there:
 
 ```bash
 just input-test-vmnl x11
@@ -136,9 +138,12 @@ target directory is cached or transferred between runners. Linux then forces the
 backend under Weston with Pixman nested on Xvfb with Openbox, then tests the GLFW X11 backend
 under Xvfb with Openbox. Both paths run visible keyboard and mouse probes. Separate probe
 processes wait for readiness, inject `A` and left-button press/release through XTEST, and require
-the exact native GLFW event sequence before timeout. A Linux-only button probe injects X11 server
-buttons 1, 2, 3, and 8–12, checking GLFW buttons 1, 3, 2, and 4–8 in order with press/release and
-released final states. The separate scroll probe injects vertical up/down with XTEST buttons 4/5
+the exact native GLFW event sequence before timeout. A Linux-only button probe reads the X11
+pointer mapping and injects only server buttons within its reported limit, checking the resulting
+GLFW button press/release order and released final states. The hosted Xvfb mapping currently
+exposes 10 buttons. CI run [#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968)
+showed XTEST rejecting server button 11 (`BadValue`), so GLFW `Button7` and `Button8` are not
+qualified by hosted CI. The separate scroll probe injects vertical up/down with XTEST buttons 4/5
 and horizontal scroll with buttons 6/7, checking offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and
 `(-1, 0)` in order. Mouse probes require the pointer to hover the focused window. The Wayland path
 injects through the parent Xvfb server into Weston's X11 backend;

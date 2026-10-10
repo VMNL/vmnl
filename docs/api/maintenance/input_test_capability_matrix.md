@@ -24,11 +24,11 @@ presence or successful compilation.
 | K | Nested Weston / parent X11 XTEST | Same focus/readiness checks; this exercises XTEST → Xvfb → Weston X11 backend → Wayland client, not a standalone Wayland seat. | `keyboard-native-input` injects only A directly into GLFW. |
 | K | Win32 / `SendInput` | Active desktop at matching integrity; keyboard layout and system shortcuts constrain eligible keys. | A-only probe is configured as visible, non-blocking evidence until qualification. |
 | K | Cocoa / `CGEventPost` | Active desktop; macOS may require Accessibility permission. Layout and system shortcuts constrain eligible keys. | A-only probe is configured as visible, non-blocking evidence until qualification. |
-| M | X11 / XTEST | Mapped, focused, hovered window and recorded X server button map. Server buttons 4–7 are scroll; later server buttons map to additional GLFW buttons. | Left-button passed in [CI run #154](https://github.com/VMNL/vmnl/actions/runs/38058493301); vertical up/down passed in [CI run #38068589103](https://github.com/VMNL/vmnl/actions/runs/38068589103); both horizontal directions passed in [CI run #38071107344](https://github.com/VMNL/vmnl/actions/runs/38071107344); all-button assertions added, awaiting CI. |
-| M | Nested Weston / parent X11 XTEST | Records nested Weston evidence only; button map and focus must be captured. Does not qualify a native Wayland seat. | Left-button passed in [CI run #154](https://github.com/VMNL/vmnl/actions/runs/38058493301); vertical up/down passed through parent X11 in [CI run #38068589103](https://github.com/VMNL/vmnl/actions/runs/38068589103); both horizontal directions passed in [CI run #38071107344](https://github.com/VMNL/vmnl/actions/runs/38071107344); all-button assertions added, awaiting CI. |
+| M | X11 / XTEST | Mapped, focused, hovered window and recorded X server button map. Server buttons 4–7 are scroll; later server buttons map to additional GLFW buttons. CI Xvfb currently exposes 10 buttons. | Left-button passed in [CI run #154](https://github.com/VMNL/vmnl/actions/runs/38058493301); vertical up/down passed in [CI run #38068589103](https://github.com/VMNL/vmnl/actions/runs/38068589103); both horizontal directions passed in [CI run #38071107344](https://github.com/VMNL/vmnl/actions/runs/38071107344). Run [#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968) exposed XTEST rejecting server button 11; the probe now filters and records mappings by server capacity, pending CI. |
+| M | Nested Weston / parent X11 XTEST | Records nested Weston evidence only; button map and focus must be captured. Does not qualify a native Wayland seat. CI parent Xvfb currently exposes 10 buttons. | Left-button passed in [CI run #154](https://github.com/VMNL/vmnl/actions/runs/38058493301); vertical up/down passed through parent X11 in [CI run #38068589103](https://github.com/VMNL/vmnl/actions/runs/38068589103); both horizontal directions passed in [CI run #38071107344](https://github.com/VMNL/vmnl/actions/runs/38071107344). Run [#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968) exposed XTEST rejecting server button 11; the probe now filters and records mappings by server capacity, pending CI. |
 | M | Win32 / `SendInput` | Active desktop at matching integrity. GLFW Win32 maps left/right/middle and XBUTTON1/2, so only GLFW buttons 1–5 are eligible through this mapping. | First left-button pass in [CI run #154](https://github.com/VMNL/vmnl/actions/runs/38058493301); still experimental pending ten consecutive successes. |
 | M | Cocoa / `CGEventPost` | Requires an active desktop and any required Accessibility permission; remaining button mapping must be established by probes. | First left-button pass in [CI run #154](https://github.com/VMNL/vmnl/actions/runs/38058493301); still experimental pending ten consecutive successes. |
-| V | Public VMNL path / X11 XTEST | Requires a qualified Vulkan loader, GPU/driver, X11 EWMH display, XTEST, mapped and focused VMNL window. | `just input-test-vmnl x11` checks native A, all eight mouse-button transitions, and both scroll axes through `Window::poll_events()` → `Event`/`Input`; runtime result not yet qualified. |
+| V | Public VMNL path / X11 XTEST | Requires a qualified Vulkan loader, GPU/driver, X11 EWMH display, XTEST, mapped and focused VMNL window. Buttons above the X11 server mapping are not injectable. | `just input-test-vmnl x11` checks A, pointer motion, every mouse-button mapping supported by the active X server, and both scroll axes through `Window::poll_events()` → `Event`/`Input`; runtime result not yet qualified. |
 
 All native cases must use a bounded deadline, verify readiness before injection, preserve the
 observed event order and identity, retain failure diagnostics, and release held inputs during
@@ -46,31 +46,35 @@ synthetic injection.
 - Modeled `EventQueue` batches cover a press and release for every key/button in one batch, then
   verify transition clearing in the next empty batch. These remain unit-level reducer checks; they
   do not execute `Window::poll_events()` or a native backend.
-- The native probe now checks one representative mouse case: focused and hovered window, ordered
-  `Button1` press/release with modifiers, released final state, injector identity, and a failure
-  reason. A passing probe still proves GLFW backend delivery only, not the public VMNL path.
+- The native probes check focused and hovered mouse cases, ordered button and scroll events,
+  released button state, pointer motion, and cursor-query agreement. They prove GLFW backend
+  delivery only, not the public VMNL path.
 - XTEST mouse-scroll injects vertical up/down (server buttons 4/5) and horizontal positive/negative
   (buttons 6/7), expecting ordered offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and `(-1, 0)`. The
   CI pass [#38068589103](https://github.com/VMNL/vmnl/actions/runs/38068589103) qualifies vertical
   scroll and [#38071107344](https://github.com/VMNL/vmnl/actions/runs/38071107344) qualifies both
-  horizontal directions on X11 and nested Weston. Downloaded Linux artifacts contain environment
-  logs but no probe JSONL; this branch changes the artifact destination to an absolute workspace
-  path, pending CI verification. The public VMNL Vulkan/display runtime remains unqualified.
-- The new native mouse-button case sends X11 server buttons `1, 2, 3, 8–12`, which GLFW maps to
-  buttons 1, 3, 2, 4–8 in event order. Its exhaustive ordered assertions and final released-state
-  checks are checked in and await CI on X11 and nested Weston.
+  horizontal directions on X11 and nested Weston. The absolute artifact destination now uploads
+  JSONL: [run #38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968) records the
+  successful pointer-motion probe. The public VMNL Vulkan/display runtime remains unqualified.
+- The all-button probe reads `GetPointerMapping`, injects only mapped X11 server buttons, asserts
+  event order for the eligible GLFW buttons, checks all final states are released, and records
+  unsupported mappings. CI run [#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968)
+  showed the Xvfb limit is 10: XTEST rejects server button 11, leaving GLFW `Button7`/`Button8`
+  unqualified. The capacity-aware retry is pending CI.
 - CI run #154 passed the representative left-button probe on X11, nested Weston, Win32, and Cocoa.
   Linux results are blocking; Windows and macOS are first experimental passes and remain
-  non-blocking until the documented ten-run qualification rule is met. Its Linux artifact also
-  lacks probe JSONL because of the relative artifact destination; the correction is awaiting CI.
+  non-blocking until the documented ten-run qualification rule is met. That run's Linux artifact
+  lacked probe JSONL because of the relative artifact destination; run #38073455968 confirms the
+  absolute-path correction uploads it.
 - `just input-test <backend>` checks the selected host, display, compositor/window-manager, and
   available input-permission prerequisites before running one native contract. CI continues to
   invoke the same selected contracts directly through Cargo: Linux X11 and nested Weston block,
   while Win32 and Cocoa remain experimental.
-- `just input-test-vmnl x11` adds an opt-in Vulkan-backed public-facade path for A, all eight
-  mouse-button press/release pairs, and vertical/horizontal scroll directions. It is excluded from the general
-  `just test-gpu` suite because it injects input into the active desktop; no Vulkan/display runtime
-  result is recorded yet.
+- `just input-test-vmnl x11` adds an opt-in Vulkan-backed public-facade path for A, pointer motion,
+  every mouse-button mapping supported by the active X11 server, and vertical/horizontal scroll
+  directions. It is excluded from `just test-gpu` because it injects input into the active desktop;
+  no Vulkan/display runtime result is recorded. On the hosted 10-button Xvfb, `Button7`/`Button8`
+  remain outside the injectable range.
 
 ## Keyboard named-key rows
 
@@ -224,26 +228,28 @@ tap retains both transition flags with `is_down == false`; the next empty batch 
 The fixed `GLFW_MOUSE_BUTTON_N` token is the independent mapping oracle. Deterministic level:
 unit/API. Native level: profile M; public VMNL end-to-end level: profile V.
 
-At baseline, all eight variants have a checked-in conversion round-trip assertion. Event
-translation and batch state used only `MouseButton::Left`; this branch now adds native XTEST cases
-for all eight GLFW buttons and public VMNL press/release assertions for every variant. The public
-Vulkan/display runtime remains unqualified.
+All eight variants have checked-in conversion, event-translation, and batch-state assertions. The
+native XTEST cases test every GLFW mapping present in the active X11 server and record mappings
+that exceed its button limit. Hosted CI's 10-button Xvfb cannot inject server buttons 11/12, so
+GLFW `Button7`/`Button8` remain unqualified there. The public Vulkan/display runtime remains
+unqualified.
 
 | VMNL button | Independent GLFW 3.4 token | Required result | Deterministic evidence at baseline | Native evidence at baseline |
 | --- | --- | --- | --- | --- |
 | `MouseButton::Left` | `GLFW_MOUSE_BUTTON_1` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 and nested Weston representative probe passed in [CI run #154](https://github.com/VMNL/vmnl/actions/runs/38058493301); public VMNL runtime not qualified. |
-| `MouseButton::Right` | `GLFW_MOUSE_BUTTON_2` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 button 3 → GLFW button 2 case added; awaiting CI. Win32 mapping is eligible but currently only left is tested. |
-| `MouseButton::Middle` | `GLFW_MOUSE_BUTTON_3` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 button 2 → GLFW button 3 case added; awaiting CI. Win32 mapping is eligible but currently only left is tested. |
-| `MouseButton::Button4` | `GLFW_MOUSE_BUTTON_4` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 button 8 case added; awaiting CI. Win32 XBUTTON1 is eligible but currently not tested; Cocoa mapping remains unqualified. |
-| `MouseButton::Button5` | `GLFW_MOUSE_BUTTON_5` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 button 9 case added; awaiting CI. Win32 XBUTTON2 is eligible but currently not tested; Cocoa mapping remains unqualified. |
-| `MouseButton::Button6` | `GLFW_MOUSE_BUTTON_6` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 button 10 case added; awaiting CI. Win32 does not expose this button through GLFW's XBUTTON1/2 mapping; Cocoa mapping remains unqualified. |
-| `MouseButton::Button7` | `GLFW_MOUSE_BUTTON_7` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 button 11 case added; awaiting CI. Win32 does not expose this button through GLFW's XBUTTON1/2 mapping; Cocoa mapping remains unqualified. |
-| `MouseButton::Button8` | `GLFW_MOUSE_BUTTON_8` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 button 12 case added; awaiting CI. Win32 does not expose this button through GLFW's XBUTTON1/2 mapping; Cocoa mapping remains unqualified. |
+| `MouseButton::Right` | `GLFW_MOUSE_BUTTON_2` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 3 is within the current CI map; the dynamic event probe awaits CI. Win32 mapping is eligible but not tested. |
+| `MouseButton::Middle` | `GLFW_MOUSE_BUTTON_3` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 2 is within the current CI map; the dynamic event probe awaits CI. Win32 mapping is eligible but not tested. |
+| `MouseButton::Button4` | `GLFW_MOUSE_BUTTON_4` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 8 is within the current CI map; the dynamic event probe awaits CI. Win32 XBUTTON1 is eligible but not tested; Cocoa mapping remains unqualified. |
+| `MouseButton::Button5` | `GLFW_MOUSE_BUTTON_5` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 9 is within the current CI map; the dynamic event probe awaits CI. Win32 XBUTTON2 is eligible but not tested; Cocoa mapping remains unqualified. |
+| `MouseButton::Button6` | `GLFW_MOUSE_BUTTON_6` | M1 | Round-trip assertion exists; event/state test only covers Left | X11 server button 10 is within the current CI map; the dynamic event probe awaits CI. Win32 does not expose this button through GLFW's XBUTTON1/2 mapping; Cocoa mapping remains unqualified. |
+| `MouseButton::Button7` | `GLFW_MOUSE_BUTTON_7` | M1 | Round-trip assertion exists; event/state test only covers Left | Not qualified: X11 requires server button 11, rejected by the hosted 10-button Xvfb in [CI run #38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968). Win32 does not expose it through GLFW's XBUTTON1/2 mapping; Cocoa remains unqualified. |
+| `MouseButton::Button8` | `GLFW_MOUSE_BUTTON_8` | M1 | Round-trip assertion exists; event/state test only covers Left | Not qualified: X11 requires server button 12, beyond the hosted 10-button Xvfb mapping. Win32 does not expose it through GLFW's XBUTTON1/2 mapping; Cocoa remains unqualified. |
 
 The issue's GLFW 3.4 backend constraints apply per row: Win32 can synthesize buttons 1–5;
-X11 reserves server buttons 4–7 for scroll and maps buttons 8–12 to GLFW buttons 4–8; nested
-Weston inherits the tested parent-X11 route. Cocoa's remaining button eligibility is unqualified.
-Never count an unavailable mapping as a pass.
+X11 reserves server buttons 4–7 for scroll and maps buttons 8–12 to GLFW buttons 4–8. The hosted
+Xvfb pointer map has only 10 server buttons, so XTEST cannot qualify the last two mappings there;
+nested Weston inherits the same parent-X11 limit. Cocoa's remaining button eligibility is
+unqualified. Never count an unavailable mapping as a pass.
 
 ## Other keyboard and mouse input families
 
@@ -264,8 +270,9 @@ Never count an unavailable mapping as a pass.
 
 ## Remaining gaps for issue #91
 
-- Expand the A-key and eligible mouse-button probes across remaining backend mappings; the new
-  Linux all-button case is awaiting CI. Add the remaining native keyboard and mouse families,
+- Expand the A-key and eligible mouse-button probes across remaining backend mappings; rerun the
+  capacity-aware Linux button probe in CI. `Button7`/`Button8` remain unqualified on the current
+  10-button Xvfb. Add the remaining native keyboard and mouse families,
   including enter/leave and modifier/text/repeat cases, with explicit non-injectable reasons per
   backend row and retained diagnostics.
 - Execute the new public VMNL scenario in at least one qualified Vulkan/X11 environment and retain

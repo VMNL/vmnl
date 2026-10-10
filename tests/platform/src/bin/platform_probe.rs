@@ -19,6 +19,16 @@ use std::{
 use vmnl_platform_tests::{backend_name, parse_backend, PROBE_SCHEMA_VERSION};
 
 const NATIVE_INPUT_TIMEOUT: Duration = Duration::from_secs(5);
+const X11_MOUSE_BUTTON_MAPPINGS: [(u8, &str); 8] = [
+    (1, "Button1"),
+    (2, "Button3"),
+    (3, "Button2"),
+    (8, "Button4"),
+    (9, "Button5"),
+    (10, "Button6"),
+    (11, "Button7"),
+    (12, "Button8"),
+];
 
 fn is_mouse_native_input(operation: &str) -> bool {
     matches!(
@@ -656,21 +666,21 @@ impl NativeMouseProbeCase {
         }
     }
 
-    fn expected_events(self) -> Vec<Value> {
+    fn expected_events(self, maximum_server_button: Option<u8>) -> Vec<Value> {
         match self {
             Self::LeftButton => vec![
                 json!({"button": "Button1", "action": "Press", "modifiers": 0}),
                 json!({"button": "Button1", "action": "Release", "modifiers": 0}),
             ],
-            Self::MouseButtons => [
-                "Button1", "Button3", "Button2", "Button4", "Button5", "Button6", "Button7",
-                "Button8",
-            ]
+            Self::MouseButtons => X11_MOUSE_BUTTON_MAPPINGS
                 .into_iter()
-                .flat_map(|button| {
+                .filter(|(server_button, _)| {
+                    maximum_server_button.is_some_and(|maximum| *server_button <= maximum)
+                })
+                .flat_map(|(_, button)| {
                     [
-                        json!({"button": format!("Button{button}"), "action": "Press", "modifiers": 0}),
-                        json!({"button": format!("Button{button}"), "action": "Release", "modifiers": 0}),
+                        json!({"button": button, "action": "Press", "modifiers": 0}),
+                        json!({"button": button, "action": "Release", "modifiers": 0}),
                     ]
                 })
                 .collect(),
@@ -684,12 +694,39 @@ impl NativeMouseProbeCase {
         }
     }
 
-    fn event_count(self) -> usize {
-        if matches!(self, Self::PointerMovement) {
-            1
-        } else {
-            self.expected_events().len()
-        }
+    fn button_coverage(self, maximum_server_button: Option<u8>) -> Value {
+        let Self::MouseButtons = self else {
+            return Value::Null;
+        };
+        let Some(maximum_server_button) = maximum_server_button else {
+            return Value::Null;
+        };
+
+        let tested_mappings: Vec<Value> = X11_MOUSE_BUTTON_MAPPINGS
+            .into_iter()
+            .filter(|(server_button, _)| *server_button <= maximum_server_button)
+            .map(|(server_button, glfw_button)| {
+                json!({"server_button": server_button, "glfw_button": glfw_button})
+            })
+            .collect();
+        let unsupported_mappings: Vec<Value> = X11_MOUSE_BUTTON_MAPPINGS
+            .into_iter()
+            .filter(|(server_button, _)| *server_button > maximum_server_button)
+            .map(|(server_button, glfw_button)| {
+                json!({
+                    "server_button": server_button,
+                    "glfw_button": glfw_button,
+                    "reason": "server_button_exceeds_x11_pointer_mapping",
+                })
+            })
+            .collect();
+        let all_eight_glfw_buttons_tested = unsupported_mappings.is_empty();
+        json!({
+            "maximum_server_button": maximum_server_button,
+            "all_eight_glfw_buttons_tested": all_eight_glfw_buttons_tested,
+            "tested_mappings": tested_mappings,
+            "unsupported_mappings": unsupported_mappings,
+        })
     }
 }
 
@@ -700,6 +737,32 @@ fn native_mouse_input(
     platform: glfw::Platform,
     case: NativeMouseProbeCase,
 ) -> Value {
+    let maximum_server_button = if matches!(case, NativeMouseProbeCase::MouseButtons) {
+        let parsed = env::var("VMNL_PLATFORM_X11_MAX_BUTTON")
+            .ok()
+            .and_then(|value| value.parse::<u8>().ok());
+        match parsed {
+            Some(maximum) if maximum >= 3 => Some(maximum),
+            Some(maximum) => {
+                return json!({
+                    "qualified": false,
+                    "stage": "capability",
+                    "maximum_server_button": maximum,
+                    "failure_reason": "X11 pointer mapping cannot cover server buttons 1 through 3",
+                });
+            }
+            None => {
+                return json!({
+                    "qualified": false,
+                    "stage": "capability",
+                    "failure_reason": "VMNL_PLATFORM_X11_MAX_BUTTON is missing or invalid",
+                });
+            }
+        }
+    } else {
+        None
+    };
+
     match case {
         NativeMouseProbeCase::LeftButton | NativeMouseProbeCase::MouseButtons => {
             window.set_mouse_button_polling(true);
@@ -806,10 +869,15 @@ fn native_mouse_input(
         });
     }
 
-    let expected_events = case.expected_events();
+    let expected_events = case.expected_events(maximum_server_button);
+    let expected_event_count = if matches!(case, NativeMouseProbeCase::PointerMovement) {
+        1
+    } else {
+        expected_events.len()
+    };
     let input_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
     let mut observed_events = Vec::new();
-    while observed_events.len() < case.event_count() && Instant::now() < input_deadline {
+    while observed_events.len() < expected_event_count && Instant::now() < input_deadline {
         glfw.wait_events_timeout(0.01);
         for (_, event) in glfw::flush_messages(events) {
             match (case, event) {
@@ -911,6 +979,7 @@ fn native_mouse_input(
         "injector": env::var("VMNL_PLATFORM_INPUT_INJECTOR")
             .unwrap_or_else(|_| "unknown".to_owned()),
         "case": case.name(),
+        "button_coverage": case.button_coverage(maximum_server_button),
         "observed_events": observed_events,
         "final_state": final_state,
         "failure_reason": if qualified {

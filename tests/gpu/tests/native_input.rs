@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #![cfg(target_os = "linux")]
-#![allow(clippy::panic)]
+#![allow(clippy::panic, clippy::print_stderr)]
 
 use std::time::{Duration, Instant};
 use vmnl::{
@@ -148,7 +148,7 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
     assert!(!window.input().mouse().is_pressed(MouseButton::Left));
     assert!(window.input().mouse().is_released(MouseButton::Left));
 
-    for (x11_button, vmnl_button) in [
+    let button_mappings = [
         (2, MouseButton::Middle),
         (3, MouseButton::Right),
         (8, MouseButton::Button4),
@@ -156,7 +156,22 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
         (10, MouseButton::Button6),
         (11, MouseButton::Button7),
         (12, MouseButton::Button8),
-    ] {
+    ];
+    let unsupported: Vec<_> = button_mappings
+        .iter()
+        .filter(|(x11_button, _)| *x11_button > injector.maximum_server_button)
+        .map(|(x11_button, vmnl_button)| (*x11_button, *vmnl_button))
+        .collect();
+    eprintln!(
+        "X11 pointer mapping supports server buttons 1 through {}; unsupported VMNL buttons are not injected: {unsupported:?}",
+        injector.maximum_server_button
+    );
+    let maximum_server_button = injector.maximum_server_button;
+
+    for (x11_button, vmnl_button) in button_mappings
+        .into_iter()
+        .filter(|(x11_button, _)| *x11_button <= maximum_server_button)
+    {
         let name = format!("{vmnl_button:?}");
         injector
             .press_mouse_button(x11_button)
@@ -343,6 +358,7 @@ fn invalid_state(message: impl Into<String>) -> VMNLError {
 struct X11Injector {
     connection: x11rb::rust_connection::RustConnection,
     root: u32,
+    maximum_server_button: u8,
     a_keycode: u8,
     key_is_down: bool,
     mouse_button_is_down: Option<u8>,
@@ -373,6 +389,18 @@ impl X11Injector {
             .get(screen_number)
             .ok_or_else(|| format!("X11 server has no screen {screen_number}"))?
             .root;
+        let pointer_mapping = connection
+            .get_pointer_mapping()
+            .map_err(|error| format!("could not request the X11 pointer mapping: {error}"))?
+            .reply()
+            .map_err(|error| format!("could not read the X11 pointer mapping: {error}"))?;
+        let maximum_server_button = u8::try_from(pointer_mapping.map.len())
+            .map_err(|_| "X11 pointer button count does not fit u8".to_owned())?;
+        if maximum_server_button < 3 {
+            return Err(format!(
+                "X11 pointer mapping reports only {maximum_server_button} buttons; at least 3 are required"
+            ));
+        }
         let keycode_count = setup.max_keycode - setup.min_keycode + 1;
         let mapping = connection
             .get_keyboard_mapping(setup.min_keycode, keycode_count)
@@ -397,6 +425,7 @@ impl X11Injector {
         Ok(Self {
             connection,
             root,
+            maximum_server_button,
             a_keycode,
             key_is_down: false,
             mouse_button_is_down: None,
