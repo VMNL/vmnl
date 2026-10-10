@@ -13,7 +13,7 @@
 
 | Platform | CI validation | Local Justfile | Status |
 |----------|---------------|----------------|--------|
-| Ubuntu Linux | Configured: build, headless tests, GLFW Null, Weston Wayland nested in Xvfb/Openbox and Xvfb/Openbox X11, including XTEST keyboard and left-button injection. | `just input-test x11` or `just input-test wayland` with the documented displays. | Blocking CI path; current workflow run required for evidence. |
+| Ubuntu Linux | Configured: build, headless tests, GLFW Null, Weston Wayland nested in Xvfb/Openbox and Xvfb/Openbox X11, including XTEST keyboard and left-button injection. | `just input-test x11`, `just input-test wayland`, and opt-in GPU-backed `just input-test-vmnl x11`. | Blocking CI path for NoApi probes; public VMNL runtime still requires a qualified Vulkan/display run. |
 | Other Linux distributions | No distribution matrix. | Best effort. | Backend guarantees remain environment-scoped. |
 | Windows | Configured: build, headless tests and GLFW Null; visible keyboard and left-button probes with `SendInput` are experimental. | `just input-test win32` on an accessible interactive desktop. | Current workflow run required; native results are non-blocking until qualified. |
 | macOS | Configured: build, headless tests and GLFW Null; visible keyboard and left-button probes with `CGEventPost` are experimental. | `just input-test cocoa` with event-posting access. | Current workflow run required; native results are non-blocking until qualified. |

@@ -93,6 +93,18 @@ just input-test win32
 just input-test cocoa
 ```
 
+The public VMNL `Window::poll_events()` → `Event`/`Input` scenario is a separate opt-in GPU test.
+It currently covers an X11 `A` press/release and left-button press/release:
+
+```bash
+just input-test-vmnl x11
+```
+
+This requires the X11 prerequisites above, XTEST, and a Vulkan-capable GPU with a Vulkan loader.
+It is excluded from `just test-gpu` so running the general GPU suite does not inject input into the
+active desktop. The command fails if the display prerequisites are unavailable; GPU initialization
+and event/state assertions fail inside the test when their runtime requirements are not met.
+
 X11 needs `DISPLAY`, `xprop`, and an EWMH window manager; the probe checks XTEST when it injects
 input. Wayland needs a live `WAYLAND_DISPLAY` socket and the X11 parent display used by XTEST.
 This probe requires nested Weston using its X11 backend on that parent display; it does not run on

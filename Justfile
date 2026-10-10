@@ -61,6 +61,10 @@ test-platform-x11:
 input-test backend:
     python3 tools/input_test.py {{ quote(backend) }}
 
+# Run the public VMNL input path on a Vulkan-capable X11 desktop.
+input-test-vmnl backend:
+    python3 tools/input_test.py --vmnl {{ quote(backend) }}
+
 # Compile GPU tests without running them.
 [no-exit-message]
 test-gpu-compile:
@@ -110,7 +114,7 @@ _test-report suite:
             suite_name='GPU'
             suite_scope='Vulkan + GLFW display required'
             suite_kind='tests'
-            test_command=(cargo "${color_args[@]}" test -p vmnl-gpu-tests -- --ignored)
+            test_command=(cargo "${color_args[@]}" test -p vmnl-gpu-tests -- --ignored --skip vmnl_public_native_keyboard_and_mouse_events_update_input)
             ;;
         gpu-compile)
             suite_name='GPU'

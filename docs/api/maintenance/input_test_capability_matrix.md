@@ -28,7 +28,7 @@ presence or successful compilation.
 | M | Nested Weston / parent X11 XTEST | Records nested Weston evidence only; button map and focus must be captured. Does not qualify a native Wayland seat. | Left-button press/release passed in [CI run #154](https://github.com/VMNL/vmnl/actions/runs/38058493301) through the parent X11 server. |
 | M | Win32 / `SendInput` | Active desktop at matching integrity. GLFW Win32 maps left/right/middle and XBUTTON1/2, so only GLFW buttons 1–5 are eligible through this mapping. | First left-button pass in [CI run #154](https://github.com/VMNL/vmnl/actions/runs/38058493301); still experimental pending ten consecutive successes. |
 | M | Cocoa / `CGEventPost` | Requires an active desktop and any required Accessibility permission; remaining button mapping must be established by probes. | First left-button pass in [CI run #154](https://github.com/VMNL/vmnl/actions/runs/38058493301); still experimental pending ten consecutive successes. |
-| V | Public VMNL path | Requires a qualified Vulkan loader, GPU/driver, display, mapped and focused VMNL window. | No native input scenario currently runs through `Window::poll_events()` → `Event`/`Input`. |
+| V | Public VMNL path / X11 XTEST | Requires a qualified Vulkan loader, GPU/driver, X11 EWMH display, XTEST, mapped and focused VMNL window. | `just input-test-vmnl x11` checks native A and left-button press/release through `Window::poll_events()` → `Event`/`Input`; runtime result not yet qualified. |
 
 All native cases must use a bounded deadline, verify readiness before injection, preserve the
 observed event order and identity, retain failure diagnostics, and release held inputs during
@@ -57,6 +57,9 @@ synthetic injection.
   available input-permission prerequisites before running one native contract. CI continues to
   invoke the same selected contracts directly through Cargo: Linux X11 and nested Weston block,
   while Win32 and Cocoa remain experimental.
+- `just input-test-vmnl x11` adds an opt-in Vulkan-backed public-facade path for A and left-button
+  press/release. It is excluded from the general `just test-gpu` suite because it injects input into
+  the active desktop; no Vulkan/display runtime result is recorded yet.
 
 ## Keyboard named-key rows
 
@@ -251,8 +254,8 @@ eligibility remain unqualified until measured. Never count an unavailable mappin
 - Expand the A-key and left-button native representatives to every eligible key/button and other
   input family;
   define explicit non-injectable reasons per backend row and retain versioned diagnostics.
-- Add at least one executed public VMNL scenario through `Window::poll_events()` → `Event`/`Input`
-  in `tests/gpu`; compilation or direct GLFW probes do not qualify it.
+- Execute the new public VMNL scenario in at least one qualified Vulkan/X11 environment and retain
+  its result; GPU-test compilation and direct GLFW probes do not qualify it.
 
 Existing references: [keyboard capability matrix](keyboard_capability_matrix.md),
 [GLFW portability inventory](glfw_platform_inventory.md), [platform probe contract](../../../docs/testing.md),

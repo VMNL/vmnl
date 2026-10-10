@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Hugo Duda
 # SPDX-License-Identifier: MIT
-"""Run the selected native GLFW input contract after checking its prerequisites."""
+"""Run the selected native input contract after checking its prerequisites."""
 
 from __future__ import annotations
 
@@ -199,11 +199,50 @@ def run_input_test(backend: str) -> int:
     return result.returncode
 
 
+def run_vmnl_input_test(backend: str) -> int:
+    if backend != "x11":
+        raise PrerequisiteError(
+            "the public VMNL input scenario currently supports only X11"
+        )
+    check_prerequisites(backend)
+    command = [
+        "cargo",
+        "test",
+        "-p",
+        "vmnl-gpu-tests",
+        "--locked",
+        "--test",
+        "native_input",
+        "vmnl_public_native_keyboard_and_mouse_events_update_input",
+        "--",
+        "--ignored",
+        "--exact",
+        "--nocapture",
+    ]
+    print(
+        "Running the public VMNL input scenario on X11; Vulkan and XTEST are also required.",
+        flush=True,
+    )
+    try:
+        result = subprocess.run(command, cwd=ROOT, check=False)
+    except OSError as error:
+        print(f"could not start the VMNL native input test: {error}", file=sys.stderr)
+        return 1
+    return result.returncode
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--vmnl",
+        action="store_true",
+        help="run the Vulkan-backed public VMNL scenario instead of the GLFW NoApi probe",
+    )
     parser.add_argument("backend", choices=BACKEND_SYSTEM)
     arguments = parser.parse_args(argv)
     try:
+        if arguments.vmnl:
+            return run_vmnl_input_test(arguments.backend)
         return run_input_test(arguments.backend)
     except PrerequisiteError as error:
         print(f"input-test prerequisite failed: {error}", file=sys.stderr)

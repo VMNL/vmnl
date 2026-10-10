@@ -117,6 +117,28 @@ class InputTestPrerequisiteTests(unittest.TestCase):
         self.assertIn("--exact", command)
         self.assertEqual(run.call_args.kwargs["env"]["VMNL_PLATFORM_TEST_BACKEND"], "x11")
 
+    def test_vmnl_scenario_rejects_unimplemented_backend(self) -> None:
+        with self.assertRaisesRegex(input_test.PrerequisiteError, "currently supports only X11"):
+            input_test.run_vmnl_input_test("wayland")
+
+    def test_runs_only_the_public_vmnl_gpu_scenario(self) -> None:
+        with (
+            patch.object(input_test, "check_prerequisites") as check,
+            patch.object(
+                input_test.subprocess, "run", return_value=SimpleNamespace(returncode=0)
+            ) as run,
+            patch("builtins.print"),
+        ):
+            self.assertEqual(input_test.run_vmnl_input_test("x11"), 0)
+
+        check.assert_called_once_with("x11")
+        command = run.call_args.args[0]
+        self.assertIn("vmnl-gpu-tests", command)
+        self.assertIn("native_input", command)
+        self.assertIn("vmnl_public_native_keyboard_and_mouse_events_update_input", command)
+        self.assertIn("--ignored", command)
+        self.assertIn("--exact", command)
+
 
 if __name__ == "__main__":
     unittest.main()

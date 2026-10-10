@@ -673,7 +673,9 @@ dependencies = [
 name = "vmnl-gpu-tests"
 version = "0.1.0"
 dependencies = [
+ "glfw",
  "vmnl",
+ "x11rb",
 ]
 
 [[package]]
