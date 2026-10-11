@@ -157,8 +157,10 @@ later background enter occurred after the probe exited, not during the injected 
 The corrected Wayland probe crosses from the GLFW content area to the default desktop shell's top
 panel inside the Weston output, waits 100 ms, then returns to the original position using XTEST.
 It requires the default desktop shell with its top panel; output bounds and both pointer targets
-are checked and logged. Native runtime validation of this corrected path is pending CI.
-Windows and macOS native probes remain experimental and non-blocking.
+are checked and logged. The Linux job in [CI run #38109958980](https://github.com/VMNL/vmnl/actions/runs/38109958980) passed this ordered leave/enter pair on both
+backends, all 17 Wayland operations, and all 19 X11 operations. The eligible GLFW buttons 1–6,
+pointer motion, and four scroll directions passed; buttons 7–8 are recorded as not injectable
+with the hosted 10-button map. Windows and macOS remain experimental and non-blocking.
 
 The scroll probe checks vertical up/down and horizontal positive/negative in order. X11 injects
 buttons 4/5 and 6/7 and expects offsets `(0, +1)`, `(0, -1)`, `(+1, 0)`, and `(-1, 0)`. Cocoa's
@@ -185,8 +187,8 @@ schema; any of those changes resets the count. The explicit Core Graphics flags 
 in run #38082851338. Scroll injections on Win32 and Cocoa are separated by 100 ms so GLFW can
 process each message before the next reversal. Pointer-motion probes discard callbacks that report
 no coordinate change. Cocoa scroll injection uses pixel deltas and matches the variadic Core
-Graphics signature and axis count; all four directions passed in run #38090546664. Additional
-modifier combinations, text, repeat, X11, and public VMNL runtime cases remain unqualified.
+Graphics signature and axis count; all four directions passed in run #38109958980. Additional
+modifier combinations, text, repeat, and public VMNL runtime cases remain unqualified.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored
