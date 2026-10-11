@@ -145,7 +145,7 @@ jobs:
           chmod 700 "$runtime_dir"
           export XDG_RUNTIME_DIR="$runtime_dir"
           export WAYLAND_DISPLAY=wayland-vmnl
-          WAYLAND_DEBUG=server weston --backend=x11 --renderer=pixman --no-config \
+          weston --backend=x11 --renderer=pixman --no-config \
             --socket="$WAYLAND_DISPLAY" --idle-time=0 >target/weston.log 2>&1 &
           weston_pid=$!
           trap 'kill "$weston_pid" "$wayland_openbox_pid" "$wayland_xvfb_pid" 2>/dev/null || true' EXIT

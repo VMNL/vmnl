@@ -108,10 +108,6 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
             )
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
-        if backend == "wayland" && operation == "mouse-hover-boundary-input" {
-            // Expose whether the XTEST-to-Weston path sends wl_pointer enter/leave events.
-            command.env("WAYLAND_DEBUG", "1");
-        }
         let mut child = command
             .spawn()
             .map_err(|error| format!("platform probe should start: {error}"))?;
@@ -915,65 +911,64 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
         .map_err(|_| "X11 screen width does not fit an XTEST coordinate".to_owned())?;
     let max_y = i16::try_from(screen.height_in_pixels.saturating_sub(1))
         .map_err(|_| "X11 screen height does not fit an XTEST coordinate".to_owned())?;
-    let (outside_weston_bounds, weston_window) = if backend == "wayland" {
+    let (weston_bounds, weston_window) = if backend == "wayland" {
         let weston = weston_x11_bounds(&connection, root)?;
         (Some(weston.bounds), Some(weston.window))
     } else {
         (None, None)
     };
-    let weston_all_event_masks =
-        subscribe_to_weston_pointer_events(&connection, backend, weston_window)?;
     let pointer = connection
         .query_pointer(root)
         .map_err(|error| format!("failed to request the parent pointer position: {error}"))?
         .reply()
         .map_err(|error| format!("failed to read the parent pointer position: {error}"))?;
     let original = (pointer.root_x, pointer.root_y);
-    let target = [(0, 0), (max_x, 0), (0, max_y), (max_x, max_y)]
-        .into_iter()
-        .filter(|(x, y)| match outside_weston_bounds {
-            Some((left, top, right, bottom)) => {
-                let (x, y) = (i32::from(*x), i32::from(*y));
-                x < left || x > right || y < top || y > bottom
-            }
-            None => true,
-        })
-        .max_by_key(|(x, y)| {
-            let dx = i64::from(*x) - i64::from(original.0);
-            let dy = i64::from(*y) - i64::from(original.1);
-            dx * dx + dy * dy
-        })
-        .ok_or_else(|| match outside_weston_bounds {
-            Some(bounds) => {
-                format!("no X11 screen corner lies outside the parent Weston window {bounds:?}")
-            }
-            None => "X11 screen has no pointer boundary target".to_owned(),
-        })?;
-    inject_x11_pointer_position(&connection, root, target, backend, "pointer leave")?;
+    let target = if let Some((left, top, right, bottom)) = weston_bounds {
+        if !(left..=right).contains(&i32::from(original.0))
+            || !(top..=bottom).contains(&i32::from(original.1))
+        {
+            return Err(format!(
+                "ready pointer {original:?} is outside the parent Weston window {weston_bounds:?}"
+            ));
+        }
+        // Weston 13's clear_pointer_focus() is empty when its X11 output is exited.
+        // Cross into the default desktop shell's top panel within the output instead.
+        let panel_y = top + 1;
+        if panel_y >= bottom || panel_y == i32::from(original.1) {
+            return Err("Weston output has no distinct top-panel pointer target".to_owned());
+        }
+        (
+            original.0,
+            i16::try_from(panel_y)
+                .map_err(|_| "Weston panel Y coordinate does not fit XTEST".to_owned())?,
+        )
+    } else {
+        [(0, 0), (max_x, 0), (0, max_y), (max_x, max_y)]
+            .into_iter()
+            .max_by_key(|(x, y)| {
+                let dx = i64::from(*x) - i64::from(original.0);
+                let dy = i64::from(*y) - i64::from(original.1);
+                dx * dx + dy * dy
+            })
+            .ok_or_else(|| "X11 screen has no pointer boundary target".to_owned())?
+    };
+    inject_x11_pointer_position(&connection, root, target, "pointer leave")?;
     let leave_check = if backend == "wayland" {
         confirm_x11_pointer_target(&connection, root, target, "leave").map(Some)
     } else {
         Ok(None)
     };
-    let leave_x11_events =
-        drain_x11_pointer_events_if_enabled(&connection, weston_all_event_masks.is_some())?;
     if backend == "wayland" {
         eprintln!(
-            "wayland_hover_boundary target={target:?} original={original:?} weston_window={weston_window:?} weston_bounds={outside_weston_bounds:?} all_event_masks_before_observer={weston_all_event_masks:?} pointer_child_after_leave={:?} parent_x11_events_after_leave={leave_x11_events:?}",
+            "wayland_hover_boundary target={target:?} original={original:?} weston_window={weston_window:?} weston_bounds={weston_bounds:?} pointer_child_after_leave={:?}",
             leave_check.as_ref().ok().copied().flatten(),
         );
         thread::sleep(Duration::from_millis(100));
     }
-    if let Err(error) =
-        inject_x11_pointer_position(&connection, root, original, backend, "pointer re-entry")
+    if let Err(error) = inject_x11_pointer_position(&connection, root, original, "pointer re-entry")
     {
-        let cleanup = inject_x11_pointer_position(
-            &connection,
-            root,
-            original,
-            backend,
-            "pointer re-entry cleanup",
-        );
+        let cleanup =
+            inject_x11_pointer_position(&connection, root, original, "pointer re-entry cleanup");
         return Err(match cleanup {
             Ok(()) => format!("{error}; cleanup re-entry succeeded"),
             Err(cleanup) => format!("{error}; cleanup re-entry failed: {cleanup}"),
@@ -981,11 +976,8 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
     }
     if backend == "wayland" {
         let pointer_child = confirm_x11_pointer_target(&connection, root, original, "re-entry")?;
-        let pointer_ancestry = x11_window_ancestry(&connection, root, pointer_child)?;
-        let reentry_x11_events =
-            drain_x11_pointer_events_if_enabled(&connection, weston_all_event_masks.is_some())?;
         eprintln!(
-            "wayland_hover_boundary pointer_after_reentry={original:?} pointer_child_after_reentry={pointer_child:#x} pointer_ancestry={pointer_ancestry:?} all_event_masks_before_observer={weston_all_event_masks:?} parent_x11_events_after_reentry={reentry_x11_events:?}"
+            "wayland_hover_boundary pointer_after_reentry={original:?} pointer_child_after_reentry={pointer_child:#x}"
         );
         leave_check?;
     }
@@ -995,132 +987,18 @@ fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
-fn subscribe_to_weston_pointer_events(
-    connection: &x11rb::rust_connection::RustConnection,
-    backend: &str,
-    weston_window: Option<u32>,
-) -> Result<Option<u32>, String> {
-    use x11rb::protocol::xproto::{ChangeWindowAttributesAux, ConnectionExt as _, EventMask};
-
-    if backend != "wayland" {
-        return Ok(None);
-    }
-
-    let window =
-        weston_window.ok_or_else(|| "could not locate the parent Weston X11 window".to_owned())?;
-    let all_event_masks = connection
-        .get_window_attributes(window)
-        .map_err(|error| format!("failed to request parent Weston event masks: {error}"))?
-        .reply()
-        .map_err(|error| format!("failed to read parent Weston event masks: {error}"))?
-        .all_event_masks;
-    connection
-        .change_window_attributes(
-            window,
-            &ChangeWindowAttributesAux::default().event_mask(
-                EventMask::ENTER_WINDOW | EventMask::LEAVE_WINDOW | EventMask::POINTER_MOTION,
-            ),
-        )
-        .map_err(|error| format!("failed to subscribe to parent Weston pointer events: {error}"))?
-        .check()
-        .map_err(|error| format!("failed to select parent Weston pointer events: {error}"))?;
-    let _ = drain_x11_pointer_events(connection)?;
-    Ok(Some(u32::from(all_event_masks)))
-}
-
-#[cfg(target_os = "linux")]
-fn drain_x11_pointer_events_if_enabled(
-    connection: &x11rb::rust_connection::RustConnection,
-    enabled: bool,
-) -> Result<Vec<String>, String> {
-    if enabled {
-        drain_x11_pointer_events(connection)
-    } else {
-        Ok(Vec::new())
-    }
-}
-
-#[cfg(target_os = "linux")]
-fn drain_x11_pointer_events(
-    connection: &x11rb::rust_connection::RustConnection,
-) -> Result<Vec<String>, String> {
-    use x11rb::{connection::Connection as _, protocol::Event};
-
-    let mut events = Vec::new();
-    while let Some(event) = connection
-        .poll_for_event()
-        .map_err(|error| format!("failed to poll parent X11 pointer events: {error}"))?
-    {
-        match event {
-            Event::EnterNotify(event) => events.push(format!(
-                "enter(window={:#x}, child={:#x}, root=({}, {}), local=({}, {}), state={:#06x}, mode={}, detail={}, same_screen_focus={})",
-                event.event,
-                event.child,
-                event.root_x,
-                event.root_y,
-                event.event_x,
-                event.event_y,
-                u16::from(event.state),
-                u8::from(event.mode),
-                u8::from(event.detail),
-                event.same_screen_focus,
-            )),
-            Event::LeaveNotify(event) => events.push(format!(
-                "leave(window={:#x}, child={:#x}, root=({}, {}), local=({}, {}), state={:#06x}, mode={}, detail={}, same_screen_focus={})",
-                event.event,
-                event.child,
-                event.root_x,
-                event.root_y,
-                event.event_x,
-                event.event_y,
-                u16::from(event.state),
-                u8::from(event.mode),
-                u8::from(event.detail),
-                event.same_screen_focus,
-            )),
-            Event::MotionNotify(event) => events.push(format!(
-                "motion(window={:#x}, child={:#x}, root=({}, {}), local=({}, {}), state={:#06x}, detail={}, same_screen={})",
-                event.event,
-                event.child,
-                event.root_x,
-                event.root_y,
-                event.event_x,
-                event.event_y,
-                u16::from(event.state),
-                u8::from(event.detail),
-                event.same_screen,
-            )),
-            _ => {}
-        }
-    }
-    Ok(events)
-}
-
-#[cfg(target_os = "linux")]
 fn inject_x11_pointer_position(
     connection: &x11rb::rust_connection::RustConnection,
     root: u32,
     position: (i16, i16),
-    backend: &str,
     label: &str,
 ) -> Result<(), String> {
-    use x11rb::protocol::{
-        xproto::{ConnectionExt as _, MOTION_NOTIFY_EVENT},
-        xtest::ConnectionExt as _,
-    };
+    use x11rb::protocol::{xproto::MOTION_NOTIFY_EVENT, xtest::ConnectionExt as _};
 
     let (x, y) = position;
-    let request = if backend == "wayland" {
-        // XTEST changed root coordinates but emitted no wl_pointer boundary messages.
-        connection
-            .warp_pointer(x11rb::NONE, root, 0, 0, 0, 0, x, y)
-            .map_err(|error| format!("failed to enqueue X11 pointer warp {label}: {error}"))?
-    } else {
-        connection
-            .xtest_fake_input(MOTION_NOTIFY_EVENT, 0, 0, root, x, y, 0)
-            .map_err(|error| format!("failed to enqueue XTEST {label}: {error}"))?
-    };
-    request
+    connection
+        .xtest_fake_input(MOTION_NOTIFY_EVENT, 0, 0, root, x, y, 0)
+        .map_err(|error| format!("failed to enqueue XTEST {label}: {error}"))?
         .check()
         .map_err(|error| format!("pointer {label} request failed: {error}"))
 }
@@ -1187,42 +1065,6 @@ fn confirm_x11_pointer_target(
         ));
     }
     Ok(pointer.child)
-}
-
-#[cfg(target_os = "linux")]
-fn x11_window_ancestry(
-    connection: &x11rb::rust_connection::RustConnection,
-    root: u32,
-    window: u32,
-) -> Result<Vec<u32>, String> {
-    use x11rb::protocol::xproto::ConnectionExt as _;
-
-    let mut ancestry = Vec::new();
-    let mut current = window;
-    for _ in 0..64 {
-        ancestry.push(current);
-        if current == root {
-            return Ok(ancestry);
-        }
-        let tree = connection
-            .query_tree(current)
-            .map_err(|error| {
-                format!("failed to request parent of X11 window {current:#x}: {error}")
-            })?
-            .reply()
-            .map_err(|error| {
-                format!("failed to read parent of X11 window {current:#x}: {error}")
-            })?;
-        if tree.parent == current {
-            return Err(format!(
-                "X11 window ancestry stopped at self-parented window {current:#x} before root {root:#x}"
-            ));
-        }
-        current = tree.parent;
-    }
-    Err(format!(
-        "X11 window ancestry from {window:#x} exceeded 64 levels before root {root:#x}"
-    ))
 }
 
 #[cfg(target_os = "linux")]
