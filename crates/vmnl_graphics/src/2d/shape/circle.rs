@@ -5,8 +5,6 @@
 
 use std::f32;
 
-use log::warn;
-
 use super::{
     validation::{validate_finite, validate_positive_finite},
     IndexedShapeBuilder, Shape,
@@ -34,7 +32,7 @@ pub struct CircleBuilder {
     /// Coordinates of shape's center as a `Vector2f`.
     position: Vector2f,
     /// radius of the shape.
-    radiuses: Vector2f,
+    radii: Vector2f,
     /// Boolean representing state of fill of the shape, default false.
     filled: bool,
     /// Optional outline setting. representing inner and outer width.
@@ -60,9 +58,9 @@ impl CircleBuilder {
     pub(crate) const fn new(radius: f32) -> Self {
         Self {
             position: Vector2f { x: 0.0, y: 0.0 },
-            radiuses: Vector2f { x: radius, y: radius },
+            radii: Vector2f { x: radius, y: radius },
             filled: false,
-            outline_width: Outline { inner: 0.0, outer: 0.0 },
+            outline_width: Outline { inner: 0.5, outer: 0.5 },
             sector: Option::None,
             cap: Option::None,
             segment_count: 32,
@@ -88,7 +86,7 @@ impl CircleBuilder {
     /// - `radius`: radius in pixel-like 2D coordinates.
     #[must_use]
     pub fn ellipse(mut self, radius: f32) -> Self {
-        self.radiuses.y = radius;
+        self.radii.y = radius;
         self
     }
 
@@ -102,7 +100,6 @@ impl CircleBuilder {
     #[must_use]
     pub fn filled(mut self, filled: bool) -> Self {
         self.filled = filled;
-        self.outline_width= Outline { inner: 0.0, outer: 0.0 };
         self
     }
 
@@ -116,7 +113,7 @@ impl CircleBuilder {
     /// state as `filled(false)`.
     #[must_use]
     pub fn inner(mut self, w: f32) -> Self {
-        self.outline_width = Outline {inner: w, outer: self.outline_width.outer};
+        self.outline_width.inner = w;
         self.filled = false;
         self
     }
@@ -131,7 +128,7 @@ impl CircleBuilder {
     /// state as `filled(false)`.
     #[must_use]
     pub fn outer(mut self, w: f32) -> Self {
-        self.outline_width = Outline {inner: self.outline_width.inner, outer: w};
+        self.outline_width.outer = w;
         self.filled = false;
         self
     }
@@ -234,7 +231,7 @@ impl CircleBuilder {
     pub fn build(self, context: &Context) -> VMNLResult<Shape> {
         Self::validate_parameters(
             self.position,
-            self.radiuses,
+            self.radii,
             self.filled,
             self.outline_width,
             self.sector,
@@ -242,12 +239,13 @@ impl CircleBuilder {
             self.cap)?;
         let (vertices, indices) = Self::geometry(
             self.position,
-            self.radiuses,
+            self.radii,
             self.filled,
             self.outline_width,
             self.sector,
             self.cap,
-            self.segment_count
+            self.segment_count,
+            self.color
         );
         let mut shape = IndexedShapeBuilder::indexed_shape(
             context,
@@ -262,8 +260,8 @@ impl CircleBuilder {
             "creating circle: center=({}, {}), radii=({}, {}), inner_radius={}, outer_radius={}, start = {}, sweep = {}, segments={}, color=({}, {}, {}, {})",
             self.position.x,
             self.position.y,
-            self.radiuses.x,
-            self.radiuses.y,
+            self.radii.x,
+            self.radii.y,
             self.outline_width.inner,
             self.outline_width.outer,
             s.start,
@@ -279,7 +277,7 @@ impl CircleBuilder {
 
     fn validate_parameters(
         position: Vector2f,
-        radiuses: Vector2f,
+        radii: Vector2f,
         filled: bool,
         outline_width: Outline,
         sector: Option<Sector>,
@@ -287,7 +285,7 @@ impl CircleBuilder {
         line_cap: Option<LineCap>
         ) -> VMNLResult<()> {
         validate_finite(&[position.x, position.y], "circle position")?;
-        validate_finite(&[radiuses.x, radiuses.y], "circle radiuses")?;
+        validate_finite(&[radii.x, radii.y], "circle radii")?;
         if !filled {
             validate_positive_finite(&[outline_width.inner, outline_width.outer], "circle outline width")?;
         }
@@ -317,125 +315,334 @@ impl CircleBuilder {
         validate_positive_finite(&[segments.into()], "circle segment count")
     }
 
+    fn get_segment_count(
+        segment_count: usize,
+        filled: bool,
+        line_cap: Option<LineCap>,
+        cap_segments: u16,
+    ) -> (usize, usize) {
+        if filled {
+            return (
+                segment_count + 2,
+                segment_count * 3,
+            );
+        }
+
+        let base_vertices = (segment_count + 1) * 2;
+        let base_indices = segment_count * 6;
+
+        let (cap_vertices, cap_indices) = match line_cap {
+            None | Some(LineCap::Butt) | Some(LineCap::Square) => (0, 0),
+
+            Some(LineCap::Round) => {
+                let cap_segments = usize::from(cap_segments);
+
+                // Two caps, each with one center and cap_segments + 1
+                // arc vertices.
+                let vertices = 2 * (cap_segments + 2);
+                let indices = 2 * cap_segments * 3;
+
+                (vertices, indices)
+            }
+        };
+
+        (
+            base_vertices + cap_vertices,
+            base_indices + cap_indices,
+        )
+    }
+
+    fn apply_square_caps(
+        radii: Vector2f,
+        sector: Sector,
+        outline_width: Outline,
+        segments: u16,
+        vertices: &mut [Vertex2D],
+    ) {
+        if segments == 0 || vertices.len() < 2 {
+            return;
+        }
+
+        let start_angle = (sector.start - 90.0).to_radians();
+        let end_angle = (sector.start + sector.sweep - 90.0).to_radians();
+
+        let sweep_direction = sector.sweep.signum();
+        let extension = (outline_width.outer + outline_width.inner) * 0.5;
+
+        // Start endpoint.
+        let (sin, cos) = start_angle.sin_cos();
+
+        let mut start_tangent = Vector2f {
+            x: -radii.x * sin,
+            y: radii.y * cos,
+        }
+        .normalize()
+            * sweep_direction;
+
+        // Extend opposite to the direction of travel.
+        start_tangent = start_tangent * -extension;
+
+        vertices[0].position += start_tangent;
+        vertices[1].position += start_tangent;
+
+        // End endpoint.
+        let (sin, cos) = end_angle.sin_cos();
+
+        let end_tangent = Vector2f {
+            x: -radii.x * sin,
+            y: radii.y * cos,
+        }
+        .normalize()
+            * (sweep_direction * extension);
+
+        let last = vertices.len() - 2;
+
+        vertices[last].position += end_tangent;
+        vertices[last + 1].position += end_tangent;
+    }
+
+    fn build_round_caps(
+        position: Vector2f,
+        radii: Vector2f,
+        sector: Sector,
+        outline_width: Outline,
+        cap_segments: u16,
+        color: Rgba,
+        vertices: &mut Vec<Vertex2D>,
+        indices: &mut Vec<u32>,
+    ) {
+        if cap_segments == 0 || sector.sweep == 0.0 {
+            return;
+        }
+
+        let start_angle = (sector.start - 90.0).to_radians();
+        let end_angle = (sector.start + sector.sweep - 90.0).to_radians();
+
+        let sweep_direction = sector.sweep.signum();
+
+        let radius = (outline_width.outer + outline_width.inner) * 0.5;
+        let normal_offset = (outline_width.outer - outline_width.inner) * 0.5;
+
+        if radius <= 0.0 {
+            return;
+        }
+
+        // Build a round cap at each endpoint.
+        for is_start in [true, false] {
+            let angle = if is_start {
+                start_angle
+            } else {
+                end_angle
+            };
+
+            let (sin, cos) = angle.sin_cos();
+
+            // Centerline point at the endpoint.
+            let centerline = Vector2f {
+                x: position.x + radii.x * cos,
+                y: position.y + radii.y * sin,
+            };
+
+            // Outward normal of the ellipse.
+            let normal = Vector2f {
+                x: cos / radii.x,
+                y: sin / radii.y,
+            }
+            .normalize();
+
+            // Tangent along the sector's direction of travel.
+            let tangent = Vector2f {
+                x: -radii.x * sin,
+                y: radii.y * cos,
+            }
+            .normalize()
+                * sweep_direction;
+
+            // At the start, the cap extends backward.
+            // At the end, it extends forward.
+            let outward_tangent = if is_start {
+                tangent * -1.0
+            } else {
+                tangent
+            };
+
+            // Shift the cap center to support asymmetric stroke widths.
+            let cap_center = centerline + normal * normal_offset;
+
+            let center_index = vertices.len() as u32;
+
+            vertices.push(Vertex2D {
+                position: cap_center,
+                color,
+            });
+
+            // Generate cap arc vertices from the inner boundary
+            // to the outer boundary, passing through the outward side.
+            let arc_start_index = vertices.len() as u32;
+
+            for segment in 0..=cap_segments {
+                let t = f32::from(segment) / f32::from(cap_segments);
+                let angle = -std::f32::consts::FRAC_PI_2
+                    + std::f32::consts::PI * t;
+
+                let (sin_arc, cos_arc) = angle.sin_cos();
+
+                let cap_position = cap_center
+                    + outward_tangent * (radius * cos_arc)
+                    + normal * (radius * sin_arc);
+
+                vertices.push(Vertex2D {
+                    position: cap_position,
+                    color,
+                });
+            }
+
+            // Triangle fan. Reverse winding where needed so both caps
+            // have consistent triangle orientation.
+            let reverse_winding = if is_start {
+                sector.sweep < 0.0
+            } else {
+                sector.sweep > 0.0
+            };
+
+            for segment in 0..cap_segments {
+                let current = arc_start_index + u32::from(segment);
+                let next = current + 1;
+
+                if reverse_winding {
+                    indices.extend_from_slice(&[
+                        center_index,
+                        next,
+                        current,
+                    ]);
+                } else {
+                    indices.extend_from_slice(&[
+                        center_index,
+                        current,
+                        next,
+                    ]);
+                }
+            }
+        }
+    }
+
     fn geometry(
         position: Vector2f,
-        radiuses: Vector2f,
+        radii: Vector2f,
         filled: bool,
         outline_width: Outline,
         sector: Option<Sector>,
         line_cap: Option<LineCap>,
         segments: u16,
+        color: Rgba
     ) -> (Vec<Vertex2D>, Vec<u32>) {
+        let (vertex_count, index_count) = Self::get_segment_count(
+            segments as usize,
+            filled,
+            line_cap,
+            32
+        );
 
-        let (vertices, indices) = match (filled, sector) {
-            (true, None) => Self::build_filled(
-                position,
-                radiuses,
-                segments
-            ),
-            (true, Some(_s)) => Self::build_filled_sector(
-                position,
-                radiuses,
-                _s,
-                line_cap,
-                segments
-            ),
-            (false, None) => Self::build_outline(
-                position,
-                radiuses,
-                outline_width,
-                segments
-            ),
-            (false, Some(_s)) => Self::build_outline_sector(
-                position,
-                radiuses,
-                outline_width,
-                _s,
-                line_cap,
-                segments
-            ) 
-        };
+        let mut vertices: Vec<Vertex2D> = Vec::with_capacity(vertex_count);
+        let mut indices: Vec<u32> = Vec::with_capacity(index_count);
+
+        if filled { vertices.push(Vertex2D { position, color }); }
+        
+        let s = sector.unwrap_or_else(|| Sector { start: 0.0, sweep: 360.0 });
+        // generate outer boundary
+        Self::build_outline(
+            position,
+            radii,
+            s,
+            outline_width,
+            segments,
+            color,
+            &mut vertices,
+            filled
+        );
+        // generate indices
+        Self::build_indices(
+            filled,
+            segments,
+            &mut indices
+        );
+        // Caps only apply to open, unfilled sectors.
+        if !filled && sector.is_some() {
+            match line_cap {
+                None | Some(LineCap::Butt) => {}
+
+                Some(LineCap::Square) => {
+                    Self::apply_square_caps(
+                        radii,
+                        s,
+                        outline_width,
+                        segments,
+                        &mut vertices,
+                    );
+                }
+
+                Some(LineCap::Round) => {
+                    Self::build_round_caps(
+                        position,
+                        radii,
+                        s,
+                        outline_width,
+                        32, // cap segment (may be changed after to a variable containing
+                            // user-defined value)
+                        color,
+                        &mut vertices,
+                        &mut indices,
+                    );
+                }
+            }
+        }
 
         (vertices, indices)
     }
 
-    fn build_filled(position: Vector2f,
-        radiuses: Vector2f,
+    fn build_indices(
+        filled: bool,
         segments: u16,
-    ) -> (Vec<Vertex2D>, Vec<u32>) {
+        indices: &mut Vec<u32>
+    ) {
+        if filled {
+            for seg in 0..segments {
+                let current = u32::from(seg) + 1;
+                let next = current + 1;
 
-        let tmp_color: Rgba = Rgba::WHITE;
+                indices.extend_from_slice(&[0, current, next]);
+            }
+        } else {
+            for segment in 0..segments {
+                let outer_current = u32::from(segment) * 2;
+                let inner_current = outer_current + 1;
+                let outer_next = outer_current + 2;
+                let inner_next = inner_current + 2;
 
-        let segment_count = usize::from(segments);
-        let mut vertices = Vec::with_capacity(segment_count + 1);
-        let mut indices = Vec::with_capacity(segment_count * 3);
-        vertices.push(Vertex2D { position, color: tmp_color});
-
-        for seg in 0..segments {
-            let angle = std::f32::consts::TAU * f32::from(seg) / f32::from(segments);
-            vertices.push(Vertex2D {
-                position: Vector2f {
-                    x: position.x + radiuses.x * angle.cos(),
-                    y: position.y + radiuses.y * angle.sin(),
-                },
-                color: tmp_color,
-            });
+                indices.extend_from_slice(&[
+                    outer_current,
+                    inner_current,
+                    outer_next,
+                    inner_current,
+                    inner_next,
+                    outer_next,
+                ]);
+            }
         }
-        for seg in 0..segments {
-            let current = u32::from(seg) + 1;
-            let next = if seg + 1 == segments {
-                1
-            } else {
-                current + 1
-            };
-            indices.extend_from_slice(&[0, current, next]);
-        }
-        (vertices, indices)
-    }
-
-    fn build_filled_sector(position: Vector2f,
-        radiuses: Vector2f,
-        sector: Sector,
-        line_cap: Option<LineCap>,
-        segments: u16
-    ) -> (Vec<Vertex2D>, Vec<u32>) {
-        let mut vertices = Vec::new();
-        let mut indices = Vec::new();
-
-        (vertices, indices)
     }
 
     fn build_outline(
         position: Vector2f,
-        radiuses: Vector2f,
-        outline_width: Outline,
-        segments: u16
-    ) -> (Vec<Vertex2D>, Vec<u32>) {
-        let mut vertices = Vec::new();
-        let mut indices = Vec::new();
-
-        (vertices, indices)
-    }
-
-    fn build_outline_sector(
-        position: Vector2f,
-        radiuses: Vector2f,
-        outline_width: Outline,
+        radii: Vector2f,
         sector: Sector,
-        line_cap: Option<LineCap>,
-        segments: u16
-    ) -> (Vec<Vertex2D>, Vec<u32>) {
-        let inner_radius = radiuses.x - outline_width.inner;
-        let outer_radius = radiuses.x + outline_width.outer;
-
-        let color = Rgba::WHITE;
-
-        // set angles as radians to make it easier, also put start on top
+        outline_width: Outline,
+        segments: u16,
+        color: Rgba,
+        vertices: &mut Vec<Vertex2D>,
+        filled: bool,
+    ) {
         let start_radians = (sector.start - 90.0).to_radians();
         let sweep_radians = sector.sweep.to_radians();
-
-        let mut vertices = Vec::with_capacity(((segments + 1) * 2) as usize);
-        let mut indices = Vec::with_capacity((segments * 6) as usize);
 
         for segment in 0..=segments {
             let t = f32::from(segment) / f32::from(segments);
@@ -443,40 +650,32 @@ impl CircleBuilder {
 
             let (sin, cos) = angle.sin_cos();
 
+            let centerline = Vector2f {
+                x: position.x + radii.x * cos,
+                y: position.y + radii.y * sin,
+            };
+
+            let normal = Vector2f {
+                x: cos / radii.x,
+                y: sin / radii.y,
+            }
+            .normalize();
+
+            let outer = centerline + normal * outline_width.outer;
+
             vertices.push(Vertex2D {
-                position: Vector2f {
-                    x: position.x + outer_radius * cos,
-                    y: position.y + outer_radius * sin,
-                },
+                position: outer,
                 color,
             });
 
-            vertices.push(Vertex2D {
-                position: Vector2f {
-                    x: position.x + inner_radius * cos,
-                    y: position.y + inner_radius * sin,
-                },
-                color,
-            });
+            if !filled {
+                let inner = centerline - normal * outline_width.inner;
+
+                vertices.push(Vertex2D {
+                    position: inner,
+                    color,
+                });
+            }
         }
-
-        for segment in 0..segments {
-            let outer_current = u32::from(segment * 2);
-            let inner_current = outer_current + 1;
-            let outer_next = outer_current + 2;
-            let inner_next = inner_current + 2;
-
-            indices.extend_from_slice(&[
-                outer_current,
-                inner_current,
-                outer_next,
-                inner_current,
-                inner_next,
-                outer_next,
-            ]);
-        }
-
-        (vertices, indices)
     }
-
 }
