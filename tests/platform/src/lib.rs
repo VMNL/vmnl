@@ -6,7 +6,7 @@
 use glfw::Platform;
 
 /// Version of the JSON record emitted by `platform_probe`.
-pub const PROBE_SCHEMA_VERSION: u32 = 1;
+pub const PROBE_SCHEMA_VERSION: u32 = 2;
 
 /// Converts a stable command-line backend name to GLFW's platform selector.
 #[must_use]

@@ -120,6 +120,48 @@ fails before the input sequence runs. The native contract still fails if XTEST, 
 actual OS-to-GLFW event delivery is unavailable. This command is opt-in and is never part of
 `just test` or `just validate`.
 
+### Extended native cases (issue #91, stage 3)
+
+The selected backend contract now follows the existing representative operations with serialized
+`native-input-case` processes. Schema 2 adds an eligibility manifest and named per-case results;
+the previous Win32/Cocoa qualification count does not apply to this schema and expanded workload.
+The manifest contains all 120 named keys, native codes/scancodes, eligible cases, and explicit
+reasons for non-injectable or not-yet-qualified cases. These entries are not counted as passes.
+
+Physical key fixtures are fixed literals audited against the bundled GLFW 3.4 key tables. Linux
+resolves XKB physical names and aliases without changing the layout. Nested Wayland also requires
+the parent X11 code to match the expected evdev code plus eight. Windows posts scan codes, with
+extended-key flags and a separate Pause virtual-key path; Cocoa posts hardware key codes.
+Each case checks exact ordered identity/scancodes, final released states, focus, and a completion
+marker before a 100 ms settling interval rejects extra callbacks. Readiness and event observation
+are bounded by five seconds, with a seven-second parent-process watchdog. Injector errors retain
+a JSON failure and release tracked keys/buttons; interrupted double-tap lock cases restore the
+missing toggle.
+
+Additional families cover:
+
+- All nonempty subsets of the four left standard modifiers, plus the four right modifiers;
+  Shift/Control chords use A as a key target. Alt/Super chords use bare modifier key events and
+  modified left-button callbacks to avoid application or desktop key shortcuts.
+- Modified left-button press/release for each available chord; Caps Lock and Num Lock reporting
+  on key and button events on X11, nested Wayland, and Win32, with two taps restoring each lock.
+- Text `a`, `é`, and `🦀`, observed separately from physical keys via character and deprecated
+  modified-character callbacks. Win32 uses UTF-16 packets and Cocoa sets Unicode event strings.
+  Linux only posts scalars present at unmodified group 1 / level 1 in the current parent map;
+  missing scalars are explicitly non-injectable. No keymap or input method is installed or changed.
+- A bounded 1.5-second hold requiring actual repeat callbacks on X11/nested Wayland. Win32/Cocoa
+  event posting does not provide a qualified hardware repeat source; synthesized repeated presses
+  would not prove that contract and are recorded as non-injectable for this profile.
+- A held A and left button followed by iconification: require both getters to report pressed,
+  focus loss, synthetic releases in GLFW order, and released getters before OS-input cleanup.
+
+Win32 bare Win-key release can open Start and remove focus; these keys are explicitly excluded
+from this profile. Cocoa Caps Lock and lock-modifier restoration remain not yet qualified.
+Any mapped key that fails delivery, focus, event order, or cleanup fails the test rather than being
+reclassified as unsupported. Schema-2 runtime results require a new qualified display execution;
+headless oracle tests and compilation are not native evidence. VMNL batch-transition and
+`Window::poll_events()` runtime qualification remain in stage 5.
+
 ## Continuous Integration
 
 The CI workflow invokes Cargo directly. The Justfile is a local development helper and is never

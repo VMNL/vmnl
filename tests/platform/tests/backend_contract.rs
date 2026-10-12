@@ -19,6 +19,11 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[path = "support/extended_input.rs"]
+mod extended_input;
+#[path = "support/probe_process.rs"]
+mod probe_process;
+
 const NATIVE_INPUT_TIMEOUT: Duration = Duration::from_secs(7);
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
 static READY_FILE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
@@ -32,10 +37,15 @@ fn is_mouse_native_input(operation: &str) -> bool {
             | "mouse-motion-input"
             | "mouse-hover-boundary-input"
             | "mouse-scroll-input"
+            | "native-input-case"
     )
 }
 
 fn probe(backend: &str, operation: &str) -> Value {
+    probe_with_case(backend, operation, None)
+}
+
+fn probe_with_case(backend: &str, operation: &str, case: Option<&Value>) -> Value {
     let output = if matches!(
         operation,
         "keyboard-native-input"
@@ -45,30 +55,34 @@ fn probe(backend: &str, operation: &str) -> Value {
             | "mouse-motion-input"
             | "mouse-hover-boundary-input"
             | "mouse-scroll-input"
+            | "native-input-case"
     ) {
-        native_input_probe(backend, operation).expect("native input probe should complete")
+        native_input_probe(backend, operation, case).expect("native input probe should complete")
     } else {
         Command::new(env!("CARGO_BIN_EXE_platform_probe"))
             .args([backend, operation])
             .output()
             .expect("platform probe should start")
     };
+    if output.stdout.is_empty() || !output.status.success() {
+        retain_record(
+            backend,
+            &serde_json::json!({
+                "schema": vmnl_platform_tests::PROBE_SCHEMA_VERSION,
+                "backend_requested":backend, "backend_actual":backend,
+                "operation":operation, "result":"error",
+                "value":{"qualified":false,"case":case.map(|s|&s["case"]),
+                    "stage":"process","status":output.status.to_string(),
+                    "stdout":String::from_utf8_lossy(&output.stdout),
+                    "stderr":String::from_utf8_lossy(&output.stderr)}
+            }),
+        );
+    }
     assert!(
         !output.stdout.is_empty(),
         "{backend}/{operation} emitted no JSON"
     );
-    if let Some(directory) = env::var_os("VMNL_PLATFORM_ARTIFACT_DIR") {
-        let directory = PathBuf::from(directory);
-        fs::create_dir_all(&directory).expect("platform artifact directory should be created");
-        let mut artifact = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(directory.join(format!("{backend}.jsonl")))
-            .expect("platform artifact should open");
-        artifact
-            .write_all(&output.stdout)
-            .expect("platform artifact should be written");
-    }
+    retain_bytes(backend, &output.stdout);
     assert!(
         output.status.success(),
         "{backend}/{operation} failed or aborted: status={:?}, stdout={}, stderr={}",
@@ -79,7 +93,32 @@ fn probe(backend: &str, operation: &str) -> Value {
     serde_json::from_slice(&output.stdout).expect("platform probe should emit one JSON record")
 }
 
-fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> {
+fn retain_bytes(backend: &str, bytes: &[u8]) {
+    if let Some(directory) = env::var_os("VMNL_PLATFORM_ARTIFACT_DIR") {
+        let directory = PathBuf::from(directory);
+        fs::create_dir_all(&directory).expect("platform artifact directory should be created");
+        let mut artifact = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(directory.join(format!("{backend}.jsonl")))
+            .expect("platform artifact should open");
+        artifact
+            .write_all(bytes)
+            .expect("platform artifact should be written");
+    }
+}
+
+fn retain_record(backend: &str, record: &Value) {
+    let mut bytes = serde_json::to_vec(record).expect("record serializes");
+    bytes.push(b'\n');
+    retain_bytes(backend, &bytes);
+}
+
+fn native_input_probe(
+    backend: &str,
+    operation: &str,
+    case: Option<&Value>,
+) -> Result<Output, String> {
     let sequence = READY_FILE_SEQUENCE.fetch_add(1, Ordering::Relaxed);
     let max_server_button =
         if operation == "mouse-buttons-input" && matches!(backend, "x11" | "wayland") {
@@ -100,6 +139,10 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
         let mut command = Command::new(env!("CARGO_BIN_EXE_platform_probe"));
         command
             .args([backend, operation])
+            .env(
+                "VMNL_PLATFORM_INPUT_CASE",
+                case.map_or_else(String::new, Value::to_string),
+            )
             .env("VMNL_PLATFORM_READY_FILE", &ready_file)
             .env("VMNL_PLATFORM_INPUT_INJECTOR", injector)
             .env(
@@ -118,6 +161,9 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
         }
         log_external_x11_focus_at_ready(backend);
         let injection = match operation {
+            "native-input-case" => {
+                extended_input::inject(case.ok_or("native case missing")?, &ready_file)
+            }
             "keyboard-native-input" => inject_key_a(),
             "keyboard-modifier-input" => inject_key_shift_a(),
             "mouse-native-input" => inject_mouse_left(),
@@ -138,11 +184,23 @@ fn native_input_probe(backend: &str, operation: &str) -> Result<Output, String> 
             value => Err(format!("unsupported native input operation: {value}")),
         };
         if let Err(reason) = injection {
+            retain_record(
+                backend,
+                &serde_json::json!({
+                    "schema": vmnl_platform_tests::PROBE_SCHEMA_VERSION,
+                    "backend_requested": backend, "backend_actual": backend,
+                    "operation": operation, "result": "error",
+                    "value": {"qualified":false, "case":case.map(|s|&s["case"]),
+                        "stage":"injector", "failure_reason":reason}
+                }),
+            );
             return Err(terminate_with_diagnostics(child, &reason));
         }
 
         wait_for_probe(child)
     })();
+    let _ = fs::remove_file(ready_file.with_extension("done"));
+    let _ = fs::remove_file(ready_file.with_extension("focus"));
     let _ = fs::remove_file(ready_file);
     result
 }
@@ -489,26 +547,8 @@ fn wait_until_ready(
     }
 }
 
-fn wait_for_probe(mut child: Child) -> Result<Output, String> {
-    let deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
-    loop {
-        if child
-            .try_wait()
-            .map_err(|error| format!("failed to inspect platform probe: {error}"))?
-            .is_some()
-        {
-            return child
-                .wait_with_output()
-                .map_err(|error| format!("failed to collect platform probe output: {error}"));
-        }
-        if Instant::now() >= deadline {
-            return Err(terminate_with_diagnostics(
-                child,
-                "platform probe did not exit within 7 seconds after input injection",
-            ));
-        }
-        thread::sleep(PROCESS_POLL_INTERVAL);
-    }
+fn wait_for_probe(child: Child) -> Result<Output, String> {
+    probe_process::collect(child)
 }
 
 fn terminate_with_diagnostics(mut child: Child, reason: &str) -> String {
@@ -2094,6 +2134,7 @@ fn selected_backend_contract() {
         assert_eq!(record["result"], "ok");
         assert_operation_contract(&backend, operation, &record);
     }
+    extended_input::run(&backend);
 }
 
 fn assert_operation_contract(backend: &str, operation: &str, record: &Value) {

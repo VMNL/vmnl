@@ -5,6 +5,9 @@
 
 #![allow(clippy::print_stderr, clippy::print_stdout, clippy::too_many_lines)]
 
+#[path = "platform_probe/input_case.rs"]
+mod input_case;
+
 use glfw::{ClientApiHint, Context as _, InitHint, WindowHint, WindowMode};
 use serde_json::{json, Value};
 #[cfg(target_os = "linux")]
@@ -128,14 +131,17 @@ fn main() -> ExitCode {
     glfw.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
     let native_input = matches!(
         operation.as_str(),
-        "keyboard-native-input" | "keyboard-modifier-input"
+        "keyboard-native-input" | "keyboard-modifier-input" | "native-input-case"
     ) || is_mouse_native_input(&operation);
     if actual == glfw::Platform::Wayland && native_input {
         glfw.window_hint(WindowHint::Maximized(true));
     }
     let visible = matches!(
         operation.as_str(),
-        "keyboard-native-input" | "keyboard-modifier-input" | "sticky-keys-manual"
+        "keyboard-native-input"
+            | "keyboard-modifier-input"
+            | "native-input-case"
+            | "sticky-keys-manual"
     ) || is_mouse_native_input(&operation);
     glfw.window_hint(WindowHint::Visible(visible));
     let Some((mut window, events)) =
@@ -243,6 +249,7 @@ fn main() -> ExitCode {
         "keyboard-wait-events-timeout-then-poll" => {
             keyboard_wait_then_poll(&mut glfw, &mut window, &events, Some(0.001))
         }
+        "native-input-case" => input_case::run(&mut glfw, &mut window, &events, actual),
         "keyboard-native-input" => {
             native_keyboard_input(&mut glfw, &mut window, &events, actual, false)
         }
@@ -317,7 +324,10 @@ fn main() -> ExitCode {
 
     let operation_succeeded = !(matches!(
         operation.as_str(),
-        "keyboard-native-input" | "sticky-keys-manual"
+        "keyboard-native-input"
+            | "keyboard-modifier-input"
+            | "native-input-case"
+            | "sticky-keys-manual"
     ) || is_mouse_native_input(&operation))
         || value["qualified"] == true;
     emit(

@@ -9,6 +9,12 @@
 - Mobile and Web are outside the VMNL scope.
 - Platform support applies only to the domains and backends explicitly exercised on that platform.
 
+The stage-3 schema-2 input expansion is implemented but has no qualified native run recorded yet.
+It adds per-key eligibility, modifier/button combinations, text, Linux bounded repeat, and held-input
+focus-loss cases. The earlier CI evidence in the table applies to schema 1; Windows/macOS need a
+new ten-run sequence. See [extended native cases](testing.md#extended-native-cases-issue-91-stage-3)
+for profile exclusions and runtime requirements. Public VMNL/Vulkan execution remains outstanding.
+
 ## Validation Matrix
 
 | Platform | CI validation | Local Justfile | Status |
