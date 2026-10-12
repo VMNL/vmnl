@@ -161,11 +161,16 @@ pub(crate) fn linux_key(
     backend: &str,
     names: &[(String, u16)],
 ) -> Option<(u16, u16)> {
-    let name = if backend == "wayland" && mapping.key == Key::World2 {
-        "LSGT"
-    } else {
-        mapping.xkb
-    };
+    if backend == "wayland" {
+        // Weston forwards the X11 detail minus eight, independently of its XKB key name.
+        let evdev = mapping.evdev?;
+        let code = evdev.checked_add(8)?;
+        return names
+            .iter()
+            .any(|(_, native)| *native == code)
+            .then_some((code, evdev));
+    }
+    let name = mapping.xkb;
     if name.is_empty() {
         return None;
     }
@@ -179,10 +184,5 @@ pub(crate) fn linux_key(
             })
             .flatten()
     })?;
-    if backend == "x11" {
-        Some((*code, *code))
-    } else {
-        let evdev = mapping.evdev?;
-        (*code == evdev + 8).then_some((*code, evdev))
-    }
+    Some((*code, *code))
 }

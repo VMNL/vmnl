@@ -129,11 +129,16 @@ The manifest contains all 120 named keys, native codes/scancodes, eligible cases
 reasons for non-injectable or not-yet-qualified cases. These entries are not counted as passes.
 
 Physical key fixtures are fixed literals audited against the bundled GLFW 3.4 key tables. Linux
-resolves XKB physical names and aliases without changing the layout. Nested Wayland also requires
-the parent X11 code to match the expected evdev code plus eight. Windows posts scan codes, with
+resolves XKB physical names and aliases without changing the layout. Nested Wayland selects the
+parent X11 code as the expected evdev code plus eight, requiring that code in the parent XKB range;
+Weston forwards raw codes independently of parent key names. This also reaches PrintScreen through
+parent code 218 / evdev 210 rather than the X11 PRSC position at code 107. Windows posts scan codes, with
 extended-key flags and a separate Pause virtual-key path; Cocoa posts hardware key codes.
 Modified-button cases acknowledge both mouse callbacks before releasing modifiers, preventing
-Win32 keyboard/mouse message scheduling from ending the modifier hold prematurely.
+Win32 keyboard/mouse message scheduling from ending the modifier hold prematurely. Their getter
+snapshot must show modifiers pressed and the target button released before cleanup. Win32 Shift
+uses side-specific virtual keys, preserving the fixed physical scancode while making the side's
+key state visible to GLFW's stuck-Shift repair.
 Each case checks exact ordered identity/scancodes, final released states, focus, and a completion
 marker before a 100 ms settling interval rejects extra callbacks. Readiness and event observation
 are bounded by five seconds, with a seven-second parent-process watchdog. Injector errors retain
@@ -150,6 +155,8 @@ Additional families cover:
   are explicitly recorded as non-injectable left clicks. A map without server button 8 records
   that side-button case as non-injectable too. Caps Lock and Num Lock reporting
   on key and button events on X11, nested Wayland, and Win32, with two taps restoring each lock.
+  Separate lock taps by 30 ms so the X11/XIM same-timestamp duplicate filter cannot discard the
+  second press; both press/release pairs remain required.
 - Text `a`, `é`, and `🦀`, observed separately from physical keys via character and deprecated
   modified-character callbacks. Win32 uses UTF-16 packets and Cocoa sets Unicode event strings.
   Linux only posts scalars present at unmodified group 1 / level 1 in the current parent map;

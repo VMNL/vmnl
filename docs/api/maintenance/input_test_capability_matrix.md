@@ -76,14 +76,14 @@ synthetic injection.
 The selected backend contract now enumerates every named key using fixed physical-key fixtures
 and emits a schema-2 `native-input-eligibility` manifest before running eligible cases. Each row
 records its native code, expected scancode, status and exclusion reason. XKB names/aliases resolve
-Linux physical keys independently of layout; nested Wayland also checks the evdev-code relationship.
+Linux physical keys independently of layout; nested Wayland selects an available parent code at the expected evdev code plus eight.
 No manifest entry or compilation result qualifies native delivery.
 
 The additional cases cover left-modifier subsets and right-side modifiers, modified mouse buttons,
 Caps/Num lock reporting on Linux/Win32, three representative text scalars, bounded Linux repeats,
 and held-key/button focus loss. See [extended native cases](../../testing.md#extended-native-cases-issue-91-stage-3)
 for the exact targets, timing, cleanup and profile limits. Win32 bare Win keys, absent backend key
-mappings, parent-map/evdev mismatches, missing unmodified text scalars, event-poster hardware repeat,
+mappings, unavailable parent evdev transport codes, missing unmodified text scalars, event-poster hardware repeat,
 and Cocoa lock restoration remain explicit exclusions or unqualified entries. Alt/Super keyboard
 chords observe modifier key events; their flags are qualified by mouse callbacks, not by a target-key
 shortcut. Linux Alt/Super mouse chords use side Button4 because the configured window managers

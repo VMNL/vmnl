@@ -468,3 +468,21 @@ fn modifier_release_waits_for_acknowledged_mouse_callbacks() {
         "modifier released before mouse acknowledgement"
     );
 }
+
+#[test]
+#[cfg(target_os = "linux")]
+fn nested_wayland_uses_evdev_transport_code_even_with_another_xkb_name() {
+    let print = *input_keys::KEYS
+        .iter()
+        .find(|m| m.key == glfw::Key::PrintScreen)
+        .expect("PrintScreen fixture");
+    let names = vec![("PRSC".to_owned(), 107), ("I218".to_owned(), 218)];
+    assert_eq!(
+        input_keys::linux_key(print, "wayland", &names),
+        Some((218, 210))
+    );
+    assert_eq!(
+        input_keys::linux_key(print, "x11", &names),
+        Some((107, 107))
+    );
+}

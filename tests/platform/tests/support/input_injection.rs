@@ -152,7 +152,7 @@ fn post(action: &Value) -> Result<(), String> {
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
         SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, INPUT_MOUSE, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY,
         KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE, KEYEVENTF_UNICODE, MOUSEEVENTF_LEFTDOWN,
-        MOUSEEVENTF_LEFTUP, MOUSEINPUT,
+        MOUSEEVENTF_LEFTUP, MOUSEINPUT, VK_LSHIFT, VK_RSHIFT,
     };
     let code = action["code"]
         .as_u64()
@@ -176,9 +176,13 @@ fn post(action: &Value) -> Result<(), String> {
     } else {
         let unicode = action["kind"] == "text";
         let pause = action["pause"] == true;
+        // Scan-only right Shift can leave VK_RSHIFT clear even while GLFW reports its key
+        // press. Use the side-specific virtual key so GLFW's stuck-Shift repair cannot
+        // release it before the mouse callbacks. Other physical keys keep scan-code injection.
+        let shift = !unicode && matches!(code, 0x2a | 0x36);
         let flags = if unicode {
             KEYEVENTF_UNICODE
-        } else if pause {
+        } else if pause || shift {
             0
         } else {
             KEYEVENTF_SCANCODE
@@ -191,7 +195,17 @@ fn post(action: &Value) -> Result<(), String> {
             r#type: INPUT_KEYBOARD,
             Anonymous: INPUT_0 {
                 ki: KEYBDINPUT {
-                    wVk: if pause { 0x13 } else { 0 },
+                    wVk: if pause {
+                        0x13
+                    } else if shift {
+                        if code == 0x2a {
+                            VK_LSHIFT
+                        } else {
+                            VK_RSHIFT
+                        }
+                    } else {
+                        0
+                    },
                     wScan: if unicode { code } else { code & 0xff },
                     dwFlags: flags,
                     ..KEYBDINPUT::default()

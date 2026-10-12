@@ -92,6 +92,7 @@ pub(super) fn run(
     // rejects extra callbacks, including delayed repeats, instead of accepting a matching prefix.
     let mut completed_at = None;
     let mut focus_observed_at = None;
+    let mut target_states = Value::Null;
     while Instant::now() < deadline {
         glfw.wait_events_timeout(0.01);
         for (_, event) in glfw::flush_messages(events) {
@@ -126,6 +127,7 @@ pub(super) fn run(
             }
         }
         if spec["target_ack"] == true
+            && target_states.is_null()
             && observed
                 .iter()
                 .filter(|e| {
@@ -136,6 +138,7 @@ pub(super) fn run(
                 .count()
                 >= 2
         {
+            target_states = states(window, &spec);
             if let Err(error) = fs::write(
                 std::path::Path::new(&ready).with_extension("target"),
                 b"TARGET\n",
@@ -200,10 +203,22 @@ pub(super) fn run(
     } else {
         window.is_focused()
     };
-    let qualified = completed_at.is_some() && events_match && released && focus_match;
+    let held_modifiers = spec["target_ack"] != true
+        || target_states.as_array().is_some_and(|values| {
+            values.iter().all(|v| {
+                v["state"]
+                    == if v.get("key").is_some() {
+                        "Press"
+                    } else {
+                        "Release"
+                    }
+            })
+        });
+    let qualified =
+        completed_at.is_some() && events_match && released && focus_match && held_modifiers;
     json!({"qualified":qualified, "stage":"input", "case":spec["case"],
         "family":spec["family"], "expected_events":expected, "observed_events":observed,
-        "focused":window.is_focused(), "pressed_snapshot":pressed_snapshot,
+        "focused":window.is_focused(), "pressed_snapshot":pressed_snapshot, "target_states":target_states,
         "final_states":final_states, "injector":env::var("VMNL_PLATFORM_INPUT_INJECTOR").ok(),
         "failure_reason":if qualified {Value::Null} else {
             json!("missing/extra/wrong events, deadline, focus or released-state mismatch")}})

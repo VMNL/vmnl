@@ -109,7 +109,10 @@ fn key_cases(keys: &[NativeKey], backend: &str, cases: &mut Vec<Value>) {
         let lock =
             matches!(key.key, Key::CapsLock | Key::NumLock | Key::ScrollLock) && backend != "cocoa";
         if lock {
-            actions.extend(actions.clone());
+            let second_tap = actions.clone();
+            // GLFW's XIM path suppresses another press with the same server timestamp.
+            actions.push(json!({"kind":"wait","ms":30}));
+            actions.extend(second_tap);
             expected.extend(expected.clone());
         }
         cases.push(case(
@@ -270,6 +273,7 @@ fn lock_cases(keys: &[NativeKey], backend: &str, cases: &mut Vec<Value>, rows: &
             key_action(a, false, 0),
             mouse_action(true, 0, backend),
             mouse_action(false, 0, backend),
+            json!({"kind":"wait","ms":30}),
             key_action(key, true, 0),
             key_action(key, false, 0),
             key_action(a, true, 0),
