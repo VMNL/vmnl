@@ -395,3 +395,20 @@ fn level_three_fallback_does_not_qualify_a_mismatched_wayland_evdev_code() {
     );
     assert_eq!(input_keys::linux_key(right_alt, "wayland", &names), None);
 }
+
+#[test]
+fn modified_mouse_target_avoids_known_linux_window_management_grabs() {
+    for mask in 0..16 {
+        let expected = if mask & 0b1100 != 0 { 3 } else { 0 };
+        assert_eq!(input_profile::modifier_mouse_button("x11", mask), expected);
+        assert_eq!(
+            input_profile::modifier_mouse_button("wayland", mask),
+            expected
+        );
+        assert_eq!(input_profile::modifier_mouse_button("win32", mask), 0);
+        assert_eq!(input_profile::modifier_mouse_button("cocoa", mask), 0);
+    }
+}
+
+#[path = "../src/input_profile.rs"]
+mod input_profile;

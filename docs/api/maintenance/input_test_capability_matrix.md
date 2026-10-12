@@ -86,7 +86,10 @@ for the exact targets, timing, cleanup and profile limits. Win32 bare Win keys, 
 mappings, parent-map/evdev mismatches, missing unmodified text scalars, event-poster hardware repeat,
 and Cocoa lock restoration remain explicit exclusions or unqualified entries. Alt/Super keyboard
 chords observe modifier key events; their flags are qualified by mouse callbacks, not by a target-key
-shortcut. Physical hardware and public VMNL evidence remain separate.
+shortcut. Linux Alt/Super mouse chords use side Button4 because the configured window managers
+consume modified left clicks; those left-click exclusions are retained explicitly. Focus-loss
+observation finishes before physical cleanup can emit an extra Cocoa mouse-up. Physical hardware
+and public VMNL evidence remain separate.
 
 No schema-2 native run is recorded yet. Win32/Cocoa need a fresh ten-run sequence after this schema
 and workload change. Existing schema-1 CI links above qualify only the earlier operations.

@@ -142,8 +142,11 @@ Additional families cover:
 
 - All nonempty subsets of the four left standard modifiers, plus the four right modifiers;
   Shift/Control chords use A as a key target. Alt/Super chords use bare modifier key events and
-  modified left-button callbacks to avoid application or desktop key shortcuts.
-- Modified left-button press/release for each available chord; Caps Lock and Num Lock reporting
+  modified-button callbacks to avoid application or desktop key shortcuts.
+- Modified left-button press/release for Shift/Control and Win32/Cocoa chords. Linux Alt/Super
+  chords use side Button4 (server button 8); default Openbox Alt+left and Weston Super+left grabs
+  are explicitly recorded as non-injectable left clicks. A map without server button 8 records
+  that side-button case as non-injectable too. Caps Lock and Num Lock reporting
   on key and button events on X11, nested Wayland, and Win32, with two taps restoring each lock.
 - Text `a`, `é`, and `🦀`, observed separately from physical keys via character and deprecated
   modified-character callbacks. Win32 uses UTF-16 packets and Cocoa sets Unicode event strings.
@@ -154,6 +157,11 @@ Additional families cover:
   would not prove that contract and are recorded as non-injectable for this profile.
 - A held A and left button followed by iconification: require both getters to report pressed,
   focus loss, synthetic releases in GLFW order, and released getters before OS-input cleanup.
+  Freeze the trace after a 100 ms settling interval, then acknowledge cleanup without polling
+  its extra mouse-up callbacks into the synthetic-release phase.
+
+Win32 boundary readiness requires 100 ms of focused hover with an actual inside-client pointer;
+re-entry uses the client's confirmed screen-space center rather than a sampled desktop cursor.
 
 Win32 bare Win-key release can open Start and remove focus; these keys are explicitly excluded
 from this profile. Cocoa Caps Lock and lock-modifier restoration remain not yet qualified.

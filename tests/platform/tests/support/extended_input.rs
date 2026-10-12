@@ -7,6 +7,8 @@
 mod input_injection;
 #[path = "../../src/input_keys.rs"]
 mod input_keys;
+#[path = "../../src/input_profile.rs"]
+mod input_profile;
 
 use glfw::Key;
 use input_keys::KEYS;
@@ -190,7 +192,9 @@ fn modifier_cases(
             held.push(Key::A);
         }
         cases.push(case(&name, "modifiers", actions, expected, held, false));
-        // Mouse callbacks preserve the same modifier combination without key shortcuts.
+        let Some(button) = modifier_button(backend, mask, &name, rows) else {
+            continue;
+        };
         let mut actions = Vec::new();
         let mut expected = Vec::new();
         let mut active = 0;
@@ -199,25 +203,50 @@ fn modifier_cases(
             actions.push(key_action(*key, true, active));
             expected.push(key_event(*key, "Press", None));
         }
-        actions.extend([
-            mouse_action(true, mask, backend),
-            mouse_action(false, mask, backend),
-        ]);
-        expected.extend([mouse_event("Press", mask), mouse_event("Release", mask)]);
+        let mut down = mouse_action(true, mask, backend);
+        let mut up = mouse_action(false, mask, backend);
+        if button == 3 {
+            down["code"] = json!(8);
+            up["code"] = json!(8);
+        }
+        actions.extend([down, up]);
+        let mut down = mouse_event("Press", mask);
+        let mut up = mouse_event("Release", mask);
+        down["button"] = json!(button);
+        up["button"] = json!(button);
+        expected.extend([down, up]);
         for key in native.iter().rev() {
             active &= !modifier(key.key);
             actions.push(key_action(*key, false, active));
             expected.push(key_event(*key, "Release", None));
         }
-        cases.push(case(
+        let mut spec = case(
             &format!("mouse-{name}"),
             "mouse-modifiers",
             actions,
             expected,
             group,
             true,
-        ));
+        );
+        spec["mouse_button"] = json!(button);
+        cases.push(spec);
     }
+}
+
+fn modifier_button(backend: &str, mask: i32, name: &str, rows: &mut Vec<Value>) -> Option<i32> {
+    // Openbox grabs Alt+left; nested Weston also grabs Super+left. Side button 4
+    // preserves modifier coverage without claiming those intercepted left clicks pass.
+    let button = input_profile::modifier_mouse_button(backend, mask);
+    if button == 3 {
+        rows.push(json!({"case":format!("mouse-left-{name}"),"status":"not injectable",
+                "reason":"default Openbox/Weston window-management grabs consume Alt/Super left clicks; side Button4 is tested separately"}));
+        #[cfg(target_os = "linux")]
+        if super::x11_pointer_button_count().expect("pointer map readable") < 8 {
+            rows.push(json!({"case":format!("mouse-{name}"),"status":"not injectable","reason":"side-button server code 8 absent from pointer map"}));
+            return None;
+        }
+    }
+    Some(button)
 }
 
 fn lock_cases(keys: &[NativeKey], backend: &str, cases: &mut Vec<Value>, rows: &mut Vec<Value>) {

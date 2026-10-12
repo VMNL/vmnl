@@ -44,8 +44,8 @@ pub(crate) fn inject_with(
                 )),
                 Some("focus-wait") => {
                     let deadline = Instant::now() + Duration::from_secs(5);
-                    while !std::fs::read_to_string(ready.with_extension("focus"))
-                        .is_ok_and(|v| v == "LOST\n")
+                    while !std::fs::read_to_string(ready.with_extension("observed"))
+                        .is_ok_and(|v| v == "OBSERVED\n")
                     {
                         if Instant::now() >= deadline {
                             return Err("focus loss not observed before deadline".to_owned());

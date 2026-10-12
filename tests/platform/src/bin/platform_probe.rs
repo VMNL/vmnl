@@ -1033,6 +1033,42 @@ fn native_mouse_input(
         });
     }
 
+    if platform == glfw::Platform::Win32 && matches!(case, NativeMouseProbeCase::PointerBoundary) {
+        let deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+        let mut stable = None;
+        while Instant::now() < deadline {
+            glfw.wait_events_timeout(0.01);
+            glfw::flush_messages(events).for_each(drop);
+            let (w, h) = window.get_size();
+            let (x, y) = window.get_cursor_pos();
+            if window.is_focused()
+                && window.is_hovered()
+                && x >= 0.0
+                && y >= 0.0
+                && x < f64::from(w)
+                && y < f64::from(h)
+            {
+                let at = *stable.get_or_insert_with(Instant::now);
+                if at.elapsed() >= Duration::from_millis(100) {
+                    break;
+                }
+            } else {
+                stable = None;
+                window.set_cursor_pos(f64::from(w) / 2.0, f64::from(h) / 2.0);
+            }
+        }
+        if stable.is_none_or(|at| at.elapsed() < Duration::from_millis(100)) {
+            return json!({"qualified":false,"stage":"readiness","failure_reason":"Win32 hover did not remain stable before injection"});
+        }
+        let (x, y) = window.get_pos();
+        let (w, h) = window.get_size();
+        if let Err(error) = fs::write(
+            std::path::Path::new(&ready_file).with_extension("pointer"),
+            json!([x + w / 2, y + h / 2]).to_string(),
+        ) {
+            return json!({"qualified":false,"stage":"handshake","failure_reason":error.to_string()});
+        }
+    }
     let initial_cursor_position = window.get_cursor_pos();
 
     if let Err(error) = fs::write(&ready_file, b"READY\n") {

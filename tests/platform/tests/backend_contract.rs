@@ -179,7 +179,7 @@ fn native_input_probe(
                 inject_mouse_buttons(button_limit)
             }
             "mouse-motion-input" => inject_mouse_motion(),
-            "mouse-hover-boundary-input" => inject_mouse_hover_boundary(backend),
+            "mouse-hover-boundary-input" => inject_mouse_hover_boundary(backend, &ready_file),
             "mouse-scroll-input" => inject_mouse_scroll(),
             value => Err(format!("unsupported native input operation: {value}")),
         };
@@ -199,6 +199,8 @@ fn native_input_probe(
 
         wait_for_probe(child)
     })();
+    let _ = fs::remove_file(ready_file.with_extension("observed"));
+    let _ = fs::remove_file(ready_file.with_extension("pointer"));
     let _ = fs::remove_file(ready_file.with_extension("done"));
     let _ = fs::remove_file(ready_file.with_extension("focus"));
     let _ = fs::remove_file(ready_file);
@@ -927,7 +929,7 @@ fn inject_mouse_motion() -> Result<(), String> {
 
 #[cfg(target_os = "linux")]
 #[allow(clippy::print_stderr)]
-fn inject_mouse_hover_boundary(backend: &str) -> Result<(), String> {
+fn inject_mouse_hover_boundary(backend: &str, _ready: &Path) -> Result<(), String> {
     use x11rb::{
         connection::Connection as _,
         protocol::{xproto::ConnectionExt as _, xtest::ConnectionExt as _},
@@ -1437,22 +1439,20 @@ fn inject_mouse_motion() -> Result<(), String> {
 }
 
 #[cfg(target_os = "windows")]
-fn inject_mouse_hover_boundary(_backend: &str) -> Result<(), String> {
+fn inject_mouse_hover_boundary(_backend: &str, _ready: &Path) -> Result<(), String> {
     use windows_sys::Win32::{
         Foundation::POINT,
-        UI::WindowsAndMessaging::{
-            GetCursorPos, GetSystemMetrics, SetCursorPos, SM_CXSCREEN, SM_CYSCREEN,
-        },
+        UI::WindowsAndMessaging::{GetSystemMetrics, SetCursorPos, SM_CXSCREEN, SM_CYSCREEN},
     };
 
-    let mut original = POINT { x: 0, y: 0 };
-    // SAFETY: `original` is writable storage for one Win32 POINT record.
-    if unsafe { GetCursorPos(&raw mut original) } == 0 {
-        return Err(format!(
-            "GetCursorPos failed before hover-boundary injection: {}",
-            std::io::Error::last_os_error()
-        ));
-    }
+    let signal = fs::read_to_string(_ready.with_extension("pointer"))
+        .map_err(|e| format!("probe center unavailable: {e}"))?;
+    let center: (i32, i32) =
+        serde_json::from_str(&signal).map_err(|e| format!("invalid probe center: {e}"))?;
+    let original = POINT {
+        x: center.0,
+        y: center.1,
+    };
     // SAFETY: These indices request the primary screen dimensions and take no pointers.
     let (width, height) = unsafe { (GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)) };
     if width <= 0 || height <= 0 {
@@ -1482,7 +1482,7 @@ fn inject_mouse_hover_boundary(_backend: &str) -> Result<(), String> {
     }
     let leave_check = confirm_win32_pointer_position(target, "leave");
     thread::sleep(Duration::from_millis(100));
-    // SAFETY: `original` was returned by GetCursorPos and restores the pointer to the probe.
+    // SAFETY: `original` is the confirmed probe content center and restores the pointer to the probe.
     if unsafe { SetCursorPos(original.x, original.y) } == 0 {
         return Err(format!(
             "SetCursorPos failed while re-entering the probe window: {}",
@@ -1650,7 +1650,7 @@ fn inject_mouse_motion() -> Result<(), String> {
 }
 
 #[cfg(target_os = "macos")]
-fn inject_mouse_hover_boundary(_backend: &str) -> Result<(), String> {
+fn inject_mouse_hover_boundary(_backend: &str, _ready: &Path) -> Result<(), String> {
     use std::ffi::c_void;
 
     type CGEventRef = *mut c_void;
@@ -1741,7 +1741,7 @@ fn inject_mouse_motion() -> Result<(), String> {
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
-fn inject_mouse_hover_boundary(_backend: &str) -> Result<(), String> {
+fn inject_mouse_hover_boundary(_backend: &str, _ready: &Path) -> Result<(), String> {
     Err("native pointer hover-boundary injection is unsupported on this OS".to_owned())
 }
 

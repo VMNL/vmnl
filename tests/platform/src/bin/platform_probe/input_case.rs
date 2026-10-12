@@ -91,6 +91,7 @@ pub(super) fn run(
     // Wait for the parent's completion marker as well as events. A fixed settling interval
     // rejects extra callbacks, including delayed repeats, instead of accepting a matching prefix.
     let mut completed_at = None;
+    let mut focus_observed_at = None;
     while Instant::now() < deadline {
         glfw.wait_events_timeout(0.01);
         for (_, event) in glfw::flush_messages(events) {
@@ -128,6 +129,32 @@ pub(super) fn run(
             pressed_snapshot = states(window, &spec);
             window.iconify();
             minimized = true;
+        }
+        if spec["family"] == "focus-loss"
+            && observed.len() >= expected.len()
+            && !window.is_focused()
+        {
+            let at = *focus_observed_at.get_or_insert_with(Instant::now);
+            if at.elapsed() >= Duration::from_millis(100) {
+                // Freeze the focus-loss trace before authorizing physical cleanup. Cocoa reports
+                // an additional mouse-up for cleanup even after GLFW synthesized its release.
+                if let Err(error) = fs::write(
+                    std::path::Path::new(&ready).with_extension("observed"),
+                    b"OBSERVED\n",
+                ) {
+                    return failure("handshake", &error);
+                }
+                while Instant::now() < deadline {
+                    if fs::read_to_string(std::path::Path::new(&ready).with_extension("done"))
+                        .is_ok_and(|s| s == "DONE\n")
+                    {
+                        completed_at = Some(Instant::now());
+                        break;
+                    }
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                break;
+            }
         }
         if fs::read_to_string(std::path::Path::new(&ready).with_extension("done"))
             .is_ok_and(|s| s == "DONE\n")
@@ -182,7 +209,15 @@ fn states(window: &glfw::PWindow, spec: &Value) -> Value {
         }
     }
     if spec["mouse"] == true {
-        values.push(json!({"button":0,"state":format!("{:?}",window.get_mouse_button(glfw::MouseButton::Button1))}));
+        let raw = spec["mouse_button"]
+            .as_i64()
+            .and_then(|n| i32::try_from(n).ok())
+            .unwrap_or(0);
+        if let Some(button) = glfw::MouseButton::from_i32(raw) {
+            values.push(
+                json!({"button":raw,"state":format!("{:?}",window.get_mouse_button(button))}),
+            );
+        }
     }
     json!(values)
 }
