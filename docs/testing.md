@@ -104,9 +104,30 @@ just input-test-vmnl x11
 ```
 
 This requires the X11 prerequisites above, XTEST, and a Vulkan-capable GPU with a Vulkan loader.
+The scenario presents a first frame before requesting focus so an Xwayland window has a buffer
+the compositor can display. It resolves physical A from the XKB `AC01` name, not from the A keysym,
+and checks that the received scancode matches that independent physical code. The GPU test's
+existing `x11rb` dependency enables `xkb` for this lookup; no new package or version is added.
+Keep the desktop idle during injection: external keyboard/pointer activity can change focus or
+add events and must not be reported as a passing input sequence.
 It is excluded from `just test-gpu` so running the general GPU suite does not inject input into the
 active desktop. The command fails if the display prerequisites are unavailable; GPU initialization
 and event/state assertions fail inside the test when their runtime requirements are not met.
+
+On 2026-10-12, an automatic local execution passed `1/1` on Fedora 44, Hyprland 0.56.2 with
+Xwayland/X11, Intel Iris Xe (ADL GT2), Mesa 26.2.3 and Vulkan loader 1.4.341, after the Xlib instance
+extension, first-frame readiness and physical-A fixes. The retained result was:
+
+```text
+X11 pointer mapping supports server buttons 1 through 10; unsupported VMNL buttons are not injected: [(11, Button7), (12, Button8)]
+test vmnl_public_native_keyboard_and_mouse_events_update_input ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored
+```
+
+This exercises physical A press/release, scancode and batch snapshots, pointer motion/position,
+GLFW mouse buttons 1–6, and both scroll axes in both directions through the public facade.
+It does not qualify buttons 7–8, every key, text, repeat, enter/leave, or public focus-loss batches,
+other display/GPU stacks, or human manual graphical validation.
 
 X11 needs `DISPLAY`, `xprop`, and an EWMH window manager; the probe checks XTEST when it injects
 input. Wayland needs a live `WAYLAND_DISPLAY` socket and the X11 parent display used by XTEST.
@@ -186,7 +207,7 @@ and 152/152 Cocoa cases, with no error records. These totals match each eligibil
 include respectively 118, 118, 116, and 110 named-key cases. Exclusions are not passes, and the
 Win32/Cocoa probes remain experimental until the ten-run threshold is met.
 Headless oracle tests and compilation are not native evidence. VMNL batch-transition and
-`Window::poll_events()` runtime qualification remain in stage 5.
+`Window::poll_events()` qualification beyond the representative public scenario remains outstanding.
 
 ## Continuous Integration
 

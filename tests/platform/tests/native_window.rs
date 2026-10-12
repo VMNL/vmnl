@@ -498,3 +498,6 @@ fn nested_wayland_uses_evdev_transport_code_even_with_another_xkb_name() {
         Some((107, 107))
     );
 }
+
+#[path = "../../gpu/src/native_input_keys.rs"]
+mod native_input_keys;

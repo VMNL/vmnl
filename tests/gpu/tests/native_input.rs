@@ -1,9 +1,15 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
+//! Public VMNL input delivery through a Vulkan-backed X11 window.
+
 #![cfg(target_os = "linux")]
 #![allow(clippy::panic, clippy::print_stderr)]
 
+#[path = "../src/native_input_keys.rs"]
+mod native_input_keys;
+
+use native_input_keys::physical_a_keycode;
 use std::time::{Duration, Instant};
 use vmnl::{
     common::Rgba, Context, Event, EventKind, Key, MouseButton, VMNLError, VMNLErrorKind,
@@ -38,6 +44,8 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
     window.enable_keyboard_polling();
     window.enable_mouse_polling();
     window.show();
+    // Xwayland may not expose the window to the compositor until its first buffer is presented.
+    window.render().submit()?;
     window.focus();
     window.set_cursor_position(120.0, 100.0)?;
 
@@ -105,6 +113,7 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
         )
     })?;
     let key_scancode = assert_key_press(&key_press_events)?;
+    assert_eq!(key_scancode, i32::from(injector.a_keycode));
     assert!(window.input().keyboard().is_down(Key::A));
     assert!(window.input().keyboard().is_pressed(Key::A));
     assert!(!window.input().keyboard().is_released(Key::A));
@@ -367,9 +376,7 @@ struct X11Injector {
 
 impl X11Injector {
     fn connect() -> Result<Self, String> {
-        const XK_A_UPPER: u32 = 0x0041;
-        const XK_A_LOWER: u32 = 0x0061;
-
+        use x11rb::protocol::xkb::{ConnectionExt as _, NameDetail, ID};
         use x11rb::{
             connection::Connection as _, protocol::xproto::ConnectionExt as _,
             protocol::xtest::ConnectionExt as _,
@@ -401,26 +408,25 @@ impl X11Injector {
                 "X11 pointer mapping reports only {maximum_server_button} buttons; at least 3 are required"
             ));
         }
-        let keycode_count = setup.max_keycode - setup.min_keycode + 1;
-        let mapping = connection
-            .get_keyboard_mapping(setup.min_keycode, keycode_count)
-            .map_err(|error| format!("could not request the X11 keyboard map: {error}"))?
+        let version = connection
+            .xkb_use_extension(1, 0)
+            .map_err(|error| format!("could not query XKB: {error}"))?
             .reply()
-            .map_err(|error| format!("could not read the X11 keyboard map: {error}"))?;
-        let keysyms_per_keycode = usize::from(mapping.keysyms_per_keycode);
-        if keysyms_per_keycode == 0 {
-            return Err("X11 returned an empty keyboard map".to_owned());
+            .map_err(|error| format!("could not read XKB version: {error}"))?;
+        if !version.supported {
+            return Err("XKB 1.0 is required to resolve physical A".to_owned());
         }
-        let keycode_offset = mapping
-            .keysyms
-            .chunks(keysyms_per_keycode)
-            .position(|keysyms| keysyms.contains(&XK_A_UPPER) || keysyms.contains(&XK_A_LOWER))
-            .ok_or_else(|| "X11 keyboard map has no A keysym".to_owned())?;
-        let a_keycode = u16::from(setup.min_keycode)
-            + u16::try_from(keycode_offset)
-                .map_err(|_| "X11 A keycode offset is too large".to_owned())?;
-        let a_keycode =
-            u8::try_from(a_keycode).map_err(|_| "X11 A keycode is invalid".to_owned())?;
+        let names = connection
+            .xkb_get_names(ID::USE_CORE_KBD.into(), NameDetail::KEY_NAMES)
+            .map_err(|error| format!("could not request XKB physical key names: {error}"))?
+            .reply()
+            .map_err(|error| format!("could not read XKB physical key names: {error}"))?;
+        let raw_names = names
+            .value_list
+            .key_names
+            .ok_or("XKB omitted physical key names")?;
+        let key_names: Vec<_> = raw_names.iter().map(|name| name.name).collect();
+        let a_keycode = physical_a_keycode(names.first_key, &key_names)?;
 
         Ok(Self {
             connection,

@@ -9,4 +9,4 @@ vmnl = { path = "../../crates/vmnl" }
 
 [target.'cfg(target_os = "linux")'.dev-dependencies]
 glfw = { workspace = true }
-x11rb = { version = "0.13.2", features = ["xtest"] }
+x11rb = { version = "0.13.2", features = ["xtest", "xkb"] }
