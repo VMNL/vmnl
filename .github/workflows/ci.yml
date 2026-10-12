@@ -195,7 +195,8 @@ jobs:
                   keyboard.remove(binding)
           tree.write('target/openbox-input.xml', encoding='utf-8', xml_declaration=True)
           PY
-          openbox --config-file target/openbox-input.xml >target/openbox.log 2>&1 &
+          # Openbox changes cwd to the home directory before loading this file.
+          openbox --config-file "$GITHUB_WORKSPACE/target/openbox-input.xml" >target/openbox.log 2>&1 &
           openbox_pid=$!
           trap 'kill "$openbox_pid" "$xvfb_pid" 2>/dev/null || true' EXIT
           for _ in {1..40}; do

@@ -141,7 +141,8 @@ uses side-specific virtual keys, preserving the fixed physical scancode while ma
 key state visible to GLFW's stuck-Shift repair. Num Lock uses `VK_NUMLOCK` with the extended
 physical scancode so the injection updates the OS toggle state as well as generating callbacks.
 The CI X11 profile removes only the distro's bare Print shortcut from a temporary Openbox
-configuration, retaining that configuration as an artifact. Otherwise its screenshot grab prevents
+configuration passed by absolute path because Openbox changes its working directory during startup,
+retaining that configuration as an artifact. Otherwise its screenshot grab prevents
 PrintScreen from reaching GLFW. Local X11 qualification requires the same absence of a Print grab.
 Each case checks exact ordered identity/scancodes, final released states, focus, and a completion
 marker before a 100 ms settling interval rejects extra callbacks. Readiness and event observation
