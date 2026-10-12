@@ -181,7 +181,21 @@ jobs:
             sleep 0.25
           done
           xdpyinfo -display "$DISPLAY" >/dev/null
-          openbox >target/openbox.log 2>&1 &
+          # The distro Print binding grabs the physical key before GLFW receives it.
+          # Remove only this binding in a temporary config; retain the input fixture.
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('/etc/xdg/openbox/rc.xml')
+          ns = {'ob': 'http://openbox.org/3.4/rc'}
+          keyboard = tree.find('ob:keyboard', ns)
+          assert keyboard is not None
+          for binding in list(keyboard):
+              if binding.tag == '{http://openbox.org/3.4/rc}keybind' and binding.get('key') == 'Print':
+                  print('Removing Openbox binding:', ET.tostring(binding, encoding='unicode'))
+                  keyboard.remove(binding)
+          tree.write('target/openbox-input.xml', encoding='utf-8', xml_declaration=True)
+          PY
+          openbox --config-file target/openbox-input.xml >target/openbox.log 2>&1 &
           openbox_pid=$!
           trap 'kill "$openbox_pid" "$xvfb_pid" 2>/dev/null || true' EXIT
           for _ in {1..40}; do
@@ -216,6 +230,7 @@ jobs:
             target/weston.log
             target/xvfb.log
             target/openbox.log
+            target/openbox-input.xml
           if-no-files-found: error
       - name: Upload experimental platform records
         if: always() && runner.os != 'Linux'

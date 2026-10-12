@@ -4,6 +4,9 @@
 //! Native event posting with bounded holds and release-on-error cleanup.
 
 use serde_json::Value;
+#[cfg(target_os = "windows")]
+#[path = "../../src/win32_input.rs"]
+mod win32_input;
 use std::{
     path::Path,
     time::{Duration, Instant},
@@ -152,7 +155,7 @@ fn post(action: &Value) -> Result<(), String> {
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
         SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, INPUT_MOUSE, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY,
         KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE, KEYEVENTF_UNICODE, MOUSEEVENTF_LEFTDOWN,
-        MOUSEEVENTF_LEFTUP, MOUSEINPUT, VK_LSHIFT, VK_RSHIFT,
+        MOUSEEVENTF_LEFTUP, MOUSEINPUT,
     };
     let code = action["code"]
         .as_u64()
@@ -176,13 +179,12 @@ fn post(action: &Value) -> Result<(), String> {
     } else {
         let unicode = action["kind"] == "text";
         let pause = action["pause"] == true;
-        // Scan-only right Shift can leave VK_RSHIFT clear even while GLFW reports its key
-        // press. Use the side-specific virtual key so GLFW's stuck-Shift repair cannot
-        // release it before the mouse callbacks. Other physical keys keep scan-code injection.
-        let shift = !unicode && matches!(code, 0x2a | 0x36);
+        // Scan-only injection can leave right Shift's side state and Num Lock's toggle
+        // state unchanged even when GLFW receives the corresponding key callbacks.
+        let virtual_key = (!unicode).then(|| win32_input::virtual_key(code)).flatten();
         let flags = if unicode {
             KEYEVENTF_UNICODE
-        } else if pause || shift {
+        } else if pause || virtual_key.is_some() {
             0
         } else {
             KEYEVENTF_SCANCODE
@@ -197,14 +199,8 @@ fn post(action: &Value) -> Result<(), String> {
                 ki: KEYBDINPUT {
                     wVk: if pause {
                         0x13
-                    } else if shift {
-                        if code == 0x2a {
-                            VK_LSHIFT
-                        } else {
-                            VK_RSHIFT
-                        }
                     } else {
-                        0
+                        virtual_key.unwrap_or(0)
                     },
                     wScan: if unicode { code } else { code & 0xff },
                     dwFlags: flags,

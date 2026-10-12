@@ -414,6 +414,18 @@ fn modified_mouse_target_avoids_known_linux_window_management_grabs() {
 mod input_profile;
 
 #[test]
+fn win32_stateful_keys_use_their_virtual_key_and_preserve_keypad_identity() {
+    assert_eq!(win32_input::virtual_key(0x2a), Some(0xa0));
+    assert_eq!(win32_input::virtual_key(0x36), Some(0xa1));
+    assert_eq!(win32_input::virtual_key(0x145), Some(0x90));
+    assert_eq!(win32_input::virtual_key(0x45), None);
+    assert_eq!(win32_input::virtual_key(0x1e), None);
+}
+
+#[path = "../src/win32_input.rs"]
+mod win32_input;
+
+#[test]
 #[cfg(target_os = "linux")]
 fn absent_physical_key_name_cannot_match_an_unnamed_xkb_keycode() {
     let world = *input_keys::KEYS

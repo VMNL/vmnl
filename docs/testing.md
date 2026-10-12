@@ -138,7 +138,11 @@ Modified-button cases acknowledge both mouse callbacks before releasing modifier
 Win32 keyboard/mouse message scheduling from ending the modifier hold prematurely. Their getter
 snapshot must show modifiers pressed and the target button released before cleanup. Win32 Shift
 uses side-specific virtual keys, preserving the fixed physical scancode while making the side's
-key state visible to GLFW's stuck-Shift repair.
+key state visible to GLFW's stuck-Shift repair. Num Lock uses `VK_NUMLOCK` with the extended
+physical scancode so the injection updates the OS toggle state as well as generating callbacks.
+The CI X11 profile removes only the distro's bare Print shortcut from a temporary Openbox
+configuration, retaining that configuration as an artifact. Otherwise its screenshot grab prevents
+PrintScreen from reaching GLFW. Local X11 qualification requires the same absence of a Print grab.
 Each case checks exact ordered identity/scancodes, final released states, focus, and a completion
 marker before a 100 ms settling interval rejects extra callbacks. Readiness and event observation
 are bounded by five seconds, with a seven-second parent-process watchdog. Injector errors retain
