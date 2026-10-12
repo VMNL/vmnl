@@ -180,8 +180,12 @@ re-entry uses the client's confirmed screen-space center rather than a sampled d
 Win32 bare Win-key release can open Start and remove focus; these keys are explicitly excluded
 from this profile. Cocoa Caps Lock and lock-modifier restoration remain not yet qualified.
 Any mapped key that fails delivery, focus, event order, or cleanup fails the test rather than being
-reclassified as unsupported. Schema-2 runtime results require a new qualified display execution;
-headless oracle tests and compilation are not native evidence. VMNL batch-transition and
+reclassified as unsupported. [CI run #38206068512](https://github.com/VMNL/vmnl/actions/runs/38206068512)
+at `32f8b3e` retained 161/161 extended X11 cases, 161/161 nested-Wayland cases, 142/142 Win32 cases,
+and 152/152 Cocoa cases, with no error records. These totals match each eligibility manifest and
+include respectively 118, 118, 116, and 110 named-key cases. Exclusions are not passes, and the
+Win32/Cocoa probes remain experimental until the ten-run threshold is met.
+Headless oracle tests and compilation are not native evidence. VMNL batch-transition and
 `Window::poll_events()` runtime qualification remain in stage 5.
 
 ## Continuous Integration
@@ -252,7 +256,9 @@ in run #38082851338. Scroll injections on Win32 and Cocoa are separated by 100 m
 process each message before the next reversal. Pointer-motion probes discard callbacks that report
 no coordinate change. Cocoa scroll injection uses pixel deltas and matches the variadic Core
 Graphics signature and axis count; all four directions passed in run #38109958980. Additional
-modifier combinations, text, repeat, and public VMNL runtime cases remain unqualified.
+modifier combinations, eligible text, Linux repeat, and focus loss passed in the schema-2 run
+recorded above. Cocoa lock restoration, Win32/Cocoa hardware repeat, Linux text scalars absent from
+the active map, and public VMNL runtime remain unqualified or non-injectable as recorded per case.
 
 The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
 platform, architecture, and installer-script hash, and the installer still verifies every restored

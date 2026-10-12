@@ -9,11 +9,23 @@
 - Mobile and Web are outside the VMNL scope.
 - Platform support applies only to the domains and backends explicitly exercised on that platform.
 
-The stage-3 schema-2 input expansion is implemented but has no qualified native run recorded yet.
-It adds per-key eligibility, modifier/button combinations, text, Linux bounded repeat, and held-input
-focus-loss cases. The earlier CI evidence in the table applies to schema 1; Windows/macOS need a
-new ten-run sequence. See [extended native cases](testing.md#extended-native-cases-issue-91-stage-3)
-for profile exclusions and runtime requirements. Public VMNL/Vulkan execution remains outstanding.
+The stage-3 schema-2 input expansion passed every eligible native case in
+[CI run #38206068512](https://github.com/VMNL/vmnl/actions/runs/38206068512) at `32f8b3e`:
+
+| Backend | Passed named-key cases | Passed extended cases, including keys |
+| --- | --- | --- |
+| X11 | 118 | 161 |
+| Nested Weston Wayland | 118 | 161 |
+| Win32 | 116 | 142 |
+| Cocoa | 110 | 152 |
+
+Each eligibility manifest lists all 120 named keys and records excluded cases with their reasons;
+excluded inputs are not passes. These results cover modifier/button combinations, eligible text,
+Linux bounded repeat, and held-input focus loss through GLFW. Windows/macOS remain experimental
+pending ten consecutive qualified runs of the current injector, schema, workload, and runner image.
+Earlier CI links in the matrix below cover the schema-1 operations. See
+[extended native cases](testing.md#extended-native-cases-issue-91-stage-3) for the exact profile limits.
+Public VMNL/Vulkan execution remains outstanding.
 
 ## Validation Matrix
 
