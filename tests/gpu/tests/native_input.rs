@@ -9,7 +9,12 @@
 #[path = "../src/native_input_keys.rs"]
 mod native_input_keys;
 
+#[path = "../src/native_input_report.rs"]
+mod native_input_report;
+
 use native_input_keys::physical_a_keycode;
+use native_input_report::InputTestReport;
+use std::panic::{catch_unwind, resume_unwind, AssertUnwindSafe};
 use std::time::{Duration, Instant};
 use vmnl::{
     common::Rgba, Context, Event, EventKind, Key, MouseButton, VMNLError, VMNLErrorKind,
@@ -32,218 +37,294 @@ const BUTTON_SCROLL_NEGATIVE_X: u8 = 7;
 #[test]
 #[ignore = "requires Vulkan, an X11 EWMH display, XTEST, and injects native keyboard/mouse input"]
 fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()> {
+    let mut report = InputTestReport::default();
+    report.plan("Environment", "X11 / Vulkan / XTEST", &["Readiness"]);
+    report.plan(
+        "Keyboard",
+        "A",
+        &[
+            "Press",
+            "Scancode",
+            "Press input states",
+            "Release",
+            "Release input states",
+        ],
+    );
+    for (_, button) in MOUSE_BUTTON_MAPPINGS {
+        report.plan("Mouse", &format!("{button:?}"), MOUSE_BUTTON_CHECKS);
+    }
+    report.plan("Mouse", "Pointer", &["Movement", "Position"]);
+    report.plan(
+        "Mouse",
+        "Scroll",
+        &["Vertical +", "Vertical -", "Horizontal +", "Horizontal -"],
+    );
+
+    // Keep the report visible after both returned errors and unwinding assertions.
+    let outcome = catch_unwind(AssertUnwindSafe(|| run_input_scenario(&mut report)));
+    eprintln!("{}", report.render());
+    match outcome {
+        Ok(result) => result.and_then(|()| {
+            if report.is_complete() {
+                Ok(())
+            } else {
+                Err(invalid_state("public input report is incomplete"))
+            }
+        }),
+        Err(payload) => resume_unwind(payload),
+    }
+}
+
+const MOUSE_BUTTON_CHECKS: &[&str] = &[
+    "Press",
+    "Press input states",
+    "Release",
+    "Release input states",
+];
+const MOUSE_BUTTON_MAPPINGS: [(u8, MouseButton); 8] = [
+    (BUTTON_LEFT, MouseButton::Left),
+    (2, MouseButton::Middle),
+    (3, MouseButton::Right),
+    (8, MouseButton::Button4),
+    (9, MouseButton::Button5),
+    (10, MouseButton::Button6),
+    (11, MouseButton::Button7),
+    (12, MouseButton::Button8),
+];
+
+fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
     let _guard = gpu_test_guard();
-    glfw::init_hint(glfw::InitHint::Platform(glfw::Platform::X11));
+    let (_context, mut window, mut injector, initial_cursor_position) = report.run(
+        "Environment",
+        "X11 / Vulkan / XTEST",
+        "Readiness",
+        || -> VMNLResult<_> {
+            glfw::init_hint(glfw::InitHint::Platform(glfw::Platform::X11));
 
-    let context = Context::new()?;
-    let mut window = Window::builder()
-        .title("VMNL public native input test")
-        .size(480, 320)
-        .set_clear_color(Rgba::rgb(12, 24, 48))
-        .build(&context)?;
-    window.enable_keyboard_polling();
-    window.enable_mouse_polling();
-    window.show();
-    // Xwayland may not expose the window to the compositor until its first buffer is presented.
-    window.render().submit()?;
-    window.focus();
-    window.set_cursor_position(120.0, 100.0)?;
+            let context = Context::new()?;
+            let mut window = Window::builder()
+                .title("VMNL public native input test")
+                .size(480, 320)
+                .set_clear_color(Rgba::rgb(12, 24, 48))
+                .build(&context)?;
+            window.enable_keyboard_polling();
+            window.enable_mouse_polling();
+            window.show();
+            // Xwayland may not expose the window to the compositor until its first buffer is presented.
+            window.render().submit()?;
+            window.focus();
+            window.set_cursor_position(120.0, 100.0)?;
 
-    let focus_deadline = Instant::now() + INPUT_TIMEOUT;
-    while !window.is_focused() && Instant::now() < focus_deadline {
-        let _ = window.poll_events();
-        window.wait_events_timeout(0.02);
+            let focus_deadline = Instant::now() + INPUT_TIMEOUT;
+            while !window.is_focused() && Instant::now() < focus_deadline {
+                let _ = window.poll_events();
+                window.wait_events_timeout(0.02);
+            }
+            assert!(
+                window.is_focused(),
+                "VMNL input window did not acquire X11 focus"
+            );
+            let _ = window.poll_events();
+            assert!(!window.input().keyboard().is_down(Key::A));
+            assert!(!window.input().mouse().is_down(MouseButton::Left));
+
+            window.set_cursor_position(120.0, 100.0)?;
+            let hover_deadline = Instant::now() + INPUT_TIMEOUT;
+            while !window.is_cursor_hovered() && Instant::now() < hover_deadline {
+                let _ = window.poll_events();
+                window.wait_events_timeout(0.02);
+            }
+            assert!(
+                window.is_cursor_hovered(),
+                "VMNL input window is not hovered"
+            );
+            let _ = window.poll_events();
+            let initial_cursor_position = window.get_cursor_position();
+
+            let injector = X11Injector::connect().map_err(invalid_state)?;
+            Ok((context, window, injector, initial_cursor_position))
+        },
+    )?;
+
+    for (server_button, button) in MOUSE_BUTTON_MAPPINGS {
+        if server_button > injector.maximum_server_button {
+            let reason = format!(
+                "X11 server button {server_button} exceeds pointer mapping limit {}",
+                injector.maximum_server_button,
+            );
+            for check in MOUSE_BUTTON_CHECKS {
+                report.exclude("Mouse", &format!("{button:?}"), check, &reason);
+            }
+        }
     }
-    assert!(
-        window.is_focused(),
-        "VMNL input window did not acquire X11 focus"
-    );
-    let _ = window.poll_events();
-    assert!(!window.input().keyboard().is_down(Key::A));
-    assert!(!window.input().mouse().is_down(MouseButton::Left));
 
-    window.set_cursor_position(120.0, 100.0)?;
-    let hover_deadline = Instant::now() + INPUT_TIMEOUT;
-    while !window.is_cursor_hovered() && Instant::now() < hover_deadline {
-        let _ = window.poll_events();
-        window.wait_events_timeout(0.02);
-    }
-    assert!(
-        window.is_cursor_hovered(),
-        "VMNL input window is not hovered"
-    );
-    let _ = window.poll_events();
-    let initial_cursor_position = window.get_cursor_position();
-
-    let mut injector = X11Injector::connect().map_err(invalid_state)?;
-    injector.move_pointer_by(6, 4).map_err(invalid_state)?;
     let expected_cursor_position = (
         initial_cursor_position.0 + 6.0,
         initial_cursor_position.1 + 4.0,
     );
-    let cursor_events = poll_until(&mut window, "cursor movement", |kind| {
-        matches!(
-            kind,
-            EventKind::MouseMoved { x, y }
-                if (*x - expected_cursor_position.0).abs() <= 0.01
-                    && (*y - expected_cursor_position.1).abs() <= 0.01
-        )
+    report.run("Mouse", "Pointer", "Movement", || -> VMNLResult<()> {
+        injector.move_pointer_by(6, 4).map_err(invalid_state)?;
+        let cursor_events = poll_until(&mut window, "cursor movement", |kind| {
+            matches!(
+                kind,
+                EventKind::MouseMoved { x, y }
+                    if (*x - expected_cursor_position.0).abs() <= 0.01
+                        && (*y - expected_cursor_position.1).abs() <= 0.01
+            )
+        })?;
+        assert!(cursor_events.iter().any(|event| {
+            matches!(
+                event.kind(),
+                EventKind::MouseMoved { x, y }
+                    if (*x - expected_cursor_position.0).abs() <= 0.01
+                        && (*y - expected_cursor_position.1).abs() <= 0.01
+            )
+        }));
+        Ok(())
     })?;
-    assert!(cursor_events.iter().any(|event| {
-        matches!(
-            event.kind(),
-            EventKind::MouseMoved { x, y }
-                if (*x - expected_cursor_position.0).abs() <= 0.01
-                    && (*y - expected_cursor_position.1).abs() <= 0.01
-        )
-    }));
-    let cursor_position = window.get_cursor_position();
-    assert!((cursor_position.0 - expected_cursor_position.0).abs() <= 0.01);
-    assert!((cursor_position.1 - expected_cursor_position.1).abs() <= 0.01);
-
-    injector.press_key_a().map_err(invalid_state)?;
-    let key_press_events = poll_until(&mut window, "A key press", |kind| {
-        matches!(
-            kind,
-            EventKind::KeyPressed {
-                key: Key::A,
-                repeat: false,
-                ..
-            }
-        )
+    report.run("Mouse", "Pointer", "Position", || -> VMNLResult<()> {
+        let cursor_position = window.get_cursor_position();
+        assert!((cursor_position.0 - expected_cursor_position.0).abs() <= 0.01);
+        assert!((cursor_position.1 - expected_cursor_position.1).abs() <= 0.01);
+        Ok(())
     })?;
-    let key_scancode = assert_key_press(&key_press_events)?;
-    assert_eq!(key_scancode, i32::from(injector.a_keycode));
-    assert!(window.input().keyboard().is_down(Key::A));
-    assert!(window.input().keyboard().is_pressed(Key::A));
-    assert!(!window.input().keyboard().is_released(Key::A));
 
-    injector.release_key_a().map_err(invalid_state)?;
-    let key_release_events = poll_until(&mut window, "A key release", |kind| {
-        matches!(kind, EventKind::KeyReleased { key: Key::A, .. })
+    let key_scancode = report.run("Keyboard", "A", "Press", || {
+        injector.press_key_a().map_err(invalid_state)?;
+        let events = poll_until(&mut window, "A key press", |kind| {
+            matches!(
+                kind,
+                EventKind::KeyPressed {
+                    key: Key::A,
+                    repeat: false,
+                    ..
+                }
+            )
+        })?;
+        assert_key_press(&events)
     })?;
-    assert_key_release(&key_release_events, key_scancode)?;
-    assert!(!window.input().keyboard().is_down(Key::A));
-    assert!(!window.input().keyboard().is_pressed(Key::A));
-    assert!(window.input().keyboard().is_released(Key::A));
-
-    injector.press_left_button().map_err(invalid_state)?;
-    let mouse_press_events = poll_until(&mut window, "left mouse button press", |kind| {
-        matches!(
-            kind,
-            EventKind::MouseButtonPressed {
-                button: MouseButton::Left,
-                ..
-            }
-        )
+    report.run("Keyboard", "A", "Scancode", || -> VMNLResult<()> {
+        assert_eq!(key_scancode, i32::from(injector.a_keycode));
+        Ok(())
     })?;
-    assert_mouse_button_event(&mouse_press_events, MouseButton::Left, true)?;
-    assert!(window.input().mouse().is_down(MouseButton::Left));
-    assert!(window.input().mouse().is_pressed(MouseButton::Left));
-    assert!(!window.input().mouse().is_released(MouseButton::Left));
-
-    injector.release_left_button().map_err(invalid_state)?;
-    let mouse_release_events = poll_until(&mut window, "left mouse button release", |kind| {
-        matches!(
-            kind,
-            EventKind::MouseButtonReleased {
-                button: MouseButton::Left,
-                ..
-            }
-        )
+    report.run(
+        "Keyboard",
+        "A",
+        "Press input states",
+        || -> VMNLResult<()> {
+            assert!(window.input().keyboard().is_down(Key::A));
+            assert!(window.input().keyboard().is_pressed(Key::A));
+            assert!(!window.input().keyboard().is_released(Key::A));
+            Ok(())
+        },
+    )?;
+    report.run("Keyboard", "A", "Release", || {
+        injector.release_key_a().map_err(invalid_state)?;
+        let events = poll_until(&mut window, "A key release", |kind| {
+            matches!(kind, EventKind::KeyReleased { key: Key::A, .. })
+        })?;
+        assert_key_release(&events, key_scancode)
     })?;
-    assert_mouse_button_event(&mouse_release_events, MouseButton::Left, false)?;
-    assert!(!window.input().mouse().is_down(MouseButton::Left));
-    assert!(!window.input().mouse().is_pressed(MouseButton::Left));
-    assert!(window.input().mouse().is_released(MouseButton::Left));
+    report.run(
+        "Keyboard",
+        "A",
+        "Release input states",
+        || -> VMNLResult<()> {
+            assert!(!window.input().keyboard().is_down(Key::A));
+            assert!(!window.input().keyboard().is_pressed(Key::A));
+            assert!(window.input().keyboard().is_released(Key::A));
+            Ok(())
+        },
+    )?;
 
-    let button_mappings = [
-        (2, MouseButton::Middle),
-        (3, MouseButton::Right),
-        (8, MouseButton::Button4),
-        (9, MouseButton::Button5),
-        (10, MouseButton::Button6),
-        (11, MouseButton::Button7),
-        (12, MouseButton::Button8),
-    ];
-    let unsupported: Vec<_> = button_mappings
-        .iter()
-        .filter(|(x11_button, _)| *x11_button > injector.maximum_server_button)
-        .map(|(x11_button, vmnl_button)| (*x11_button, *vmnl_button))
-        .collect();
-    eprintln!(
-        "X11 pointer mapping supports server buttons 1 through {}; unsupported VMNL buttons are not injected: {unsupported:?}",
-        injector.maximum_server_button
-    );
     let maximum_server_button = injector.maximum_server_button;
-
-    for (x11_button, vmnl_button) in button_mappings
+    for (server_button, button) in MOUSE_BUTTON_MAPPINGS
         .into_iter()
-        .filter(|(x11_button, _)| *x11_button <= maximum_server_button)
+        .filter(|(server_button, _)| *server_button <= maximum_server_button)
     {
-        let name = format!("{vmnl_button:?}");
-        injector
-            .press_mouse_button(x11_button)
-            .map_err(invalid_state)?;
-        let press_events = poll_until(
-            &mut window,
-            &format!("{name} mouse button press"),
-            |kind| matches!(kind, EventKind::MouseButtonPressed { button, .. } if *button == vmnl_button),
+        let name = format!("{button:?}");
+        report.run("Mouse", &name, "Press", || {
+            injector.press_mouse_button(server_button).map_err(invalid_state)?;
+            let events = poll_until(
+                &mut window,
+                &format!("{name} mouse button press"),
+                |kind| matches!(kind, EventKind::MouseButtonPressed { button: observed, .. } if *observed == button),
+            )?;
+            assert_mouse_button_event(&events, button, true)
+        })?;
+        report.run(
+            "Mouse",
+            &name,
+            "Press input states",
+            || -> VMNLResult<()> {
+                assert!(window.input().mouse().is_down(button));
+                assert!(window.input().mouse().is_pressed(button));
+                assert!(!window.input().mouse().is_released(button));
+                Ok(())
+            },
         )?;
-        assert_mouse_button_event(&press_events, vmnl_button, true)?;
-        assert!(window.input().mouse().is_down(vmnl_button));
-        assert!(window.input().mouse().is_pressed(vmnl_button));
-        assert!(!window.input().mouse().is_released(vmnl_button));
-
-        injector
-            .release_mouse_button(x11_button)
-            .map_err(invalid_state)?;
-        let release_events = poll_until(
-            &mut window,
-            &format!("{name} mouse button release"),
-            |kind| matches!(kind, EventKind::MouseButtonReleased { button, .. } if *button == vmnl_button),
+        report.run("Mouse", &name, "Release", || {
+            injector.release_mouse_button(server_button).map_err(invalid_state)?;
+            let events = poll_until(
+                &mut window,
+                &format!("{name} mouse button release"),
+                |kind| matches!(kind, EventKind::MouseButtonReleased { button: observed, .. } if *observed == button),
+            )?;
+            assert_mouse_button_event(&events, button, false)
+        })?;
+        report.run(
+            "Mouse",
+            &name,
+            "Release input states",
+            || -> VMNLResult<()> {
+                assert!(!window.input().mouse().is_down(button));
+                assert!(!window.input().mouse().is_pressed(button));
+                assert!(window.input().mouse().is_released(button));
+                Ok(())
+            },
         )?;
-        assert_mouse_button_event(&release_events, vmnl_button, false)?;
-        assert!(!window.input().mouse().is_down(vmnl_button));
-        assert!(!window.input().mouse().is_pressed(vmnl_button));
-        assert!(window.input().mouse().is_released(vmnl_button));
     }
 
-    injector.scroll_vertical_up().map_err(invalid_state)?;
-    let scroll_up_events = poll_until(
-        &mut window,
-        "vertical scroll up",
-        |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 0.0 && *dy == 1.0),
-    )?;
-    assert_mouse_scroll_event(&scroll_up_events, 0.0, 1.0)?;
-
-    injector.scroll_vertical_down().map_err(invalid_state)?;
-    let scroll_down_events = poll_until(
-        &mut window,
-        "vertical scroll down",
-        |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 0.0 && *dy == -1.0),
-    )?;
-    assert_mouse_scroll_event(&scroll_down_events, 0.0, -1.0)?;
-
-    injector
-        .scroll_horizontal_positive()
-        .map_err(invalid_state)?;
-    let scroll_right_events = poll_until(
-        &mut window,
-        "positive horizontal scroll",
-        |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 1.0 && *dy == 0.0),
-    )?;
-    assert_mouse_scroll_event(&scroll_right_events, 1.0, 0.0)?;
-
-    injector
-        .scroll_horizontal_negative()
-        .map_err(invalid_state)?;
-    let scroll_left_events = poll_until(
-        &mut window,
-        "negative horizontal scroll",
-        |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == -1.0 && *dy == 0.0),
-    )?;
-    assert_mouse_scroll_event(&scroll_left_events, -1.0, 0.0)?;
+    report.run("Mouse", "Scroll", "Vertical +", || {
+        injector.scroll_vertical_up().map_err(invalid_state)?;
+        let events = poll_until(
+            &mut window,
+            "vertical scroll up",
+            |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 0.0 && *dy == 1.0),
+        )?;
+        assert_mouse_scroll_event(&events, 0.0, 1.0)
+    })?;
+    report.run("Mouse", "Scroll", "Vertical -", || {
+        injector.scroll_vertical_down().map_err(invalid_state)?;
+        let events = poll_until(
+            &mut window,
+            "vertical scroll down",
+            |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 0.0 && *dy == -1.0),
+        )?;
+        assert_mouse_scroll_event(&events, 0.0, -1.0)
+    })?;
+    report.run("Mouse", "Scroll", "Horizontal +", || {
+        injector
+            .scroll_horizontal_positive()
+            .map_err(invalid_state)?;
+        let events = poll_until(
+            &mut window,
+            "positive horizontal scroll",
+            |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 1.0 && *dy == 0.0),
+        )?;
+        assert_mouse_scroll_event(&events, 1.0, 0.0)
+    })?;
+    report.run("Mouse", "Scroll", "Horizontal -", || {
+        injector
+            .scroll_horizontal_negative()
+            .map_err(invalid_state)?;
+        let events = poll_until(
+            &mut window,
+            "negative horizontal scroll",
+            |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == -1.0 && *dy == 0.0),
+        )?;
+        assert_mouse_scroll_event(&events, -1.0, 0.0)
+    })?;
 
     Ok(())
 }
@@ -448,14 +529,6 @@ impl X11Injector {
         self.fake_input(KEY_RELEASE, self.a_keycode, "A key release")?;
         self.key_is_down = false;
         Ok(())
-    }
-
-    fn press_left_button(&mut self) -> Result<(), String> {
-        self.press_mouse_button(BUTTON_LEFT)
-    }
-
-    fn release_left_button(&mut self) -> Result<(), String> {
-        self.release_mouse_button(BUTTON_LEFT)
     }
 
     fn press_mouse_button(&mut self, button: u8) -> Result<(), String> {

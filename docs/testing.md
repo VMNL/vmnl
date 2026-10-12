@@ -103,6 +103,18 @@ server buttons, so GLFW `Button7` and `Button8` are not qualified there:
 just input-test-vmnl x11
 ```
 
+The terminal report groups checks under `Keyboard` (one block per key) and `Mouse` (one block
+per button, plus pointer and scroll). `Press` and `Release` verify event delivery and metadata;
+their separate `input states` checks verify `is_down`, `is_pressed` and `is_released`.
+`Scancode` compares physical A with its independently resolved XKB keycode.
+Each check reports `PASS`, `FAIL` with its diagnostic, `EXCLUDED` with the X11 mapping reason,
+or `NOT RUN` when an earlier failure stopped execution. The summary counts checks, including
+environment readiness, rather than distinct input devices or keys; exclusions and unexecuted
+checks never count as passes. Returned errors and assertion panics print the report and retain
+the failing exit status; an incomplete report also fails the command. The reporter accepts
+additional key blocks without expanding the
+current scenario's coverage. Its formatting and failure accounting are tested without a display.
+
 This requires the X11 prerequisites above, XTEST, and a Vulkan-capable GPU with a Vulkan loader.
 The scenario presents a first frame before requesting focus so an Xwayland window has a buffer
 the compositor can display. It resolves physical A from the XKB `AC01` name, not from the A keysym,
