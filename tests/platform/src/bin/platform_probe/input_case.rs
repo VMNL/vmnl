@@ -125,6 +125,24 @@ pub(super) fn run(
                 observed.push(item);
             }
         }
+        if spec["target_ack"] == true
+            && observed
+                .iter()
+                .filter(|e| {
+                    e["kind"] == "mouse"
+                        && e["button"] == spec["mouse_button"]
+                        && matches!(e["action"].as_str(), Some("Press" | "Release"))
+                })
+                .count()
+                >= 2
+        {
+            if let Err(error) = fs::write(
+                std::path::Path::new(&ready).with_extension("target"),
+                b"TARGET\n",
+            ) {
+                return failure("handshake", &error);
+            }
+        }
         if spec["family"] == "focus-loss" && !minimized && observed.len() >= 2 {
             pressed_snapshot = states(window, &spec);
             window.iconify();

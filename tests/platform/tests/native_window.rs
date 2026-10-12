@@ -412,3 +412,59 @@ fn modified_mouse_target_avoids_known_linux_window_management_grabs() {
 
 #[path = "../src/input_profile.rs"]
 mod input_profile;
+
+#[test]
+#[cfg(target_os = "linux")]
+fn absent_physical_key_name_cannot_match_an_unnamed_xkb_keycode() {
+    let world = *input_keys::KEYS
+        .iter()
+        .find(|m| m.key == glfw::Key::World2)
+        .expect("World2 fixture");
+    let names = vec![(String::new(), 8), ("LSGT".to_owned(), 94)];
+    assert_eq!(input_keys::linux_key(world, "x11", &names), None);
+    assert_eq!(
+        input_keys::linux_key(world, "wayland", &names),
+        Some((94, 86))
+    );
+}
+
+#[test]
+fn modifier_release_waits_for_acknowledged_mouse_callbacks() {
+    use serde_json::json;
+    let ready = std::env::temp_dir().join(format!("vmnl-target-ack-test-{}", std::process::id()));
+    let marker = ready.with_extension("target");
+    let spec = json!({"actions":[
+        {"kind":"key","code":54,"down":true},
+        {"kind":"mouse","code":1,"down":true},
+        {"kind":"mouse","code":1,"down":false},
+        {"kind":"target-wait"},
+        {"kind":"key","code":54,"down":false}
+    ]});
+    let mut ack_writer = None;
+    let mut release_after_ack = false;
+    let result = input_injection::inject_with(&spec, &ready, |action| {
+        if action["kind"] == "mouse" && action["down"] == false {
+            let path = marker.clone();
+            ack_writer = Some(std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_millis(30));
+                std::fs::write(path, b"TARGET\n")
+            }));
+        }
+        if action["kind"] == "key" && action["down"] == false {
+            release_after_ack = marker.exists();
+        }
+        Ok(())
+    });
+    ack_writer
+        .expect("observer started")
+        .join()
+        .expect("observer joined")
+        .expect("target acknowledgement");
+    let _ = std::fs::remove_file(marker);
+    let _ = std::fs::remove_file(ready.with_extension("done"));
+    assert!(result.is_ok());
+    assert!(
+        release_after_ack,
+        "modifier released before mouse acknowledgement"
+    );
+}

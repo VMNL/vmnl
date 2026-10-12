@@ -209,7 +209,7 @@ fn modifier_cases(
             down["code"] = json!(8);
             up["code"] = json!(8);
         }
-        actions.extend([down, up]);
+        actions.extend([down, up, json!({"kind":"target-wait"})]);
         let mut down = mouse_event("Press", mask);
         let mut up = mouse_event("Release", mask);
         down["button"] = json!(button);
@@ -229,6 +229,7 @@ fn modifier_cases(
             true,
         );
         spec["mouse_button"] = json!(button);
+        spec["target_ack"] = json!(true);
         cases.push(spec);
     }
 }

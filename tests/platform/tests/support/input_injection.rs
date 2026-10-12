@@ -42,13 +42,21 @@ pub(crate) fn inject_with(
                 Some("wait") => std::thread::sleep(Duration::from_millis(
                     action["ms"].as_u64().ok_or("hold duration missing")?,
                 )),
-                Some("focus-wait") => {
+                Some("focus-wait" | "target-wait") => {
+                    let (extension, expected) = if action["kind"] == "target-wait" {
+                        ("target", "TARGET\n")
+                    } else {
+                        ("observed", "OBSERVED\n")
+                    };
                     let deadline = Instant::now() + Duration::from_secs(5);
-                    while !std::fs::read_to_string(ready.with_extension("observed"))
-                        .is_ok_and(|v| v == "OBSERVED\n")
+                    while !std::fs::read_to_string(ready.with_extension(extension))
+                        .is_ok_and(|v| v == expected)
                     {
                         if Instant::now() >= deadline {
-                            return Err("focus loss not observed before deadline".to_owned());
+                            return Err(format!(
+                                "{} not acknowledged before deadline",
+                                action["kind"]
+                            ));
                         }
                         std::thread::sleep(Duration::from_millis(10));
                     }

@@ -132,6 +132,8 @@ Physical key fixtures are fixed literals audited against the bundled GLFW 3.4 ke
 resolves XKB physical names and aliases without changing the layout. Nested Wayland also requires
 the parent X11 code to match the expected evdev code plus eight. Windows posts scan codes, with
 extended-key flags and a separate Pause virtual-key path; Cocoa posts hardware key codes.
+Modified-button cases acknowledge both mouse callbacks before releasing modifiers, preventing
+Win32 keyboard/mouse message scheduling from ending the modifier hold prematurely.
 Each case checks exact ordered identity/scancodes, final released states, focus, and a completion
 marker before a 100 ms settling interval rejects extra callbacks. Readiness and event observation
 are bounded by five seconds, with a seven-second parent-process watchdog. Injector errors retain

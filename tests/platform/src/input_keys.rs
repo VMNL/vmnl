@@ -166,6 +166,9 @@ pub(crate) fn linux_key(
     } else {
         mapping.xkb
     };
+    if name.is_empty() {
+        return None;
+    }
     // Prefer the canonical physical position; a level-3 key can precede RALT in XKB order.
     let (_, code) = names.iter().find(|(n, _)| n == name).or_else(|| {
         (mapping.key == Key::RightAlt)

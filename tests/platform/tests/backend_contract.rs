@@ -199,6 +199,7 @@ fn native_input_probe(
 
         wait_for_probe(child)
     })();
+    let _ = fs::remove_file(ready_file.with_extension("target"));
     let _ = fs::remove_file(ready_file.with_extension("observed"));
     let _ = fs::remove_file(ready_file.with_extension("pointer"));
     let _ = fs::remove_file(ready_file.with_extension("done"));
