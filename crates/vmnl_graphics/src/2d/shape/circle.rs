@@ -12,23 +12,27 @@ use super::{
     Vector2f, Vertex2D,
 };
 use crate::{
-    Context, VMNLError, VMNLErrorKind, VMNLResult, common::{BufferMemoryPreference, Rgba}, d2::LineCap
+    common::{BufferMemoryPreference, Rgba},
+    d2::LineCap,
+    Context, VMNLError, VMNLErrorKind, VMNLResult,
 };
 
 #[derive(Clone, Copy, Default, Debug)]
 struct Outline {
     inner: f32,
-    outer: f32
+    outer: f32,
 }
 
 #[derive(Clone, Copy, Default, Debug)]
 struct Sector {
     start: f32,
-    sweep: f32
+    sweep: f32,
 }
 
-/// Builder to create circle-like shapes.
-pub struct CircleBuilder {
+/// Options for configuring circle shape properties such as position, radii, filling options,
+/// outlines options, sector configuration, cap style, and color.
+#[derive(Clone, Debug)]
+struct CircleOptions {
     /// Coordinates of shape's center as a `Vector2f`.
     position: Vector2f,
     /// radius of the shape.
@@ -42,7 +46,7 @@ pub struct CircleBuilder {
     /// optional struct to cut the shape in a sector with:
     /// - start: Start position in degrees, assuming 0 is the top of the virtual circle.
     /// - sweep: Length of the arc in degrees, between 1 and 360, positive visual rotation direction,
-    /// negative the opposite.
+    ///   negative the opposite.
     sector: Option<Sector>,
     /// Optional line cap style defining how the endpoints of the arc are rendered.
     /// possible values: see `LineCap`.
@@ -54,18 +58,42 @@ pub struct CircleBuilder {
     buffer_memory_preference: BufferMemoryPreference,
 }
 
-impl CircleBuilder {
-    pub(crate) const fn new(radius: f32) -> Self {
+/// Builder to create circle-like shapes.
+pub struct CircleBuilder {
+    /// Configuration options for the circle shape.
+    options: CircleOptions,
+}
+
+impl Default for CircleOptions {
+    /// Create a default `CircleOptions` instance with default values for all properties.
+    fn default() -> Self {
         Self {
             position: Vector2f { x: 0.0, y: 0.0 },
-            radii: Vector2f { x: radius, y: radius },
+            radii: Vector2f { x: 0.0, y: 0.0 },
             filled: false,
-            outline_width: Outline { inner: 0.5, outer: 0.5 },
+            outline_width: Outline {
+                inner: 0.5,
+                outer: 0.5,
+            },
             sector: Option::None,
             cap: Option::None,
             segment_count: 32,
             color: Rgba::new(255, 255, 255, 255),
-            buffer_memory_preference: BufferMemoryPreference::Device
+            buffer_memory_preference: BufferMemoryPreference::default(),
+        }
+    }
+}
+
+impl CircleBuilder {
+    pub(crate) fn new(radius: f32) -> Self {
+        Self {
+            options: CircleOptions {
+                radii: Vector2f {
+                    x: radius,
+                    y: radius,
+                },
+                ..Default::default()
+            },
         }
     }
 
@@ -76,7 +104,7 @@ impl CircleBuilder {
     /// - `y`: Y-coordinate of the center in pixel-like 2D coordinates.
     #[must_use]
     pub fn position(mut self, x: f32, y: f32) -> Self {
-        self.position = Vector2f { x, y };
+        self.options.position = Vector2f { x, y };
         self
     }
 
@@ -86,7 +114,7 @@ impl CircleBuilder {
     /// - `radius`: radius in pixel-like 2D coordinates.
     #[must_use]
     pub fn ellipse(mut self, radius: f32) -> Self {
-        self.radii.y = radius;
+        self.options.radii.y = radius;
         self
     }
 
@@ -99,7 +127,7 @@ impl CircleBuilder {
     /// - `.width`, `.inner`, `.outer`: no outline width when circle is filled, using this will delete outline settings.
     #[must_use]
     pub fn filled(mut self, filled: bool) -> Self {
-        self.filled = filled;
+        self.options.filled = filled;
         self
     }
 
@@ -110,11 +138,11 @@ impl CircleBuilder {
     ///
     /// # Incompatibility
     /// - `.filled(true)`: no outline width when circle is filled, using this will override filled
-    /// state as `filled(false)`.
+    ///   state as `filled(false)`.
     #[must_use]
     pub fn inner(mut self, w: f32) -> Self {
-        self.outline_width.inner = w;
-        self.filled = false;
+        self.options.outline_width.inner = w;
+        self.options.filled = false;
         self
     }
 
@@ -125,11 +153,11 @@ impl CircleBuilder {
     ///
     /// # Incompatibility
     /// - `.filled(true)`: no outline width when circle is filled, using this will override filled
-    /// state as `filled(false)`.
+    ///   state as `filled(false)`.
     #[must_use]
     pub fn outer(mut self, w: f32) -> Self {
-        self.outline_width.outer = w;
-        self.filled = false;
+        self.options.outline_width.outer = w;
+        self.options.filled = false;
         self
     }
 
@@ -140,11 +168,14 @@ impl CircleBuilder {
     ///
     /// # Incompatibility
     /// - `.filled(true)`: no outline width when circle is filled, using this will override filled
-    /// state as `filled(false)`.
+    ///   state as `filled(false)`.
     #[must_use]
     pub fn width(mut self, width: f32) -> Self {
-        self.outline_width = Outline {inner: width / 2.0, outer: width / 2.0};
-        self.filled = false;
+        self.options.outline_width = Outline {
+            inner: width / 2.0,
+            outer: width / 2.0,
+        };
+        self.options.filled = false;
         self
     }
 
@@ -153,10 +184,10 @@ impl CircleBuilder {
     /// # Arguments
     /// - `start`: Start position in degrees, assuming 0 is the top of the virtual circle.
     /// - `sweep`: Length of the arc in degrees, between 1 and 360, positive visual rotation direction,
-    /// negative the opposite.
+    ///   negative the opposite.
     #[must_use]
     pub fn sector(mut self, start: f32, sweep: f32) -> Self {
-        self.sector = Some(Sector { start, sweep });
+        self.options.sector = Some(Sector { start, sweep });
         self
     }
 
@@ -169,7 +200,7 @@ impl CircleBuilder {
     /// - `.sector(...)`: *MUST* be used for this to be used.
     #[must_use]
     pub fn cap(mut self, cap: LineCap) -> Self {
-        self.cap = Some(cap);
+        self.options.cap = Some(cap);
         self
     }
 
@@ -179,7 +210,7 @@ impl CircleBuilder {
     /// - `segments`: number of segments, must be strictly positive.
     #[must_use]
     pub fn segments(mut self, segments: u16) -> Self {
-        self.segment_count = segments;
+        self.options.segment_count = segments;
         self
     }
 
@@ -193,7 +224,7 @@ impl CircleBuilder {
     where
         C: Into<Rgba>,
     {
-        self.color = color.into();
+        self.options.color = color.into();
         self
     }
 
@@ -202,7 +233,7 @@ impl CircleBuilder {
     /// This is a preference, not a guarantee. Defaults to `BufferMemoryPreference::Device`.
     #[must_use]
     pub const fn buffer_memory_preference(mut self, preference: BufferMemoryPreference) -> Self {
-        self.buffer_memory_preference = preference;
+        self.options.buffer_memory_preference = preference;
         self
     }
 
@@ -229,90 +260,70 @@ impl CircleBuilder {
     /// # }
     /// ```
     pub fn build(self, context: &Context) -> VMNLResult<Shape> {
-        Self::validate_parameters(
-            self.position,
-            self.radii,
-            self.filled,
-            self.outline_width,
-            self.sector,
-            self.segment_count,
-            self.cap)?;
-        let (vertices, indices) = Self::geometry(
-            self.position,
-            self.radii,
-            self.filled,
-            self.outline_width,
-            self.sector,
-            self.cap,
-            self.segment_count,
-            self.color
-        );
+        Self::validate_parameters(&self.options)?;
+        let (vertices, indices) = Self::geometry(&self.options);
         let mut shape = IndexedShapeBuilder::indexed_shape(
             context,
             &vertices,
             &indices,
-            self.buffer_memory_preference,
+            self.options.buffer_memory_preference,
         )?;
 
-        let s = self.sector.unwrap_or_default();
+        let s = self.options.sector.unwrap_or_default();
         shape.kind = Circle;
         log::trace!(
             "creating circle: center=({}, {}), radii=({}, {}), inner_radius={}, outer_radius={}, start = {}, sweep = {}, segments={}, color=({}, {}, {}, {})",
-            self.position.x,
-            self.position.y,
-            self.radii.x,
-            self.radii.y,
-            self.outline_width.inner,
-            self.outline_width.outer,
+            self.options.position.x,
+            self.options.position.y,
+            self.options.radii.x,
+            self.options.radii.y,
+            self.options.outline_width.inner,
+            self.options.outline_width.outer,
             s.start,
             s.sweep,
-            self.segment_count,
-            self.color.r,
-            self.color.g,
-            self.color.b,
-            self.color.a
+            self.options.segment_count,
+            self.options.color.r,
+            self.options.color.g,
+            self.options.color.b,
+            self.options.color.a
         );
         Ok(shape)
     }
 
-    fn validate_parameters(
-        position: Vector2f,
-        radii: Vector2f,
-        filled: bool,
-        outline_width: Outline,
-        sector: Option<Sector>,
-        segments: u16,
-        line_cap: Option<LineCap>
-        ) -> VMNLResult<()> {
-        validate_finite(&[position.x, position.y], "circle position")?;
-        validate_finite(&[radii.x, radii.y], "circle radii")?;
-        if !filled {
-            validate_positive_finite(&[outline_width.inner, outline_width.outer], "circle outline width")?;
+    fn validate_parameters(options: &CircleOptions) -> VMNLResult<()> {
+        validate_finite(&[options.position.x, options.position.y], "circle position")?;
+        validate_positive_finite(&[options.radii.x, options.radii.y], "circle radii")?;
+        if !options.filled {
+            validate_positive_finite(
+                &[options.outline_width.inner, options.outline_width.outer],
+                "circle outline width",
+            )?;
         }
-        if !sector.is_none() {
-            let s = sector.unwrap_or_default();
+        if options.sector.is_some() {
+            let s = options.sector.unwrap_or_default();
             validate_finite(&[s.start, s.sweep], "shape sector coordinates")?;
             if s.start < 0.0 || s.start > 360.0 {
-                return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
-                    "sector's start must be between 0 and 360"
-                ))));
+                return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                    "sector's start must be between 0 and 360".to_string(),
+                )));
             }
             if s.sweep == 0.0 || s.sweep.abs() > 360.0 {
-                return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
+                return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                     "sector's sweep must be between -360 and 360, and strictly different than 0"
-                ))));
+                        .to_string(),
+                )));
             }
-            if line_cap.is_none() {
-                return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
-                    "Line Cap must be set when using Sector"
-                ))));
+            if options.cap.is_none() {
+                return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                    "Line Cap must be set when using Sector".to_string(),
+                )));
             }
-        } else if !line_cap.is_none() {
-            return Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
-                "Cannot use Line Cap when Sector is none"
-            ))));           
+        } else if options.cap.is_some() {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "Cannot use Line Cap when Sector is none".to_string(),
+            )));
         }
-        validate_positive_finite(&[segments.into()], "circle segment count")
+        validate_positive_finite(&[options.segment_count.into()], "circle segment count")
     }
 
     fn get_segment_count(
@@ -322,17 +333,14 @@ impl CircleBuilder {
         cap_segments: u16,
     ) -> (usize, usize) {
         if filled {
-            return (
-                segment_count + 2,
-                segment_count * 3,
-            );
+            return (segment_count + 2, segment_count * 3);
         }
 
         let base_vertices = (segment_count + 1) * 2;
         let base_indices = segment_count * 6;
 
         let (cap_vertices, cap_indices) = match line_cap {
-            None | Some(LineCap::Butt) | Some(LineCap::Square) => (0, 0),
+            None | Some(LineCap::Butt | LineCap::Square) => (0, 0),
 
             Some(LineCap::Round) => {
                 let cap_segments = usize::from(cap_segments);
@@ -346,20 +354,11 @@ impl CircleBuilder {
             }
         };
 
-        (
-            base_vertices + cap_vertices,
-            base_indices + cap_indices,
-        )
+        (base_vertices + cap_vertices, base_indices + cap_indices)
     }
 
-    fn apply_square_caps(
-        radii: Vector2f,
-        sector: Sector,
-        outline_width: Outline,
-        segments: u16,
-        vertices: &mut [Vertex2D],
-    ) {
-        if segments == 0 || vertices.len() < 2 {
+    fn apply_square_caps(options: &CircleOptions, sector: Sector, vertices: &mut [Vertex2D]) {
+        if options.segment_count == 0 || vertices.len() < 2 {
             return;
         }
 
@@ -367,14 +366,14 @@ impl CircleBuilder {
         let end_angle = (sector.start + sector.sweep - 90.0).to_radians();
 
         let sweep_direction = sector.sweep.signum();
-        let extension = (outline_width.outer + outline_width.inner) * 0.5;
+        let extension = (options.outline_width.outer + options.outline_width.inner) * 0.5;
 
         // Start endpoint.
         let (sin, cos) = start_angle.sin_cos();
 
         let mut start_tangent = Vector2f {
-            x: -radii.x * sin,
-            y: radii.y * cos,
+            x: -options.radii.x * sin,
+            y: options.radii.y * cos,
         }
         .normalize()
             * sweep_direction;
@@ -389,8 +388,8 @@ impl CircleBuilder {
         let (sin, cos) = end_angle.sin_cos();
 
         let end_tangent = Vector2f {
-            x: -radii.x * sin,
-            y: radii.y * cos,
+            x: -options.radii.x * sin,
+            y: options.radii.y * cos,
         }
         .normalize()
             * (sweep_direction * extension);
@@ -402,12 +401,9 @@ impl CircleBuilder {
     }
 
     fn build_round_caps(
-        position: Vector2f,
-        radii: Vector2f,
+        options: &CircleOptions,
         sector: Sector,
-        outline_width: Outline,
         cap_segments: u16,
-        color: Rgba,
         vertices: &mut Vec<Vertex2D>,
         indices: &mut Vec<u32>,
     ) {
@@ -420,8 +416,8 @@ impl CircleBuilder {
 
         let sweep_direction = sector.sweep.signum();
 
-        let radius = (outline_width.outer + outline_width.inner) * 0.5;
-        let normal_offset = (outline_width.outer - outline_width.inner) * 0.5;
+        let radius = (options.outline_width.outer + options.outline_width.inner) * 0.5;
+        let normal_offset = (options.outline_width.outer - options.outline_width.inner) * 0.5;
 
         if radius <= 0.0 {
             return;
@@ -429,71 +425,61 @@ impl CircleBuilder {
 
         // Build a round cap at each endpoint.
         for is_start in [true, false] {
-            let angle = if is_start {
-                start_angle
-            } else {
-                end_angle
-            };
+            let angle = if is_start { start_angle } else { end_angle };
 
             let (sin, cos) = angle.sin_cos();
 
             // Centerline point at the endpoint.
             let centerline = Vector2f {
-                x: position.x + radii.x * cos,
-                y: position.y + radii.y * sin,
+                x: options.position.x + options.radii.x * cos,
+                y: options.position.y + options.radii.y * sin,
             };
 
             // Outward normal of the ellipse.
             let normal = Vector2f {
-                x: cos / radii.x,
-                y: sin / radii.y,
+                x: cos / options.radii.x,
+                y: sin / options.radii.y,
             }
             .normalize();
 
             // Tangent along the sector's direction of travel.
             let tangent = Vector2f {
-                x: -radii.x * sin,
-                y: radii.y * cos,
+                x: -options.radii.x * sin,
+                y: options.radii.y * cos,
             }
             .normalize()
                 * sweep_direction;
 
             // At the start, the cap extends backward.
             // At the end, it extends forward.
-            let outward_tangent = if is_start {
-                tangent * -1.0
-            } else {
-                tangent
-            };
+            let outward_tangent = if is_start { tangent * -1.0 } else { tangent };
 
             // Shift the cap center to support asymmetric stroke widths.
             let cap_center = centerline + normal * normal_offset;
 
-            let center_index = vertices.len() as u32;
+            let center_index: u32 = vertices.len().try_into().unwrap_or_default();
 
             vertices.push(Vertex2D {
                 position: cap_center,
-                color,
+                color: options.color,
             });
 
             // Generate cap arc vertices from the inner boundary
             // to the outer boundary, passing through the outward side.
-            let arc_start_index = vertices.len() as u32;
+            let arc_start_index: u32 = vertices.len().try_into().unwrap_or_default();
 
             for segment in 0..=cap_segments {
                 let t = f32::from(segment) / f32::from(cap_segments);
-                let angle = -std::f32::consts::FRAC_PI_2
-                    + std::f32::consts::PI * t;
+                let angle = -std::f32::consts::FRAC_PI_2 + std::f32::consts::PI * t;
 
                 let (sin_arc, cos_arc) = angle.sin_cos();
 
-                let cap_position = cap_center
-                    + outward_tangent * (radius * cos_arc)
-                    + normal * (radius * sin_arc);
+                let cap_position =
+                    cap_center + outward_tangent * (radius * cos_arc) + normal * (radius * sin_arc);
 
                 vertices.push(Vertex2D {
                     position: cap_position,
-                    color,
+                    color: options.color,
                 });
             }
 
@@ -510,86 +496,55 @@ impl CircleBuilder {
                 let next = current + 1;
 
                 if reverse_winding {
-                    indices.extend_from_slice(&[
-                        center_index,
-                        next,
-                        current,
-                    ]);
+                    indices.extend_from_slice(&[center_index, next, current]);
                 } else {
-                    indices.extend_from_slice(&[
-                        center_index,
-                        current,
-                        next,
-                    ]);
+                    indices.extend_from_slice(&[center_index, current, next]);
                 }
             }
         }
     }
 
-    fn geometry(
-        position: Vector2f,
-        radii: Vector2f,
-        filled: bool,
-        outline_width: Outline,
-        sector: Option<Sector>,
-        line_cap: Option<LineCap>,
-        segments: u16,
-        color: Rgba
-    ) -> (Vec<Vertex2D>, Vec<u32>) {
+    fn geometry(options: &CircleOptions) -> (Vec<Vertex2D>, Vec<u32>) {
         let (vertex_count, index_count) = Self::get_segment_count(
-            segments as usize,
-            filled,
-            line_cap,
-            32
+            options.segment_count as usize,
+            options.filled,
+            options.cap,
+            32,
         );
 
         let mut vertices: Vec<Vertex2D> = Vec::with_capacity(vertex_count);
         let mut indices: Vec<u32> = Vec::with_capacity(index_count);
 
-        if filled { vertices.push(Vertex2D { position, color }); }
-        
-        let s = sector.unwrap_or_else(|| Sector { start: 0.0, sweep: 360.0 });
+        if options.filled {
+            vertices.push(Vertex2D {
+                position: options.position,
+                color: options.color,
+            });
+        }
+
+        let s = options.sector.unwrap_or(Sector {
+            start: 0.0,
+            sweep: 360.0,
+        });
         // generate outer boundary
-        Self::build_outline(
-            position,
-            radii,
-            s,
-            outline_width,
-            segments,
-            color,
-            &mut vertices,
-            filled
-        );
+        Self::build_outline(options, s, &mut vertices);
         // generate indices
-        Self::build_indices(
-            filled,
-            segments,
-            &mut indices
-        );
+        Self::build_indices(options.filled, options.segment_count, &mut indices);
         // Caps only apply to open, unfilled sectors.
-        if !filled && sector.is_some() {
-            match line_cap {
+        if !options.filled && options.sector.is_some() {
+            match options.cap {
                 None | Some(LineCap::Butt) => {}
 
                 Some(LineCap::Square) => {
-                    Self::apply_square_caps(
-                        radii,
-                        s,
-                        outline_width,
-                        segments,
-                        &mut vertices,
-                    );
+                    Self::apply_square_caps(options, s, &mut vertices);
                 }
 
                 Some(LineCap::Round) => {
                     Self::build_round_caps(
-                        position,
-                        radii,
+                        options,
                         s,
-                        outline_width,
                         32, // cap segment (may be changed after to a variable containing
-                            // user-defined value)
-                        color,
+                        // user-defined value)
                         &mut vertices,
                         &mut indices,
                     );
@@ -600,11 +555,7 @@ impl CircleBuilder {
         (vertices, indices)
     }
 
-    fn build_indices(
-        filled: bool,
-        segments: u16,
-        indices: &mut Vec<u32>
-    ) {
+    fn build_indices(filled: bool, segments: u16, indices: &mut Vec<u32>) {
         if filled {
             for seg in 0..segments {
                 let current = u32::from(seg) + 1;
@@ -631,51 +582,373 @@ impl CircleBuilder {
         }
     }
 
-    fn build_outline(
-        position: Vector2f,
-        radii: Vector2f,
-        sector: Sector,
-        outline_width: Outline,
-        segments: u16,
-        color: Rgba,
-        vertices: &mut Vec<Vertex2D>,
-        filled: bool,
-    ) {
+    fn build_outline(options: &CircleOptions, sector: Sector, vertices: &mut Vec<Vertex2D>) {
         let start_radians = (sector.start - 90.0).to_radians();
         let sweep_radians = sector.sweep.to_radians();
 
-        for segment in 0..=segments {
-            let t = f32::from(segment) / f32::from(segments);
+        for segment in 0..=options.segment_count {
+            let t = f32::from(segment) / f32::from(options.segment_count);
             let angle = start_radians + sweep_radians * t;
 
             let (sin, cos) = angle.sin_cos();
 
             let centerline = Vector2f {
-                x: position.x + radii.x * cos,
-                y: position.y + radii.y * sin,
+                x: options.position.x + options.radii.x * cos,
+                y: options.position.y + options.radii.y * sin,
             };
 
             let normal = Vector2f {
-                x: cos / radii.x,
-                y: sin / radii.y,
+                x: cos / options.radii.x,
+                y: sin / options.radii.y,
             }
             .normalize();
 
-            let outer = centerline + normal * outline_width.outer;
+            let outer = centerline + normal * options.outline_width.outer;
 
             vertices.push(Vertex2D {
                 position: outer,
-                color,
+                color: options.color,
             });
 
-            if !filled {
-                let inner = centerline - normal * outline_width.inner;
+            if !options.filled {
+                let inner = centerline - normal * options.outline_width.inner;
 
                 vertices.push(Vertex2D {
                     position: inner,
-                    color,
+                    color: options.color,
                 });
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn options(radius: f32) -> CircleOptions {
+        CircleBuilder::new(radius).options
+    }
+
+    fn assert_close(actual: f32, expected: f32) {
+        assert!(
+            (actual - expected).abs() < 1e-4,
+            "expected {expected}, got {actual}"
+        );
+    }
+
+    fn assert_valid_mesh(vertices: &[Vertex2D], indices: &[u32]) {
+        assert!(!vertices.is_empty(), "mesh should contain vertices");
+        assert!(!indices.is_empty(), "mesh should contain indices");
+        assert_eq!(
+            indices.len() % 3,
+            0,
+            "triangle-list index count must be divisible by 3"
+        );
+
+        for vertex in vertices {
+            assert!(
+                vertex.position.x.is_finite(),
+                "vertex X position must be finite"
+            );
+            assert!(
+                vertex.position.y.is_finite(),
+                "vertex Y position must be finite"
+            );
+        }
+
+        for &index in indices {
+            assert!(
+                (index as usize) < vertices.len(),
+                "index {index} exceeds vertex count {}",
+                vertices.len()
+            );
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Defaults
+    // ---------------------------------------------------------
+
+    #[test]
+    fn defaults_match_the_builder_contract() {
+        let options = options(10.0);
+
+        assert_eq!(options.position.x.to_bits(), 0.0_f32.to_bits());
+        assert_eq!(options.position.y.to_bits(), 0.0_f32.to_bits());
+
+        assert_eq!(options.radii.x.to_bits(), 10.0_f32.to_bits());
+        assert_eq!(options.radii.y.to_bits(), 10.0_f32.to_bits());
+
+        assert!(!options.filled);
+
+        assert_eq!(options.outline_width.inner.to_bits(), 0.5_f32.to_bits());
+        assert_eq!(options.outline_width.outer.to_bits(), 0.5_f32.to_bits());
+
+        assert!(options.sector.is_none());
+        assert!(options.cap.is_none());
+
+        assert_eq!(options.segment_count, 32);
+        assert_eq!(options.color, Rgba::WHITE);
+    }
+
+    // ---------------------------------------------------------
+    // Geometry
+    // ---------------------------------------------------------
+
+    #[test]
+    fn outlined_circle_generates_expected_geometry() {
+        let options = options(10.0);
+        let (vertices, indices) = CircleBuilder::geometry(&options);
+
+        // 32 segments produce 33 samples.
+        // Each sample has an outer and inner vertex.
+        assert_eq!(vertices.len(), 66);
+
+        // Each segment generates two triangles.
+        assert_eq!(indices.len(), 192);
+
+        assert_valid_mesh(&vertices, &indices);
+    }
+
+    #[test]
+    fn filled_circle_generates_expected_geometry() {
+        let mut options = options(10.0);
+        options.filled = true;
+
+        let (vertices, indices) = CircleBuilder::geometry(&options);
+
+        // One center vertex plus 33 boundary vertices.
+        assert_eq!(vertices.len(), 34);
+
+        // One triangle per segment.
+        assert_eq!(indices.len(), 96);
+
+        // The center vertex should match the circle position.
+        assert_close(vertices[0].position.x, 0.0);
+        assert_close(vertices[0].position.y, 0.0);
+
+        assert_valid_mesh(&vertices, &indices);
+    }
+
+    #[test]
+    fn circle_position_offsets_generated_vertices() {
+        let mut options = options(10.0);
+        options.position = Vector2f { x: 20.0, y: 30.0 };
+
+        let (vertices, indices) = CircleBuilder::geometry(&options);
+
+        // The first boundary sample is at the top of the circle.
+        assert_close(vertices[0].position.x, 20.0);
+        assert_close(vertices[0].position.y, 19.5);
+
+        // The second vertex is the inner boundary at the same angle.
+        assert_close(vertices[1].position.x, 20.0);
+        assert_close(vertices[1].position.y, 20.5);
+
+        assert_valid_mesh(&vertices, &indices);
+    }
+
+    #[test]
+    fn ellipse_uses_independent_x_and_y_radii() {
+        let mut options = options(10.0);
+        options.radii.y = 5.0;
+        options.segment_count = 4;
+
+        let (vertices, indices) = CircleBuilder::geometry(&options);
+
+        // Four segments produce five samples, with two vertices per sample.
+        assert_eq!(vertices.len(), 10);
+        assert_eq!(indices.len(), 24);
+
+        // First sample: top of the ellipse.
+        assert_close(vertices[0].position.x, 0.0);
+        assert_close(vertices[0].position.y, -5.5);
+
+        // Second sample: rightmost point of the ellipse.
+        assert_close(vertices[2].position.x, 10.5);
+        assert_close(vertices[2].position.y, 0.0);
+
+        assert_valid_mesh(&vertices, &indices);
+    }
+
+    #[test]
+    fn custom_segment_count_changes_geometry_size() {
+        let mut options = options(10.0);
+        options.segment_count = 8;
+
+        let (vertices, indices) = CircleBuilder::geometry(&options);
+
+        assert_eq!(vertices.len(), 18);
+        assert_eq!(indices.len(), 48);
+
+        assert_valid_mesh(&vertices, &indices);
+    }
+
+    // ---------------------------------------------------------
+    // Stroke widths
+    // ---------------------------------------------------------
+
+    #[test]
+    fn custom_inner_and_outer_widths_are_respected() {
+        let mut options = options(10.0);
+
+        options.outline_width.inner = 2.0;
+        options.outline_width.outer = 3.0;
+
+        let (vertices, indices) = CircleBuilder::geometry(&options);
+
+        // At the top of the circle, the outer edge extends upward.
+        assert_close(vertices[0].position.y, -13.0);
+
+        // The inner edge is offset inward.
+        assert_close(vertices[1].position.y, -8.0);
+
+        assert_valid_mesh(&vertices, &indices);
+    }
+
+    // ---------------------------------------------------------
+    // Sectors and line caps
+    // ---------------------------------------------------------
+
+    fn sector_options(cap: LineCap) -> CircleOptions {
+        let mut options = options(10.0);
+
+        options.segment_count = 8;
+        options.sector = Some(Sector {
+            start: 0.0,
+            sweep: 90.0,
+        });
+        options.cap = Some(cap);
+
+        options
+    }
+
+    #[test]
+    fn butt_caps_do_not_add_extra_geometry() {
+        let options = sector_options(LineCap::Butt);
+
+        let (vertices, indices) = CircleBuilder::geometry(&options);
+
+        assert_eq!(vertices.len(), 18);
+        assert_eq!(indices.len(), 48);
+
+        assert_valid_mesh(&vertices, &indices);
+    }
+
+    #[test]
+    fn square_caps_extend_sector_endpoints() {
+        let options = sector_options(LineCap::Square);
+
+        let (vertices, indices) = CircleBuilder::geometry(&options);
+
+        // Square caps reuse the existing outline vertices.
+        assert_eq!(vertices.len(), 18);
+        assert_eq!(indices.len(), 48);
+
+        // Start is at the top; the cap extends backward.
+        assert_close(vertices[0].position.x, -0.5);
+        assert_close(vertices[0].position.y, -10.5);
+
+        // End is at the right; the cap extends along the tangent.
+        assert_close(vertices[16].position.x, 10.5);
+        assert_close(vertices[16].position.y, 0.5);
+
+        assert_valid_mesh(&vertices, &indices);
+    }
+
+    #[test]
+    fn round_caps_generate_additional_geometry() {
+        let options = sector_options(LineCap::Round);
+
+        let (vertices, indices) = CircleBuilder::geometry(&options);
+
+        // Base outline: 18 vertices.
+        // Two caps: 2 * (32 + 2) = 68 vertices.
+        assert_eq!(vertices.len(), 86);
+
+        // Base outline: 48 indices.
+        // Two caps: 2 * 32 * 3 = 192 indices.
+        assert_eq!(indices.len(), 240);
+
+        assert_valid_mesh(&vertices, &indices);
+    }
+
+    // ---------------------------------------------------------
+    // Parameter validation
+    // ---------------------------------------------------------
+
+    #[test]
+    fn zero_radius_is_rejected() {
+        let options = options(0.0);
+
+        assert!(CircleBuilder::validate_parameters(&options).is_err());
+    }
+
+    #[test]
+    fn valid_default_circle_parameters_are_accepted() {
+        let options = options(10.0);
+
+        assert!(CircleBuilder::validate_parameters(&options).is_ok());
+    }
+
+    #[test]
+    fn zero_segment_count_is_rejected() {
+        let mut options = options(10.0);
+        options.segment_count = 0;
+
+        assert!(CircleBuilder::validate_parameters(&options).is_err());
+    }
+
+    #[test]
+    fn sector_without_line_cap_is_rejected() {
+        let mut options = options(10.0);
+        options.sector = Some(Sector {
+            start: 0.0,
+            sweep: 90.0,
+        });
+
+        assert!(CircleBuilder::validate_parameters(&options).is_err());
+    }
+
+    #[test]
+    fn line_cap_without_sector_is_rejected() {
+        let mut options = options(10.0);
+        options.cap = Some(LineCap::Round);
+
+        assert!(CircleBuilder::validate_parameters(&options).is_err());
+    }
+
+    #[test]
+    fn zero_sector_sweep_is_rejected() {
+        let mut options = sector_options(LineCap::Butt);
+        options.sector = Some(Sector {
+            start: 0.0,
+            sweep: 0.0,
+        });
+
+        assert!(CircleBuilder::validate_parameters(&options).is_err());
+    }
+
+    #[test]
+    fn sector_sweep_greater_than_360_degrees_is_rejected() {
+        let mut options = sector_options(LineCap::Butt);
+        options.sector = Some(Sector {
+            start: 0.0,
+            sweep: 361.0,
+        });
+
+        assert!(CircleBuilder::validate_parameters(&options).is_err());
+    }
+
+    #[test]
+    fn sector_start_outside_valid_range_is_rejected() {
+        let mut options = sector_options(LineCap::Butt);
+        options.sector = Some(Sector {
+            start: -1.0,
+            sweep: 90.0,
+        });
+
+        assert!(CircleBuilder::validate_parameters(&options).is_err());
     }
 }

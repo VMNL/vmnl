@@ -5,7 +5,7 @@
 
 use bytemuck::{Pod, Zeroable};
 use std::cmp::Ordering;
-use std::ops::{AddAssign, Mul, Sub, Add, SubAssign};
+use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 
 /// 2D vector of `f32` values.
 ///

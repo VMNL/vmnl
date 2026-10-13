@@ -4,8 +4,6 @@
 //! Shape utilities for the VMNL library.
 
 mod circle;
-mod arc;
-mod ellipse;
 mod indexed;
 mod line;
 mod polygon;
@@ -18,9 +16,8 @@ mod validation;
 use super::{Drawable2D, GpuVertex2D, RenderItem2D, Vector2f, Vertex2D};
 use crate::{
     common::{BlendMode, GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey},
-    d2::shape::{arc::ArcBuilder, circle::CircleBuilder},
+    d2::shape::circle::CircleBuilder,
 };
-pub use ellipse::EllipseBuilder;
 pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
 pub use polygon::PolygonBuilder;
@@ -33,10 +30,6 @@ pub use triangle::TriangleBuilder;
 pub(crate) enum ShapeKind {
     /// Circle-like shape.
     Circle,
-    /// Filled ellipse shape.
-    Ellipse,
-    /// Filled arc shape.
-    Arc,
     /// Raw vertex data without indices.
     RawVertices,
     /// Indexed geometry using vertex and index buffers.
@@ -108,80 +101,6 @@ impl Shape {
     #[must_use]
     pub fn circle(radius: f32) -> CircleBuilder {
         CircleBuilder::new(radius).filled(true)
-    }
-
-    /// Create a filled ellipse builder with a required radius.
-    ///
-    /// The ellipse center defaults to `(0, 0)` and its color defaults to white.
-    ///
-    /// # Arguments
-    /// - `radius`: Ellipse radius in pixel-like 2D coordinates.
-    ///
-    /// # Example
-    /// ```rust,no_run
-    /// # use vmnl_graphics::Context;
-    /// # use vmnl_graphics::d2::Shape;
-    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
-    /// # let context = Context::new()?;
-    /// let ellipse = Shape::ellipse(50.0, 40.0).position(100.0, 120.0).build(&context)?;
-    /// # drop(ellipse);
-    /// # Ok(())
-    /// # }
-    /// ```
-    #[must_use]
-    pub fn ellipse(radius_x: f32, radius_y: f32) -> EllipseBuilder {
-        EllipseBuilder::new(Vector2f {
-            x: radius_x,
-            y: radius_y,
-        })
-    }
-
-    /// Create an arc builder with a required radius, start angle, and sweep.
-    ///
-    /// The arc center defaults to `(0, 0)` and its color defaults to white.
-    ///
-    /// # Arguments
-    /// - `radius`: arc radius in pixel-like 2D coordinates.
-    /// - `start`: arc starting point in degrees, 0 being the topmost point of the virtual circle.
-    /// - `sweep`: arc absolute length in degrees, negative value means going left, positive going right.
-    ///
-    /// # Example
-    /// ```rust,no_run
-    /// # use vmnl_graphics::Context;
-    /// # use vmnl_graphics::d2::Shape;
-    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
-    /// # let context = Context::new()?;
-    /// let arc = Shape::arc(80.0, 30.0, 140.0).position(100.0, 120.0).width(10.0).build(&context)?;
-    /// # drop(arc);
-    /// # Ok(())
-    /// # }
-    /// ```
-    #[must_use]
-    pub fn arc(radius: f32, start: f32, sweep: f32) -> CircleBuilder {
-        CircleBuilder::new(radius).sector(start, sweep).width(10.0).cap(LineCap::Butt)
-    }
-
-    /// Create a ring builder with a required radius.
-    ///
-    /// The ring center defaults to `(0, 0)` and its color defaults to white.
-    ///
-    /// # Arguments
-    /// - `radius`: ring radius in pixel-like 2D coordinates.
-    ///
-    /// # Example
-    /// ```rust,no_run
-    /// # use vmnl_graphics::Context;
-    /// # use vmnl_graphics::d2::Shape;
-    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
-    /// # let context = Context::new()?;
-    /// let ring = Shape::ring(50.0).position(100.0, 120.0).width(10.0).build(&context)?;
-    /// # drop(ring);
-    /// # Ok(())
-    /// # }
-    /// ```
-    #[must_use]
-    pub fn ring(radius: f32) -> ArcBuilder {
-        ArcBuilder::new(radius, 0.0, 360.0)
     }
 
     pub(crate) fn blend_mode_from_vertices(vertices: &[Vertex2D]) -> BlendMode {
