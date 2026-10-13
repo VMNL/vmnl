@@ -504,3 +504,7 @@ mod native_input_keys;
 
 #[path = "../../gpu/src/native_input_report.rs"]
 mod native_input_report;
+
+#[path = "../../gpu/src/native_input_process.rs"]
+#[cfg(target_os = "linux")]
+mod native_input_process;

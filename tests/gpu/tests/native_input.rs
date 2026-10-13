@@ -16,13 +16,15 @@ mod native_input_report;
 mod input_key_table;
 
 use native_input_keys::physical_keycode;
+use native_input_process::ClientProcess;
 use native_input_report::InputTestReport;
+
+#[path = "../src/native_input_process.rs"]
+mod native_input_process;
 use std::panic::{catch_unwind, resume_unwind, AssertUnwindSafe};
+use std::process::Command;
 use std::time::{Duration, Instant};
-use vmnl::{
-    common::Rgba, Context, Event, EventKind, Key, Modifiers, MouseButton, VMNLError, VMNLErrorKind,
-    VMNLResult, Window,
-};
+use vmnl::{Key, MouseButton, VMNLError, VMNLErrorKind, VMNLResult};
 use vmnl_gpu_tests::gpu_test_guard;
 
 const INPUT_TIMEOUT: Duration = Duration::from_secs(5);
@@ -44,7 +46,7 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
     report.plan(
         "Environment",
         "X11 / Vulkan / XTEST",
-        &["Readiness", "Lock state restoration"],
+        &["Readiness", "Lock state restoration", "Client shutdown"],
     );
     for case in KEY_CASES {
         report.plan("Keyboard", &format!("{:?}", case.key), KEY_CHECKS);
@@ -118,62 +120,34 @@ const MOUSE_BUTTON_MAPPINGS: [(u8, MouseButton); 8] = [
 
 fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
     let _guard = gpu_test_guard();
-    let (_context, mut window, mut injector, initial_cursor_position) = report.run(
-        "Environment",
-        "X11 / Vulkan / XTEST",
-        "Readiness",
-        || -> VMNLResult<_> {
-            glfw::init_hint(glfw::InitHint::Platform(glfw::Platform::X11));
-
-            let context = Context::new()?;
-            let mut window = Window::builder()
-                .title("VMNL public native input test")
-                .size(480, 320)
-                .set_clear_color(Rgba::rgb(12, 24, 48))
-                .build(&context)?;
-            window.enable_keyboard_polling();
-            window.enable_mouse_polling();
-            window.show();
-            // Xwayland may not expose the window to the compositor until its first buffer is presented.
-            window.render().submit()?;
-            window.focus();
-            window.set_cursor_position(120.0, 100.0)?;
-
-            let focus_deadline = Instant::now() + INPUT_TIMEOUT;
-            while !window.is_focused() && Instant::now() < focus_deadline {
-                let _ = window.poll_events();
-                window.wait_events_timeout(0.02);
-            }
-            assert!(
-                window.is_focused(),
-                "VMNL input window did not acquire X11 focus"
-            );
-            let _ = window.poll_events();
-            assert!(!window.input().keyboard().is_one_down());
-            assert!(!window.input().mouse().is_down(MouseButton::Left));
-
-            window.set_cursor_position(120.0, 100.0)?;
-            let hover_deadline = Instant::now() + INPUT_TIMEOUT;
-            while !window.is_cursor_hovered() && Instant::now() < hover_deadline {
-                let _ = window.poll_events();
-                window.wait_events_timeout(0.02);
-            }
-            assert!(
-                window.is_cursor_hovered(),
-                "VMNL input window is not hovered"
-            );
-            let _ = window.poll_events();
-            let initial_cursor_position = window.get_cursor_position();
-
+    let (mut client, mut injector, initial_cursor_position) = report.run(
+        "Environment", "X11 / Vulkan / XTEST", "Readiness", || -> VMNLResult<_> {
             let injector = X11Injector::connect().map_err(invalid_state)?;
-            Ok((context, window, injector, initial_cursor_position))
+            let executable = std::env::var_os("VMNL_INPUT_CLIENT").ok_or_else(||
+                invalid_state("VMNL_INPUT_CLIENT is unset; use just input-test-vmnl x11 to build and locate the client"))?;
+            let mut command = Command::new(executable);
+            // Select the OS environment before the unmodified public Context initializes.
+            command.env("XDG_SESSION_TYPE", "x11").env_remove("WAYLAND_DISPLAY").env_remove("WAYLAND_SOCKET");
+            let mut process = ClientProcess::spawn(&mut command).map_err(invalid_state)?;
+            let hello = process.receive(INPUT_TIMEOUT + Duration::from_secs(5)).map_err(invalid_state)?;
+            let fields: Vec<_> = hello.split('\t').collect();
+            let title = format!("VMNL input client {}", process.id());
+            if fields.len() != 5 || fields[0] != "HELLO" || fields[1] != "1" || fields[2] != title {
+                return Err(invalid_state(format!("invalid client greeting: {hello:?}")));
+            }
+            let x = fields[3].parse::<f64>().map_err(|error| invalid_state(error.to_string()))?;
+            let y = fields[4].parse::<f64>().map_err(|error| invalid_state(error.to_string()))?;
+            if !x.is_finite() || !y.is_finite() { return Err(invalid_state("non-finite client cursor position")); }
+            // An environment hint alone is not evidence of the selected window system.
+            injector.confirm_client_window(&title, process.id()).map_err(invalid_state)?;
+            Ok((process, injector, (x, y)))
         },
     )?;
 
     for case in KEY_CASES {
         if injector.keycode(case.key).is_none() {
             let reason = if case.physical_name.is_empty() {
-                "GLFW X11 has no physical-name mapping for this named key".to_owned()
+                "no X11 physical-name fixture for this named VMNL key".to_owned()
             } else {
                 format!(
                     "physical XKB name/alias {} is absent from the active map",
@@ -185,12 +159,11 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
             }
         }
     }
-
     for (server_button, button) in MOUSE_BUTTON_MAPPINGS {
         if server_button > injector.maximum_server_button {
             let reason = format!(
                 "X11 server button {server_button} exceeds pointer mapping limit {}",
-                injector.maximum_server_button,
+                injector.maximum_server_button
             );
             for check in MOUSE_BUTTON_CHECKS {
                 report.exclude("Mouse", &format!("{button:?}"), check, &reason);
@@ -198,92 +171,46 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
         }
     }
 
-    let expected_cursor_position = (
-        initial_cursor_position.0 + 6.0,
-        initial_cursor_position.1 + 4.0,
-    );
-    report.run("Mouse", "Pointer", "Movement", || -> VMNLResult<()> {
-        injector.move_pointer_by(6, 4).map_err(invalid_state)?;
-        let cursor_events = poll_until(&mut window, "cursor movement", |kind| {
-            matches!(
-                kind,
-                EventKind::MouseMoved { x, y }
-                    if (*x - expected_cursor_position.0).abs() <= 0.01
-                        && (*y - expected_cursor_position.1).abs() <= 0.01
-            )
-        })?;
-        assert!(cursor_events.iter().any(|event| {
-            matches!(
-                event.kind(),
-                EventKind::MouseMoved { x, y }
-                    if (*x - expected_cursor_position.0).abs() <= 0.01
-                        && (*y - expected_cursor_position.1).abs() <= 0.01
-            )
-        }));
-        Ok(())
-    })?;
-    report.run("Mouse", "Pointer", "Position", || -> VMNLResult<()> {
-        let cursor_position = window.get_cursor_position();
-        assert!((cursor_position.0 - expected_cursor_position.0).abs() <= 0.01);
-        assert!((cursor_position.1 - expected_cursor_position.1).abs() <= 0.01);
-        Ok(())
-    })?;
-
+    client
+        .observe(
+            report,
+            "Mouse",
+            "Pointer",
+            &["Movement", "Position"],
+            &format!(
+                "MOTION\t{}\t{}",
+                initial_cursor_position.0 + 6.0,
+                initial_cursor_position.1 + 4.0
+            ),
+            || injector.move_pointer_by(6, 4),
+        )
+        .map_err(invalid_state)?;
     for case in KEY_CASES {
         let Some(code) = injector.keycode(case.key) else {
             continue;
         };
         let name = format!("{:?}", case.key);
-        let key_scancode = report.run("Keyboard", &name, "Press", || {
-            injector.press_key(code).map_err(invalid_state)?;
-            let events = poll_until(&mut window, &format!("{name} key press"), |kind| {
-                matches!(kind, EventKind::KeyPressed { key, repeat: false, .. } if *key == case.key)
-            })?;
-            assert_key_press(&events, case.key)
-        })?;
-        report.run("Keyboard", &name, "Scancode", || -> VMNLResult<()> {
-            assert_eq!(
-                key_scancode,
-                i32::from(code),
-                "{name} physical XKB scancode"
-            );
-            Ok(())
-        })?;
-        report.run(
-            "Keyboard",
-            &name,
-            "Press input states",
-            || -> VMNLResult<()> {
-                assert!(window.input().keyboard().is_down(case.key));
-                assert!(window.input().keyboard().is_pressed(case.key));
-                assert!(!window.input().keyboard().is_released(case.key));
-                Ok(())
-            },
-        )?;
-        report.run("Keyboard", &name, "Release", || {
-            injector.release_key(code).map_err(invalid_state)?;
-            let events = poll_until(
-                &mut window,
-                &format!("{name} key release"),
-                |kind| matches!(kind, EventKind::KeyReleased { key, .. } if *key == case.key),
-            )?;
-            assert_key_release(&events, case.key, i32::from(code))
-        })?;
-        report.run(
-            "Keyboard",
-            &name,
-            "Release input states",
-            || -> VMNLResult<()> {
-                assert!(!window.input().keyboard().is_down(case.key));
-                assert!(!window.input().keyboard().is_pressed(case.key));
-                assert!(window.input().keyboard().is_released(case.key));
-                assert!(
-                    !window.input().keyboard().is_one_down(),
-                    "{name} left a key down"
-                );
-                Ok(())
-            },
-        )?;
+        client
+            .observe(
+                report,
+                "Keyboard",
+                &name,
+                &KEY_CHECKS[..3],
+                &format!("KEY_PRESS\t{name}\t{code}"),
+                || injector.press_key(code),
+            )
+            .map_err(invalid_state)?;
+        // The complete press observation, including Input snapshots, precedes release.
+        client
+            .observe(
+                report,
+                "Keyboard",
+                &name,
+                &KEY_CHECKS[3..],
+                &format!("KEY_RELEASE\t{name}\t{code}"),
+                || injector.release_key(code),
+            )
+            .map_err(invalid_state)?;
     }
     report.run(
         "Environment",
@@ -295,226 +222,53 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
     let maximum_server_button = injector.maximum_server_button;
     for (server_button, button) in MOUSE_BUTTON_MAPPINGS
         .into_iter()
-        .filter(|(server_button, _)| *server_button <= maximum_server_button)
+        .filter(|(code, _)| *code <= maximum_server_button)
     {
         let name = format!("{button:?}");
-        report.run("Mouse", &name, "Press", || {
-            injector.press_mouse_button(server_button).map_err(invalid_state)?;
-            let events = poll_until(
-                &mut window,
-                &format!("{name} mouse button press"),
-                |kind| matches!(kind, EventKind::MouseButtonPressed { button: observed, .. } if *observed == button),
-            )?;
-            assert_mouse_button_event(&events, button, true)
-        })?;
-        report.run(
-            "Mouse",
-            &name,
-            "Press input states",
-            || -> VMNLResult<()> {
-                assert!(window.input().mouse().is_down(button));
-                assert!(window.input().mouse().is_pressed(button));
-                assert!(!window.input().mouse().is_released(button));
-                Ok(())
-            },
-        )?;
-        report.run("Mouse", &name, "Release", || {
-            injector.release_mouse_button(server_button).map_err(invalid_state)?;
-            let events = poll_until(
-                &mut window,
-                &format!("{name} mouse button release"),
-                |kind| matches!(kind, EventKind::MouseButtonReleased { button: observed, .. } if *observed == button),
-            )?;
-            assert_mouse_button_event(&events, button, false)
-        })?;
-        report.run(
-            "Mouse",
-            &name,
-            "Release input states",
-            || -> VMNLResult<()> {
-                assert!(!window.input().mouse().is_down(button));
-                assert!(!window.input().mouse().is_pressed(button));
-                assert!(window.input().mouse().is_released(button));
-                Ok(())
-            },
-        )?;
-    }
-
-    report.run("Mouse", "Scroll", "Vertical +", || {
-        injector.scroll_vertical_up().map_err(invalid_state)?;
-        let events = poll_until(
-            &mut window,
-            "vertical scroll up",
-            |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 0.0 && *dy == 1.0),
-        )?;
-        assert_mouse_scroll_event(&events, 0.0, 1.0)
-    })?;
-    report.run("Mouse", "Scroll", "Vertical -", || {
-        injector.scroll_vertical_down().map_err(invalid_state)?;
-        let events = poll_until(
-            &mut window,
-            "vertical scroll down",
-            |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 0.0 && *dy == -1.0),
-        )?;
-        assert_mouse_scroll_event(&events, 0.0, -1.0)
-    })?;
-    report.run("Mouse", "Scroll", "Horizontal +", || {
-        injector
-            .scroll_horizontal_positive()
+        client
+            .observe(
+                report,
+                "Mouse",
+                &name,
+                &MOUSE_BUTTON_CHECKS[..2],
+                &format!("BUTTON_PRESS\t{name}"),
+                || injector.press_mouse_button(server_button),
+            )
             .map_err(invalid_state)?;
-        let events = poll_until(
-            &mut window,
-            "positive horizontal scroll",
-            |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == 1.0 && *dy == 0.0),
-        )?;
-        assert_mouse_scroll_event(&events, 1.0, 0.0)
-    })?;
-    report.run("Mouse", "Scroll", "Horizontal -", || {
-        injector
-            .scroll_horizontal_negative()
+        client
+            .observe(
+                report,
+                "Mouse",
+                &name,
+                &MOUSE_BUTTON_CHECKS[2..],
+                &format!("BUTTON_RELEASE\t{name}"),
+                || injector.release_mouse_button(server_button),
+            )
             .map_err(invalid_state)?;
-        let events = poll_until(
-            &mut window,
-            "negative horizontal scroll",
-            |kind| matches!(kind, EventKind::MouseScrolled { dx, dy } if *dx == -1.0 && *dy == 0.0),
-        )?;
-        assert_mouse_scroll_event(&events, -1.0, 0.0)
-    })?;
-
-    Ok(())
-}
-
-fn poll_until(
-    window: &mut Window,
-    expected: &str,
-    matches_expected: impl Fn(&EventKind) -> bool,
-) -> VMNLResult<Vec<Event>> {
-    let deadline = Instant::now() + INPUT_TIMEOUT;
-    let mut observed = Vec::new();
-    while Instant::now() < deadline {
-        if !window.is_focused() {
-            return Err(invalid_state(format!(
-                "VMNL input window lost focus while waiting for {expected}; observed={observed:?}"
-            )));
-        }
-        let batch = window.poll_events();
-        let found = batch.iter().any(|event| matches_expected(event.kind()));
-        observed.extend(batch);
-        if found {
-            return Ok(observed);
-        }
-        window.wait_events_timeout(0.02);
     }
-
-    Err(invalid_state(format!(
-        "timed out waiting for {expected}; focused={}; observed={observed:?}",
-        window.is_focused()
-    )))
-}
-
-fn assert_key_press(events: &[Event], expected_key: Key) -> VMNLResult<i32> {
-    let mut matching = events.iter().filter_map(|event| match event.kind() {
-        EventKind::KeyPressed {
-            key,
-            scancode,
-            modifiers,
-            repeat: false,
-        } if *key == expected_key => Some((*scancode, *modifiers)),
-        _ => None,
-    });
-    let Some((scancode, modifiers)) = matching.next() else {
-        return Err(invalid_state(format!(
-            "{expected_key:?} press event was absent: {events:?}"
-        )));
-    };
-    if matching.next().is_some()
-        || scancode.as_raw() <= 0
-        || !valid_single_key_modifiers(expected_key, modifiers)
-    {
-        return Err(invalid_state(format!(
-            "{expected_key:?} press event had duplicate or invalid metadata: {events:?}"
-        )));
+    for (name, dx, dy, button) in [
+        ("Vertical +", 0, 1, BUTTON_SCROLL_UP),
+        ("Vertical -", 0, -1, BUTTON_SCROLL_DOWN),
+        ("Horizontal +", 1, 0, BUTTON_SCROLL_POSITIVE_X),
+        ("Horizontal -", -1, 0, BUTTON_SCROLL_NEGATIVE_X),
+    ] {
+        client
+            .observe(
+                report,
+                "Mouse",
+                "Scroll",
+                &[name],
+                &format!("SCROLL\t{dx}\t{dy}"),
+                || injector.scroll(button, name),
+            )
+            .map_err(invalid_state)?;
     }
-    Ok(scancode.as_raw())
-}
-
-fn assert_key_release(
-    events: &[Event],
-    expected_key: Key,
-    expected_scancode: i32,
-) -> VMNLResult<()> {
-    let mut matching = events.iter().filter_map(|event| match event.kind() {
-        EventKind::KeyReleased {
-            key,
-            scancode,
-            modifiers,
-        } if *key == expected_key => Some((*scancode, *modifiers)),
-        _ => None,
-    });
-    let Some((scancode, modifiers)) = matching.next() else {
-        return Err(invalid_state(format!(
-            "{expected_key:?} release event was absent: {events:?}"
-        )));
-    };
-    if matching.next().is_some()
-        || scancode.as_raw() != expected_scancode
-        || !valid_single_key_modifiers(expected_key, modifiers)
-    {
-        return Err(invalid_state(format!(
-            "{expected_key:?} release event had duplicate or mismatched metadata: {events:?}"
-        )));
-    }
-    Ok(())
-}
-
-fn valid_single_key_modifiers(key: Key, modifiers: Modifiers) -> bool {
-    let allowed = match key {
-        Key::LeftShift | Key::RightShift => Modifiers::SHIFT,
-        Key::LeftControl | Key::RightControl => Modifiers::CONTROL,
-        Key::LeftAlt | Key::RightAlt => Modifiers::ALT,
-        Key::LeftSuper | Key::RightSuper => Modifiers::SUPER,
-        _ => Modifiers::NONE,
-    };
-    // X11 may include the modifier key's own flag in its callback state.
-    modifiers.bits() & !allowed.bits() == 0
-}
-
-fn assert_mouse_button_event(
-    events: &[Event],
-    expected_button: MouseButton,
-    pressed: bool,
-) -> VMNLResult<()> {
-    let matching = events.iter().filter(|event| match (pressed, event.kind()) {
-        (true, EventKind::MouseButtonPressed { button, modifiers })
-        | (false, EventKind::MouseButtonReleased { button, modifiers }) => {
-            *button == expected_button && modifiers.is_empty()
-        }
-        _ => false,
-    });
-    if matching.count() != 1 {
-        return Err(invalid_state(format!(
-            "expected one {expected_button:?} mouse button {} event: {events:?}",
-            if pressed { "press" } else { "release" },
-        )));
-    }
-    Ok(())
-}
-
-fn assert_mouse_scroll_event(
-    events: &[Event],
-    expected_dx: f64,
-    expected_dy: f64,
-) -> VMNLResult<()> {
-    let mut observed = events.iter().filter_map(|event| match event.kind() {
-        EventKind::MouseScrolled { dx, dy } => Some((*dx, *dy)),
-        _ => None,
-    });
-    if observed.next() != Some((expected_dx, expected_dy)) || observed.next().is_some() {
-        return Err(invalid_state(format!(
-            "expected exactly one scroll event with dx={expected_dx}, dy={expected_dy}: {events:?}"
-        )));
-    }
-    Ok(())
+    report.run(
+        "Environment",
+        "X11 / Vulkan / XTEST",
+        "Client shutdown",
+        || client.finish(INPUT_TIMEOUT).map_err(invalid_state),
+    )
 }
 
 fn invalid_state(message: impl Into<String>) -> VMNLError {
@@ -643,6 +397,55 @@ impl X11Injector {
         })
     }
 
+    fn confirm_client_window(&self, title: &str, pid: u32) -> Result<(), String> {
+        use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
+        let atom = |name: &[u8]| -> Result<u32, String> {
+            self.connection
+                .intern_atom(false, name)
+                .map_err(|error| error.to_string())?
+                .reply()
+                .map(|reply| reply.atom)
+                .map_err(|error| error.to_string())
+        };
+        let clients = atom(b"_NET_CLIENT_LIST")?;
+        let window_name = atom(b"_NET_WM_NAME")?;
+        let window_pid = atom(b"_NET_WM_PID")?;
+        let deadline = Instant::now() + INPUT_TIMEOUT;
+        while Instant::now() < deadline {
+            let reply = self
+                .connection
+                .get_property(false, self.root, clients, AtomEnum::WINDOW, 0, 4096)
+                .map_err(|error| error.to_string())?
+                .reply()
+                .map_err(|error| error.to_string())?;
+            for window in reply.value32().into_iter().flatten() {
+                // Other applications may disappear between the list and property queries.
+                let Ok(name) = self
+                    .connection
+                    .get_property(false, window, window_name, AtomEnum::ANY, 0, 256)
+                    .map_err(|error| error.to_string())?
+                    .reply()
+                else {
+                    continue;
+                };
+                if name.value != title.as_bytes() {
+                    continue;
+                }
+                let process = self
+                    .connection
+                    .get_property(false, window, window_pid, AtomEnum::CARDINAL, 0, 1)
+                    .map_err(|error| error.to_string())?
+                    .reply()
+                    .map_err(|error| error.to_string())?;
+                if process.value32().and_then(|mut values| values.next()) == Some(pid) {
+                    return Ok(());
+                }
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        Err(format!("client {pid} has no matching mapped X11 window {title:?}; X11 selection was not confirmed"))
+    }
+
     fn keycode(&self, key: Key) -> Option<u8> {
         self.keys
             .iter()
@@ -731,23 +534,28 @@ impl X11Injector {
             .map_err(|error| format!("XTEST pointer motion failed: {error}"))?;
         self.connection
             .flush()
-            .map_err(|error| format!("could not flush XTEST pointer motion: {error}"))
-    }
-
-    fn scroll_vertical_up(&mut self) -> Result<(), String> {
-        self.scroll(BUTTON_SCROLL_UP, "vertical scroll up")
-    }
-
-    fn scroll_vertical_down(&mut self) -> Result<(), String> {
-        self.scroll(BUTTON_SCROLL_DOWN, "vertical scroll down")
-    }
-
-    fn scroll_horizontal_positive(&mut self) -> Result<(), String> {
-        self.scroll(BUTTON_SCROLL_POSITIVE_X, "positive horizontal scroll")
-    }
-
-    fn scroll_horizontal_negative(&mut self) -> Result<(), String> {
-        self.scroll(BUTTON_SCROLL_NEGATIVE_X, "negative horizontal scroll")
+            .map_err(|error| format!("could not flush XTEST pointer motion: {error}"))?;
+        // Xwayland can acknowledge XTEST before compositor feedback updates the
+        // X11 pointer. Request completion alone does not prove delivered motion.
+        let deadline = Instant::now() + Duration::from_millis(500);
+        loop {
+            let after = self
+                .connection
+                .query_pointer(self.root)
+                .map_err(|error| error.to_string())?
+                .reply()
+                .map_err(|error| error.to_string())?;
+            if after.root_x == x && after.root_y == y {
+                return Ok(());
+            }
+            if Instant::now() >= deadline {
+                return Err(format!(
+                    "XTEST pointer target=({x}, {y}), observed root=({}, {}), child={}",
+                    after.root_x, after.root_y, after.child,
+                ));
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
     }
 
     fn scroll(&mut self, button: u8, direction: &str) -> Result<(), String> {

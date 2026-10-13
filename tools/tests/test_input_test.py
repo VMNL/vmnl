@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import importlib.util
+import json
 import socket
 import tempfile
 import unittest
@@ -122,22 +123,52 @@ class InputTestPrerequisiteTests(unittest.TestCase):
             input_test.run_vmnl_input_test("wayland")
 
     def test_runs_only_the_public_vmnl_gpu_scenario(self) -> None:
+        artifact = json.dumps({
+            "reason": "compiler-artifact", "target": {"name": "vmnl-input-client"},
+            "executable": "/custom-target/debug/vmnl-input-client",
+        })
         with (
             patch.object(input_test, "check_prerequisites") as check,
             patch.object(
-                input_test.subprocess, "run", return_value=SimpleNamespace(returncode=0)
+                input_test.subprocess, "run", side_effect=[
+                    SimpleNamespace(returncode=0, stdout=artifact),
+                    SimpleNamespace(returncode=0),
+                ]
             ) as run,
             patch("builtins.print"),
         ):
             self.assertEqual(input_test.run_vmnl_input_test("x11"), 0)
 
         check.assert_called_once_with("x11")
+        self.assertIn("vmnl-input-client", run.call_args_list[0].args[0])
         command = run.call_args.args[0]
         self.assertIn("vmnl-gpu-tests", command)
         self.assertIn("native_input", command)
         self.assertIn("vmnl_public_native_keyboard_and_mouse_events_update_input", command)
         self.assertIn("--ignored", command)
         self.assertIn("--exact", command)
+        self.assertEqual(
+            run.call_args.kwargs["env"]["VMNL_INPUT_CLIENT"],
+            "/custom-target/debug/vmnl-input-client",
+        )
+
+    def test_vmnl_client_build_failure_does_not_start_injection(self) -> None:
+        with (
+            patch.object(input_test, "check_prerequisites"),
+            patch.object(input_test.subprocess, "run", return_value=SimpleNamespace(returncode=101)) as run,
+            patch("builtins.print"),
+        ):
+            self.assertEqual(input_test.run_vmnl_input_test("x11"), 101)
+        run.assert_called_once()
+
+    def test_vmnl_client_artifact_rejects_missing_duplicate_or_malformed_records(self) -> None:
+        artifact = json.dumps({
+            "reason": "compiler-artifact", "target": {"name": "vmnl-input-client"},
+            "executable": "/target/debug/vmnl-input-client",
+        })
+        for output in ["", "not JSON", "[]", artifact + "\n" + artifact]:
+            with self.subTest(output=output), self.assertRaises(input_test.PrerequisiteError):
+                input_test.vmnl_client_executable(output)
 
 
 if __name__ == "__main__":

@@ -94,15 +94,34 @@ just input-test cocoa
 ```
 
 The public VMNL `Window::poll_events()` → `Event`/`Input` scenario is a separate opt-in GPU test.
+Its executable client lives in `tests/gpu/input_client` and has only `vmnl` as a direct
+dependency. It creates the context/window and observes native events and input snapshots on
+its main thread, through the public facade. The separate test driver uses X11/XTEST/XKB for
+injection and physical fixtures; neither process calls GLFW directly. The GLFW-specific
+`tests/platform` probes remain a separate backend contract.
 It enumerates all 120 named keys using the shared physical-key fixtures and runs each key
 available in the active XKB map. It also covers XTEST pointer motion delivered as `MouseMoved`,
 each available X11 mouse-button mapping, and both scroll axes/directions. Missing physical
 key names/aliases and mouse mappings above the server limit are explicitly excluded; the hosted Xvfb runner exposes 10
-server buttons, so GLFW `Button7` and `Button8` are not qualified there:
+server buttons, so VMNL `Button7` and `Button8` are not qualified there:
 
 ```bash
 just input-test-vmnl x11
 ```
+
+The launcher builds the client and obtains its executable path from Cargo's JSON artifacts,
+including a custom `CARGO_TARGET_DIR`. For direct Cargo invocation of the ignored GPU scenario,
+first build `vmnl-input-client` and set `VMNL_INPUT_CLIENT` to that executable; an unset path
+fails with guidance. The driver gives only the client process `XDG_SESSION_TYPE=x11`, removes
+its `WAYLAND_DISPLAY`/`WAYLAND_SOCKET`, and confirms the client's title and PID in the X11
+window list before injecting. The host session environment is not modified.
+
+Each action has a numbered `ARM` → `READY` → checks → `OBSERVED` exchange over pipes. The
+client clears the previous event batch before `READY`. The driver waits for all press checks
+and their input snapshots before issuing release. Missing, malformed, failed or out-of-order
+records, client crashes and timeouts fail the test; stdout/stderr are continuously drained
+with bounded capture. Success requires `DONE` and a successful client exit. On failure the
+driver kills/reaps its client, releases injected held inputs and attempts XKB lock restoration.
 
 The terminal report groups checks under `Keyboard` (one block per key) and `Mouse` (one block
 per button, plus pointer and scroll). `Press` and `Release` verify event delivery and metadata;
@@ -115,15 +134,23 @@ environment readiness, rather than distinct input devices or keys; exclusions an
 checks never count as passes. Returned errors and assertion panics print the report and retain
 the failing exit status; an incomplete report also fails the command. Formatting, failure
 accounting, physical-name selection and Right Alt fallback priority are tested without a display.
+The separate-client version adds `Client shutdown` to the previous 640 checks, for 641 total;
+the shutdown check rejects extra records after `DONE` and unsuccessful exits. Headless driver
+fixtures verify that injection waits for `READY` and release waits for the complete press
+observation, and exercise crashes, timeouts, malformed records and large output on both pipes.
 
 This requires the X11 prerequisites above, XTEST, and a Vulkan-capable GPU with a Vulkan loader.
 The scenario presents a first frame before requesting focus so an Xwayland window has a buffer
 the compositor can display. It resolves physical XKB names and aliases, not layout characters
 or GLFW runtime scancode lookups, and compares each received scancode with that independent
-physical code. Canonical `RALT` is preferred to the backend's `LVL3`/`MDSW` fallback. The GPU test's
-existing `x11rb` dependency enables `xkb` for this lookup; no new package or version is added.
+physical code. This numeric X11 scancode convention still depends on the current backend;
+the client separation does not qualify a replacement backend's scancode representation.
+Canonical `RALT` is preferred to the backend's `LVL3`/`MDSW` fallback. The driver retains
+the existing `x11rb` version and its `xkb` feature for this lookup.
 The test rejects an initially held native key and checks that no VMNL key remains down after
-each release. Lock keys are tested as individual keys; the initial XKB locked-modifier mask is
+each release. The injector verifies the pointer's root position after posting its motion;
+the client must independently receive `MouseMoved` and observe the matching public getter.
+Lock keys are tested as individual keys; the initial XKB locked-modifier mask is
 restored and verified before the mouse-button cases. Cleanup releases the currently injected
 key and attempts lock restoration on an error or assertion panic. This does not qualify modifier
 combinations, lock-modifier flags, text, repeat or batch-boundary scenarios. A mapped key
@@ -172,6 +199,15 @@ initial failure is not established. These results qualify only individual named-
 press/release, scancodes and snapshots, plus the existing mouse cases. Text, modifier
 combinations/lock flags, repeat, unknown keys, enter/leave, focus loss, same-batch taps and other
 platforms/environments remain outside this public scenario's runtime evidence.
+
+On 2026-10-13, the separate-client version passed three consecutive automatic executions on
+the local X11 display: each reported 641 checks, 623 `PASS`, 18 `EXCLUDED`, zero `FAIL` and zero
+`NOT RUN`. The additional pass checks successful client shutdown. The driver confirmed the
+client's X11 title/PID before injection. An immediate post-XTEST position query initially still
+reported the old root coordinates; delivery verification now waits up to 500 ms for the target,
+while the client independently checks `MouseMoved` and the public position getter. These runs
+do not establish the cause of the earlier event timeout or qualify another backend's numeric
+scancode representation. They are automatic evidence, not operator graphical validation.
 
 X11 needs `DISPLAY`, `xprop`, and an EWMH window manager; the probe checks XTEST when it injects
 input. Wayland needs a live `WAYLAND_DISPLAY` socket and the X11 parent display used by XTEST.

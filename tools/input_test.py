@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import ctypes
+import json
 import os
 import platform
 import re
@@ -224,11 +225,40 @@ def run_vmnl_input_test(backend: str) -> int:
         flush=True,
     )
     try:
-        result = subprocess.run(command, cwd=ROOT, check=False)
+        build = subprocess.run(
+            ["cargo", "build", "-p", "vmnl-input-client", "--locked",
+             "--message-format=json-render-diagnostics"],
+            cwd=ROOT, check=False, stdout=subprocess.PIPE, text=True,
+        )
+        if build.returncode != 0:
+            return build.returncode
+        executable = vmnl_client_executable(build.stdout)
+        environment = os.environ.copy()
+        environment["VMNL_INPUT_CLIENT"] = executable
+        result = subprocess.run(command, cwd=ROOT, env=environment, check=False)
     except OSError as error:
         print(f"could not start the VMNL native input test: {error}", file=sys.stderr)
         return 1
     return result.returncode
+
+
+def vmnl_client_executable(cargo_output: str) -> str:
+    """Use Cargo's artifact path, including a caller's CARGO_TARGET_DIR override."""
+    try:
+        records = [json.loads(line) for line in cargo_output.splitlines() if line.strip()]
+    except json.JSONDecodeError as error:
+        raise PrerequisiteError(f"invalid Cargo artifact output: {error}") from error
+    if any(not isinstance(record, dict) for record in records):
+        raise PrerequisiteError("Cargo artifact records must be JSON objects")
+    executables = [
+        record["executable"] for record in records
+        if record.get("reason") == "compiler-artifact"
+        and record.get("target", {}).get("name") == "vmnl-input-client"
+        and record.get("executable")
+    ]
+    if len(executables) != 1:
+        raise PrerequisiteError("Cargo did not report exactly one VMNL input client executable")
+    return executables[0]
 
 
 def main(argv: Sequence[str] | None = None) -> int:

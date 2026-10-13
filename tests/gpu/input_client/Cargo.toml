@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2026 Hugo Duda
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "vmnl-input-client"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+publish = false
+
+[dependencies]
+vmnl = { path = "../../../crates/vmnl" }

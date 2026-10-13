@@ -14,6 +14,7 @@ members = [
     "examples/window/wait_events",
     "tests/api",
     "tests/gpu",
+    "tests/gpu/input_client",
     "tests/platform",
     "tests/smoke",
 ]

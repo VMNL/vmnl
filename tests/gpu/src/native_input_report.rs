@@ -103,7 +103,7 @@ impl InputTestReport {
 
     pub(crate) fn render(&self) -> String {
         let mut output =
-            String::from("\nVMNL INPUT TEST — X11\nPath: XTEST → GLFW → VMNL Event / Input\n");
+            String::from("\nVMNL INPUT TEST — X11\nPath: XTEST → OS → VMNL client Event / Input\n");
         let mut section = "";
         let mut input = "";
         let (mut passed, mut failed, mut excluded, mut not_run) = (0, 0, 0, 0);
@@ -185,7 +185,7 @@ mod tests {
         );
         assert!(report.is_complete());
         assert_eq!(report.render(), concat!(
-            "\nVMNL INPUT TEST — X11\nPath: XTEST → GLFW → VMNL Event / Input\n",
+            "\nVMNL INPUT TEST — X11\nPath: XTEST → OS → VMNL client Event / Input\n",
             "\nKeyboard:\n  A:\n    Press: PASS\n    Release: PASS\n  B:\n    Press: PASS\n",
             "\nMouse:\n  Button7:\n    Press: EXCLUDED — server button 11 exceeds limit 10\n",
             "\nSummary:\n  Checks:   4\n  PASS:     3\n  FAIL:     0\n  EXCLUDED: 1\n  NOT RUN:  0\n  Result:   PASS\n",
