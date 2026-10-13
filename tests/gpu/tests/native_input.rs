@@ -12,12 +12,15 @@ mod native_input_keys;
 #[path = "../src/native_input_report.rs"]
 mod native_input_report;
 
-use native_input_keys::physical_a_keycode;
+#[path = "../../platform/src/input_key_table.rs"]
+mod input_key_table;
+
+use native_input_keys::physical_keycode;
 use native_input_report::InputTestReport;
 use std::panic::{catch_unwind, resume_unwind, AssertUnwindSafe};
 use std::time::{Duration, Instant};
 use vmnl::{
-    common::Rgba, Context, Event, EventKind, Key, MouseButton, VMNLError, VMNLErrorKind,
+    common::Rgba, Context, Event, EventKind, Key, Modifiers, MouseButton, VMNLError, VMNLErrorKind,
     VMNLResult, Window,
 };
 use vmnl_gpu_tests::gpu_test_guard;
@@ -38,18 +41,14 @@ const BUTTON_SCROLL_NEGATIVE_X: u8 = 7;
 #[ignore = "requires Vulkan, an X11 EWMH display, XTEST, and injects native keyboard/mouse input"]
 fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()> {
     let mut report = InputTestReport::default();
-    report.plan("Environment", "X11 / Vulkan / XTEST", &["Readiness"]);
     report.plan(
-        "Keyboard",
-        "A",
-        &[
-            "Press",
-            "Scancode",
-            "Press input states",
-            "Release",
-            "Release input states",
-        ],
+        "Environment",
+        "X11 / Vulkan / XTEST",
+        &["Readiness", "Lock state restoration"],
     );
+    for case in KEY_CASES {
+        report.plan("Keyboard", &format!("{:?}", case.key), KEY_CHECKS);
+    }
     for (_, button) in MOUSE_BUTTON_MAPPINGS {
         report.plan("Mouse", &format!("{button:?}"), MOUSE_BUTTON_CHECKS);
     }
@@ -74,6 +73,31 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
         Err(payload) => resume_unwind(payload),
     }
 }
+
+#[derive(Clone, Copy)]
+struct KeyCase {
+    key: Key,
+    physical_name: &'static str,
+}
+
+const fn x11_key(
+    key: Key,
+    physical_name: &'static str,
+    _evdev: Option<u16>,
+    _win32: Option<u16>,
+    _cocoa: Option<u16>,
+) -> KeyCase {
+    KeyCase { key, physical_name }
+}
+
+const KEY_CASES: [KeyCase; 120] = input_key_table::key_mappings!(x11_key, Key);
+const KEY_CHECKS: &[&str] = &[
+    "Press",
+    "Scancode",
+    "Press input states",
+    "Release",
+    "Release input states",
+];
 
 const MOUSE_BUTTON_CHECKS: &[&str] = &[
     "Press",
@@ -125,7 +149,7 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
                 "VMNL input window did not acquire X11 focus"
             );
             let _ = window.poll_events();
-            assert!(!window.input().keyboard().is_down(Key::A));
+            assert!(!window.input().keyboard().is_one_down());
             assert!(!window.input().mouse().is_down(MouseButton::Left));
 
             window.set_cursor_position(120.0, 100.0)?;
@@ -145,6 +169,22 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
             Ok((context, window, injector, initial_cursor_position))
         },
     )?;
+
+    for case in KEY_CASES {
+        if injector.keycode(case.key).is_none() {
+            let reason = if case.physical_name.is_empty() {
+                "GLFW X11 has no physical-name mapping for this named key".to_owned()
+            } else {
+                format!(
+                    "physical XKB name/alias {} is absent from the active map",
+                    case.physical_name
+                )
+            };
+            for check in KEY_CHECKS {
+                report.exclude("Keyboard", &format!("{:?}", case.key), check, &reason);
+            }
+        }
+    }
 
     for (server_button, button) in MOUSE_BUTTON_MAPPINGS {
         if server_button > injector.maximum_server_button {
@@ -189,52 +229,67 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
         Ok(())
     })?;
 
-    let key_scancode = report.run("Keyboard", "A", "Press", || {
-        injector.press_key_a().map_err(invalid_state)?;
-        let events = poll_until(&mut window, "A key press", |kind| {
-            matches!(
-                kind,
-                EventKind::KeyPressed {
-                    key: Key::A,
-                    repeat: false,
-                    ..
-                }
-            )
+    for case in KEY_CASES {
+        let Some(code) = injector.keycode(case.key) else {
+            continue;
+        };
+        let name = format!("{:?}", case.key);
+        let key_scancode = report.run("Keyboard", &name, "Press", || {
+            injector.press_key(code).map_err(invalid_state)?;
+            let events = poll_until(&mut window, &format!("{name} key press"), |kind| {
+                matches!(kind, EventKind::KeyPressed { key, repeat: false, .. } if *key == case.key)
+            })?;
+            assert_key_press(&events, case.key)
         })?;
-        assert_key_press(&events)
-    })?;
-    report.run("Keyboard", "A", "Scancode", || -> VMNLResult<()> {
-        assert_eq!(key_scancode, i32::from(injector.a_keycode));
-        Ok(())
-    })?;
-    report.run(
-        "Keyboard",
-        "A",
-        "Press input states",
-        || -> VMNLResult<()> {
-            assert!(window.input().keyboard().is_down(Key::A));
-            assert!(window.input().keyboard().is_pressed(Key::A));
-            assert!(!window.input().keyboard().is_released(Key::A));
+        report.run("Keyboard", &name, "Scancode", || -> VMNLResult<()> {
+            assert_eq!(
+                key_scancode,
+                i32::from(code),
+                "{name} physical XKB scancode"
+            );
             Ok(())
-        },
-    )?;
-    report.run("Keyboard", "A", "Release", || {
-        injector.release_key_a().map_err(invalid_state)?;
-        let events = poll_until(&mut window, "A key release", |kind| {
-            matches!(kind, EventKind::KeyReleased { key: Key::A, .. })
         })?;
-        assert_key_release(&events, key_scancode)
-    })?;
+        report.run(
+            "Keyboard",
+            &name,
+            "Press input states",
+            || -> VMNLResult<()> {
+                assert!(window.input().keyboard().is_down(case.key));
+                assert!(window.input().keyboard().is_pressed(case.key));
+                assert!(!window.input().keyboard().is_released(case.key));
+                Ok(())
+            },
+        )?;
+        report.run("Keyboard", &name, "Release", || {
+            injector.release_key(code).map_err(invalid_state)?;
+            let events = poll_until(
+                &mut window,
+                &format!("{name} key release"),
+                |kind| matches!(kind, EventKind::KeyReleased { key, .. } if *key == case.key),
+            )?;
+            assert_key_release(&events, case.key, i32::from(code))
+        })?;
+        report.run(
+            "Keyboard",
+            &name,
+            "Release input states",
+            || -> VMNLResult<()> {
+                assert!(!window.input().keyboard().is_down(case.key));
+                assert!(!window.input().keyboard().is_pressed(case.key));
+                assert!(window.input().keyboard().is_released(case.key));
+                assert!(
+                    !window.input().keyboard().is_one_down(),
+                    "{name} left a key down"
+                );
+                Ok(())
+            },
+        )?;
+    }
     report.run(
-        "Keyboard",
-        "A",
-        "Release input states",
-        || -> VMNLResult<()> {
-            assert!(!window.input().keyboard().is_down(Key::A));
-            assert!(!window.input().keyboard().is_pressed(Key::A));
-            assert!(window.input().keyboard().is_released(Key::A));
-            Ok(())
-        },
+        "Environment",
+        "X11 / Vulkan / XTEST",
+        "Lock state restoration",
+        || injector.restore_locks().map_err(invalid_state),
     )?;
 
     let maximum_server_button = injector.maximum_server_button;
@@ -357,50 +412,71 @@ fn poll_until(
     )))
 }
 
-fn assert_key_press(events: &[Event]) -> VMNLResult<i32> {
+fn assert_key_press(events: &[Event], expected_key: Key) -> VMNLResult<i32> {
     let mut matching = events.iter().filter_map(|event| match event.kind() {
         EventKind::KeyPressed {
-            key: Key::A,
+            key,
             scancode,
             modifiers,
             repeat: false,
-        } => Some((*scancode, *modifiers)),
+        } if *key == expected_key => Some((*scancode, *modifiers)),
         _ => None,
     });
     let Some((scancode, modifiers)) = matching.next() else {
         return Err(invalid_state(format!(
-            "A press event was absent: {events:?}"
+            "{expected_key:?} press event was absent: {events:?}"
         )));
     };
-    if matching.next().is_some() || scancode.as_raw() <= 0 || !modifiers.is_empty() {
+    if matching.next().is_some()
+        || scancode.as_raw() <= 0
+        || !valid_single_key_modifiers(expected_key, modifiers)
+    {
         return Err(invalid_state(format!(
-            "A press event had duplicate or invalid metadata: {events:?}"
+            "{expected_key:?} press event had duplicate or invalid metadata: {events:?}"
         )));
     }
     Ok(scancode.as_raw())
 }
 
-fn assert_key_release(events: &[Event], expected_scancode: i32) -> VMNLResult<()> {
+fn assert_key_release(
+    events: &[Event],
+    expected_key: Key,
+    expected_scancode: i32,
+) -> VMNLResult<()> {
     let mut matching = events.iter().filter_map(|event| match event.kind() {
         EventKind::KeyReleased {
-            key: Key::A,
+            key,
             scancode,
             modifiers,
-        } => Some((*scancode, *modifiers)),
+        } if *key == expected_key => Some((*scancode, *modifiers)),
         _ => None,
     });
     let Some((scancode, modifiers)) = matching.next() else {
         return Err(invalid_state(format!(
-            "A release event was absent: {events:?}"
+            "{expected_key:?} release event was absent: {events:?}"
         )));
     };
-    if matching.next().is_some() || scancode.as_raw() != expected_scancode || !modifiers.is_empty()
+    if matching.next().is_some()
+        || scancode.as_raw() != expected_scancode
+        || !valid_single_key_modifiers(expected_key, modifiers)
     {
         return Err(invalid_state(format!(
-            "A release event had duplicate or mismatched metadata: {events:?}"
+            "{expected_key:?} release event had duplicate or mismatched metadata: {events:?}"
         )));
     }
     Ok(())
+}
+
+fn valid_single_key_modifiers(key: Key, modifiers: Modifiers) -> bool {
+    let allowed = match key {
+        Key::LeftShift | Key::RightShift => Modifiers::SHIFT,
+        Key::LeftControl | Key::RightControl => Modifiers::CONTROL,
+        Key::LeftAlt | Key::RightAlt => Modifiers::ALT,
+        Key::LeftSuper | Key::RightSuper => Modifiers::SUPER,
+        _ => Modifiers::NONE,
+    };
+    // X11 may include the modifier key's own flag in its callback state.
+    modifiers.bits() & !allowed.bits() == 0
 }
 
 fn assert_mouse_button_event(
@@ -449,8 +525,9 @@ struct X11Injector {
     connection: x11rb::rust_connection::RustConnection,
     root: u32,
     maximum_server_button: u8,
-    a_keycode: u8,
-    key_is_down: bool,
+    keys: Vec<(Key, Option<u8>)>,
+    held_keycode: Option<u8>,
+    initial_locked_mods: x11rb::protocol::xproto::ModMask,
     mouse_button_is_down: Option<u8>,
     scroll_button_is_down: Option<u8>,
 }
@@ -495,10 +572,13 @@ impl X11Injector {
             .reply()
             .map_err(|error| format!("could not read XKB version: {error}"))?;
         if !version.supported {
-            return Err("XKB 1.0 is required to resolve physical A".to_owned());
+            return Err("XKB 1.0 is required to resolve physical keys".to_owned());
         }
         let names = connection
-            .xkb_get_names(ID::USE_CORE_KBD.into(), NameDetail::KEY_NAMES)
+            .xkb_get_names(
+                ID::USE_CORE_KBD.into(),
+                NameDetail::KEY_NAMES | NameDetail::KEY_ALIASES,
+            )
             .map_err(|error| format!("could not request XKB physical key names: {error}"))?
             .reply()
             .map_err(|error| format!("could not read XKB physical key names: {error}"))?;
@@ -506,28 +586,110 @@ impl X11Injector {
             .value_list
             .key_names
             .ok_or("XKB omitted physical key names")?;
-        let key_names: Vec<_> = raw_names.iter().map(|name| name.name).collect();
-        let a_keycode = physical_a_keycode(names.first_key, &key_names)?;
+        let mut key_names = Vec::new();
+        for (index, name) in raw_names.iter().enumerate() {
+            let code = u16::from(names.first_key)
+                .checked_add(u16::try_from(index).map_err(|error| error.to_string())?)
+                .ok_or("XKB keycode overflowed")?;
+            key_names.push((xkb_name(&name.name), code));
+        }
+        if let Some(aliases) = names.value_list.key_aliases {
+            for alias in aliases {
+                let real = xkb_name(&alias.real);
+                if let Some(code) = key_names
+                    .iter()
+                    .find(|(name, _)| *name == real)
+                    .map(|(_, code)| *code)
+                {
+                    key_names.push((xkb_name(&alias.alias), code));
+                }
+            }
+        }
+        let keys = KEY_CASES
+            .iter()
+            .map(|case| {
+                physical_keycode(case.physical_name, &key_names).map(|code| (case.key, code))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        if keys.iter().all(|(_, code)| code.is_none()) {
+            return Err("active XKB map has no injectable named key".to_owned());
+        }
+        let initial_locked_mods = connection
+            .xkb_get_state(ID::USE_CORE_KBD.into())
+            .map_err(|error| format!("could not request initial XKB lock state: {error}"))?
+            .reply()
+            .map_err(|error| format!("could not read initial XKB lock state: {error}"))?
+            .locked_mods;
+        let held = connection
+            .query_keymap()
+            .map_err(|error| format!("could not request native keyboard state: {error}"))?
+            .reply()
+            .map_err(|error| format!("could not read native keyboard state: {error}"))?;
+        if held.keys.iter().any(|byte| *byte != 0) {
+            return Err(
+                "native keys are already held; leave the keyboard idle before the test".to_owned(),
+            );
+        }
 
         Ok(Self {
             connection,
             root,
             maximum_server_button,
-            a_keycode,
-            key_is_down: false,
+            keys,
+            held_keycode: None,
+            initial_locked_mods,
             mouse_button_is_down: None,
             scroll_button_is_down: None,
         })
     }
 
-    fn press_key_a(&mut self) -> Result<(), String> {
-        self.key_is_down = true;
-        self.fake_input(KEY_PRESS, self.a_keycode, "A key press")
+    fn keycode(&self, key: Key) -> Option<u8> {
+        self.keys
+            .iter()
+            .find(|(named, _)| *named == key)
+            .and_then(|(_, code)| *code)
     }
 
-    fn release_key_a(&mut self) -> Result<(), String> {
-        self.fake_input(KEY_RELEASE, self.a_keycode, "A key release")?;
-        self.key_is_down = false;
+    fn press_key(&mut self, code: u8) -> Result<(), String> {
+        self.held_keycode = Some(code);
+        self.fake_input(KEY_PRESS, code, "key press")
+    }
+
+    fn release_key(&mut self, code: u8) -> Result<(), String> {
+        self.fake_input(KEY_RELEASE, code, "key release")?;
+        self.held_keycode = None;
+        Ok(())
+    }
+
+    fn restore_locks(&self) -> Result<(), String> {
+        use x11rb::protocol::xkb::{ConnectionExt as _, ID};
+        self.connection
+            .xkb_latch_lock_state(
+                ID::USE_CORE_KBD.into(),
+                u8::MAX.into(),
+                self.initial_locked_mods,
+                false,
+                0u8.into(),
+                0u8.into(),
+                false,
+                0,
+            )
+            .map_err(|error| format!("could not restore XKB locks: {error}"))?
+            .check()
+            .map_err(|error| format!("XKB lock restoration failed: {error}"))?;
+        let observed = self
+            .connection
+            .xkb_get_state(ID::USE_CORE_KBD.into())
+            .map_err(|error| format!("could not request restored XKB locks: {error}"))?
+            .reply()
+            .map_err(|error| format!("could not read restored XKB locks: {error}"))?
+            .locked_mods;
+        if observed != self.initial_locked_mods {
+            return Err(format!(
+                "XKB locks were not restored: initial={:?}, observed={observed:?}",
+                self.initial_locked_mods
+            ));
+        }
         Ok(())
     }
 
@@ -612,8 +774,8 @@ impl X11Injector {
 
 impl Drop for X11Injector {
     fn drop(&mut self) {
-        if self.key_is_down {
-            let _ = self.fake_input(KEY_RELEASE, self.a_keycode, "cleanup A key release");
+        if let Some(code) = self.held_keycode {
+            let _ = self.fake_input(KEY_RELEASE, code, "cleanup key release");
         }
         if let Some(button) = self.mouse_button_is_down {
             let _ = self.fake_input(BUTTON_RELEASE, button, "cleanup mouse release");
@@ -621,5 +783,14 @@ impl Drop for X11Injector {
         if let Some(button) = self.scroll_button_is_down {
             let _ = self.fake_input(BUTTON_RELEASE, button, "cleanup scroll release");
         }
+        if let Err(error) = self.restore_locks() {
+            eprintln!("X11 input cleanup: {error}");
+        }
     }
+}
+
+fn xkb_name(raw: &[u8; 4]) -> String {
+    String::from_utf8_lossy(raw)
+        .trim_end_matches('\0')
+        .to_owned()
 }

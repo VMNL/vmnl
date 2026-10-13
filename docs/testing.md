@@ -94,9 +94,10 @@ just input-test cocoa
 ```
 
 The public VMNL `Window::poll_events()` → `Event`/`Input` scenario is a separate opt-in GPU test.
-It currently covers X11 `A`, XTEST pointer motion delivered as `MouseMoved`, each mouse button
-whose X11 server mapping is available, and vertical/horizontal scroll in both directions. It
-logs and skips mappings above the server's reported limit; the hosted Xvfb runner exposes 10
+It enumerates all 120 named keys using the shared physical-key fixtures and runs each key
+available in the active XKB map. It also covers XTEST pointer motion delivered as `MouseMoved`,
+each available X11 mouse-button mapping, and both scroll axes/directions. Missing physical
+key names/aliases and mouse mappings above the server limit are explicitly excluded; the hosted Xvfb runner exposes 10
 server buttons, so GLFW `Button7` and `Button8` are not qualified there:
 
 ```bash
@@ -106,20 +107,27 @@ just input-test-vmnl x11
 The terminal report groups checks under `Keyboard` (one block per key) and `Mouse` (one block
 per button, plus pointer and scroll). `Press` and `Release` verify event delivery and metadata;
 their separate `input states` checks verify `is_down`, `is_pressed` and `is_released`.
-`Scancode` compares physical A with its independently resolved XKB keycode.
+`Scancode` compares each key with its independently resolved XKB keycode. The headless facade
+test checks that the shared fixture contains every named VMNL key exactly once.
 Each check reports `PASS`, `FAIL` with its diagnostic, `EXCLUDED` with the X11 mapping reason,
 or `NOT RUN` when an earlier failure stopped execution. The summary counts checks, including
 environment readiness, rather than distinct input devices or keys; exclusions and unexecuted
 checks never count as passes. Returned errors and assertion panics print the report and retain
-the failing exit status; an incomplete report also fails the command. The reporter accepts
-additional key blocks without expanding the
-current scenario's coverage. Its formatting and failure accounting are tested without a display.
+the failing exit status; an incomplete report also fails the command. Formatting, failure
+accounting, physical-name selection and Right Alt fallback priority are tested without a display.
 
 This requires the X11 prerequisites above, XTEST, and a Vulkan-capable GPU with a Vulkan loader.
 The scenario presents a first frame before requesting focus so an Xwayland window has a buffer
-the compositor can display. It resolves physical A from the XKB `AC01` name, not from the A keysym,
-and checks that the received scancode matches that independent physical code. The GPU test's
+the compositor can display. It resolves physical XKB names and aliases, not layout characters
+or GLFW runtime scancode lookups, and compares each received scancode with that independent
+physical code. Canonical `RALT` is preferred to the backend's `LVL3`/`MDSW` fallback. The GPU test's
 existing `x11rb` dependency enables `xkb` for this lookup; no new package or version is added.
+The test rejects an initially held native key and checks that no VMNL key remains down after
+each release. Lock keys are tested as individual keys; the initial XKB locked-modifier mask is
+restored and verified before the mouse-button cases. Cleanup releases the currently injected
+key and attempts lock restoration on an error or assertion panic. This does not qualify modifier
+combinations, lock-modifier flags, text, repeat or batch-boundary scenarios. A mapped key
+intercepted by a compositor shortcut still fails; missing delivery is not converted into an exclusion.
 Keep the desktop idle during injection: external keyboard/pointer activity can change focus or
 add events and must not be reported as a passing input sequence.
 It is excluded from `just test-gpu` so running the general GPU suite does not inject input into the
@@ -140,6 +148,30 @@ This exercises physical A press/release, scancode and batch snapshots, pointer m
 GLFW mouse buttons 1–6, and both scroll axes in both directions through the public facade.
 It does not qualify buttons 7–8, every key, text, repeat, enter/leave, or public focus-loss batches,
 other display/GPU stacks, or human manual graphical validation.
+
+On 2026-10-13, the expanded public X11 scenario passed all five checks for 118 of the 120
+named keys on the same Fedora 44 / Hyprland 0.56.2 / Xwayland stack (Mesa 26.2.3, Vulkan loader
+1.4.341). `World2` has no X11 physical-name fixture; `F25` has no `FK25` name/alias in the active
+XKB map. Buttons 7–8 remain outside the ten-button pointer map. The final terminal summary was:
+
+```text
+Summary:
+  Checks:   640
+  PASS:     622
+  FAIL:     0
+  EXCLUDED: 18
+  NOT RUN:  0
+  Result:   PASS
+```
+
+The 18 excluded checks are five per excluded key and four per excluded mouse button; the 622
+passes include readiness and verified XKB lock restoration. All tested keys finish released.
+The first attempt timed out on the existing pointer-motion check before keyboard injection;
+a diagnostic run and the final run without instrumentation both passed. The cause of that
+initial failure is not established. These results qualify only individual named-key
+press/release, scancodes and snapshots, plus the existing mouse cases. Text, modifier
+combinations/lock flags, repeat, unknown keys, enter/leave, focus loss, same-batch taps and other
+platforms/environments remain outside this public scenario's runtime evidence.
 
 X11 needs `DISPLAY`, `xprop`, and an EWMH window manager; the probe checks XTEST when it injects
 input. Wayland needs a live `WAYLAND_DISPLAY` socket and the X11 parent display used by XTEST.

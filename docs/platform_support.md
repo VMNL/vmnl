@@ -29,6 +29,13 @@ The representative public VMNL/Vulkan scenario also passed locally on Fedora 44 
 Hyprland 0.56.2/Xwayland, Intel Iris Xe and Mesa 26.2.3. See the
 [public input execution record](testing.md#native-input-contract) for its exact scope; this is
 automatic runtime evidence and does not qualify other hardware/backends or manual graphics.
+The 2026-10-13 public X11 expansion passed press/release, independent scancode and snapshot
+checks for 118 of the 120 named keys in that local environment. `World2` lacks an X11 physical
+fixture and `F25` lacks an active `FK25` name/alias; both are explicit exclusions. XKB lock state
+is restored and checked. This does not qualify public text, modifier combinations, repeat,
+focus loss/batch boundaries or other desktop environments. The first pointer-motion attempt
+failed before keyboard injection; the diagnostic and final runs passed, with no established
+cause for the initial timeout. Details and counts are in the linked execution record.
 
 ## Validation Matrix
 

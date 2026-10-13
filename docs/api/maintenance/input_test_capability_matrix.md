@@ -20,7 +20,7 @@ presence or successful compilation.
 
 | Profile | Backend and injector | Prerequisites and limits | Current native path |
 | --- | --- | --- | --- |
-| K | X11 / XTEST | Visible mapped window, confirmed focus, active keyboard layout; unavailable keys and intercepted shortcuts need a recorded reason. | 118 eligible named-key cases and the eligible extended keyboard families passed directly through GLFW in [schema-2 CI run #38206068512](https://github.com/VMNL/vmnl/actions/runs/38206068512). The representative public A scenario passed locally (stage 5); other public key families remain unqualified. |
+| K | X11 / XTEST | Visible mapped window, confirmed focus, active keyboard layout; unavailable keys and intercepted shortcuts need a recorded reason. | 118 eligible named-key cases and the eligible extended keyboard families passed directly through GLFW in [schema-2 CI run #38206068512](https://github.com/VMNL/vmnl/actions/runs/38206068512). The public VMNL X11 scenario passed 118 named keys locally on 2026-10-13; World2/F25 are explicitly excluded. Text, modifier combinations and repeat remain unqualified through VMNL. |
 | K | Nested Weston / parent X11 XTEST | Same focus/readiness checks; this exercises XTEST → Xvfb → Weston X11 backend → Wayland client, not a standalone Wayland seat. | 118 eligible named-key cases and the eligible extended keyboard families passed directly through GLFW in [schema-2 CI run #38206068512](https://github.com/VMNL/vmnl/actions/runs/38206068512). Public VMNL runtime remains unqualified. |
 | K | Win32 / `SendInput` | Active desktop at matching integrity; keyboard layout and system shortcuts constrain eligible keys. | 116 eligible named-key cases and the eligible extended keyboard families passed directly through GLFW in [schema-2 CI run #38206068512](https://github.com/VMNL/vmnl/actions/runs/38206068512). Experimental pending ten consecutive qualified runs; public VMNL runtime remains unqualified. |
 | K | Cocoa / `CGEventPost` | Active desktop; macOS may require Accessibility permission. Layout and system shortcuts constrain eligible keys. | 110 eligible named-key cases and the eligible extended keyboard families passed directly through GLFW in [schema-2 CI run #38206068512](https://github.com/VMNL/vmnl/actions/runs/38206068512). Experimental pending ten consecutive qualified runs; public VMNL runtime remains unqualified. |
@@ -28,7 +28,7 @@ presence or successful compilation.
 | M | Nested Weston / parent X11 XTEST | Records nested Weston evidence only; button map and focus must be captured. Requires the default desktop shell with its top panel for boundary crossings. Does not qualify a native Wayland seat. CI parent Xvfb currently exposes 10 buttons. | GLFW buttons 1–6, motion, leave/enter, and all four scroll directions passed in [CI run #38109958980](https://github.com/VMNL/vmnl/actions/runs/38109958980). Buttons 7–8 are explicitly not injectable with the hosted 10-button map. |
 | M | Win32 / `SendInput` | Active desktop at matching integrity. GLFW Win32 maps left/right/middle and XBUTTON1/2, so only GLFW buttons 1–5 are eligible through this mapping. | Eligible buttons, pointer motion, leave/enter, and all four scroll directions passed in [CI runs #38089252090](https://github.com/VMNL/vmnl/actions/runs/38089252090) and [#38109958980](https://github.com/VMNL/vmnl/actions/runs/38109958980). Still experimental pending ten consecutive successes. |
 | M | Cocoa / `CGEventPost` | Requires an active desktop and any required Accessibility permission; remaining button mapping must be established by probes. | All eight buttons, pointer motion, leave/enter, and all four scroll directions passed in [CI runs #38089252090](https://github.com/VMNL/vmnl/actions/runs/38089252090) and [#38109958980](https://github.com/VMNL/vmnl/actions/runs/38109958980). Still experimental pending ten consecutive successes. |
-| V | Public VMNL path / X11 XTEST | Requires a qualified Vulkan loader, GPU/driver, X11 EWMH display, XTEST, mapped and focused VMNL window. Buttons above the X11 server mapping are not injectable. | `just input-test-vmnl x11` checks A, pointer motion, every mouse-button mapping supported by the active X server, and both scroll axes through `Window::poll_events()` → `Event`/`Input`; representative runtime passed on the local Fedora/Xwayland stack recorded below. |
+| V | Public VMNL path / X11 XTEST | Requires a qualified Vulkan loader, GPU/driver, X11 EWMH display, XTEST, mapped and focused VMNL window. Buttons above the X11 server mapping are not injectable. | `just input-test-vmnl x11` enumerates all 120 named keys and checks every active XKB mapping, pointer motion, every mouse-button mapping supported by the active X server, and both scroll axes through `Window::poll_events()` → `Event`/`Input`; representative runtime passed on the local Fedora/Xwayland stack recorded below. |
 
 All native cases must use a bounded deadline, verify readiness before injection, preserve the
 observed event order and identity, retain failure diagnostics, and release held inputs during
@@ -65,7 +65,7 @@ synthetic injection.
   available input-permission prerequisites before running one native contract. CI continues to
   invoke the same selected contracts directly through Cargo: Linux X11 and nested Weston block,
   while Win32 and Cocoa remain experimental.
-- `just input-test-vmnl x11` adds an opt-in Vulkan-backed public-facade path for A, pointer motion,
+- `just input-test-vmnl x11` adds an opt-in Vulkan-backed public-facade path for all eligible named keys, pointer motion,
   every mouse-button mapping supported by the active X11 server, and vertical/horizontal scroll
   directions. It is excluded from `just test-gpu` because it injects input into the active desktop;
   its representative runtime passed on the local Vulkan/Xwayland stack recorded below. On the hosted 10-button Xvfb, `Button7`/`Button8`
@@ -122,9 +122,20 @@ The local X11 pointer map reports ten server buttons, so VMNL buttons 7–8 rema
 The X11 Vulkan instance also enables Xlib when GLFW selects XCB, matching the raw handle used
 by Vulkano for surface creation.
 
-This is automatic GPU/display execution. It does not qualify every public key, text, repeat,
+This is automatic GPU/display execution. Excluded named keys, text and repeat remain unqualified, as do
 enter/leave, focus loss or same-batch taps through VMNL, Windows/macOS VMNL runtime, a native
 Xorg/Wayland seat, other drivers/hardware, or human manual graphical regression checks.
+
+The 2026-10-13 expansion passed all five public checks for 118 named keys: press delivery,
+independent scancode, press snapshot, release delivery/scancode and release snapshot with no key
+remaining down. The shared physical-key table instantiates independent GLFW and VMNL variants;
+no production conversion or GLFW runtime scancode lookup supplies the expected VMNL key.
+XKB aliases and canonical-before-fallback Right Alt resolution cover the active map. `World2`
+and `F25` are explicitly excluded for the reasons in the rows below. The 640-check terminal
+report contains 622 passes and 18 exclusions, including the existing mouse cases and verified
+restoration of the original XKB locked-modifier mask. See the
+[execution record](../../testing.md#native-input-contract) for the initial pointer timeout and
+successful diagnostic/final runs; this is not a cross-environment stability claim.
 
 ## Keyboard named-key rows
 
@@ -149,126 +160,126 @@ historical snapshot; the new exhaustive modeled assertions are listed in branch 
 
 | VMNL key | Independent GLFW 3.4 token | Required result | Deterministic evidence at baseline | Native evidence and current status |
 | --- | --- | --- | --- | --- |
-| `Key::A` | `GLFW_KEY_A` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (stage 5) |
-| `Key::B` | `GLFW_KEY_B` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::C` | `GLFW_KEY_C` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::D` | `GLFW_KEY_D` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::E` | `GLFW_KEY_E` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F` | `GLFW_KEY_F` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::G` | `GLFW_KEY_G` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::H` | `GLFW_KEY_H` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::I` | `GLFW_KEY_I` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::J` | `GLFW_KEY_J` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::K` | `GLFW_KEY_K` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::L` | `GLFW_KEY_L` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::M` | `GLFW_KEY_M` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::N` | `GLFW_KEY_N` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::O` | `GLFW_KEY_O` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::P` | `GLFW_KEY_P` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Q` | `GLFW_KEY_Q` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::R` | `GLFW_KEY_R` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::S` | `GLFW_KEY_S` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::T` | `GLFW_KEY_T` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::U` | `GLFW_KEY_U` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::V` | `GLFW_KEY_V` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::W` | `GLFW_KEY_W` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::X` | `GLFW_KEY_X` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Y` | `GLFW_KEY_Y` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Z` | `GLFW_KEY_Z` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Num0` | `GLFW_KEY_0` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Num1` | `GLFW_KEY_1` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Num2` | `GLFW_KEY_2` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Num3` | `GLFW_KEY_3` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Num4` | `GLFW_KEY_4` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Num5` | `GLFW_KEY_5` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Num6` | `GLFW_KEY_6` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Num7` | `GLFW_KEY_7` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Num8` | `GLFW_KEY_8` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Num9` | `GLFW_KEY_9` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Escape` | `GLFW_KEY_ESCAPE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Enter` | `GLFW_KEY_ENTER` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Tab` | `GLFW_KEY_TAB` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Backspace` | `GLFW_KEY_BACKSPACE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Left` | `GLFW_KEY_LEFT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Right` | `GLFW_KEY_RIGHT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Up` | `GLFW_KEY_UP` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Down` | `GLFW_KEY_DOWN` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F1` | `GLFW_KEY_F1` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F2` | `GLFW_KEY_F2` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F3` | `GLFW_KEY_F3` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F4` | `GLFW_KEY_F4` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F5` | `GLFW_KEY_F5` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F6` | `GLFW_KEY_F6` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F7` | `GLFW_KEY_F7` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F8` | `GLFW_KEY_F8` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F9` | `GLFW_KEY_F9` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F10` | `GLFW_KEY_F10` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F11` | `GLFW_KEY_F11` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F12` | `GLFW_KEY_F12` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Space` | `GLFW_KEY_SPACE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Apostrophe` | `GLFW_KEY_APOSTROPHE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Comma` | `GLFW_KEY_COMMA` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Minus` | `GLFW_KEY_MINUS` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Period` | `GLFW_KEY_PERIOD` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Slash` | `GLFW_KEY_SLASH` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Semicolon` | `GLFW_KEY_SEMICOLON` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Equal` | `GLFW_KEY_EQUAL` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::LeftBracket` | `GLFW_KEY_LEFT_BRACKET` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Backslash` | `GLFW_KEY_BACKSLASH` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::RightBracket` | `GLFW_KEY_RIGHT_BRACKET` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::GraveAccent` | `GLFW_KEY_GRAVE_ACCENT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::World1` | `GLFW_KEY_WORLD_1` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: not injectable; Win32: not injectable; Cocoa: pass |
-| `Key::World2` | `GLFW_KEY_WORLD_2` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: not injectable; Wayland: pass; Win32: pass; Cocoa: not injectable |
-| `Key::Insert` | `GLFW_KEY_INSERT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Delete` | `GLFW_KEY_DELETE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::PageUp` | `GLFW_KEY_PAGE_UP` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::PageDown` | `GLFW_KEY_PAGE_DOWN` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Home` | `GLFW_KEY_HOME` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::End` | `GLFW_KEY_END` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::CapsLock` | `GLFW_KEY_CAPS_LOCK` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not yet qualified |
-| `Key::ScrollLock` | `GLFW_KEY_SCROLL_LOCK` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable |
-| `Key::NumLock` | `GLFW_KEY_NUM_LOCK` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::PrintScreen` | `GLFW_KEY_PRINT_SCREEN` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Pause` | `GLFW_KEY_PAUSE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable |
-| `Key::F13` | `GLFW_KEY_F13` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable |
-| `Key::F14` | `GLFW_KEY_F14` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F15` | `GLFW_KEY_F15` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F16` | `GLFW_KEY_F16` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F17` | `GLFW_KEY_F17` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F18` | `GLFW_KEY_F18` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F19` | `GLFW_KEY_F19` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F20` | `GLFW_KEY_F20` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::F21` | `GLFW_KEY_F21` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable |
-| `Key::F22` | `GLFW_KEY_F22` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable |
-| `Key::F23` | `GLFW_KEY_F23` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable |
-| `Key::F24` | `GLFW_KEY_F24` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable |
-| `Key::F25` | `GLFW_KEY_F25` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: not injectable; Wayland: not injectable; Win32: not injectable; Cocoa: not injectable |
-| `Key::Kp0` | `GLFW_KEY_KP_0` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Kp1` | `GLFW_KEY_KP_1` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Kp2` | `GLFW_KEY_KP_2` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Kp3` | `GLFW_KEY_KP_3` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Kp4` | `GLFW_KEY_KP_4` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Kp5` | `GLFW_KEY_KP_5` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Kp6` | `GLFW_KEY_KP_6` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Kp7` | `GLFW_KEY_KP_7` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Kp8` | `GLFW_KEY_KP_8` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::Kp9` | `GLFW_KEY_KP_9` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::KpDecimal` | `GLFW_KEY_KP_DECIMAL` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::KpDivide` | `GLFW_KEY_KP_DIVIDE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::KpMultiply` | `GLFW_KEY_KP_MULTIPLY` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::KpSubtract` | `GLFW_KEY_KP_SUBTRACT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::KpAdd` | `GLFW_KEY_KP_ADD` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::KpEnter` | `GLFW_KEY_KP_ENTER` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::KpEqual` | `GLFW_KEY_KP_EQUAL` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::LeftShift` | `GLFW_KEY_LEFT_SHIFT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::LeftControl` | `GLFW_KEY_LEFT_CONTROL` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::LeftAlt` | `GLFW_KEY_LEFT_ALT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::LeftSuper` | `GLFW_KEY_LEFT_SUPER` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: not injectable; Cocoa: pass |
-| `Key::RightShift` | `GLFW_KEY_RIGHT_SHIFT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::RightControl` | `GLFW_KEY_RIGHT_CONTROL` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::RightAlt` | `GLFW_KEY_RIGHT_ALT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
-| `Key::RightSuper` | `GLFW_KEY_RIGHT_SUPER` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: not injectable; Cocoa: pass |
-| `Key::Menu` | `GLFW_KEY_MENU` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass |
+| `Key::A` | `GLFW_KEY_A` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::B` | `GLFW_KEY_B` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::C` | `GLFW_KEY_C` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::D` | `GLFW_KEY_D` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::E` | `GLFW_KEY_E` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F` | `GLFW_KEY_F` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::G` | `GLFW_KEY_G` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::H` | `GLFW_KEY_H` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::I` | `GLFW_KEY_I` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::J` | `GLFW_KEY_J` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::K` | `GLFW_KEY_K` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::L` | `GLFW_KEY_L` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::M` | `GLFW_KEY_M` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::N` | `GLFW_KEY_N` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::O` | `GLFW_KEY_O` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::P` | `GLFW_KEY_P` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Q` | `GLFW_KEY_Q` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::R` | `GLFW_KEY_R` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::S` | `GLFW_KEY_S` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::T` | `GLFW_KEY_T` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::U` | `GLFW_KEY_U` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::V` | `GLFW_KEY_V` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::W` | `GLFW_KEY_W` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::X` | `GLFW_KEY_X` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Y` | `GLFW_KEY_Y` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Z` | `GLFW_KEY_Z` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Num0` | `GLFW_KEY_0` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Num1` | `GLFW_KEY_1` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Num2` | `GLFW_KEY_2` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Num3` | `GLFW_KEY_3` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Num4` | `GLFW_KEY_4` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Num5` | `GLFW_KEY_5` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Num6` | `GLFW_KEY_6` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Num7` | `GLFW_KEY_7` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Num8` | `GLFW_KEY_8` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Num9` | `GLFW_KEY_9` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Escape` | `GLFW_KEY_ESCAPE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Enter` | `GLFW_KEY_ENTER` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Tab` | `GLFW_KEY_TAB` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Backspace` | `GLFW_KEY_BACKSPACE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Left` | `GLFW_KEY_LEFT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Right` | `GLFW_KEY_RIGHT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Up` | `GLFW_KEY_UP` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Down` | `GLFW_KEY_DOWN` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F1` | `GLFW_KEY_F1` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F2` | `GLFW_KEY_F2` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F3` | `GLFW_KEY_F3` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F4` | `GLFW_KEY_F4` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F5` | `GLFW_KEY_F5` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F6` | `GLFW_KEY_F6` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F7` | `GLFW_KEY_F7` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F8` | `GLFW_KEY_F8` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F9` | `GLFW_KEY_F9` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F10` | `GLFW_KEY_F10` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F11` | `GLFW_KEY_F11` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F12` | `GLFW_KEY_F12` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Space` | `GLFW_KEY_SPACE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Apostrophe` | `GLFW_KEY_APOSTROPHE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Comma` | `GLFW_KEY_COMMA` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Minus` | `GLFW_KEY_MINUS` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Period` | `GLFW_KEY_PERIOD` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Slash` | `GLFW_KEY_SLASH` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Semicolon` | `GLFW_KEY_SEMICOLON` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Equal` | `GLFW_KEY_EQUAL` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::LeftBracket` | `GLFW_KEY_LEFT_BRACKET` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Backslash` | `GLFW_KEY_BACKSLASH` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::RightBracket` | `GLFW_KEY_RIGHT_BRACKET` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::GraveAccent` | `GLFW_KEY_GRAVE_ACCENT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::World1` | `GLFW_KEY_WORLD_1` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: not injectable; Win32: not injectable; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::World2` | `GLFW_KEY_WORLD_2` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: not injectable; Wayland: pass; Win32: pass; Cocoa: not injectable; public VMNL X11: excluded — GLFW X11 has no physical-name mapping for this named key |
+| `Key::Insert` | `GLFW_KEY_INSERT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Delete` | `GLFW_KEY_DELETE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::PageUp` | `GLFW_KEY_PAGE_UP` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::PageDown` | `GLFW_KEY_PAGE_DOWN` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Home` | `GLFW_KEY_HOME` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::End` | `GLFW_KEY_END` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::CapsLock` | `GLFW_KEY_CAPS_LOCK` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not yet qualified; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::ScrollLock` | `GLFW_KEY_SCROLL_LOCK` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::NumLock` | `GLFW_KEY_NUM_LOCK` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::PrintScreen` | `GLFW_KEY_PRINT_SCREEN` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Pause` | `GLFW_KEY_PAUSE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F13` | `GLFW_KEY_F13` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F14` | `GLFW_KEY_F14` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F15` | `GLFW_KEY_F15` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F16` | `GLFW_KEY_F16` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F17` | `GLFW_KEY_F17` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F18` | `GLFW_KEY_F18` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F19` | `GLFW_KEY_F19` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F20` | `GLFW_KEY_F20` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F21` | `GLFW_KEY_F21` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F22` | `GLFW_KEY_F22` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F23` | `GLFW_KEY_F23` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F24` | `GLFW_KEY_F24` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: not injectable; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::F25` | `GLFW_KEY_F25` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: not injectable; Wayland: not injectable; Win32: not injectable; Cocoa: not injectable; public VMNL X11: excluded — physical XKB name/alias FK25 is absent from the active map |
+| `Key::Kp0` | `GLFW_KEY_KP_0` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Kp1` | `GLFW_KEY_KP_1` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Kp2` | `GLFW_KEY_KP_2` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Kp3` | `GLFW_KEY_KP_3` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Kp4` | `GLFW_KEY_KP_4` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Kp5` | `GLFW_KEY_KP_5` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Kp6` | `GLFW_KEY_KP_6` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Kp7` | `GLFW_KEY_KP_7` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Kp8` | `GLFW_KEY_KP_8` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Kp9` | `GLFW_KEY_KP_9` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::KpDecimal` | `GLFW_KEY_KP_DECIMAL` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::KpDivide` | `GLFW_KEY_KP_DIVIDE` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::KpMultiply` | `GLFW_KEY_KP_MULTIPLY` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::KpSubtract` | `GLFW_KEY_KP_SUBTRACT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::KpAdd` | `GLFW_KEY_KP_ADD` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::KpEnter` | `GLFW_KEY_KP_ENTER` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::KpEqual` | `GLFW_KEY_KP_EQUAL` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::LeftShift` | `GLFW_KEY_LEFT_SHIFT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::LeftControl` | `GLFW_KEY_LEFT_CONTROL` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::LeftAlt` | `GLFW_KEY_LEFT_ALT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::LeftSuper` | `GLFW_KEY_LEFT_SUPER` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: not injectable; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::RightShift` | `GLFW_KEY_RIGHT_SHIFT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::RightControl` | `GLFW_KEY_RIGHT_CONTROL` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::RightAlt` | `GLFW_KEY_RIGHT_ALT` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::RightSuper` | `GLFW_KEY_RIGHT_SUPER` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: not injectable; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
+| `Key::Menu` | `GLFW_KEY_MENU` | K1 | Round-trip assertion only; per-key event/state oracle missing | X11: pass; Wayland: pass; Win32: pass; Cocoa: pass; public VMNL X11 press/release, scancode and snapshots: local pass (2026-10-13) |
 
 `Key::Unknown` is not a named-key row: unknown physical keys must preserve `Scancode` and
 modifiers in `KeyPressed`/`KeyReleased` events while remaining absent from `KeyboardState`.

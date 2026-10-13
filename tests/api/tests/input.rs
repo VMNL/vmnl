@@ -8,6 +8,9 @@ use vmnl::{
     MouseButton, Scancode, StandardCursor, StandardCursorBuilder, VMNLResult, Window,
 };
 
+#[path = "../../platform/src/input_key_table.rs"]
+mod input_key_table;
+
 fn assert_empty(input: &Input) {
     let keyboard = input.keyboard();
     assert!(!keyboard.is_down(Key::Escape));
@@ -37,27 +40,19 @@ fn input_initial_state_is_empty_through_public_facade() -> VMNLResult<()> {
 
 #[test]
 fn every_named_key_family_is_exposed_through_public_facade() {
-    let representatives = [
-        Key::Space,
-        Key::Apostrophe,
-        Key::World1,
-        Key::Insert,
-        Key::PageDown,
-        Key::CapsLock,
-        Key::PrintScreen,
-        Key::F25,
-        Key::Kp0,
-        Key::KpDecimal,
-        Key::KpEnter,
-        Key::LeftShift,
-        Key::RightControl,
-        Key::LeftAlt,
-        Key::RightSuper,
-        Key::Menu,
-    ];
-
-    assert_eq!(representatives.len(), 16);
-    assert!(representatives.iter().all(|key| *key != Key::Unknown));
+    const fn named_key(
+        key: Key,
+        _xkb: &str,
+        _evdev: Option<u16>,
+        _win32: Option<u16>,
+        _cocoa: Option<u16>,
+    ) -> Key {
+        key
+    }
+    let keys: [Key; 120] = input_key_table::key_mappings!(named_key, Key);
+    let mut ordinals: Vec<_> = keys.iter().map(|key| *key as usize).collect();
+    ordinals.sort_unstable();
+    assert_eq!(ordinals, (1..=Key::Menu as usize).collect::<Vec<_>>());
 }
 
 #[test]
