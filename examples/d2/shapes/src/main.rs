@@ -22,16 +22,20 @@ fn main() -> VMNLResult<()> {
         .position(110.0, 220.0)
         .color(Rgba::rgba(50, 170, 255, 255))
         .build(&context)?;
-    let ellipse = Shape::ellipse(11.0, 183.0)
+    let ellipse = Shape::circle(11.0)
+        .ellipse(183.0)
+        .filled(true)
         .position(440.0, 425.0)
         .color(Rgba::rgba(0, 0, 255, 255))
         .build(&context)?;
-    let arc = Shape::arc(70.0, 0.0, 90.0)
+    let arc = Shape::circle(70.0)
+        .sector(0.0, 90.0)
         .position(640.0, 455.0)
         .color(Rgba::rgba(0, 255, 0, 255))
         .segments(32)
         .build(&context)?;
-    let ring = Shape::ring(20.0)
+    let ring = Shape::circle(20.0)
+        .width(10.0)
         .position(540.0, 455.0)
         .color(Rgba::rgba(255, 0, 0, 255))
         .segments(32)

@@ -5,7 +5,7 @@
 
 use vmnl::{
     common::Rgba,
-    d2::{Shape, LineCap},
+    d2::{LineCap, Shape},
     Context, Key, PresentMode, VMNLResult, Window,
 };
 
