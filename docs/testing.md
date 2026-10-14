@@ -115,13 +115,20 @@ first build `vmnl-input-client` and set `VMNL_INPUT_CLIENT` to that executable; 
 fails with guidance. The driver gives only the client process `XDG_SESSION_TYPE=x11`, removes
 its `WAYLAND_DISPLAY`/`WAYLAND_SOCKET`, and confirms the client's title and PID in the X11
 window list before injecting. The host session environment is not modified.
+Startup uses `MAPPED` → native pointer preparation → `START` → `HELLO`. The driver confirms
+X11 title/PID and live geometry, posts an actual XTEST inside-window pointer move, and verifies
+its root position. The client must then confirm focus/hover and report its public cursor position
+before any scenario begins; a cached public position alone is not readiness evidence.
 
-The client greeting uses protocol version 2. Key commands contain only the expected public
+The client greeting uses protocol version 3. Key commands contain only the expected public
 key name and press/release or mapping-check action; XKB injection codes remain private to the driver.
-Each action has a numbered `ARM` → `READY` → checks → `OBSERVED` exchange over pipes. The
-client clears the previous event batch before `READY`. The driver waits for all press checks
+Each action has a numbered `ARM` → `READY` → native injection → `INJECTED` → checks → `OBSERVED` exchange over pipes. The
+client clears the previous event batch before `READY`, except when a control scenario explicitly
+inspects that batch. It waits for the numbered `INJECTED` barrier before observing the new inputs.
+The driver waits for all press checks
 and their input snapshots before issuing release. Missing, malformed, failed or out-of-order
-records, client crashes and timeouts fail the test; stdout/stderr are continuously drained
+records, client crashes and timeouts fail the test. Failure reasons are sanitized and capped at 1024
+Unicode scalars so one diagnostic stays below the protocol line limit; stdout/stderr are continuously drained
 with bounded capture. Success requires `DONE` and a successful client exit. On failure the
 driver kills/reaps its client, releases injected held inputs and attempts XKB lock restoration.
 
@@ -149,7 +156,8 @@ checks never count as passes. Returned errors and assertion panics print the rep
 the failing exit status; an incomplete report also fails the command. Formatting, failure
 accounting, physical-name selection and Right Alt fallback priority are tested without a display.
 The separate-client version adds `Client shutdown` to the previous 640 checks, and the
-four physical alternates add sixteen checks, for 657 total;
+four physical alternates add sixteen checks, for 657 in the protocol-2 workload;
+the extended protocol-3 workload plans 848 checks;
 the shutdown check rejects extra records after `DONE` and unsuccessful exits. Headless driver
 fixtures verify that injection waits for `READY` and release waits for the complete press
 observation, and exercise crashes, timeouts, malformed records and large output on both pipes.
@@ -165,15 +173,47 @@ could pass this check. Raw backend encoding and translation checks remain in the
 suites. Headless client regressions cover zero and negative values, missing/mismatched mappings,
 release without a matching press, query selection among observed physical variants, and
 rejection of key commands containing native codes.
+Fresh XTEST key presses are separated by 5 ms so two legitimate presses cannot receive the
+same millisecond X11 timestamp and be filtered as an input-method duplicate. This pacing stays
+inside the OS driver; no native timestamp or keycode is sent to the public client.
 Canonical `RALT` is preferred to the backend's `LVL3`/`MDSW` fallback. The driver retains
 the existing `x11rb` version and its `xkb` feature for this lookup.
 The test rejects an initially held native key and checks that no VMNL key remains down after
 each release. The injector verifies the pointer's root position after posting its motion;
 the client must independently receive `MouseMoved` and observe the matching public getter.
 Lock keys are tested as individual keys; the initial XKB locked-modifier mask is
-restored and verified before the mouse-button cases. Cleanup releases the currently injected
-key and attempts lock restoration on an error or assertion panic. This does not qualify modifier
-combinations, lock-modifier flags, text, repeat or batch-boundary scenarios. A mapped key
+restored and verified before the mouse-button cases. Cleanup releases every currently injected
+key/button in reverse hold order and attempts lock restoration on an error or assertion panic.
+The protocol-3 scenario additionally observes the following contracts through the public client:
+
+- All 15 nonempty subsets of the four left standard modifiers and the four individual right
+  modifiers. Shift/Control chords target A; Alt/Super chords use modified Button4 to avoid
+  window-manager left-click grabs. Key and button callbacks verify modifier flags and held
+  snapshots; each release preserves the observed opaque press scancode.
+- Caps Lock and Num Lock flags on key and button events, both toggle phases and the public
+  reporting-mode getter. XKB locks are temporarily cleared for independent expectations and
+  the original locked-modifier mask is restored and verified after the extended cases.
+- Text `a`, `é` and `🦀`, independently selected from unmodified group-1/level-1 XKB symbols
+  with active group 0. Missing scalars are explicitly excluded; no keymap/input method is
+  installed or changed. Both ordinary and legacy modified-text payloads are checked separately
+  from physical key identity; this does not enumerate Unicode or qualify IME composition.
+- A bounded 1500 ms A hold with actual native repeats. Repeat batches preserve down state
+  without reporting a new press; disabled per-key/global repeat or excessive delay is excluded
+  from the OS controls captured before injection. Posted repeat events are not substituted.
+- Real key/button press and release in a single `Window::poll_events`, non-consuming queries,
+  next-empty-poll clearing, held-state preservation and `clear_input_transitions`. The driver
+  completes both checked OS operations before `INJECTED`; the client performs one poll for
+  the same-batch assertion. No fabricated VMNL event or private reducer is used.
+- Disabled key/button event delivery with continuing native snapshot updates, followed by
+  re-enabled delivery and acknowledged events.
+- Pointer leave/enter with the public hover getter, and held A/left-button focus loss with
+  synthetic release events/snapshots. VMNL does not prescribe the relative callback order across
+  focus, keyboard and mouse sources; each release must match its acknowledged hold.
+  The driver first prepares a second VMNL window before holding inputs. Focus transfers to
+  that receiver; both windows remain owned by the client. The trace is checked before physical
+  cleanup; the receiver is then destroyed and the primary window regains focus and hover.
+
+The retained protocol-3 execution evidence and environment limits are recorded below. A mapped key
 intercepted by a compositor shortcut still fails; missing delivery is not converted into an exclusion.
 Keep the desktop idle during injection: external keyboard/pointer activity can change focus or
 add events and must not be reported as a passing input sequence.
@@ -253,6 +293,28 @@ fails before the input sequence runs. The native contract still fails if XTEST, 
 actual OS-to-GLFW event delivery is unavailable. This command is opt-in and is never part of
 `just test` or `just validate`.
 
+### Extended public client execution (protocol 3)
+
+On 2026-10-14, three consecutive local X11/Vulkan executions without instrumentation passed:
+848 checks, 828 `PASS`, 20 `EXCLUDED`, zero `FAIL`, zero `NOT RUN`. This is automatic public
+VMNL evidence on the Fedora/Hyprland/Xwayland stack recorded above. All 19 modifier cases,
+Caps/Num key and mouse flags, ASCII `a` through both text sources, actual A repeat, key/mouse
+poll controls, pointer boundaries and the two-owned-window focus cycle passed. The exclusions
+are World2/F25 (ten checks), buttons 7–8 (eight) and unmodified `é`/`🦀` text (two). Neither a
+new layout nor an input method was installed; non-ASCII native text remains unqualified here.
+
+Earlier attempts exposed a duplicated native Control press timestamp (`16870183` twice),
+followed by a missing public callback. A 5 ms XTEST press spacing removed duplicate timestamps
+in the diagnostic run while preserving strict event/state assertions. Iconification was ignored
+(`focused=true`, `iconified=false`); hiding with a held button produced an additional focus-gained
+callback even after 100 ms settling. The final focus case uses a prepared owned VMNL receiver
+and verifies releases before native cleanup, then destroys that receiver and restores the primary.
+A startup attempt reported an inside public cursor position with hover false; the explicit native
+startup pointer preparation precedes the final three passes. These observations do not establish
+a general cause for the older intermittent Xwayland pointer delivery failures or qualify other
+compositors, native seats, GPU/display stacks, IME composition, physical devices or human
+manual graphical validation.
+
 ### Extended native cases (issue #91, stage 3)
 
 The selected backend contract now follows the existing representative operations with serialized
@@ -319,7 +381,7 @@ and 152/152 Cocoa cases, with no error records. These totals match each eligibil
 include respectively 118, 118, 116, and 110 named-key cases. Exclusions are not passes, and the
 Win32/Cocoa probes remain experimental until the ten-run threshold is met.
 Headless oracle tests and compilation are not native evidence. VMNL batch-transition and
-`Window::poll_events()` qualification beyond the representative public scenario remains outstanding.
+`Window::poll_events()` qualification beyond the recorded public X11 scenario remains environment-specific.
 
 ## Continuous Integration
 

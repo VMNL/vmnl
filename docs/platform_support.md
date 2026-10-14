@@ -49,6 +49,20 @@ cause for the initial timeout. Details and counts are in the linked execution re
 `just bootstrap` invokes `./deps`, which requires `/etc/os-release` and only contains Linux
 package-manager paths. CI invokes Cargo directly and never invokes the bootstrap recipe.
 
+## Public input client qualification
+
+On 2026-10-14, the separate public VMNL client completed three consecutive automatic local
+X11/Vulkan protocol-3 runs on the Fedora/Hyprland/Xwayland stack: 848 checks, 828 passes,
+20 explicit exclusions and no failures or unexecuted checks. In addition to 118 named keys,
+physical aliases, buttons 1–6, motion and scrolling, this qualifies the eligible standard modifier
+chords, Caps/Num key/button flags, ASCII a, actual repeat, leave/enter/hover, public poll controls
+and a focus transfer between two owned VMNL windows. World2, F25, buttons 7–8 and unmodified
+é/🦀 remain excluded. This is synthetic public API evidence; other backends, non-ASCII text,
+IME composition and physical input devices retain their separate qualification limits. See the
+[execution record](testing.md#extended-public-client-execution-protocol-3) for prerequisites,
+startup preparation and failed diagnostic attempts. The client directly depends only on vmnl;
+OS injection codes and timestamp pacing remain in the X11 driver.
+
 ## Runtime Constraints
 
 - Visual examples and GPU tests require a Vulkan-capable GPU, a Vulkan loader, GLFW, and a display server.

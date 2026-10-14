@@ -13,6 +13,8 @@ use vmnl::{
 #[path = "../../../platform/src/input_key_table.rs"]
 mod input_key_table;
 
+mod scenarios;
+
 const INPUT_TIMEOUT: Duration = Duration::from_secs(5);
 
 const fn named_key(key: Key, _: &str, _: Option<u16>, _: Option<u16>, _: Option<u16>) -> Key {
@@ -39,6 +41,8 @@ const BUTTONS: [MouseButton; 8] = [
 ///
 /// Returns an error on initialization, command, I/O, focus, delivery or input-state failure.
 pub fn run() -> VMNLResult<()> {
+    let stdin = io::stdin();
+    let mut commands = stdin.lock().lines();
     let title = format!("VMNL input client {}", std::process::id());
     let context = Context::new()?;
     let mut window = Window::builder()
@@ -51,6 +55,15 @@ pub fn run() -> VMNLResult<()> {
     window.show();
     // A first presented buffer makes the window visible to Xwayland's compositor.
     window.render().submit()?;
+    emit(&format!("MAPPED\t3\t{title}"))?;
+    let start = commands
+        .next()
+        .ok_or_else(|| invalid_state("driver disconnected before native pointer preparation"))?
+        .map_err(|error| invalid_state(error.to_string()))?;
+    require(
+        start == "START",
+        "invalid native preparation acknowledgement",
+    )?;
     window.focus();
     window.set_cursor_position(120.0, 100.0)?;
     let deadline = Instant::now() + INPUT_TIMEOUT;
@@ -84,18 +97,23 @@ pub fn run() -> VMNLResult<()> {
     )?;
     let _ = window.poll_events();
     let (x, y) = window.get_cursor_position();
-    emit(&format!("HELLO\t2\t{title}\t{x}\t{y}"))?;
+    emit(&format!("HELLO\t3\t{title}\t{x}\t{y}"))?;
 
     // Only this main thread owns the window. Commands arrive between observations;
     // stdin EOF terminates the client if the driver exits.
     let mut sequence = 0_u64;
     let mut pressed_key = None;
     let mut observations: Option<KeyObservations> = None;
-    for command in io::stdin().lock().lines() {
+    let mut scenarios = scenarios::State::default();
+    while let Some(command) = commands.next() {
         let command = command.map_err(|error| invalid_state(error.to_string()))?;
         if command == "FINISH" {
             require(
-                pressed_key.is_none() && observations.is_none(),
+                pressed_key.is_none()
+                    && observations.is_none()
+                    && scenarios.is_empty()
+                    && !window.input().keyboard().is_one_down()
+                    && !window.input().mouse().is_one_down(),
                 "driver finished with a held key or unchecked scancode mapping",
             )?;
             drop(window);
@@ -109,9 +127,18 @@ pub fn run() -> VMNLResult<()> {
             parts.len() >= 3 && parts[0] == "ARM" && parts[1] == sequence.to_string(),
             "malformed or out-of-order ARM command",
         )?;
-        // Clear the previous batch before READY, never after native injection.
-        let _ = window.poll_events();
         let action = Action::parse(&parts[2..])?;
+        // Snapshot-control scenarios inspect the previous batch before starting another.
+        if !matches!(&action, Action::Scenario(action) if action.preserves_previous_batch()) {
+            let _ = window.poll_events();
+        }
+        if let Action::Scenario(action) = &action {
+            require(
+                pressed_key.is_none() && observations.is_none(),
+                "scenario interrupted a named-key mapping group",
+            )?;
+            action.prepare(&mut window);
+        }
         // Capture one public mapping before the first physical variant is injected.
         if let Action::Key { key, pressed: true } = &action {
             if let Some(group) = &observations {
@@ -128,12 +155,22 @@ pub fn run() -> VMNLResult<()> {
             }
         }
         emit(&format!("READY\t{sequence}"))?;
+        let injected = commands
+            .next()
+            .ok_or_else(|| invalid_state("driver disconnected before injection completion"))?
+            .map_err(|error| invalid_state(error.to_string()))?;
+        require(
+            injected == format!("INJECTED\t{sequence}"),
+            "malformed or out-of-order INJECTED record",
+        )?;
         observe(
+            &context,
             &mut window,
             sequence,
             action,
             &mut observations,
             &mut pressed_key,
+            &mut scenarios,
         )?;
         emit(&format!("OBSERVED\t{sequence}"))?;
     }
@@ -147,6 +184,7 @@ struct KeyObservations {
 }
 
 enum Action {
+    Scenario(scenarios::Action),
     KeyMapping { key: Key },
     Key { key: Key, pressed: bool },
     Button { button: MouseButton, pressed: bool },
@@ -194,19 +232,22 @@ impl Action {
                     Ok(Self::Scroll { dx: x, dy: y })
                 }
             }
-            _ => Err(invalid_state("unknown or malformed input action")),
+            _ => scenarios::Action::parse(parts).map(Self::Scenario),
         }
     }
 }
 
 fn observe(
+    context: &Context,
     window: &mut Window,
     sequence: u64,
     action: Action,
     observations: &mut Option<KeyObservations>,
     pressed_key: &mut Option<(Key, Scancode)>,
+    scenarios: &mut scenarios::State,
 ) -> VMNLResult<()> {
     match action {
+        Action::Scenario(action) => scenarios.observe(context, window, sequence, action)?,
         Action::Key { key, pressed } => {
             let event_check = if pressed { "Press" } else { "Release" };
             let observed_scancode = check(sequence, event_check, || {
@@ -369,11 +410,22 @@ fn check<T>(sequence: u64, name: &str, operation: impl FnOnce() -> VMNLResult<T>
             Ok(value)
         }
         Err(error) => {
-            let reason = error.to_string().replace(['\t', '\n', '\r'], " ");
+            let reason = failure_reason(&error);
             emit(&format!("FAIL\t{sequence}\t{name}\t{reason}"))?;
             Err(error)
         }
     }
+}
+
+fn failure_reason(error: &VMNLError) -> String {
+    let message = error.to_string().replace(['\t', '\n', '\r'], " ");
+    let mut characters = message.chars();
+    // Keep one valid UTF-8 failure record below the driver's 8192-byte line limit.
+    let mut bounded: String = characters.by_ref().take(1024).collect();
+    if characters.next().is_some() {
+        bounded.push_str(" ... [truncated]");
+    }
+    bounded
 }
 
 fn emit(line: &str) -> VMNLResult<()> {
@@ -552,6 +604,17 @@ fn invalid_state(message: impl Into<String>) -> VMNLError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn failure_records_bound_unicode_and_sanitize_protocol_separators() {
+        let error = invalid_state(format!("line\tbreak\n{}", "🦀".repeat(5000)));
+        let reason = failure_reason(&error);
+        assert!(reason.len() < 8192);
+        assert!(!reason.contains(['\t', '\n', '\r']));
+        assert!(reason.ends_with("[truncated]"));
+        let short = invalid_state("short failure");
+        assert_eq!(failure_reason(&short), short.to_string());
+    }
 
     #[test]
     fn key_commands_contain_only_public_key_identity() {

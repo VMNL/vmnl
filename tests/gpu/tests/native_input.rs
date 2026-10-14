@@ -15,6 +15,9 @@ mod native_input_report;
 #[path = "../../platform/src/input_key_table.rs"]
 mod input_key_table;
 
+#[path = "../src/native_input_scenarios.rs"]
+mod native_input_scenarios;
+
 use native_input_keys::physical_keycode;
 use native_input_process::ClientProcess;
 use native_input_report::InputTestReport;
@@ -102,6 +105,8 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
         &["Vertical +", "Vertical -", "Horizontal +", "Horizontal -"],
     );
 
+    native_input_scenarios::plan(&mut report);
+
     // Keep the report visible after both returned errors and unwinding assertions.
     let outcome = catch_unwind(AssertUnwindSafe(|| run_input_scenario(&mut report)));
     eprintln!("{}", report.render());
@@ -171,17 +176,22 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
     let _guard = gpu_test_guard();
     let (mut client, mut injector, initial_cursor_position) = report.run(
         "Environment", "X11 / Vulkan / XTEST", "Readiness", || -> VMNLResult<_> {
-            let injector = X11Injector::connect().map_err(invalid_state)?;
+            let mut injector = X11Injector::connect().map_err(invalid_state)?;
             let executable = std::env::var_os("VMNL_INPUT_CLIENT").ok_or_else(||
                 invalid_state("VMNL_INPUT_CLIENT is unset; use just input-test-vmnl x11 to build and locate the client"))?;
             let mut command = Command::new(executable);
             // Select the OS environment before the unmodified public Context initializes.
             command.env("XDG_SESSION_TYPE", "x11").env_remove("WAYLAND_DISPLAY").env_remove("WAYLAND_SOCKET");
             let mut process = ClientProcess::spawn(&mut command).map_err(invalid_state)?;
+            let title = format!("VMNL input client {}", process.id());
+            process.expect(&format!("MAPPED\t3\t{title}"), INPUT_TIMEOUT + Duration::from_secs(5)).map_err(invalid_state)?;
+            injector.confirm_client_window(&title, process.id()).map_err(invalid_state)?;
+            // Confirm the live X11 geometry and prepare the actual OS pointer before HELLO.
+            injector.move_to_boundary(true).map_err(invalid_state)?;
+            process.send("START").map_err(invalid_state)?;
             let hello = process.receive(INPUT_TIMEOUT + Duration::from_secs(5)).map_err(invalid_state)?;
             let fields: Vec<_> = hello.split('\t').collect();
-            let title = format!("VMNL input client {}", process.id());
-            if fields.len() != 5 || fields[0] != "HELLO" || fields[1] != "2" || fields[2] != title {
+            if fields.len() != 5 || fields[0] != "HELLO" || fields[1] != "3" || fields[2] != title {
                 return Err(invalid_state(format!("invalid client greeting: {hello:?}")));
             }
             let x = fields[3].parse::<f64>().map_err(|error| invalid_state(error.to_string()))?;
@@ -359,6 +369,7 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
             )
             .map_err(invalid_state)?;
     }
+    native_input_scenarios::run(report, &mut client, &mut injector)?;
     report.run(
         "Environment",
         "X11 / Vulkan / XTEST",
@@ -377,7 +388,10 @@ struct X11Injector {
     maximum_server_button: u8,
     keys: Vec<(Key, Option<u8>)>,
     variants: Vec<(KeyVariant, Option<u8>)>,
-    held_keycode: Option<u8>,
+    held_keycodes: Vec<u8>,
+    client_window: Option<u32>,
+    text_keys: Vec<(char, Option<u8>)>,
+    repeat_exclusion: Option<String>,
     initial_locked_mods: x11rb::protocol::xproto::ModMask,
     mouse_button_is_down: Option<u8>,
     scroll_button_is_down: Option<u8>,
@@ -488,6 +502,61 @@ impl X11Injector {
                 Ok((variant, code))
             })
             .collect::<Result<Vec<_>, String>>()?;
+        let setup = connection.setup();
+        let mapping = connection
+            .get_keyboard_mapping(setup.min_keycode, setup.max_keycode - setup.min_keycode + 1)
+            .map_err(|error| error.to_string())?
+            .reply()
+            .map_err(|error| error.to_string())?;
+        let stride = usize::from(mapping.keysyms_per_keycode);
+        if stride == 0 {
+            return Err("active X11 map has no keysyms".into());
+        }
+        let group = connection
+            .xkb_get_state(ID::USE_CORE_KBD.into())
+            .map_err(|error| error.to_string())?
+            .reply()
+            .map_err(|error| error.to_string())?
+            .group;
+        let text_keys = ['a', 'é', '🦀']
+            .into_iter()
+            .map(|character| {
+                let symbol = if u32::from(character) <= 0xff {
+                    u32::from(character)
+                } else {
+                    0x0100_0000 | u32::from(character)
+                };
+                let code = if u8::from(group) == 0 {
+                    mapping
+                        .keysyms
+                        .chunks(stride)
+                        .position(|symbols| symbols.first() == Some(&symbol))
+                        .and_then(|index| u8::try_from(index).ok())
+                        .and_then(|index| setup.min_keycode.checked_add(index))
+                } else {
+                    None
+                };
+                (character, code)
+            })
+            .collect();
+        let controls = connection
+            .xkb_get_controls(ID::USE_CORE_KBD.into())
+            .map_err(|error| error.to_string())?
+            .reply()
+            .map_err(|error| error.to_string())?;
+        let repeat_key = keys
+            .iter()
+            .find(|(key, _)| *key == Key::A)
+            .and_then(|(_, code)| *code);
+        let repeat_exclusion = if repeat_key.is_none_or(|code| {
+            controls.per_key_repeat[usize::from(code / 8)] & (1 << (code % 8)) == 0
+        }) || u32::from(controls.enabled_controls) & 1 == 0
+            || controls.repeat_delay >= 1500
+        {
+            Some("XKB A repeat is disabled/unavailable or its delay exceeds the bounded 1500 ms hold".to_owned())
+        } else {
+            None
+        };
         let initial_locked_mods = connection
             .xkb_get_state(ID::USE_CORE_KBD.into())
             .map_err(|error| format!("could not request initial XKB lock state: {error}"))?
@@ -511,14 +580,17 @@ impl X11Injector {
             maximum_server_button,
             keys,
             variants,
-            held_keycode: None,
+            held_keycodes: Vec::new(),
+            client_window: None,
+            text_keys,
+            repeat_exclusion,
             initial_locked_mods,
             mouse_button_is_down: None,
             scroll_button_is_down: None,
         })
     }
 
-    fn confirm_client_window(&self, title: &str, pid: u32) -> Result<(), String> {
+    fn confirm_client_window(&mut self, title: &str, pid: u32) -> Result<(), String> {
         use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
         let atom = |name: &[u8]| -> Result<u32, String> {
             self.connection
@@ -559,6 +631,7 @@ impl X11Injector {
                     .reply()
                     .map_err(|error| error.to_string())?;
                 if process.value32().and_then(|mut values| values.next()) == Some(pid) {
+                    self.client_window = Some(window);
                     return Ok(());
                 }
             }
@@ -575,32 +648,25 @@ impl X11Injector {
     }
 
     fn press_key(&mut self, code: u8) -> Result<(), String> {
-        self.held_keycode = Some(code);
+        if self.held_keycodes.contains(&code) {
+            return Err("native key is already held".into());
+        }
+        // Native X11 timestamps have millisecond resolution. Separate fresh presses so
+        // the input method cannot discard a legitimate same-key event as a duplicate.
+        std::thread::sleep(Duration::from_millis(5));
+        self.held_keycodes.push(code);
         self.fake_input(KEY_PRESS, code, "key press")
     }
 
     fn release_key(&mut self, code: u8) -> Result<(), String> {
         self.fake_input(KEY_RELEASE, code, "key release")?;
-        self.held_keycode = None;
+        self.held_keycodes.retain(|held| *held != code);
         Ok(())
     }
 
     fn restore_locks(&self) -> Result<(), String> {
         use x11rb::protocol::xkb::{ConnectionExt as _, ID};
-        self.connection
-            .xkb_latch_lock_state(
-                ID::USE_CORE_KBD.into(),
-                u8::MAX.into(),
-                self.initial_locked_mods,
-                false,
-                0u8.into(),
-                0u8.into(),
-                false,
-                0,
-            )
-            .map_err(|error| format!("could not restore XKB locks: {error}"))?
-            .check()
-            .map_err(|error| format!("XKB lock restoration failed: {error}"))?;
+        self.set_locks(self.initial_locked_mods)?;
         let observed = self
             .connection
             .xkb_get_state(ID::USE_CORE_KBD.into())
@@ -617,6 +683,69 @@ impl X11Injector {
         Ok(())
     }
 
+    fn set_locks(&self, locked: x11rb::protocol::xproto::ModMask) -> Result<(), String> {
+        use x11rb::protocol::xkb::{ConnectionExt as _, ID};
+        self.connection
+            .xkb_latch_lock_state(
+                ID::USE_CORE_KBD.into(),
+                u8::MAX.into(),
+                locked,
+                false,
+                0u8.into(),
+                0u8.into(),
+                false,
+                0,
+            )
+            .map_err(|error| format!("could not restore XKB locks: {error}"))?
+            .check()
+            .map_err(|error| format!("XKB lock restoration failed: {error}"))?;
+        let observed = self
+            .connection
+            .xkb_get_state(ID::USE_CORE_KBD.into())
+            .map_err(|error| error.to_string())?
+            .reply()
+            .map_err(|error| error.to_string())?
+            .locked_mods;
+        if observed != locked {
+            return Err(format!(
+                "XKB lock fixture differs: expected={locked:?}, observed={observed:?}"
+            ));
+        }
+        Ok(())
+    }
+
+    fn move_to_boundary(&self, inside: bool) -> Result<(), String> {
+        use x11rb::protocol::xproto::ConnectionExt as _;
+        let window = self
+            .client_window
+            .ok_or("client X11 window is unconfirmed")?;
+        let geometry = self
+            .connection
+            .get_geometry(window)
+            .map_err(|error| error.to_string())?
+            .reply()
+            .map_err(|error| error.to_string())?;
+        let origin = self
+            .connection
+            .translate_coordinates(window, self.root, 0, 0)
+            .map_err(|error| error.to_string())?
+            .reply()
+            .map_err(|error| error.to_string())?;
+        let x = origin
+            .dst_x
+            .checked_add(if inside {
+                120
+            } else {
+                i16::try_from(geometry.width)
+                    .map_err(|error| error.to_string())?
+                    .checked_add(12)
+                    .ok_or("boundary coordinate overflow")?
+            })
+            .ok_or("boundary X overflow")?;
+        let y = origin.dst_y.checked_add(100).ok_or("boundary Y overflow")?;
+        self.move_pointer_to(x, y)
+    }
+
     fn press_mouse_button(&mut self, button: u8) -> Result<(), String> {
         self.mouse_button_is_down = Some(button);
         self.fake_input(BUTTON_PRESS, button, "mouse button press")
@@ -629,11 +758,20 @@ impl X11Injector {
     }
 
     fn move_pointer_by(&self, delta_x: i16, delta_y: i16) -> Result<(), String> {
-        use x11rb::{
-            connection::Connection as _, protocol::xproto::ConnectionExt as _,
-            protocol::xtest::ConnectionExt as _,
-        };
+        use x11rb::protocol::xproto::ConnectionExt as _;
 
+        let focus = self
+            .connection
+            .get_input_focus()
+            .map_err(|error| error.to_string())?
+            .reply()
+            .map_err(|error| error.to_string())?;
+        if self.client_window != Some(focus.focus) {
+            return Err(format!(
+                "native focus changed before pointer injection: focus={}, client={:?}",
+                focus.focus, self.client_window
+            ));
+        }
         let pointer = self
             .connection
             .query_pointer(self.root)
@@ -648,6 +786,14 @@ impl X11Injector {
             .root_y
             .checked_add(delta_y)
             .ok_or_else(|| "target X11 pointer Y coordinate overflowed".to_owned())?;
+        self.move_pointer_to(x, y)
+    }
+
+    fn move_pointer_to(&self, x: i16, y: i16) -> Result<(), String> {
+        use x11rb::{
+            connection::Connection as _, protocol::xproto::ConnectionExt as _,
+            protocol::xtest::ConnectionExt as _,
+        };
         self.connection
             .xtest_fake_input(MOTION_NOTIFY, 0, 0, self.root, x, y, 0)
             .map_err(|error| format!("could not enqueue XTEST pointer motion: {error}"))?
@@ -697,14 +843,15 @@ impl X11Injector {
             .map_err(|error| format!("XTEST {name} failed: {error}"))?;
         self.connection
             .flush()
-            .map_err(|error| format!("could not flush {name}: {error}"))
+            .map_err(|error| format!("could not flush {name}: {error}"))?;
+        Ok(())
     }
 }
 
 impl Drop for X11Injector {
     fn drop(&mut self) {
-        if let Some(code) = self.held_keycode {
-            let _ = self.fake_input(KEY_RELEASE, code, "cleanup key release");
+        for code in self.held_keycodes.iter().rev() {
+            let _ = self.fake_input(KEY_RELEASE, *code, "cleanup key release");
         }
         if let Some(button) = self.mouse_button_is_down {
             let _ = self.fake_input(BUTTON_RELEASE, button, "cleanup mouse release");

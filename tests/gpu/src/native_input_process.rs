@@ -117,6 +117,7 @@ impl ClientProcess {
                     self.send(&format!("ARM\t{sequence}\t{action}"))?;
                     self.expect(&format!("READY\t{sequence}"), INPUT_TIMEOUT)?;
                     inject()?;
+                    self.send(&format!("INJECTED\t{sequence}"))?;
                 }
                 self.expect(
                     &format!("PASS\t{sequence}\t{check}"),
@@ -213,7 +214,7 @@ mod tests {
     fn injection_requires_ready_and_release_requires_complete_press_observation() {
         for (response, expect_press) in [
             ("print('READY\\t2', flush=True)", false),
-            ("print('READY\\t1\\nPASS\\t1\\tPress\\nPASS\\t1\\tPress input states\\nOBSERVED\\t2', flush=True)", true),
+            ("print('READY\\t1', flush=True)\nassert input() == 'INJECTED\\t1'\nprint('PASS\\t1\\tPress\\nPASS\\t1\\tPress input states\\nOBSERVED\\t2', flush=True)", true),
         ] {
             let mut command = Command::new("python3");
             command.args(["-c", &format!("input()\n{response}")]);
