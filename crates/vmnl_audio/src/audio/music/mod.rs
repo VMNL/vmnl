@@ -1,15 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// SPDX-FileCopyrightText: 2026 Nathan Flachat
 /// SPDX-License-Identifier: MIT
-///
 ////////////////////////////////////////////////////////////////////////////////
 mod handle;
 mod stream;
 
-use crate::audio::bus::BusKind;
 use crate::audio::device::AudioDevice;
-use crate::audio::error::{AudioError, AudioResult};
+use crate::audio::error::AudioResult;
 use crate::audio::runtime::AudioRuntime;
+use crate::audio::stream_decoder::StreamingDecoder;
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -19,7 +18,9 @@ pub(crate) use stream::MusicStream;
 
 #[derive(Debug, Clone, Copy)]
 pub struct MusicPlayConfig {
+    /// Linear gain between 0.0 (silent) and 1.0 (full volume).
     pub volume: f32,
+    /// Rewind and continue playing when the end of the source is reached.
     pub looping: bool,
 }
 
@@ -40,34 +41,13 @@ pub struct Music {
 }
 
 impl Music {
-    pub(crate) fn from_file<P>(
-        device: &AudioDevice,
-        path: P,
-    ) -> AudioResult<Self>
-    where
-        P: AsRef<Path>,
-    {
+    pub(crate) fn from_file<P: AsRef<Path>>(device: &AudioDevice, path: P) -> AudioResult<Self> {
         let path = path.as_ref().to_path_buf();
         let sample_rate = device.sample_rate();
 
-        /*
-         * Validate the file using a streaming decoder.
-         *
-         * Nothing is fully decoded into memory here.
-         */
-        let decoder_config = miniaudio::DecoderConfig::new(
-            miniaudio::Format::F32,
-            2,
-            sample_rate,
-        );
-
-        miniaudio::Decoder::from_file(
-            &path,
-            Some(&decoder_config),
-        )
-        .map_err(|error| {
-            AudioError::DecoderFailed(error.to_string())
-        })?;
+        // Validate the file/codec without decoding the complete track into RAM.
+        // The actual streaming decoder is created for each playback instance.
+        drop(StreamingDecoder::open(&path, sample_rate)?);
 
         Ok(Self {
             runtime: device.runtime(),
@@ -80,31 +60,18 @@ impl Music {
         self.play_with_config(MusicPlayConfig::default())
     }
 
-    pub fn play_with_config(
-        &self,
-        config: MusicPlayConfig,
-    ) -> AudioResult<MusicHandle> {
-        let id = self.runtime.next_stream_id();
+    pub fn play_with_config(&self, config: MusicPlayConfig) -> AudioResult<MusicHandle> {
+        let stream = Arc::new(MusicStream::new(
+            self.path.clone(),
+            config.volume,
+            config.looping,
+            crate::audio::PlaybackState::Playing,
+            self.sample_rate,
+        )?);
 
-        let stream = Arc::new(
-            MusicStream::new(
-                id,
-                self.path.clone(),
-                BusKind::Music,
-                config.volume,
-                config.looping,
-                crate::audio::PlaybackState::Playing,
-                self.sample_rate,
-            )?,
-        );
-
-        /*
-         * Fill the streaming buffer BEFORE exposing the stream to the mixer.
-         */
+        // Prefill before publishing the stream to the realtime mixer.
         stream.pump()?;
-
-        self.runtime
-            .register_music_stream(stream.clone())?;
+        self.runtime.register_music_stream(stream.clone())?;
 
         Ok(MusicHandle::new(stream))
     }
