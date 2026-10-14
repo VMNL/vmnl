@@ -213,24 +213,26 @@ mod tests {
     fn injection_requires_ready_and_release_requires_complete_press_observation() {
         for (response, expect_press) in [
             ("print('READY\\t2', flush=True)", false),
-            ("print('READY\\t1\\nPASS\\t1\\tPress\\nPASS\\t1\\tScancode\\nPASS\\t1\\tPress input states\\nOBSERVED\\t2', flush=True)", true),
+            ("print('READY\\t1\\nPASS\\t1\\tPress\\nPASS\\t1\\tPress input states\\nOBSERVED\\t2', flush=True)", true),
         ] {
             let mut command = Command::new("python3");
             command.args(["-c", &format!("input()\n{response}")]);
             let mut client = ClientProcess::spawn(&mut command).expect("fixture starts");
             let mut report = InputTestReport::default();
-            let checks = ["Press", "Scancode", "Press input states"];
+            let checks = ["Press", "Press input states"];
             report.plan("Keyboard", "A", &checks);
             report.plan("Keyboard", "A", &["Release"]);
             let (mut pressed, mut released) = (false, false);
-            let result = client.observe(&mut report, "Keyboard", "A", &checks, "KEY_PRESS\tA\t38", || {
+            let result = client.observe(&mut report, "Keyboard", "A", &checks, "KEY_PRESS\tA", || {
                 pressed = true;
                 Ok(())
-            }).and_then(|()| client.observe(&mut report, "Keyboard", "A", &["Release"], "KEY_RELEASE\tA\t38", || {
+            }).and_then(|()| client.observe(&mut report, "Keyboard", "A", &["Release"], "KEY_RELEASE\tA", || {
                 released = true;
                 Ok(())
             }));
-            assert!(result.is_err());
+            let error = result.expect_err("fixture must reject the wrong acknowledgement");
+            let expected = if expect_press { "OBSERVED\\t1" } else { "READY\\t1" };
+            assert!(error.contains(expected), "{error}");
             assert_eq!(pressed, expect_press);
             assert!(!released, "release must wait for complete press acknowledgement");
             assert!(!report.is_complete());

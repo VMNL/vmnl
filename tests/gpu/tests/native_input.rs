@@ -38,6 +38,41 @@ const BUTTON_SCROLL_UP: u8 = 4;
 const BUTTON_SCROLL_DOWN: u8 = 5;
 const BUTTON_SCROLL_POSITIVE_X: u8 = 6;
 const BUTTON_SCROLL_NEGATIVE_X: u8 = 7;
+#[derive(Clone, Copy)]
+struct KeyVariant {
+    key: Key,
+    physical_name: &'static str,
+    report_name: &'static str,
+    keysym: u32,
+}
+
+// Independent active-XKB fixtures for additional physical variants of the same public key.
+const KEY_VARIANTS: [KeyVariant; 4] = [
+    KeyVariant {
+        key: Key::PrintScreen,
+        physical_name: "I218",
+        report_name: "PrintScreen / I218",
+        keysym: 0xff61,
+    }, // XK_Print
+    KeyVariant {
+        key: Key::KpDecimal,
+        physical_name: "I129",
+        report_name: "KpDecimal / I129",
+        keysym: 0xffae,
+    }, // XK_KP_Decimal
+    KeyVariant {
+        key: Key::RightAlt,
+        physical_name: "LVL3",
+        report_name: "RightAlt / LVL3",
+        keysym: 0xfe03,
+    }, // XK_ISO_Level3_Shift
+    KeyVariant {
+        key: Key::RightAlt,
+        physical_name: "MDSW",
+        report_name: "RightAlt / MDSW",
+        keysym: 0xfe11,
+    }, // XK_ISO_Level5_Shift
+];
 
 #[test]
 #[ignore = "requires Vulkan, an X11 EWMH display, XTEST, and injects native keyboard/mouse input"]
@@ -50,6 +85,12 @@ fn vmnl_public_native_keyboard_and_mouse_events_update_input() -> VMNLResult<()>
     );
     for case in KEY_CASES {
         report.plan("Keyboard", &format!("{:?}", case.key), KEY_CHECKS);
+        for variant in KEY_VARIANTS
+            .iter()
+            .filter(|variant| variant.key == case.key)
+        {
+            report.plan("Keyboard", variant.report_name, KEY_VARIANT_CHECKS);
+        }
     }
     for (_, button) in MOUSE_BUTTON_MAPPINGS {
         report.plan("Mouse", &format!("{button:?}"), MOUSE_BUTTON_CHECKS);
@@ -100,6 +141,14 @@ const KEY_CHECKS: &[&str] = &[
     "Release",
     "Release input states",
 ];
+const KEY_PRESS_CHECKS: &[&str] = &["Press", "Press input states"];
+const KEY_RELEASE_CHECKS: &[&str] = &["Release", "Release input states"];
+const KEY_VARIANT_CHECKS: &[&str] = &[
+    "Press",
+    "Press input states",
+    "Release",
+    "Release input states",
+];
 
 const MOUSE_BUTTON_CHECKS: &[&str] = &[
     "Press",
@@ -132,7 +181,7 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
             let hello = process.receive(INPUT_TIMEOUT + Duration::from_secs(5)).map_err(invalid_state)?;
             let fields: Vec<_> = hello.split('\t').collect();
             let title = format!("VMNL input client {}", process.id());
-            if fields.len() != 5 || fields[0] != "HELLO" || fields[1] != "1" || fields[2] != title {
+            if fields.len() != 5 || fields[0] != "HELLO" || fields[1] != "2" || fields[2] != title {
                 return Err(invalid_state(format!("invalid client greeting: {hello:?}")));
             }
             let x = fields[3].parse::<f64>().map_err(|error| invalid_state(error.to_string()))?;
@@ -156,6 +205,14 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
             };
             for check in KEY_CHECKS {
                 report.exclude("Keyboard", &format!("{:?}", case.key), check, &reason);
+            }
+        }
+    }
+    for (variant, code) in &injector.variants {
+        if code.is_none() || injector.keycode(variant.key).is_none() {
+            for check in KEY_VARIANT_CHECKS {
+                report.exclude("Keyboard", variant.report_name, check, &format!(
+                    "XKB {} is absent, duplicates the primary fixture, lacks the expected symbol, or the primary fixture is unavailable", variant.physical_name));
             }
         }
     }
@@ -185,6 +242,7 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
             || injector.move_pointer_by(6, 4),
         )
         .map_err(invalid_state)?;
+    let variants = injector.variants.clone();
     for case in KEY_CASES {
         let Some(code) = injector.keycode(case.key) else {
             continue;
@@ -195,8 +253,8 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
                 report,
                 "Keyboard",
                 &name,
-                &KEY_CHECKS[..3],
-                &format!("KEY_PRESS\t{name}\t{code}"),
+                KEY_PRESS_CHECKS,
+                &format!("KEY_PRESS\t{name}"),
                 || injector.press_key(code),
             )
             .map_err(invalid_state)?;
@@ -206,9 +264,47 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
                 report,
                 "Keyboard",
                 &name,
-                &KEY_CHECKS[3..],
-                &format!("KEY_RELEASE\t{name}\t{code}"),
+                KEY_RELEASE_CHECKS,
+                &format!("KEY_RELEASE\t{name}"),
                 || injector.release_key(code),
+            )
+            .map_err(invalid_state)?;
+        for (variant, code) in variants
+            .iter()
+            .filter(|(variant, _)| variant.key == case.key)
+        {
+            if let Some(alternate) = *code {
+                client
+                    .observe(
+                        report,
+                        "Keyboard",
+                        variant.report_name,
+                        KEY_PRESS_CHECKS,
+                        &format!("KEY_PRESS\t{name}"),
+                        || injector.press_key(alternate),
+                    )
+                    .map_err(invalid_state)?;
+                client
+                    .observe(
+                        report,
+                        "Keyboard",
+                        variant.report_name,
+                        KEY_RELEASE_CHECKS,
+                        &format!("KEY_RELEASE\t{name}"),
+                        || injector.release_key(alternate),
+                    )
+                    .map_err(invalid_state)?;
+            }
+        }
+        // One named key may have several physical variants. Check the mapping after observing them.
+        client
+            .observe(
+                report,
+                "Keyboard",
+                &name,
+                &["Scancode"],
+                &format!("KEY_MAPPING\t{name}"),
+                || Ok(()),
             )
             .map_err(invalid_state)?;
     }
@@ -280,6 +376,7 @@ struct X11Injector {
     root: u32,
     maximum_server_button: u8,
     keys: Vec<(Key, Option<u8>)>,
+    variants: Vec<(KeyVariant, Option<u8>)>,
     held_keycode: Option<u8>,
     initial_locked_mods: x11rb::protocol::xproto::ModMask,
     mouse_button_is_down: Option<u8>,
@@ -368,6 +465,29 @@ impl X11Injector {
         if keys.iter().all(|(_, code)| code.is_none()) {
             return Err("active XKB map has no injectable named key".to_owned());
         }
+        let variants = KEY_VARIANTS
+            .into_iter()
+            .map(|variant| {
+                let primary = keys
+                    .iter()
+                    .find(|(key, _)| *key == variant.key)
+                    .and_then(|(_, code)| *code);
+                let candidate = physical_keycode(variant.physical_name, &key_names)?
+                    .filter(|code| Some(*code) != primary);
+                let code = if let Some(code) = candidate {
+                    // Verify the OS fixture's active symbol without a backend scancode lookup.
+                    let mapping = connection
+                        .get_keyboard_mapping(code, 1)
+                        .map_err(|error| error.to_string())?
+                        .reply()
+                        .map_err(|error| error.to_string())?;
+                    mapping.keysyms.contains(&variant.keysym).then_some(code)
+                } else {
+                    None
+                };
+                Ok((variant, code))
+            })
+            .collect::<Result<Vec<_>, String>>()?;
         let initial_locked_mods = connection
             .xkb_get_state(ID::USE_CORE_KBD.into())
             .map_err(|error| format!("could not request initial XKB lock state: {error}"))?
@@ -390,6 +510,7 @@ impl X11Injector {
             root,
             maximum_server_button,
             keys,
+            variants,
             held_keycode: None,
             initial_locked_mods,
             mouse_button_is_down: None,

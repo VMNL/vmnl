@@ -116,6 +116,8 @@ fails with guidance. The driver gives only the client process `XDG_SESSION_TYPE=
 its `WAYLAND_DISPLAY`/`WAYLAND_SOCKET`, and confirms the client's title and PID in the X11
 window list before injecting. The host session environment is not modified.
 
+The client greeting uses protocol version 2. Key commands contain only the expected public
+key name and press/release or mapping-check action; XKB injection codes remain private to the driver.
 Each action has a numbered `ARM` → `READY` → checks → `OBSERVED` exchange over pipes. The
 client clears the previous event batch before `READY`. The driver waits for all press checks
 and their input snapshots before issuing release. Missing, malformed, failed or out-of-order
@@ -126,7 +128,19 @@ driver kills/reaps its client, releases injected held inputs and attempts XKB lo
 The terminal report groups checks under `Keyboard` (one block per key) and `Mouse` (one block
 per button, plus pointer and scroll). `Press` and `Release` verify event delivery and metadata;
 their separate `input states` checks verify `is_down`, `is_pressed` and `is_released`.
-`Scancode` compares each key with its independently resolved XKB keycode. The headless facade
+`Scancode` requires `Context::get_key_scancode`, captured before the first variant's `READY`,
+to match at least one scancode actually received for that named key. `KEY_MAPPING` performs
+this check after every physical variant has been released. A named key can have several
+physical scancodes: PrintScreen exercises `PRSC` and the distinct `I218` fixture when the
+active XKB map assigns it the Print symbol. KpDecimal similarly exercises `KPDL` and the
+distinct `I129` fixture when it carries KP_Decimal. RightAlt also exercises the distinct
+`LVL3` and `MDSW` fixtures when they carry ISO_Level3_Shift and ISO_Level5_Shift.
+Each alternate has its own press/release
+and input state checks; an unavailable alternate is explicitly excluded.
+Release checks compare the same key and scancode with the acknowledged press. Comparisons use
+the opaque `Scancode` type, without arithmetic or positivity requirements. A missing query
+mapping after a matching named-key press fails explicitly; it does not exclude the input.
+The headless facade
 test checks that the shared fixture contains every named VMNL key exactly once.
 Each check reports `PASS`, `FAIL` with its diagnostic, `EXCLUDED` with the X11 mapping reason,
 or `NOT RUN` when an earlier failure stopped execution. The summary counts checks, including
@@ -134,7 +148,8 @@ environment readiness, rather than distinct input devices or keys; exclusions an
 checks never count as passes. Returned errors and assertion panics print the report and retain
 the failing exit status; an incomplete report also fails the command. Formatting, failure
 accounting, physical-name selection and Right Alt fallback priority are tested without a display.
-The separate-client version adds `Client shutdown` to the previous 640 checks, for 641 total;
+The separate-client version adds `Client shutdown` to the previous 640 checks, and the
+four physical alternates add sixteen checks, for 657 total;
 the shutdown check rejects extra records after `DONE` and unsuccessful exits. Headless driver
 fixtures verify that injection waits for `READY` and release waits for the complete press
 observation, and exercise crashes, timeouts, malformed records and large output on both pipes.
@@ -142,9 +157,14 @@ observation, and exercise crashes, timeouts, malformed records and large output 
 This requires the X11 prerequisites above, XTEST, and a Vulkan-capable GPU with a Vulkan loader.
 The scenario presents a first frame before requesting focus so an Xwayland window has a buffer
 the compositor can display. It resolves physical XKB names and aliases, not layout characters
-or GLFW runtime scancode lookups, and compares each received scancode with that independent
-physical code. This numeric X11 scancode convention still depends on the current backend;
-the client separation does not qualify a replacement backend's scancode representation.
+or runtime scancode lookups, to choose the injected key and independently expected VMNL key.
+The client queries only the public facade for scancode metadata. This checks query/event and
+press/release consistency in one context with a stable keyboard layout; it does not establish
+the correctness of an exact native numeric encoding. A shared query/event encoding defect
+could pass this check. Raw backend encoding and translation checks remain in the unit/platform
+suites. Headless client regressions cover zero and negative values, missing/mismatched mappings,
+release without a matching press, query selection among observed physical variants, and
+rejection of key commands containing native codes.
 Canonical `RALT` is preferred to the backend's `LVL3`/`MDSW` fallback. The driver retains
 the existing `x11rb` version and its `xkb` feature for this lookup.
 The test rejects an initially held native key and checks that no VMNL key remains down after
@@ -208,6 +228,18 @@ reported the old root coordinates; delivery verification now waits up to 500 ms 
 while the client independently checks `MouseMoved` and the public position getter. These runs
 do not establish the cause of the earlier event timeout or qualify another backend's numeric
 scancode representation. They are automatic evidence, not operator graphical validation.
+
+On 2026-10-14, protocol version 2 passed three consecutive automatic local X11 executions
+without instrumentation: 657 checks, 639 `PASS`, 18 `EXCLUDED`, zero `FAIL` and zero `NOT RUN`.
+The four additional physical variants (`PrintScreen / I218`, `KpDecimal / I129`,
+`RightAlt / LVL3` and `RightAlt / MDSW`) each passed event and input-state checks for press
+and release. The public query matched an actually observed variant for each logical key;
+every variant preserved its own press/release scancode. Earlier strict per-press equality
+failed on legitimate query/event pairs (PrintScreen 218/107, KpDecimal 129/91 and RightAlt
+203/108), demonstrating why one-to-many mappings require this group check. A pointer attempt
+also failed before keyboard injection with an unchanged X11 root position; its cause remains
+unestablished. These final runs qualify metadata consistency on this stack, not exact backend
+numeric encoding, cross-environment stability or human graphical validation.
 
 X11 needs `DISPLAY`, `xprop`, and an EWMH window manager; the probe checks XTEST when it injects
 input. Wayland needs a live `WAYLAND_DISPLAY` socket and the X11 parent display used by XTEST.

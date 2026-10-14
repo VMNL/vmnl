@@ -63,7 +63,9 @@ No keyboard query performs GPU work, transfer, synchronization, or waiting.
 A Vulkan loader and supported device are required. A display is not necessarily touched by
 `Context::new`, but later window creation requires GLFW and a usable display/session. Key names and
 scancodes depend on the active platform and keyboard layout, may change after a layout change, and
-must be queried on the context's platform thread. Wayland key names require one processed keyboard
+must be queried on the context's platform thread. Several physical scancodes may map to the
+same named key: `get_key_scancode` selects one, while events preserve the scancode of the
+physical variant that generated them. Wayland key names require one processed keyboard
 event before the first successful query. Raw mouse motion is unavailable on Cocoa in bundled GLFW
 3.4 and requires XInput 2 on X11.
 

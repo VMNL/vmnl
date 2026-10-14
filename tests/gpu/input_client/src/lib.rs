@@ -6,8 +6,8 @@
 use std::io::{self, BufRead, Write as _};
 use std::time::{Duration, Instant};
 use vmnl::{
-    common::Rgba, Context, Event, EventKind, Key, Modifiers, MouseButton, VMNLError, VMNLErrorKind,
-    VMNLResult, Window,
+    common::Rgba, Context, Event, EventKind, Key, Modifiers, MouseButton, Scancode, VMNLError,
+    VMNLErrorKind, VMNLResult, Window,
 };
 
 #[path = "../../../platform/src/input_key_table.rs"]
@@ -84,14 +84,20 @@ pub fn run() -> VMNLResult<()> {
     )?;
     let _ = window.poll_events();
     let (x, y) = window.get_cursor_position();
-    emit(&format!("HELLO\t1\t{title}\t{x}\t{y}"))?;
+    emit(&format!("HELLO\t2\t{title}\t{x}\t{y}"))?;
 
     // Only this main thread owns the window. Commands arrive between observations;
     // stdin EOF terminates the client if the driver exits.
     let mut sequence = 0_u64;
+    let mut pressed_key = None;
+    let mut observations: Option<KeyObservations> = None;
     for command in io::stdin().lock().lines() {
         let command = command.map_err(|error| invalid_state(error.to_string()))?;
         if command == "FINISH" {
+            require(
+                pressed_key.is_none() && observations.is_none(),
+                "driver finished with a held key or unchecked scancode mapping",
+            )?;
             drop(window);
             drop(context);
             emit("DONE")?;
@@ -106,48 +112,61 @@ pub fn run() -> VMNLResult<()> {
         // Clear the previous batch before READY, never after native injection.
         let _ = window.poll_events();
         let action = Action::parse(&parts[2..])?;
+        // Capture one public mapping before the first physical variant is injected.
+        if let Action::Key { key, pressed: true } = &action {
+            if let Some(group) = &observations {
+                require(
+                    group.key == *key,
+                    "driver changed key before checking its mapping",
+                )?;
+            } else {
+                observations = Some(KeyObservations {
+                    key: *key,
+                    queried: context.get_key_scancode(*key),
+                    scancodes: Vec::new(),
+                });
+            }
+        }
         emit(&format!("READY\t{sequence}"))?;
-        observe(&mut window, sequence, action)?;
+        observe(
+            &mut window,
+            sequence,
+            action,
+            &mut observations,
+            &mut pressed_key,
+        )?;
         emit(&format!("OBSERVED\t{sequence}"))?;
     }
     Err(invalid_state("driver disconnected before FINISH"))
 }
 
+struct KeyObservations {
+    key: Key,
+    queried: Option<Scancode>,
+    scancodes: Vec<Scancode>,
+}
+
 enum Action {
-    Key {
-        key: Key,
-        scancode: i32,
-        pressed: bool,
-    },
-    Button {
-        button: MouseButton,
-        pressed: bool,
-    },
-    Motion {
-        x: f64,
-        y: f64,
-    },
-    Scroll {
-        dx: f64,
-        dy: f64,
-    },
+    KeyMapping { key: Key },
+    Key { key: Key, pressed: bool },
+    Button { button: MouseButton, pressed: bool },
+    Motion { x: f64, y: f64 },
+    Scroll { dx: f64, dy: f64 },
 }
 
 impl Action {
     fn parse(parts: &[&str]) -> VMNLResult<Self> {
         match parts {
-            [action @ ("KEY_PRESS" | "KEY_RELEASE"), name, raw] => {
+            [action @ ("KEY_PRESS" | "KEY_RELEASE" | "KEY_MAPPING"), name] => {
                 let key = KEYS
                     .into_iter()
                     .find(|key| format!("{key:?}") == *name)
                     .ok_or_else(|| invalid_state("unknown named key"))?;
-                let scancode = raw
-                    .parse::<i32>()
-                    .map_err(|error| invalid_state(error.to_string()))?;
-                require(scancode > 0, "expected scancode must be positive")?;
+                if *action == "KEY_MAPPING" {
+                    return Ok(Self::KeyMapping { key });
+                }
                 Ok(Self::Key {
                     key,
-                    scancode,
                     pressed: *action == "KEY_PRESS",
                 })
             }
@@ -180,15 +199,21 @@ impl Action {
     }
 }
 
-fn observe(window: &mut Window, sequence: u64, action: Action) -> VMNLResult<()> {
+fn observe(
+    window: &mut Window,
+    sequence: u64,
+    action: Action,
+    observations: &mut Option<KeyObservations>,
+    pressed_key: &mut Option<(Key, Scancode)>,
+) -> VMNLResult<()> {
     match action {
-        Action::Key {
-            key,
-            scancode,
-            pressed,
-        } => {
+        Action::Key { key, pressed } => {
             let event_check = if pressed { "Press" } else { "Release" };
             let observed_scancode = check(sequence, event_check, || {
+                require(
+                    !pressed || pressed_key.is_none(),
+                    "key press preceded the previous release",
+                )?;
                 let events =
                     poll_until(window, &format!("{key:?} {event_check}"), |kind| {
                         match (pressed, kind) {
@@ -207,17 +232,21 @@ fn observe(window: &mut Window, sequence: u64, action: Action) -> VMNLResult<()>
                         }
                     })?;
                 if pressed {
-                    assert_key_press(&events, key)
+                    assert_key_press(events.iter().map(Event::kind), key)
                 } else {
-                    assert_key_release(&events, key, scancode).map(|()| scancode)
+                    let released_scancode =
+                        assert_key_release(events.iter().map(Event::kind), key)?;
+                    check_scancode_release(key, *pressed_key, released_scancode)?;
+                    Ok(released_scancode)
                 }
             })?;
             if pressed {
-                check(sequence, "Scancode", || {
-                    require(observed_scancode == scancode, &format!(
-                        "{key:?} physical scancode: expected={scancode}, observed={observed_scancode}",
-                    ))
-                })?;
+                let group = observations
+                    .as_mut()
+                    .ok_or_else(|| invalid_state("press has no mapping snapshot"))?;
+                require(group.key == key, "press key differs from mapping snapshot")?;
+                group.scancodes.push(observed_scancode);
+                *pressed_key = Some((key, observed_scancode));
             }
             let name = if pressed {
                 "Press input states"
@@ -234,6 +263,23 @@ fn observe(window: &mut Window, sequence: u64, action: Action) -> VMNLResult<()>
                     &format!("{key:?} incorrect {name}"),
                 )
             })?;
+            if !pressed {
+                *pressed_key = None;
+            }
+        }
+        Action::KeyMapping { key } => {
+            check(sequence, "Scancode", || {
+                require(
+                    pressed_key.is_none(),
+                    "mapping checked before physical key release",
+                )?;
+                let group = observations
+                    .as_ref()
+                    .ok_or_else(|| invalid_state("mapping has no preceding key observations"))?;
+                require(group.key == key, "mapping key differs from observed key")?;
+                check_scancode_mapping(key, group.queried, &group.scancodes)
+            })?;
+            *observations = None;
         }
         Action::Button { button, pressed } => {
             let name = if pressed { "Press" } else { "Release" };
@@ -365,8 +411,11 @@ fn poll_until(
     )))
 }
 
-fn assert_key_press(events: &[Event], expected_key: Key) -> VMNLResult<i32> {
-    let mut matching = events.iter().filter_map(|event| match event.kind() {
+fn assert_key_press<'a>(
+    events: impl Iterator<Item = &'a EventKind> + Clone + std::fmt::Debug,
+    expected_key: Key,
+) -> VMNLResult<Scancode> {
+    let mut matching = events.clone().filter_map(|kind| match kind {
         EventKind::KeyPressed {
             key,
             scancode,
@@ -380,23 +429,19 @@ fn assert_key_press(events: &[Event], expected_key: Key) -> VMNLResult<i32> {
             "{expected_key:?} press event was absent: {events:?}"
         )));
     };
-    if matching.next().is_some()
-        || scancode.as_raw() <= 0
-        || !valid_single_key_modifiers(expected_key, modifiers)
-    {
+    if matching.next().is_some() || !valid_single_key_modifiers(expected_key, modifiers) {
         return Err(invalid_state(format!(
             "{expected_key:?} press event had duplicate or invalid metadata: {events:?}"
         )));
     }
-    Ok(scancode.as_raw())
+    Ok(scancode)
 }
 
-fn assert_key_release(
-    events: &[Event],
+fn assert_key_release<'a>(
+    events: impl Iterator<Item = &'a EventKind> + Clone + std::fmt::Debug,
     expected_key: Key,
-    expected_scancode: i32,
-) -> VMNLResult<()> {
-    let mut matching = events.iter().filter_map(|event| match event.kind() {
+) -> VMNLResult<Scancode> {
+    let mut matching = events.clone().filter_map(|kind| match kind {
         EventKind::KeyReleased {
             key,
             scancode,
@@ -409,15 +454,45 @@ fn assert_key_release(
             "{expected_key:?} release event was absent: {events:?}"
         )));
     };
-    if matching.next().is_some()
-        || scancode.as_raw() != expected_scancode
-        || !valid_single_key_modifiers(expected_key, modifiers)
-    {
+    if matching.next().is_some() || !valid_single_key_modifiers(expected_key, modifiers) {
         return Err(invalid_state(format!(
-            "{expected_key:?} release event had duplicate or mismatched metadata: {events:?}"
+            "{expected_key:?} release event had duplicate or invalid metadata: {events:?}"
         )));
     }
-    Ok(())
+    Ok(scancode)
+}
+
+fn check_scancode_mapping(
+    key: Key,
+    queried: Option<Scancode>,
+    observed: &[Scancode],
+) -> VMNLResult<()> {
+    let expected = queried.ok_or_else(|| {
+        invalid_state(format!(
+            "get_key_scancode({key:?}) returned None before a matching named-key press",
+        ))
+    })?;
+    require(
+        observed.contains(&expected),
+        &format!(
+            "{key:?} scancode query/event mismatch: queried={expected:?}, observed physical variants={observed:?}",
+        ),
+    )
+}
+
+fn check_scancode_release(
+    key: Key,
+    pressed: Option<(Key, Scancode)>,
+    released: Scancode,
+) -> VMNLResult<()> {
+    let (pressed_key, pressed_scancode) = pressed.ok_or_else(|| {
+        invalid_state(format!(
+            "{key:?} release has no preceding acknowledged press"
+        ))
+    })?;
+    require(pressed_key == key && pressed_scancode == released, &format!(
+        "{key:?} release mismatches press: pressed=({pressed_key:?}, {pressed_scancode:?}), released={released:?}",
+    ))
 }
 
 fn valid_single_key_modifiers(key: Key, modifiers: Modifiers) -> bool {
@@ -479,19 +554,120 @@ mod tests {
     use super::*;
 
     #[test]
+    fn key_commands_contain_only_public_key_identity() {
+        assert!(Action::parse(&["KEY_PRESS", "A"]).is_ok());
+        assert!(Action::parse(&["KEY_RELEASE", "A"]).is_ok());
+        assert!(Action::parse(&["KEY_MAPPING", "A"]).is_ok());
+        assert!(Action::parse(&["KEY_PRESS", "A", "38"]).is_err());
+        assert!(Action::parse(&["KEY_RELEASE", "A", "0"]).is_err());
+    }
+
+    #[test]
     fn actions_require_valid_public_names_and_finite_coordinates() {
-        assert!(Action::parse(&["KEY_PRESS", "A", "38"]).is_ok());
+        assert!(Action::parse(&["KEY_PRESS", "A"]).is_ok());
         assert!(Action::parse(&["BUTTON_RELEASE", "Button8"]).is_ok());
         for parts in [
-            vec!["KEY_PRESS", "Unknown", "38"],
+            vec!["KEY_PRESS", "Unknown"],
             vec!["KEY_PRESS", "A", "-1"],
             vec!["MOTION", "NaN", "0"],
             vec!["SCROLL", "0", "inf"],
             vec!["BUTTON_PRESS", "Unknown"],
-            vec!["KEY_PRESS", "A"],
+            vec!["KEY_PRESS"],
         ] {
             assert!(Action::parse(&parts).is_err(), "{parts:?}");
         }
+    }
+
+    #[test]
+    fn scancode_comparisons_accept_opaque_zero_and_negative_values() {
+        for raw in [i32::MIN, -7, -1, 0, 38, i32::MAX] {
+            let scancode = Scancode::from_raw(raw);
+            let press = EventKind::KeyPressed {
+                key: Key::A,
+                scancode,
+                modifiers: Modifiers::NONE,
+                repeat: false,
+            };
+            let release = EventKind::KeyReleased {
+                key: Key::A,
+                scancode,
+                modifiers: Modifiers::NONE,
+            };
+            assert_eq!(
+                assert_key_press(std::iter::once(&press), Key::A).ok(),
+                Some(scancode)
+            );
+            assert_eq!(
+                assert_key_release(std::iter::once(&release), Key::A).ok(),
+                Some(scancode)
+            );
+            assert!(check_scancode_mapping(Key::A, Some(scancode), &[scancode]).is_ok());
+            assert!(check_scancode_release(Key::A, Some((Key::A, scancode)), scancode).is_ok());
+        }
+    }
+
+    #[test]
+    fn key_metadata_checks_reject_wrong_identity_duplicates_and_repeats() {
+        let press = EventKind::KeyPressed {
+            key: Key::B,
+            scancode: Scancode::from_raw(0),
+            modifiers: Modifiers::NONE,
+            repeat: false,
+        };
+        let release = EventKind::KeyReleased {
+            key: Key::B,
+            scancode: Scancode::from_raw(0),
+            modifiers: Modifiers::NONE,
+        };
+        assert!(assert_key_press(std::iter::once(&press), Key::A).is_err());
+        assert!(assert_key_release(std::iter::once(&release), Key::A).is_err());
+        assert!(assert_key_press([&press, &press].into_iter(), Key::B).is_err());
+        assert!(assert_key_release([&release, &release].into_iter(), Key::B).is_err());
+        let repeat = EventKind::KeyPressed {
+            key: Key::B,
+            scancode: Scancode::from_raw(0),
+            modifiers: Modifiers::NONE,
+            repeat: true,
+        };
+        assert!(assert_key_press(std::iter::once(&repeat), Key::B).is_err());
+    }
+
+    #[test]
+    fn scancode_mapping_rejects_missing_or_mismatched_query() {
+        let scancode = Scancode::from_raw(0);
+        let missing = check_scancode_mapping(Key::A, None, &[scancode]);
+        assert!(missing.is_err());
+        assert!(missing.err().is_some_and(|error| error
+            .to_string()
+            .contains("get_key_scancode(A) returned None")));
+        assert!(check_scancode_mapping(Key::A, Some(Scancode::from_raw(1)), &[scancode]).is_err());
+    }
+
+    #[test]
+    fn scancode_query_can_select_any_observed_physical_variant() {
+        let observed = [Scancode::from_raw(107), Scancode::from_raw(218)];
+        for scancode in observed {
+            assert!(check_scancode_mapping(Key::PrintScreen, Some(scancode), &observed).is_ok());
+        }
+        assert!(
+            check_scancode_mapping(Key::PrintScreen, Some(Scancode::from_raw(42)), &observed)
+                .is_err()
+        );
+        assert!(
+            check_scancode_mapping(Key::PrintScreen, Some(observed[1]), &observed[..1]).is_err()
+        );
+        assert!(check_scancode_mapping(Key::PrintScreen, Some(observed[0]), &[]).is_err());
+    }
+
+    #[test]
+    fn scancode_release_requires_the_same_key_and_value_as_press() {
+        let scancode = Scancode::from_raw(0);
+        assert!(check_scancode_release(Key::A, None, scancode).is_err());
+        assert!(check_scancode_release(Key::A, Some((Key::B, scancode)), scancode).is_err());
+        assert!(
+            check_scancode_release(Key::A, Some((Key::A, scancode)), Scancode::from_raw(1))
+                .is_err()
+        );
     }
 
     #[test]

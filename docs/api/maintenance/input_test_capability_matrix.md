@@ -139,6 +139,25 @@ successful diagnostic/final runs; this is not a cross-environment stability clai
 
 ## Keyboard named-key rows
 
+The current public client uses protocol version 2: native injection codes remain in the X11
+driver, and `Scancode` requires `Context::get_key_scancode`, captured before injection, to
+match one actually observed physical variant. Each variant retains identical press/release
+scancodes and its own input-state checks. PrintScreen adds the distinct `I218` variant when
+the active XKB map assigns it Print; KpDecimal adds `I129` when it carries KP_Decimal.
+RightAlt additionally exercises distinct `LVL3` and `MDSW` fixtures carrying
+ISO_Level3_Shift and ISO_Level5_Shift. An unavailable alternate is explicitly excluded.
+Zero and negative opaque values are
+accepted. A missing mapping for an observed named key fails; it is not an input exclusion.
+The independent physical fixture still determines the expected `Key`. This public check
+qualifies metadata consistency rather than the independent native numeric encoding recorded
+by the earlier 2026-10-13 executions. Exact encoding checks remain in the backend suites.
+
+On 2026-10-14, three consecutive local protocol-2 executions passed 657 checks with 639 passes,
+18 exclusions and no failures or unexecuted checks. All four alternate physical fixtures above
+passed; the exclusions still cover World2, F25 and mouse buttons 7–8. See the
+[execution record](../../testing.md#native-input-contract) for the preceding failed attempts
+and the exact evidence boundary.
+
 For each row, required result K1 is: press emits `KeyPressed { key: Key::<name>, scancode,
 modifiers, repeat: false }`; release emits `KeyReleased` with the same scancode and expected
 modifiers. The press sets `is_down`/`is_pressed`; release clears `is_down`. A press and release in
