@@ -1,15 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////
-use crate::audio::error::{validate_gain, AudioResult};
 /// SPDX-FileCopyrightText: 2026 Nathan Flachat
 /// SPDX-License-Identifier: MIT
-///
 ////////////////////////////////////////////////////////////////////////////////
+use crate::audio::error::{validate_gain, AudioResult};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum BusKind {
+pub(crate) enum BusKind {
     Master,
     Music,
     Sfx,
@@ -24,15 +23,12 @@ struct AudioBusState {
 
 #[derive(Clone, Debug)]
 pub struct AudioBus {
-    kind: BusKind,
     state: Arc<AudioBusState>,
 }
 
 impl AudioBus {
-    #[must_use]
-    pub fn new(kind: BusKind) -> Self {
+    pub(crate) fn new() -> Self {
         Self {
-            kind,
             state: Arc::new(AudioBusState {
                 volume_bits: AtomicU32::new(1.0f32.to_bits()),
                 muted: AtomicBool::new(false),
@@ -41,18 +37,11 @@ impl AudioBus {
         }
     }
 
-    #[must_use]
-    pub fn kind(&self) -> BusKind {
-        self.kind
-    }
-
     pub fn set_volume(&self, volume: f32) -> AudioResult<()> {
         let volume = validate_gain(volume)?;
-
         self.state
             .volume_bits
             .store(volume.to_bits(), Ordering::Relaxed);
-
         Ok(())
     }
 

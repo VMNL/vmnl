@@ -1,31 +1,27 @@
 ////////////////////////////////////////////////////////////////////////////////
-use crate::audio::decoder::{AudioDecoder, DecodedAudio};
 /// SPDX-FileCopyrightText: 2026 Nathan Flachat
 /// SPDX-License-Identifier: MIT
 ///
 ////////////////////////////////////////////////////////////////////////////////
-use crate::audio::{AudioBus, AudioError, AudioResult, BusKind};
+use crate::audio::bus::{AudioBus, BusKind};
+use crate::audio::decoder::{AudioDecoder, DecodedAudio};
+use crate::audio::error::{AudioError, AudioResult};
 
 use crate::audio::mixer::AudioMixer;
 use crate::audio::music::MusicStream;
 use crate::audio::sound::SoundVoice;
 
+use arc_swap::ArcSwap;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
-use arc_swap::ArcSwap;
 
 #[derive(Debug, Clone)]
 pub(crate) enum AudioCommand {
-    SetMasterVolume(f32),
-    SetBusVolume(BusKind, f32),
-    MuteBus(BusKind),
-    UnmuteBus(BusKind),
     PauseAll,
     ResumeAll,
     StopAll,
-    SetMaxVoices(usize),
 }
 
 pub(crate) struct AudioRuntime {
@@ -35,21 +31,20 @@ pub(crate) struct AudioRuntime {
     sound_cache: RwLock<HashMap<PathBuf, Arc<DecodedAudio>>>,
     active_sound_voices: Mutex<Vec<Arc<SoundVoice>>>,
     active_music_streams: Mutex<Vec<Arc<MusicStream>>>,
-    sound_voice_snapshot: ArcSwap<Vec<Arc<SoundVoice>>>,
-    music_stream_snapshot: ArcSwap<Vec<Arc<MusicStream>>>,
+    pub(crate) sound_voice_snapshot: ArcSwap<Vec<Arc<SoundVoice>>>,
+    pub(crate) music_stream_snapshot: ArcSwap<Vec<Arc<MusicStream>>>,
     command_queue: Mutex<Vec<AudioCommand>>,
     next_voice_id: AtomicU64,
-    next_stream_id: AtomicU64,
     max_sound_voices: AtomicUsize,
 }
 
 impl AudioRuntime {
     #[must_use]
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
-            master_bus: AudioBus::new(BusKind::Master),
-            music_bus: AudioBus::new(BusKind::Music),
-            sfx_bus: AudioBus::new(BusKind::Sfx),
+            master_bus: AudioBus::new(),
+            music_bus: AudioBus::new(),
+            sfx_bus: AudioBus::new(),
             sound_cache: RwLock::new(HashMap::new()),
             active_sound_voices: Mutex::new(Vec::new()),
             active_music_streams: Mutex::new(Vec::new()),
@@ -57,7 +52,6 @@ impl AudioRuntime {
             music_stream_snapshot: ArcSwap::from_pointee(Vec::new()),
             command_queue: Mutex::new(Vec::new()),
             next_voice_id: AtomicU64::new(1),
-            next_stream_id: AtomicU64::new(1),
             max_sound_voices: AtomicUsize::new(64),
         }
     }
@@ -74,33 +68,25 @@ impl AudioRuntime {
         self.sfx_bus.clone()
     }
 
-
-    fn publish_sound_voice_snapshot(&self, voices: &[Arc<SoundVoice>],) {
-        self.sound_voice_snapshot
-            .store(Arc::new(voices.to_vec()));
+    fn publish_sound_voice_snapshot(&self, voices: &[Arc<SoundVoice>]) {
+        self.sound_voice_snapshot.store(Arc::new(voices.to_vec()));
     }
 
-    fn publish_music_stream_snapshot(&self, streams: &[Arc<MusicStream>],) {
-        self.music_stream_snapshot
-            .store(Arc::new(streams.to_vec()));
+    fn publish_music_stream_snapshot(&self, streams: &[Arc<MusicStream>]) {
+        self.music_stream_snapshot.store(Arc::new(streams.to_vec()));
     }
 
-    pub fn next_voice_id(&self) -> u64 {
+    pub(crate) fn next_voice_id(&self) -> u64 {
         self.next_voice_id.fetch_add(1, Ordering::Relaxed)
     }
 
-    pub fn next_stream_id(&self) -> u64 {
-        self.next_stream_id.fetch_add(1, Ordering::Relaxed)
-    }
-
     #[must_use]
-    pub fn max_sound_voices(&self) -> usize {
+    pub(crate) fn max_sound_voices(&self) -> usize {
         self.max_sound_voices.load(Ordering::Relaxed)
     }
 
-    pub fn set_max_sound_voices(&self, max: usize) -> AudioResult<()> {
-        self.max_sound_voices
-            .store(max.max(1), Ordering::Relaxed);
+    pub(crate) fn set_max_sound_voices(&self, max: usize) -> AudioResult<()> {
+        self.max_sound_voices.store(max.max(1), Ordering::Relaxed);
 
         let mut voices = self
             .active_sound_voices
@@ -114,7 +100,7 @@ impl AudioRuntime {
         Ok(())
     }
 
-    pub fn enqueue(&self, command: AudioCommand) -> AudioResult<()> {
+    pub(crate) fn enqueue(&self, command: AudioCommand) -> AudioResult<()> {
         let mut queue = self
             .command_queue
             .lock()
@@ -125,7 +111,7 @@ impl AudioRuntime {
         Ok(())
     }
 
-    pub fn apply_commands(&self) -> AudioResult<()> {
+    pub(crate) fn apply_commands(&self) -> AudioResult<()> {
         let commands = {
             let mut queue = self
                 .command_queue
@@ -136,22 +122,6 @@ impl AudioRuntime {
 
         for command in commands {
             match command {
-                AudioCommand::SetMasterVolume(volume) => self.master_bus.set_volume(volume)?,
-                AudioCommand::SetBusVolume(BusKind::Master, volume) => {
-                    self.master_bus.set_volume(volume)?;
-                }
-                AudioCommand::SetBusVolume(BusKind::Music, volume) => {
-                    self.music_bus.set_volume(volume)?;
-                }
-                AudioCommand::SetBusVolume(BusKind::Sfx, volume) => {
-                    self.sfx_bus.set_volume(volume)?;
-                }
-                AudioCommand::MuteBus(BusKind::Master) => self.master_bus.mute(),
-                AudioCommand::MuteBus(BusKind::Music) => self.music_bus.mute(),
-                AudioCommand::MuteBus(BusKind::Sfx) => self.sfx_bus.mute(),
-                AudioCommand::UnmuteBus(BusKind::Master) => self.master_bus.unmute(),
-                AudioCommand::UnmuteBus(BusKind::Music) => self.music_bus.unmute(),
-                AudioCommand::UnmuteBus(BusKind::Sfx) => self.sfx_bus.unmute(),
                 AudioCommand::PauseAll => {
                     let voices = self
                         .active_sound_voices
@@ -211,14 +181,12 @@ impl AudioRuntime {
                         stream.stop();
                     }
                 }
-
-                AudioCommand::SetMaxVoices(max) => self.set_max_sound_voices(max)?,
             }
         }
         Ok(())
     }
 
-    pub fn get_or_decode_audio<P>(&self, path: P) -> AudioResult<Arc<DecodedAudio>>
+    pub(crate) fn get_or_decode_audio<P>(&self, path: P) -> AudioResult<Arc<DecodedAudio>>
     where
         P: AsRef<std::path::Path>,
     {
@@ -249,7 +217,7 @@ impl AudioRuntime {
         Ok(decoded_audio)
     }
 
-    pub fn register_sound_voice(&self, voice: Arc<SoundVoice>) -> AudioResult<()> {
+    pub(crate) fn register_sound_voice(&self, voice: Arc<SoundVoice>) -> AudioResult<()> {
         let mut voices = self
             .active_sound_voices
             .lock()
@@ -262,7 +230,7 @@ impl AudioRuntime {
         Ok(())
     }
 
-    pub fn register_music_stream(&self, stream: Arc<MusicStream>) -> AudioResult<()> {
+    pub(crate) fn register_music_stream(&self, stream: Arc<MusicStream>) -> AudioResult<()> {
         let mut streams = self
             .active_music_streams
             .lock()
@@ -319,9 +287,7 @@ impl AudioRuntime {
 
             let old_len = streams.len();
 
-            streams.retain(|stream| {
-                !stream.is_stopped() && !stream.is_finished()
-            });
+            streams.retain(|stream| !stream.is_stopped());
 
             if streams.len() != old_len {
                 self.publish_music_stream_snapshot(&streams);
@@ -331,25 +297,25 @@ impl AudioRuntime {
         Ok(())
     }
 
-    pub fn pump_music_streams(&self) -> AudioResult<()> {
+    pub(crate) fn pump_music_streams(&self) -> AudioResult<()> {
         let streams = self
             .active_music_streams
             .lock()
             .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
 
         for stream in streams.iter() {
-            stream.pump();
+            stream.pump()?;
         }
 
         Ok(())
     }
 
-    pub fn mix_into(&self, output: &mut [f32]) -> AudioResult<()> {
-        AudioMixer::mix(self, output)
+    pub(crate) fn mix_into(&self, output: &mut [f32]) {
+        AudioMixer::mix(self, output);
     }
 
     #[must_use]
-    pub fn bus_gain(&self, bus: BusKind) -> f32 {
+    pub(crate) fn bus_gain(&self, bus: BusKind) -> f32 {
         match bus {
             BusKind::Master => self.master_bus.gain(),
             BusKind::Music => self.music_bus.gain(),
@@ -357,37 +323,23 @@ impl AudioRuntime {
         }
     }
 
-    #[must_use]
-    pub fn is_anything_playing(&self) -> AudioResult<bool> {
-        let voices = self
-            .active_sound_voices
-            .lock()
-            .map_err(|_| AudioError::ActiveSoundVoicesPoisoned)?;
-
-        if voices.iter().any(|voice| !voice.is_stopped()) {
-            return Ok(true);
-        }
-
-        let streams = self
-            .active_music_streams
-            .lock()
-            .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
-
-        Ok(streams
-            .iter()
-            .any(|stream| !stream.is_stopped() && !stream.is_finished()))
-    }
-
-    pub fn force_stop_all(&self) -> AudioResult<()> {
+    pub(crate) fn force_stop_all(&self) -> AudioResult<()> {
         self.enqueue(AudioCommand::StopAll)
     }
 
-    pub fn force_pause_all(&self) -> AudioResult<()> {
+    pub(crate) fn force_pause_all(&self) -> AudioResult<()> {
         self.enqueue(AudioCommand::PauseAll)
     }
 
-    pub fn force_resume_all(&self) -> AudioResult<()> {
+    pub(crate) fn force_resume_all(&self) -> AudioResult<()> {
         self.enqueue(AudioCommand::ResumeAll)
+    }
+
+    pub(crate) fn tick(&self) -> AudioResult<()> {
+        self.apply_commands()?;
+        self.pump_music_streams()?;
+        self.cleanup()?;
+        Ok(())
     }
 }
 

@@ -1,12 +1,10 @@
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 /// SPDX-FileCopyrightText: 2026 Nathan Flachat
 /// SPDX-License-Identifier: MIT
-///
 ////////////////////////////////////////////////////////////////////////////////
-use crate::audio::bus::BusKind;
 use crate::audio::decoder::DecodedAudio;
-
 use crate::audio::error::{validate_gain, AudioResult};
+
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
 
@@ -26,66 +24,54 @@ pub(crate) struct SoundVoice {
     volume_bits: AtomicU32,
     looping: AtomicBool,
     state: AtomicU8,
-    bus: BusKind,
 }
 
 impl SoundVoice {
-    #[must_use]
-    pub(crate) fn new(id: u64, decoded_audio: Arc<DecodedAudio>, bus: BusKind, volume: f32, looping: bool, state: PlaybackState) -> AudioResult<Self> {
-        Self {
+    pub(crate) fn new(
+        id: u64,
+        decoded_audio: Arc<DecodedAudio>,
+        volume: f32,
+        looping: bool,
+        state: PlaybackState,
+    ) -> AudioResult<Self> {
+        Ok(Self {
             id,
             decoded_audio,
             cursor_frames: AtomicUsize::new(0),
             volume_bits: AtomicU32::new(validate_gain(volume)?.to_bits()),
             looping: AtomicBool::new(looping),
             state: AtomicU8::new(state as u8),
-            bus,
-        }
+        })
     }
 
     #[must_use]
-    pub fn id(&self) -> u64 {
+    pub(crate) fn id(&self) -> u64 {
         self.id
     }
 
-    #[must_use]
-    pub fn bus(&self) -> BusKind {
-        self.bus
-    }
-
-    #[must_use]
-    pub fn decoded_audio(&self) -> &Arc<DecodedAudio> {
-        &self.decoded_audio
-    }
-
-    pub fn set_looping(&self, looping: bool) {
+    pub(crate) fn set_looping(&self, looping: bool) {
         self.looping.store(looping, Ordering::Relaxed);
     }
 
-    pub fn looping(&self) -> bool {
+    fn looping(&self) -> bool {
         self.looping.load(Ordering::Relaxed)
     }
 
-    pub fn set_volume(&self, volume: f32) -> AudioResult<()> {
+    pub(crate) fn set_volume(&self, volume: f32) -> AudioResult<()> {
         let volume = validate_gain(volume)?;
-
         self.volume_bits.store(volume.to_bits(), Ordering::Relaxed);
-
         Ok(())
     }
 
-    pub fn volume(&self) -> f32 {
+    fn volume(&self) -> f32 {
         f32::from_bits(self.volume_bits.load(Ordering::Relaxed))
     }
 
-    pub(crate) fn start(&self) {
-        self.set_state(PlaybackState::Playing);
-    }
-    pub fn set_state(&self, state: PlaybackState) {
+    fn set_state(&self, state: PlaybackState) {
         self.state.store(state as u8, Ordering::Relaxed);
     }
 
-    pub fn state(&self) -> PlaybackState {
+    pub(crate) fn state(&self) -> PlaybackState {
         match self.state.load(Ordering::Relaxed) {
             0 => PlaybackState::Playing,
             1 => PlaybackState::Paused,
@@ -93,46 +79,29 @@ impl SoundVoice {
         }
     }
 
-    #[must_use]
-    pub fn is_playing(&self) -> bool {
-        self.state() == PlaybackState::Playing
-    }
-
-    #[must_use]
-    pub fn is_paused(&self) -> bool {
-        self.state() == PlaybackState::Paused
-    }
-
-    #[must_use]
-    pub fn is_stopped(&self) -> bool {
+    pub(crate) fn is_stopped(&self) -> bool {
         self.state() == PlaybackState::Stopped
     }
 
-    pub fn stop(&self) {
-        self.cursor_frames.store(0, Ordering::Relaxed);
+    pub(crate) fn stop(&self) {
         self.set_state(PlaybackState::Stopped);
     }
 
-    pub fn pause(&self) {
+    pub(crate) fn pause(&self) {
         self.set_state(PlaybackState::Paused);
     }
 
-    pub fn resume(&self) {
+    pub(crate) fn resume(&self) {
         if !self.is_stopped() {
             self.set_state(PlaybackState::Playing);
         }
     }
 
-    #[must_use]
-    pub fn cursor_frames(&self) -> usize {
+    pub(crate) fn cursor_frames(&self) -> usize {
         self.cursor_frames.load(Ordering::Relaxed)
     }
 
-    pub fn set_cursor_frames(&self, cursor: usize) {
-        self.cursor_frames.store(cursor, Ordering::Relaxed);
-    }
-
-    pub fn mix_into(&self, output: &mut [f32], gain: f32) {
+    pub(crate) fn mix_into(&self, output: &mut [f32], gain: f32) {
         if self.state() != PlaybackState::Playing || gain <= 0.0 {
             return;
         }
@@ -149,9 +118,8 @@ impl SoundVoice {
             return;
         }
 
-        // Reserve a distinct cursor range for this mixer invocation. This makes
-        // concurrent render_into() calls safe: two mixers cannot consume the
-        // same frames and overwrite each other's cursor progress.
+        // CPAL is the only runtime mixing consumer. Keep a monotonic cursor so
+        // the voice remains safe if that backend contract changes in the future.
         let start = self.cursor_frames.fetch_add(frame_count, Ordering::AcqRel);
 
         if self.state() != PlaybackState::Playing {

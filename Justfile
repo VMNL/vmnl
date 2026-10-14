@@ -83,6 +83,11 @@ test-gpu-compile:
 test-gpu:
     @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report gpu
 
+# Run audio tests.
+[no-exit-message]
+test-audio:
+    @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report audio
+
 # Run Rustdoc examples.
 [no-exit-message]
 doctest:
@@ -118,6 +123,12 @@ _test-report suite:
     fi
 
     case '{{ suite }}' in
+        audio)
+            suite_name='AUDIO'
+            suite_scope='audio tests'
+            suite_kind='tests'
+            test_command=(cargo "${color_args[@]}" test -p vmnl_audio)
+            ;;
         gpu)
             suite_name='GPU'
             suite_scope='Vulkan + GLFW display required'
@@ -275,12 +286,12 @@ _test-total report:
         test)
             report_name='TEST'
             report_unit='suites'
-            recipes=(test-unit test-api test-smoke test-platform)
+            recipes=(test-unit test-api test-audio test-smoke test-platform)
             ;;
         validate)
             report_name='VALIDATION'
             report_unit='steps'
-            recipes=(build-workspace check-fmt check-clippy test-unit test-api test-smoke test-platform doctest docs _docs-api-check)
+            recipes=(build-workspace check-fmt check-clippy doctest docs _docs-api-check test-unit test-api test-audio test-smoke test-platform)
             ;;
         *)
             printf 'unknown VMNL aggregate report: %s\n' '{{ report }}' >&2
