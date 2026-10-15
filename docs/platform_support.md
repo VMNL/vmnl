@@ -63,6 +63,13 @@ IME composition and physical input devices retain their separate qualification l
 startup preparation and failed diagnostic attempts. The client directly depends only on vmnl;
 OS injection codes and timestamp pacing remain in the X11 driver.
 
+On 2026-10-15, three consecutive executions without instrumentation revalidated the public scroll
+oracle on the local Fedora/Hyprland/Xwayland/Mesa stack: each completed 848 checks with 828 passes,
+20 exclusions and no failures or unexecuted checks. All four scroll directions passed with the
+100 ms quiet interval and fixed five-second deadline. The
+[revalidation record](testing.md#scroll-oracle-native-revalidation) includes exact versions,
+source identification and the preceding text-fixture failure. This is automatic local evidence.
+
 ## Runtime Constraints
 
 - Visual examples and GPU tests require a Vulkan-capable GPU, a Vulkan loader, GLFW, and a display server.

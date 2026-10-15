@@ -16,6 +16,7 @@ mod input_key_table;
 mod scenarios;
 
 const INPUT_TIMEOUT: Duration = Duration::from_secs(5);
+const SCROLL_SETTLE_TIME: Duration = Duration::from_millis(100);
 
 const fn named_key(key: Key, _: &str, _: Option<u16>, _: Option<u16>, _: Option<u16>) -> Key {
     key
@@ -183,13 +184,54 @@ struct KeyObservations {
     scancodes: Vec<Scancode>,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ScrollDirection {
+    VerticalPositive,
+    VerticalNegative,
+    HorizontalPositive,
+    HorizontalNegative,
+}
+
+impl ScrollDirection {
+    fn from_fixture(dx: f64, dy: f64) -> VMNLResult<Self> {
+        // Protocol values name a direction; they do not prescribe backend scroll units.
+        match (dx, dy) {
+            (0.0, 1.0) => Ok(Self::VerticalPositive),
+            (0.0, -1.0) => Ok(Self::VerticalNegative),
+            (1.0, 0.0) => Ok(Self::HorizontalPositive),
+            (-1.0, 0.0) => Ok(Self::HorizontalNegative),
+            _ => Err(invalid_state("unsupported scroll direction fixture")),
+        }
+    }
+
+    const fn name(self) -> &'static str {
+        match self {
+            Self::VerticalPositive => "Vertical +",
+            Self::VerticalNegative => "Vertical -",
+            Self::HorizontalPositive => "Horizontal +",
+            Self::HorizontalNegative => "Horizontal -",
+        }
+    }
+
+    fn matches_delta(self, dx: f64, dy: f64) -> bool {
+        dx.is_finite()
+            && dy.is_finite()
+            && match self {
+                Self::VerticalPositive => dx == 0.0 && dy > 0.0,
+                Self::VerticalNegative => dx == 0.0 && dy < 0.0,
+                Self::HorizontalPositive => dy == 0.0 && dx > 0.0,
+                Self::HorizontalNegative => dy == 0.0 && dx < 0.0,
+            }
+    }
+}
+
 enum Action {
     Scenario(scenarios::Action),
     KeyMapping { key: Key },
     Key { key: Key, pressed: bool },
     Button { button: MouseButton, pressed: bool },
     Motion { x: f64, y: f64 },
-    Scroll { dx: f64, dy: f64 },
+    Scroll(ScrollDirection),
 }
 
 impl Action {
@@ -229,7 +271,7 @@ impl Action {
                 if *action == "MOTION" {
                     Ok(Self::Motion { x, y })
                 } else {
-                    Ok(Self::Scroll { dx: x, dy: y })
+                    Ok(Self::Scroll(ScrollDirection::from_fixture(x, y)?))
                 }
             }
             _ => scenarios::Action::parse(parts).map(Self::Scenario),
@@ -375,20 +417,11 @@ fn observe(
                 )
             })?;
         }
-        Action::Scroll { dx, dy } => {
-            let name = match (dx, dy) {
-                (0.0, 1.0) => "Vertical +",
-                (0.0, -1.0) => "Vertical -",
-                (1.0, 0.0) => "Horizontal +",
-                (-1.0, 0.0) => "Horizontal -",
-                _ => return Err(invalid_state("unsupported scroll fixture")),
-            };
+        Action::Scroll(direction) => {
+            let name = direction.name();
             check(sequence, name, || {
-                let events = poll_until(window, name, |kind| {
-                    matches!(kind,
-                    EventKind::MouseScrolled { dx: x, dy: y } if *x == dx && *y == dy)
-                })?;
-                assert_mouse_scroll_event(&events, dx, dy)
+                let events = poll_scroll_events(window, direction)?;
+                assert_mouse_scroll_event(events.iter().map(Event::kind), direction)
             })?;
         }
     }
@@ -460,6 +493,56 @@ fn poll_until(
     Err(invalid_state(format!(
         "timed out waiting for {expected}; focused={}; hovered={}; cursor={:?}; observed={observed:?}",
         window.is_focused(), window.is_cursor_hovered(), window.get_cursor_position()
+    )))
+}
+
+fn poll_scroll_events(window: &mut Window, direction: ScrollDirection) -> VMNLResult<Vec<Event>> {
+    let started = Instant::now();
+    let mut observation = ScrollObservation::new(direction);
+    let mut observed = Vec::new();
+    while started.elapsed() < INPUT_TIMEOUT {
+        if !window.is_focused() {
+            return Err(invalid_state(format!(
+                "VMNL input window lost focus while observing {}; observed={observed:?}",
+                direction.name()
+            )));
+        }
+        let batch = window.poll_events();
+        let elapsed = started.elapsed();
+        let result = observation.observe_batch(elapsed, batch.iter().map(Event::kind));
+        observed.extend(batch);
+        let complete = result.map_err(|error| {
+            invalid_state(format!(
+                "scroll observation failed after {elapsed:?}: {error}; focused={}; hovered={}; cursor={:?}; observed={observed:?}",
+                window.is_focused(),
+                window.is_cursor_hovered(),
+                window.get_cursor_position()
+            ))
+        })?;
+        if !window.is_focused() {
+            return Err(invalid_state(format!(
+                "VMNL input window lost focus while observing {}; observed={observed:?}",
+                direction.name()
+            )));
+        }
+        if started.elapsed() >= INPUT_TIMEOUT {
+            break;
+        }
+        if complete {
+            return Ok(observed);
+        }
+        let remaining = INPUT_TIMEOUT.saturating_sub(started.elapsed());
+        if remaining.is_zero() {
+            break;
+        }
+        window.wait_events_timeout(remaining.min(Duration::from_millis(20)).as_secs_f64());
+    }
+    Err(invalid_state(format!(
+        "timed out waiting for stable {}; focused={}; hovered={}; cursor={:?}; observed={observed:?}",
+        direction.name(),
+        window.is_focused(),
+        window.is_cursor_hovered(),
+        window.get_cursor_position()
     )))
 }
 
@@ -580,18 +663,57 @@ fn assert_mouse_button_event(
     Ok(())
 }
 
-fn assert_mouse_scroll_event(
-    events: &[Event],
-    expected_dx: f64,
-    expected_dy: f64,
+fn is_scroll_event(kind: &EventKind) -> bool {
+    matches!(kind, EventKind::MouseScrolled { .. })
+}
+
+struct ScrollObservation {
+    direction: ScrollDirection,
+    last_scroll_at: Option<Duration>,
+}
+
+impl ScrollObservation {
+    const fn new(direction: ScrollDirection) -> Self {
+        Self {
+            direction,
+            last_scroll_at: None,
+        }
+    }
+
+    fn observe_batch<'a>(
+        &mut self,
+        elapsed: Duration,
+        events: impl Iterator<Item = &'a EventKind> + Clone + std::fmt::Debug,
+    ) -> VMNLResult<bool> {
+        require(
+            elapsed < INPUT_TIMEOUT,
+            "scroll observation reached its total deadline",
+        )?;
+        if events.clone().any(is_scroll_event) {
+            assert_mouse_scroll_event(events, self.direction)?;
+            self.last_scroll_at = Some(elapsed);
+        }
+        Ok(self
+            .last_scroll_at
+            .is_some_and(|last| elapsed.saturating_sub(last) >= SCROLL_SETTLE_TIME))
+    }
+}
+
+fn assert_mouse_scroll_event<'a>(
+    events: impl Iterator<Item = &'a EventKind> + Clone + std::fmt::Debug,
+    direction: ScrollDirection,
 ) -> VMNLResult<()> {
-    let mut observed = events.iter().filter_map(|event| match event.kind() {
-        EventKind::MouseScrolled { dx, dy } => Some((*dx, *dy)),
-        _ => None,
-    });
-    if observed.next() != Some((expected_dx, expected_dy)) || observed.next().is_some() {
+    let mut observed = events
+        .clone()
+        .filter_map(|event| match event {
+            EventKind::MouseScrolled { dx, dy } => Some((*dx, *dy)),
+            _ => None,
+        })
+        .peekable();
+    if observed.peek().is_none() || !observed.all(|(dx, dy)| direction.matches_delta(dx, dy)) {
         return Err(invalid_state(format!(
-            "expected exactly one scroll event with dx={expected_dx}, dy={expected_dy}: {events:?}"
+            "expected one or more finite scroll events, all for {}: {events:?}",
+            direction.name()
         )));
     }
     Ok(())
@@ -604,6 +726,329 @@ fn invalid_state(message: impl Into<String>) -> VMNLError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn scroll_observation_keeps_waiting_after_the_first_valid_batch() {
+        let mut observation = ScrollObservation::new(ScrollDirection::VerticalPositive);
+        let event = EventKind::MouseScrolled { dx: 0.0, dy: 0.25 };
+        assert_eq!(
+            observation
+                .observe_batch(Duration::ZERO, std::iter::once(&event))
+                .ok(),
+            Some(false)
+        );
+    }
+
+    #[test]
+    fn scroll_observation_requires_the_full_quiet_interval() {
+        let mut observation = ScrollObservation::new(ScrollDirection::VerticalPositive);
+        let event = EventKind::MouseScrolled { dx: 0.0, dy: 0.25 };
+        assert_eq!(
+            observation
+                .observe_batch(Duration::from_millis(10), std::iter::once(&event))
+                .ok(),
+            Some(false)
+        );
+        assert_eq!(
+            observation
+                .observe_batch(Duration::from_millis(109), std::iter::empty())
+                .ok(),
+            Some(false)
+        );
+        assert_eq!(
+            observation
+                .observe_batch(Duration::from_millis(110), std::iter::empty())
+                .ok(),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn scroll_observation_resets_quiet_time_only_on_scroll() {
+        let mut observation = ScrollObservation::new(ScrollDirection::HorizontalNegative);
+        let event = EventKind::MouseScrolled {
+            dx: -120.0,
+            dy: 0.0,
+        };
+        let noise = EventKind::MouseMoved { x: 1.0, y: 2.0 };
+        assert_eq!(
+            observation
+                .observe_batch(Duration::ZERO, std::iter::once(&noise))
+                .ok(),
+            Some(false)
+        );
+        for elapsed in [0, 80, 180] {
+            assert_eq!(
+                observation
+                    .observe_batch(Duration::from_millis(elapsed), std::iter::once(&event))
+                    .ok(),
+                Some(false)
+            );
+        }
+        assert_eq!(
+            observation
+                .observe_batch(Duration::from_millis(220), std::iter::once(&noise))
+                .ok(),
+            Some(false)
+        );
+        assert_eq!(
+            observation
+                .observe_batch(Duration::from_millis(279), std::iter::empty())
+                .ok(),
+            Some(false)
+        );
+        assert_eq!(
+            observation
+                .observe_batch(Duration::from_millis(280), std::iter::empty())
+                .ok(),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn scroll_observation_rejects_invalid_later_batches_at_the_settle_boundary() {
+        for elapsed in [95, 100] {
+            for (dx, dy) in [
+                (1.0, 0.0),
+                (0.0, -1.0),
+                (0.0, 0.0),
+                (f64::NAN, 0.0),
+                (0.0, f64::INFINITY),
+            ] {
+                let mut observation = ScrollObservation::new(ScrollDirection::VerticalPositive);
+                let valid = EventKind::MouseScrolled { dx: 0.0, dy: 1.0 };
+                assert_eq!(
+                    observation
+                        .observe_batch(Duration::ZERO, std::iter::once(&valid))
+                        .ok(),
+                    Some(false)
+                );
+                let invalid = EventKind::MouseScrolled { dx, dy };
+                assert!(observation
+                    .observe_batch(Duration::from_millis(elapsed), std::iter::once(&invalid))
+                    .is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn scroll_observation_keeps_its_absolute_deadline() {
+        let mut empty = ScrollObservation::new(ScrollDirection::VerticalPositive);
+        for elapsed in [0, 100, 4999] {
+            assert_eq!(
+                empty
+                    .observe_batch(Duration::from_millis(elapsed), std::iter::empty())
+                    .ok(),
+                Some(false)
+            );
+        }
+        assert!(empty
+            .observe_batch(Duration::from_millis(5000), std::iter::empty())
+            .is_err());
+
+        let mut continuous = ScrollObservation::new(ScrollDirection::VerticalPositive);
+        let event = EventKind::MouseScrolled { dx: 0.0, dy: 0.25 };
+        for batch in 0..56 {
+            assert_eq!(
+                continuous
+                    .observe_batch(Duration::from_millis(batch * 90), std::iter::once(&event))
+                    .ok(),
+                Some(false)
+            );
+        }
+        assert!(continuous
+            .observe_batch(Duration::from_millis(5000), std::iter::empty())
+            .is_err());
+
+        let mut settled = ScrollObservation::new(ScrollDirection::VerticalPositive);
+        assert_eq!(
+            settled
+                .observe_batch(Duration::ZERO, std::iter::once(&event))
+                .ok(),
+            Some(false)
+        );
+        assert!(settled
+            .observe_batch(Duration::from_millis(5000), std::iter::empty())
+            .is_err());
+    }
+
+    #[test]
+    fn scroll_wait_observes_invalid_input_without_a_later_valid_event() {
+        for (dx, dy) in [
+            (1.0, 0.0),
+            (0.0, -1.0),
+            (0.0, 0.0),
+            (f64::NAN, 0.0),
+            (0.0, f64::INFINITY),
+        ] {
+            let event = EventKind::MouseScrolled { dx, dy };
+            assert!(
+                is_scroll_event(&event),
+                "wait must observe {event:?} before validating its payload"
+            );
+            assert!(assert_mouse_scroll_event(
+                std::iter::once(&event),
+                ScrollDirection::VerticalPositive
+            )
+            .is_err());
+            let mut observation = ScrollObservation::new(ScrollDirection::VerticalPositive);
+            assert!(observation
+                .observe_batch(Duration::ZERO, std::iter::once(&event))
+                .is_err());
+        }
+    }
+
+    #[test]
+    fn scroll_wait_observes_all_directions_and_ignores_other_event_kinds() {
+        for (dx, dy) in [(0.0, 0.25), (0.0, -120.0), (1.0, 0.0), (-0.5, 0.0)] {
+            assert!(is_scroll_event(&EventKind::MouseScrolled { dx, dy }));
+        }
+        for event in [
+            EventKind::MouseEntered,
+            EventKind::MouseLeft,
+            EventKind::MouseMoved { x: 0.0, y: 1.0 },
+            EventKind::Text('a'),
+        ] {
+            assert!(!is_scroll_event(&event));
+        }
+    }
+
+    #[test]
+    fn scroll_oracle_accepts_non_unit_magnitudes() {
+        for (direction, dx, dy) in [
+            (ScrollDirection::VerticalPositive, 0.0, 1.0),
+            (ScrollDirection::VerticalNegative, 0.0, -1.0),
+            (ScrollDirection::HorizontalPositive, 1.0, 0.0),
+            (ScrollDirection::HorizontalNegative, -1.0, 0.0),
+        ] {
+            for magnitude in [0.25, 1.0, 120.0] {
+                let event = EventKind::MouseScrolled {
+                    dx: dx * magnitude,
+                    dy: dy * magnitude,
+                };
+                assert!(
+                    assert_mouse_scroll_event(std::iter::once(&event), direction).is_ok(),
+                    "{direction:?} should accept {event:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn scroll_oracle_accepts_multiple_consistent_events() {
+        for (direction, dx, dy) in [
+            (ScrollDirection::VerticalPositive, 0.0, 1.0),
+            (ScrollDirection::VerticalNegative, 0.0, -1.0),
+            (ScrollDirection::HorizontalPositive, 1.0, 0.0),
+            (ScrollDirection::HorizontalNegative, -1.0, 0.0),
+        ] {
+            let events = [
+                EventKind::MouseScrolled {
+                    dx: dx * 0.25,
+                    dy: dy * 0.25,
+                },
+                EventKind::MouseEntered,
+                EventKind::MouseScrolled {
+                    dx: dx * 120.0,
+                    dy: dy * 120.0,
+                },
+            ];
+            assert!(
+                assert_mouse_scroll_event(events.iter(), direction).is_ok(),
+                "{direction:?} should accept {events:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn scroll_oracle_retains_axis_direction_and_finiteness_checks() {
+        for direction in [
+            ScrollDirection::VerticalPositive,
+            ScrollDirection::VerticalNegative,
+            ScrollDirection::HorizontalPositive,
+            ScrollDirection::HorizontalNegative,
+        ] {
+            assert!(assert_mouse_scroll_event(std::iter::empty(), direction).is_err());
+            for (dx, dy) in [
+                (0.0, 0.0),
+                (1.0, 1.0),
+                (f64::NAN, 0.0),
+                (0.0, f64::NAN),
+                (f64::INFINITY, 0.0),
+                (f64::NEG_INFINITY, 0.0),
+                (0.0, f64::INFINITY),
+                (0.0, f64::NEG_INFINITY),
+            ] {
+                let event = EventKind::MouseScrolled { dx, dy };
+                assert!(assert_mouse_scroll_event(std::iter::once(&event), direction).is_err());
+            }
+            for (expected_direction, dx, dy) in [
+                (ScrollDirection::VerticalPositive, 0.0, 1.0),
+                (ScrollDirection::VerticalNegative, 0.0, -1.0),
+                (ScrollDirection::HorizontalPositive, 1.0, 0.0),
+                (ScrollDirection::HorizontalNegative, -1.0, 0.0),
+            ] {
+                let event = EventKind::MouseScrolled { dx, dy };
+                if expected_direction != direction {
+                    assert!(assert_mouse_scroll_event(std::iter::once(&event), direction).is_err());
+                }
+                assert_eq!(
+                    assert_mouse_scroll_event([&event, &event].into_iter(), direction).is_ok(),
+                    expected_direction == direction
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn scroll_oracle_rejects_mixed_sequences_without_cancelling_bad_deltas() {
+        for (direction, dx, dy) in [
+            (ScrollDirection::VerticalPositive, 0.0, 1.0),
+            (ScrollDirection::VerticalNegative, 0.0, -1.0),
+            (ScrollDirection::HorizontalPositive, 1.0, 0.0),
+            (ScrollDirection::HorizontalNegative, -1.0, 0.0),
+        ] {
+            let valid = EventKind::MouseScrolled { dx, dy };
+            for (bad_dx, bad_dy) in [
+                (-dx, -dy),
+                (dy, dx),
+                (0.0, 0.0),
+                (f64::NAN, dy),
+                (dx, f64::NAN),
+                (f64::INFINITY, dy),
+                (dx, f64::NEG_INFINITY),
+            ] {
+                for position in 0..3 {
+                    let mut events = [valid.clone(), valid.clone(), valid.clone()];
+                    events[position] = EventKind::MouseScrolled {
+                        dx: bad_dx,
+                        dy: bad_dy,
+                    };
+                    assert!(
+                        assert_mouse_scroll_event(events.iter(), direction).is_err(),
+                        "{direction:?} should reject {events:?}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn scroll_commands_encode_only_the_four_directions() {
+        for (x, y, expected) in [
+            ("0", "1", ScrollDirection::VerticalPositive),
+            ("0", "-1", ScrollDirection::VerticalNegative),
+            ("1", "0", ScrollDirection::HorizontalPositive),
+            ("-1", "0", ScrollDirection::HorizontalNegative),
+        ] {
+            assert!(
+                matches!(Action::parse(&["SCROLL", x, y]), Ok(Action::Scroll(direction)) if direction == expected)
+            );
+        }
+        for (x, y) in [("0", "0"), ("1", "1"), ("0", "0.25"), ("120", "0")] {
+            assert!(Action::parse(&["SCROLL", x, y]).is_err());
+        }
+    }
 
     #[test]
     fn failure_records_bound_unicode_and_sanitize_protocol_separators() {

@@ -135,6 +135,19 @@ driver kills/reaps its client, releases injected held inputs and attempts XKB lo
 The terminal report groups checks under `Keyboard` (one block per key) and `Mouse` (one block
 per button, plus pointer and scroll). `Press` and `Release` verify event delivery and metadata;
 their separate `input states` checks verify `is_down`, `is_pressed` and `is_released`.
+Scroll commands use the four `(0, ±1)` / `(±1, 0)` tokens to select an axis and direction,
+not to prescribe backend offset units. The public client requires one or more scroll events;
+each must have a finite nonzero magnitude on that axis with the expected sign. Every scroll
+event in the collected trace is checked individually; deltas are not summed, so opposite values
+cannot cancel. Any invalid scroll payload fails immediately after the poll that observes it.
+After the first valid scroll, the client continues polling until 100 ms have passed without
+another scroll event; each additional valid batch restarts that quiet interval. Unrelated event
+kinds do not restart it. Every batch is validated before testing completion, including a batch
+at the quiet-interval boundary. A fixed five-second deadline bounds the entire observation,
+including initial delivery and settling; absent input, a continuous stream or input arriving too
+late to settle fails. Focus must remain held through the final poll. These timing checks have
+deterministic headless coverage using supplied elapsed durations rather than sleeps. Exact GLFW
+offsets remain separate backend assertions.
 `Scancode` requires `Context::get_key_scancode`, captured before the first variant's `READY`,
 to match at least one scancode actually received for that named key. `KEY_MAPPING` performs
 this check after every physical variant has been released. A named key can have several
@@ -314,6 +327,29 @@ startup pointer preparation precedes the final three passes. These observations 
 a general cause for the older intermittent Xwayland pointer delivery failures or qualify other
 compositors, native seats, GPU/display stacks, IME composition, physical devices or human
 manual graphical validation.
+
+### Scroll oracle native revalidation
+
+On 2026-10-15, `just input-test-vmnl x11` passed three consecutive executions without
+instrumentation after the scroll-oracle changes: 848 checks, 828 `PASS`, 20 `EXCLUDED`,
+zero `FAIL` and zero `NOT RUN` each. The native test took 4.36 s, 4.40 s and 4.36 s.
+Readiness and all four scroll directions passed with the 100 ms quiet interval and fixed
+five-second observation deadline. Headless regressions separately cover invalid later batches,
+quiet-interval resets and timeout precedence; the native passes exercise the nominal public path.
+
+The observed environment was Fedora 44, kernel 7.2.8-200.fc44.x86_64, Hyprland 0.56.2,
+Xwayland (`DISPLAY=:0`) and Mesa 26.2.3. The workspace was based on `e519fa7`, with the
+four scroll-oracle corrections; the client source `tests/gpu/input_client/src/lib.rs` had SHA-256
+`bd619d527440cec51ce290e6b0fb1688dfbbb167b50b1c45978419311b67668b`.
+The exclusions remained World2/F25, buttons 7–8 and unmodified `é`/`🦀` text.
+
+The first revalidation attempt passed readiness and all four scroll checks, then failed text:
+the fixture injected X11 keycode 24 expecting `a`, while VMNL received `q`. A second execution
+with read-only keymap measurements passed; its map stayed at keycode 24 → `q`, 38 → `a`.
+The three final passes above followed that diagnostic execution and used the same client source.
+The cause of the initial text-fixture mismatch and the older intermittent pointer-preparation
+failures remains unestablished. These results qualify this automatic local execution, not other
+backends, layouts, hardware or human graphical validation.
 
 ### Extended native cases (issue #91, stage 3)
 
