@@ -132,4 +132,8 @@ impl Window {
     pub(crate) fn swapchain_image_count(&self) -> usize {
         self.inner.handle.framebuffers.len()
     }
+
+    pub(crate) fn render_extent(&self) -> [u32; 2] {
+        self.inner.handle.swapchain.image_extent()
+    }
 }

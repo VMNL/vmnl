@@ -6,6 +6,7 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 |---|---|---|---|---|
 | alias | `vmnl::VMNLResult` | [VMNLResult](../reference/errors/vmnl_result.md) | [Rustdoc](../../../target/doc/vmnl/type.VMNLResult.html) | [API errors](../../../tests/api/tests/errors.rs) |
 | enum | `vmnl::CursorMode` | [CursorMode](../reference/window/input/cursor_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.CursorMode.html) | [API input](../../../tests/api/tests/input.rs) |
+| enum | `vmnl::DeviceFeature` | [DeviceFeature](../reference/device_feature.md) | [Rustdoc](../../../target/doc/vmnl/enum.DeviceFeature.html) | [API context configuration](../../../tests/api/tests/context_config.rs) |
 | enum | `vmnl::EventKind` | [EventKind](../reference/window/events/event_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.EventKind.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl/enum.Key.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::MouseButton` | [MouseButton](../reference/window/input/mouse_button.md) | [Rustdoc](../../../target/doc/vmnl/enum.MouseButton.html) | [API input](../../../tests/api/tests/input.rs) |
@@ -19,11 +20,19 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | enum | `vmnl::d2::LineCap` | [LineCap](../reference/d2/shapes/line_cap.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.LineCap.html) | [2D shapes example](../../../examples/d2/shapes/src/main.rs) |
 | enum | `vmnl::d2::LineJoin` | [LineJoin](../reference/d2/shapes/line_join.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.LineJoin.html) | [2D shape API](../../../tests/api/tests/d2_shapes.rs) |
 | enum | `vmnl::raw::BlendMode` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.BlendMode.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
+| enum | `vmnl::raw::CullMode` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.CullMode.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
+| enum | `vmnl::raw::FrontFace` | [FrontFace](../reference/raw/pipeline/front_face.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.FrontFace.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
+| enum | `vmnl::raw::PolygonMode` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PolygonMode.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
 | enum | `vmnl::raw::PrimitiveTopology` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
+| enum | `vmnl::raw::ScissorPolicy` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.ScissorPolicy.html) | [API viewport/scissor](../../../tests/api/tests/raw_viewport.rs) |
+| enum | `vmnl::raw::ViewportPolicy` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.ViewportPolicy.html) | [API viewport/scissor](../../../tests/api/tests/raw_viewport.rs) |
 | macro | `vmnl::raw::Pod` | [Pod derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Pod.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
 | macro | `vmnl::raw::Vertex` | [Vertex derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Vertex.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
 | macro | `vmnl::raw::Zeroable` | [Zeroable derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Zeroable.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
+| struct | `vmnl::LineWidthLimits` | [LineWidthLimits](../reference/line_width_limits.md) | [Rustdoc](../../../target/doc/vmnl/struct.LineWidthLimits.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
 | struct | `vmnl::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.Context.html) | [GPU context](../../../tests/gpu/tests/context.rs) |
+| struct | `vmnl::ContextBuilder` | [ContextBuilder](../reference/context_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.ContextBuilder.html) | [API context configuration](../../../tests/api/tests/context_config.rs) |
+| struct | `vmnl::DeviceConfig` | [DeviceConfig](../reference/device_config.md) | [Rustdoc](../../../target/doc/vmnl/struct.DeviceConfig.html) | [API context configuration](../../../tests/api/tests/context_config.rs) |
 | struct | `vmnl::Cursor` | [Cursor](../reference/window/input/cursor.md) | [Rustdoc](../../../target/doc/vmnl/struct.Cursor.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::CursorBuilder` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.CursorBuilder.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/struct.Event.html) | [event input example](../../../examples/window/events_input/src/main.rs) |
@@ -67,8 +76,10 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | struct | `vmnl::raw::PipelineSpec` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.PipelineSpec.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
 | struct | `vmnl::raw::Resources` | [Resources](../reference/raw/resources/resources.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Resources.html) | [raw uniform example](../../../examples/raw/uniform/src/main.rs) |
 | struct | `vmnl::raw::ResourcesBuilder` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html) | [raw uniform example](../../../examples/raw/uniform/src/main.rs) |
+| struct | `vmnl::raw::Scissor` | [Scissor](../reference/raw/pipeline/scissor.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Scissor.html) | [API viewport/scissor](../../../tests/api/tests/raw_viewport.rs) |
 | struct | `vmnl::raw::Uniform` | [Uniform](../reference/raw/uniforms/uniform.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Uniform.html) | [raw uniform example](../../../examples/raw/uniform/src/main.rs) |
 | struct | `vmnl::raw::UniformBuilder` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.UniformBuilder.html) | [raw uniform example](../../../examples/raw/uniform/src/main.rs) |
+| struct | `vmnl::raw::Viewport` | [Viewport](../reference/raw/pipeline/viewport.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Viewport.html) | [API viewport/scissor](../../../tests/api/tests/raw_viewport.rs) |
 | trait | `vmnl::d2::Drawable2D` | [Drawable2D](../reference/d2/drawable_2d.md) | [Rustdoc](../../../target/doc/vmnl/d2/trait.Drawable2D.html) | [GPU frame renderer](../../../tests/gpu/tests/frame_renderer.rs) |
 | trait | `vmnl::d3::Drawable3D` | [Drawable3D](../reference/d3/drawable_3d.md) | [Rustdoc](../../../target/doc/vmnl/d3/trait.Drawable3D.html) | [GPU 3D scaffold](../../../tests/gpu/tests/d3_scaffold.rs) |
 | trait | `vmnl::raw::BufferContents` | [BufferContents](../reference/raw/traits/buffer_contents.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.BufferContents.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |

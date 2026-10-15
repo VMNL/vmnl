@@ -134,8 +134,9 @@ stable compatibility baseline; their present behavior remains documented in the 
 ## Current Implementation Boundaries
 
 - `vmnl` re-exports the current public graphics API.
+- `ContextBuilder::device(DeviceConfig)` configures required device features and exposes support/activation inspection through `Context`; GPU identity, queue and allocator selection remain automatic.
 - `vmnl_graphics` owns rendering, windowing, input, and GPU resource behavior.
-- `raw` exposes experimental lower-level VMNL pipeline, geometry, and resource control.
+- `raw` exposes experimental lower-level VMNL pipeline, geometry, and resource control; polygon rasterization and line width are fixed at pipeline creation and validated against enabled features and inspectable GPU limits.
 - 2D rendering is available.
 - 3D public types exist, but 3D rendering is still scaffolded.
 - Internal backend details stay out of the facade unless they are deliberate public API.

@@ -4,9 +4,9 @@
 //! Physical device submodule for VMNL Vulkan initialization.
 //!
 //! This module ranks and selects a Vulkan physical device compatible with the
-//! required extensions and graphics queue support.
+//! required extensions, graphics queue support, and requested device features.
 
-use super::VMNLInstance;
+use super::{DeviceConfig, DeviceFeature, VMNLInstance};
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;
 use vulkano::{
@@ -38,11 +38,12 @@ impl VMNLInstance {
         }
     }
 
-    /// Select a suitable physical device based on required extensions and graphics support.
+    /// Select a suitable physical device based on required extensions, graphics support and features.
     ///
     /// # Arguments
     /// - `instance`: Reference to the Vulkan instance used to enumerate physical devices.
     /// - `required_extensions`: Device extensions that the selected physical device must support.
+    /// - `device_config`: Features that must be supported together before device ranking.
     ///
     /// # Returns
     /// An `Arc<PhysicalDevice>` pointing to the selected physical device.
@@ -53,8 +54,9 @@ impl VMNLInstance {
     pub(super) fn select_physical_device(
         instance: &Arc<Instance>,
         required_extensions: &DeviceExtensions,
+        device_config: &DeviceConfig,
     ) -> VMNLResult<Arc<PhysicalDevice>> {
-        instance
+        let candidates = instance
             .enumerate_physical_devices()
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanInitFailed))?
             .filter(|physical_device| {
@@ -67,10 +69,42 @@ impl VMNLInstance {
                     .queue_family_properties()
                     .iter()
                     .any(|queue| queue.queue_flags.contains(QueueFlags::GRAPHICS))
-            })
-            .max_by_key(|physical_device| {
+            });
+
+        Self::select_device_for_requirements(
+            candidates,
+            device_config,
+            |physical_device, feature| feature.is_set_in(physical_device.supported_features()),
+            |physical_device| {
                 Self::physical_device_priority(physical_device.properties().device_type)
+            },
+        )
+    }
+
+    pub(super) fn select_device_for_requirements<T>(
+        candidates: impl IntoIterator<Item = T>,
+        device_config: &DeviceConfig,
+        supports: impl Fn(&T, DeviceFeature) -> bool,
+        priority: impl Fn(&T) -> u32,
+    ) -> VMNLResult<T> {
+        candidates
+            .into_iter()
+            .filter(|candidate| {
+                device_config
+                    .required_features()
+                    .iter()
+                    .all(|&feature| supports(candidate, feature))
             })
-            .ok_or_else(|| VMNLError::new(VMNLErrorKind::VulkanUnsupportedFeature))
+            .max_by_key(priority)
+            .ok_or_else(|| {
+                let required_features = device_config.required_features();
+                VMNLError::new(if required_features.is_empty() {
+                    VMNLErrorKind::VulkanUnsupportedFeature
+                } else {
+                    VMNLErrorKind::DeviceRequirementsNotMet {
+                        required_features: required_features.to_vec(),
+                    }
+                })
+            })
     }
 }

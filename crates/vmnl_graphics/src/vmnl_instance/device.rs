@@ -6,7 +6,7 @@
 //! This module creates the Vulkan logical device and graphics queue from the
 //! selected physical device.
 
-use super::VMNLInstance;
+use super::{DeviceConfig, VMNLInstance};
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;
 use vulkano::device::{
@@ -20,6 +20,7 @@ impl VMNLInstance {
     /// - `physical_device`: The physical device to create a logical device for.
     /// - `queue_family_index`: Index of the queue family for which to create a queue.
     /// - `device_extensions`: Device extensions to enable for the logical device.
+    /// - `device_config`: Required features already checked during physical-device selection.
     ///
     /// # Returns
     /// A tuple `(Arc<Device>, Arc<Queue>)` containing the created logical device and its graphics queue.
@@ -31,6 +32,7 @@ impl VMNLInstance {
         physical_device: &Arc<PhysicalDevice>,
         queue_family_index: u32,
         device_extensions: &DeviceExtensions,
+        device_config: &DeviceConfig,
     ) -> VMNLResult<(Arc<Device>, Arc<Queue>)> {
         let (device, mut queues) = Device::new(
             physical_device.clone(),
@@ -40,6 +42,7 @@ impl VMNLInstance {
                     ..Default::default()
                 }],
                 enabled_extensions: *device_extensions,
+                enabled_features: device_config.enabled_features(),
                 ..Default::default()
             },
         )

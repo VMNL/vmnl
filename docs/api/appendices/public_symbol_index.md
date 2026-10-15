@@ -4,15 +4,19 @@
 | Kind | Symbol | Canonical page | Rustdoc |
 |---|---|---|---|
 | struct | `vmnl::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.Context.html) |
+| struct | `vmnl::ContextBuilder` | [ContextBuilder](../reference/context_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.ContextBuilder.html) |
 | struct | `vmnl::Cursor` | [Cursor](../reference/window/input/cursor.md) | [Rustdoc](../../../target/doc/vmnl/struct.Cursor.html) |
 | struct | `vmnl::CursorBuilder` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.CursorBuilder.html) |
 | enum | `vmnl::CursorMode` | [CursorMode](../reference/window/input/cursor_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.CursorMode.html) |
+| struct | `vmnl::DeviceConfig` | [DeviceConfig](../reference/device_config.md) | [Rustdoc](../../../target/doc/vmnl/struct.DeviceConfig.html) |
+| enum | `vmnl::DeviceFeature` | [DeviceFeature](../reference/device_feature.md) | [Rustdoc](../../../target/doc/vmnl/enum.DeviceFeature.html) |
 | struct | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/struct.Event.html) |
 | enum | `vmnl::EventKind` | [EventKind](../reference/window/events/event_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.EventKind.html) |
 | struct | `vmnl::FrameRenderer` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [Rustdoc](../../../target/doc/vmnl/struct.FrameRenderer.html) |
 | struct | `vmnl::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl/struct.Input.html) |
 | enum | `vmnl::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl/enum.Key.html) |
 | struct | `vmnl::KeyboardState` | [KeyboardState](../reference/window/input/keyboard_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.KeyboardState.html) |
+| struct | `vmnl::LineWidthLimits` | [LineWidthLimits](../reference/line_width_limits.md) | [Rustdoc](../../../target/doc/vmnl/struct.LineWidthLimits.html) |
 | struct | `vmnl::Modifiers` | [Modifiers](../reference/window/input/modifiers.md) | [Rustdoc](../../../target/doc/vmnl/struct.Modifiers.html) |
 | struct | `vmnl::MonitorInfo` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [Rustdoc](../../../target/doc/vmnl/struct.MonitorInfo.html) |
 | struct | `vmnl::Monitors` | [Monitors](../reference/window/monitors/monitors.md) | [Rustdoc](../../../target/doc/vmnl/struct.Monitors.html) |
@@ -57,20 +61,27 @@
 | struct | `vmnl::d3::Vertex3D` | [Vertex3D](../reference/d3/vertex_3d.md) | [Rustdoc](../../../target/doc/vmnl/d3/struct.Vertex3D.html) |
 | enum | `vmnl::raw::BlendMode` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.BlendMode.html) |
 | trait | `vmnl::raw::BufferContents` | [BufferContents](../reference/raw/traits/buffer_contents.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.BufferContents.html) |
+| enum | `vmnl::raw::CullMode` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.CullMode.html) |
 | struct | `vmnl::raw::FrameUniform` | [FrameUniform](../reference/raw/uniforms/frame_uniform.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.FrameUniform.html) |
 | struct | `vmnl::raw::FrameUniformBuilder` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.FrameUniformBuilder.html) |
+| enum | `vmnl::raw::FrontFace` | [FrontFace](../reference/raw/pipeline/front_face.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.FrontFace.html) |
 | struct | `vmnl::raw::Geometry` | [Geometry](../reference/raw/geometry/geometry.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Geometry.html) |
 | struct | `vmnl::raw::GeometryBuilder` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.GeometryBuilder.html) |
 | struct | `vmnl::raw::Pipeline` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Pipeline.html) |
 | struct | `vmnl::raw::PipelineSpec` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.PipelineSpec.html) |
 | macro | `vmnl::raw::Pod` | [Pod derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Pod.html) |
 | trait | `vmnl::raw::Pod` | [Pod trait](../reference/raw/traits/pod.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Pod.html) |
+| enum | `vmnl::raw::PolygonMode` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PolygonMode.html) |
 | enum | `vmnl::raw::PrimitiveTopology` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html) |
 | struct | `vmnl::raw::Resources` | [Resources](../reference/raw/resources/resources.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Resources.html) |
 | struct | `vmnl::raw::ResourcesBuilder` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html) |
+| struct | `vmnl::raw::Scissor` | [Scissor](../reference/raw/pipeline/scissor.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Scissor.html) |
+| enum | `vmnl::raw::ScissorPolicy` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.ScissorPolicy.html) |
 | struct | `vmnl::raw::Uniform` | [Uniform](../reference/raw/uniforms/uniform.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Uniform.html) |
 | struct | `vmnl::raw::UniformBuilder` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.UniformBuilder.html) |
 | macro | `vmnl::raw::Vertex` | [Vertex derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Vertex.html) |
 | trait | `vmnl::raw::Vertex` | [Vertex trait](../reference/raw/traits/vertex.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Vertex.html) |
+| struct | `vmnl::raw::Viewport` | [Viewport](../reference/raw/pipeline/viewport.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Viewport.html) |
+| enum | `vmnl::raw::ViewportPolicy` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.ViewportPolicy.html) |
 | macro | `vmnl::raw::Zeroable` | [Zeroable derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Zeroable.html) |
 | trait | `vmnl::raw::Zeroable` | [Zeroable trait](../reference/raw/traits/zeroable.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Zeroable.html) |
