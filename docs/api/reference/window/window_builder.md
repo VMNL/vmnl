@@ -15,6 +15,9 @@ Configures a native window, default 2D shaders, clear color, event polling, size
 | `title(&str)` | Set UTF-8 native title. |
 | `size(width, height)` | Set initial logical pixel size. |
 | `unset_configure_window_polling()` | Disable default event-source configuration. |
+| `joystick_event_delivery(bool)` | Opt this window into joystick connection events; defaults to disabled. |
+| `joystick_tracking(bool)` | Opt this window into per-poll joystick snapshots; defaults to disabled. |
+| `left_stick_config(config)` / `right_stick_config(config)` | Configure processed mapped-stick views independently. |
 | `size_limit(min_w, min_h, max_w, max_h)` | Validate and set optional per-axis limits. |
 | `vertex_shader(source)` / `fragment_shader(source)` | Replace the built-in 2D shader stage. |
 | `set_clear_color(color)` | Set normalized framebuffer clear color from `Into<Rgba>`. |
@@ -26,7 +29,7 @@ The type implements `Default`.
 
 ## Construction, defaults, and validation
 
-Defaults: title `VMNL Window`, size `800x600`, common public event delivery enabled, no size limits, built-in 2D shaders, opaque black clear color, and `PresentMode::Auto`. Both initial dimensions must be at least 64. Minimum limits cannot exceed corresponding maximum limits.
+Defaults: title `VMNL Window`, size `800x600`, common public event delivery enabled, joystick event delivery and joystick state tracking disabled, default left/right `StickConfig`, no size limits, built-in 2D shaders, opaque black clear color, and `PresentMode::Auto`. Both initial dimensions must be at least 64. Minimum limits cannot exceed corresponding maximum limits. Joystick event delivery and state tracking are independent. Stick configs affect processed `JoystickState` views; mapped `GamepadState` axes remain raw.
 
 ## Units, coordinates, and valid ranges
 
@@ -38,7 +41,7 @@ Setters consume/return the builder. Owned strings and shader sources move into w
 
 ## Errors, panics, and failure conditions
 
-`size_limit` returns `InvalidWindowSize` for inverted limits. `build` can return invalid-size, GLFW, shader, surface, swapchain, render-pass, allocation, or unsupported-presentation errors.
+`size_limit` returns `InvalidWindowSize` for inverted limits. `build` can return invalid-size, GLFW initialization/input, shader, surface, swapchain, render-pass, allocation, or unsupported-presentation errors. With joystick tracking enabled, the initial joystick query can return `GlfwInputOperationFailed`.
 
 ## Allocation, transfers, synchronization, and GPU cost
 

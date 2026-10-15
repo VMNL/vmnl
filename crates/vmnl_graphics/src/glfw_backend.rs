@@ -4,8 +4,11 @@
 //! Private boundary for GLFW diagnostics and platform-sensitive operations.
 
 use crate::window::CursorImage;
-use crate::{StandardCursor, VMNLError, VMNLErrorKind, VMNLResult};
-use std::ptr::NonNull;
+use crate::{
+    GamepadAxis, GamepadButton, GamepadState, JoystickId, JoystickSample, StandardCursor,
+    VMNLError, VMNLErrorKind, VMNLResult,
+};
+use std::{ffi::CStr, ptr::NonNull, slice};
 
 pub(crate) struct NativeCursor(NonNull<glfw::ffi::GLFWcursor>);
 
@@ -17,11 +20,9 @@ pub(crate) fn init(
 
 pub(crate) fn set_error_callback(
     glfw: &mut glfw::Glfw,
-    mut callback: impl FnMut(VMNLErrorKind, String) + 'static,
+    callback: impl FnMut(glfw::Error, String) + 'static,
 ) {
-    glfw.set_error_callback(move |error, description| {
-        callback(map_error(error), callback_message(error, description));
-    });
+    glfw.set_error_callback(callback);
 }
 
 pub(crate) fn map_error(error: glfw::Error) -> VMNLErrorKind {
@@ -43,11 +44,118 @@ pub(crate) fn map_error(error: glfw::Error) -> VMNLErrorKind {
     }
 }
 
-fn callback_message(error: glfw::Error, description: String) -> String {
+pub(crate) fn callback_message(error: glfw::Error, description: String) -> String {
     match error {
         glfw::Error::Unknown(code) => format!("GLFW unknown error {code}: {description}"),
         _ => description,
     }
+}
+
+/// Copies one GLFW sample while its returned pointers are valid.
+pub(crate) fn sample_joystick(id: JoystickId) -> Result<Option<JoystickSample>, String> {
+    // SAFETY: `JoystickId` restricts `id` to GLFW's documented 0..=15 range. The shared runtime
+    // is initialized, and callers obey GLFW's main-platform-thread requirement. Every returned
+    // array or string is copied before another operation can invalidate its pointer.
+    unsafe {
+        if glfw::ffi::glfwJoystickPresent(id.as_raw()) != glfw::ffi::GLFW_TRUE {
+            return Ok(None);
+        }
+
+        let mut axis_count = 0;
+        let axis_ptr = glfw::ffi::glfwGetJoystickAxes(id.as_raw(), &raw mut axis_count);
+        let axes = copy_glfw_array(axis_ptr, axis_count, "axes")?;
+
+        let mut button_count = 0;
+        let button_ptr = glfw::ffi::glfwGetJoystickButtons(id.as_raw(), &raw mut button_count);
+        let buttons = copy_glfw_array(button_ptr, button_count, "buttons")?;
+
+        let mut hat_count = 0;
+        let hat_ptr = glfw::ffi::glfwGetJoystickHats(id.as_raw(), &raw mut hat_count);
+        let hats = copy_glfw_array(hat_ptr, hat_count, "hats")?;
+
+        let name = copy_glfw_string(glfw::ffi::glfwGetJoystickName(id.as_raw()));
+        let guid = copy_glfw_string(glfw::ffi::glfwGetJoystickGUID(id.as_raw()));
+
+        let gamepad = if glfw::ffi::glfwJoystickIsGamepad(id.as_raw()) == glfw::ffi::GLFW_TRUE {
+            let name = copy_glfw_string(glfw::ffi::glfwGetGamepadName(id.as_raw()));
+            let mut state = glfw::ffi::GLFWgamepadstate {
+                buttons: [0; GamepadButton::COUNT],
+                axes: [0.0; GamepadAxis::COUNT],
+            };
+            if glfw::ffi::glfwGetGamepadState(id.as_raw(), &raw mut state) == glfw::ffi::GLFW_TRUE {
+                Some(GamepadState::from_native(name, state.buttons, state.axes))
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        Ok(Some(JoystickSample::from_native(
+            id, name, guid, axes, buttons, hats, gamepad,
+        )))
+    }
+}
+
+pub(crate) fn update_gamepad_mappings(mappings: &std::ffi::CStr) -> bool {
+    // SAFETY: `CStr` guarantees a non-null, NUL-terminated string whose allocation outlives this
+    // call. The shared runtime and main-thread precondition are enforced by `InputRuntime`.
+    unsafe { glfw::ffi::glfwUpdateGamepadMappings(mappings.as_ptr()) == glfw::ffi::GLFW_TRUE }
+}
+
+pub(crate) fn get_joystick_user_pointer(id: JoystickId) -> *mut std::ffi::c_void {
+    // SAFETY: `JoystickId` restricts the slot to GLFW's 0..=15 range. The owning InputRuntime
+    // keeps GLFW initialized and confines this call to GLFW's platform thread.
+    unsafe { glfw::ffi::glfwGetJoystickUserPointer(id.as_raw()) }
+}
+
+pub(crate) fn set_joystick_user_pointer(id: JoystickId, pointer: *mut std::ffi::c_void) {
+    // SAFETY: `JoystickId` restricts the slot to GLFW's 0..=15 range. The owning InputRuntime
+    // keeps GLFW initialized; GLFW stores the opaque pointer without dereferencing it.
+    unsafe { glfw::ffi::glfwSetJoystickUserPointer(id.as_raw(), pointer) };
+}
+
+/// # Safety
+/// `pointer` and `count` must be the matching pointer/count pair just returned by GLFW for a live
+/// joystick on its main platform thread. No GLFW call may invalidate the array before the copy.
+unsafe fn copy_glfw_array<T: Copy>(
+    pointer: *const T,
+    count: std::ffi::c_int,
+    label: &str,
+) -> Result<Vec<T>, String> {
+    let count = usize::try_from(count)
+        .map_err(|_| format!("GLFW returned a negative joystick {label} count"))?;
+    if pointer.is_null() {
+        return if count == 0 {
+            Ok(Vec::new())
+        } else {
+            Err(format!(
+                "GLFW returned a null joystick {label} pointer with count {count}"
+            ))
+        };
+    }
+    if count == 0 {
+        return Ok(Vec::new());
+    }
+
+    // SAFETY: The pointer and count come from the matching GLFW 3.4 query. GLFW documents the
+    // array as valid until its invalidation boundary; this helper copies it immediately, and the
+    // non-null/count checks establish the slice's length preconditions.
+    Ok(unsafe { slice::from_raw_parts(pointer, count) }.to_vec())
+}
+
+fn copy_glfw_string(pointer: *const std::ffi::c_char) -> Option<String> {
+    if pointer.is_null() {
+        return None;
+    }
+
+    // SAFETY: GLFW returns null-terminated UTF-8 device strings for the duration of the current
+    // connection/runtime. `to_string_lossy` makes the owned copy without retaining that pointer.
+    Some(
+        unsafe { CStr::from_ptr(pointer) }
+            .to_string_lossy()
+            .into_owned(),
+    )
 }
 
 pub(crate) fn backend_name(glfw: &glfw::Glfw) -> &'static str {

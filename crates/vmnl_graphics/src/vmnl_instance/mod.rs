@@ -19,12 +19,9 @@ mod vulkan_instance;
 #[cfg(test)]
 mod tests;
 
-use crate::{VMNLError, VMNLErrorKind, VMNLResult};
+use crate::{glfw_runtime::GlfwRuntime, VMNLResult};
 pub use context::Context;
-use std::{
-    cell::Cell,
-    sync::{Arc, Mutex},
-};
+use std::{cell::Cell, rc::Rc, sync::Arc};
 use vulkano::{
     command_buffer::allocator::StandardCommandBufferAllocator,
     descriptor_set::allocator::StandardDescriptorSetAllocator,
@@ -32,8 +29,6 @@ use vulkano::{
     instance::Instance,
     memory::allocator::StandardMemoryAllocator,
 };
-
-static GLFW_INIT_LOCK: Mutex<()> = Mutex::new(());
 
 /// Represents the core Vulkan context used by the graphical part of the library.
 ///
@@ -59,7 +54,7 @@ pub(crate) struct VMNLInstance {
     /// Descriptor set allocator used to bind raw shader resources.
     pub(crate) descriptor_set_allocator: Arc<StandardDescriptorSetAllocator>,
     /// GLFW context used for window management and input handling.
-    pub(crate) glfw: glfw::Glfw,
+    pub(crate) glfw: Rc<GlfwRuntime>,
     /// Whether layout-dependent key-name queries are safe for the active backend.
     pub(crate) keyboard_name_queries_ready: Cell<bool>,
 }
@@ -76,21 +71,14 @@ impl VMNLInstance {
     #[must_use = "VMNLInstance is required for Context initialization"]
     pub(crate) fn new() -> VMNLResult<Self> {
         log::debug!("initializing VMNL instance");
-        let _glfw_init_guard = GLFW_INIT_LOCK.lock().map_err(|_| {
-            VMNLError::new(VMNLErrorKind::InvalidState(
-                "GLFW initialization lock is poisoned".into(),
-            ))
-        })?;
-        let glfw: glfw::Glfw = crate::glfw_backend::init(|error, description| {
-            log::error!("GLFW error {error:?}: {description}");
-        })
-        .map_err(|_| VMNLError::new(VMNLErrorKind::GlfwInitFailed))?;
+        let glfw = GlfwRuntime::acquire(None)?;
         log::debug!(
             "initialized GLFW {} backend",
-            crate::glfw_backend::backend_name(&glfw)
+            crate::glfw_backend::backend_name(glfw.glfw())
         );
-        let keyboard_name_queries_ready = Cell::new(glfw.get_platform() != glfw::Platform::Wayland);
-        let instance: Arc<Instance> = Self::create_instance(&glfw)?;
+        let keyboard_name_queries_ready =
+            Cell::new(glfw.glfw().get_platform() != glfw::Platform::Wayland);
+        let instance: Arc<Instance> = Self::create_instance(glfw.glfw())?;
         let device_extensions: DeviceExtensions = DeviceExtensions {
             khr_swapchain: true,
             ..DeviceExtensions::empty()
