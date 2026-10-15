@@ -58,6 +58,7 @@ tests/api/                    public headless API tests
 tests/smoke/                  startup executables without windows
 tests/platform/               isolated GLFW backend probes without Vulkan
 tests/gpu/                    Vulkan/display tests
+tests/support/                backend-neutral public test fixtures
 examples/                     visual runnable examples
 ```
 
@@ -99,8 +100,12 @@ dependency. It creates the context/window and observes native events and input s
 its main thread, through the public facade. The separate test driver uses X11/XTEST/XKB for
 injection and physical fixtures; neither process calls GLFW directly. The GLFW-specific
 `tests/platform` probes remain a separate backend contract.
-It enumerates all 120 named keys using the shared physical-key fixtures and runs each key
-available in the active XKB map. It also covers XTEST pointer motion delivered as `MouseMoved`,
+The client and headless API tests share only the 120 named `vmnl::Key` values in
+[tests/support/input_keys.rs](../tests/support/input_keys.rs). This inventory contains no native
+identifiers and does not include files from `tests/platform`. Physical XKB/evdev/Win32/Cocoa
+correspondences remain in the injectors' table under `tests/platform/src/input_key_table.rs`;
+the X11 driver uses it to select each key available in the active XKB map. It also covers XTEST
+pointer motion delivered as `MouseMoved`,
 each available X11 mouse-button mapping, and both scroll axes/directions. Missing physical
 key names/aliases and mouse mappings above the server limit are explicitly excluded; the hosted Xvfb runner exposes 10
 server buttons, so VMNL `Button7` and `Button8` are not qualified there:
@@ -160,8 +165,11 @@ and input state checks; an unavailable alternate is explicitly excluded.
 Release checks compare the same key and scancode with the acknowledged press. Comparisons use
 the opaque `Scancode` type, without arithmetic or positivity requirements. A missing query
 mapping after a matching named-key press fails explicitly; it does not exclude the input.
-The headless facade
-test checks that the shared fixture contains every named VMNL key exactly once.
+The headless facade and client tests check that the neutral inventory contains 120 distinct
+named VMNL keys, excluding `Unknown`, using `Eq`/`Hash` without numeric casts or ordering.
+An exhaustive match generated from the same literal names makes adding a public `Key` variant
+fail test compilation until the inventory is updated. These inventory checks do not require
+contiguous or ordered discriminants.
 Each check reports `PASS`, `FAIL` with its diagnostic, `EXCLUDED` with the X11 mapping reason,
 or `NOT RUN` when an earlier failure stopped execution. The summary counts checks, including
 environment readiness, rather than distinct input devices or keys; exclusions and unexecuted

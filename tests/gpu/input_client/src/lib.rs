@@ -10,18 +10,16 @@ use vmnl::{
     VMNLErrorKind, VMNLResult, Window,
 };
 
-#[path = "../../../platform/src/input_key_table.rs"]
-mod input_key_table;
+#[path = "../../../support/input_keys.rs"]
+mod input_keys;
+
+use input_keys::KEYS;
 
 mod scenarios;
 
 const INPUT_TIMEOUT: Duration = Duration::from_secs(5);
 const SCROLL_SETTLE_TIME: Duration = Duration::from_millis(100);
 
-const fn named_key(key: Key, _: &str, _: Option<u16>, _: Option<u16>, _: Option<u16>) -> Key {
-    key
-}
-const KEYS: [Key; 120] = input_key_table::key_mappings!(named_key, Key);
 const BUTTONS: [MouseButton; 8] = [
     MouseButton::Left,
     MouseButton::Middle,
@@ -1180,12 +1178,9 @@ mod tests {
 
     #[test]
     fn client_inventory_contains_all_120_public_keys_once() {
-        let distinct: std::collections::BTreeSet<_> =
-            KEYS.into_iter().map(|key| key as usize).collect();
+        let distinct: std::collections::HashSet<_> = KEYS.into_iter().collect();
         assert_eq!(distinct.len(), 120);
-        assert_eq!(
-            distinct.into_iter().collect::<Vec<_>>(),
-            (1..=Key::Menu as usize).collect::<Vec<_>>()
-        );
+        assert!(KEYS.into_iter().all(input_keys::is_named_key));
+        assert!(!input_keys::is_named_key(Key::Unknown));
     }
 }

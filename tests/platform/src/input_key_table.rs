@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Shared literal physical-key fixtures for GLFW and public VMNL test oracles.
+//! Literal physical-key fixtures for native injectors and GLFW probes.
 
 macro_rules! key_mappings {
     ($constructor:ident, $key_type:ident) => {
