@@ -23,6 +23,9 @@ use std::{
 mod extended_input;
 #[path = "support/probe_process.rs"]
 mod probe_process;
+#[cfg(target_os = "linux")]
+#[path = "support/x11_pointer.rs"]
+mod x11_pointer;
 
 const NATIVE_INPUT_TIMEOUT: Duration = Duration::from_secs(7);
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
@@ -492,6 +495,8 @@ fn wait_until_ready(
     let mut next_activation = Instant::now();
     #[cfg(target_os = "linux")]
     let mut mouse_activation_sent = false;
+    #[cfg(target_os = "linux")]
+    let mut pointer_prepared = false;
     loop {
         if let Some(status) = child
             .try_wait()
@@ -505,6 +510,10 @@ fn wait_until_ready(
             Err(error) => return Err(format!("failed to read platform probe signal: {error}")),
         };
         if signal == "READY\n" {
+            #[cfg(target_os = "linux")]
+            if backend == "x11" && is_mouse_native_input(operation) && !pointer_prepared {
+                return Err("X11 probe reported READY before pointer preparation".to_owned());
+            }
             #[cfg(target_os = "linux")]
             if backend == "wayland" {
                 if weston_has_x11_focus()? {
@@ -520,6 +529,15 @@ fn wait_until_ready(
             }
             #[cfg(not(target_os = "linux"))]
             return Ok(());
+        }
+        #[cfg(target_os = "linux")]
+        if backend == "x11" && !pointer_prepared {
+            if let Some(window) = x11_pointer::requested_window(&signal)? {
+                x11_pointer::prepare(window, child.id())?;
+                fs::write(ready_file, b"POSITIONED\n")
+                    .map_err(|e| format!("failed to acknowledge X11 pointer preparation: {e}"))?;
+                pointer_prepared = true;
+            }
         }
         #[cfg(target_os = "linux")]
         if backend == "wayland" && Instant::now() >= next_activation {

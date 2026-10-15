@@ -281,7 +281,7 @@ category = "window"
 introduced = "3.0"
 vmnl_usage = ["Window::hide"]
 backends = [{ name = "all", status = "supported", conditions = "Live window.", behavior = "Hides the native window.", errors = ["GLFW_PLATFORM_ERROR"], sentinel = "No-op on error", source = "https://www.glfw.org/docs/3.4/group__window.html" }]
-proofs = ["justification:official window reference reviewed"]
+proofs = ["justification:official window reference reviewed", "test:platform_probe:x11:native-input-case focus-loss-held-key-and-button hides the owned window"]
 
 [[function]]
 c_symbol = "glfwFocusWindow"
@@ -796,23 +796,23 @@ proofs = ["test:GPU surface tests on a qualified Cocoa environment", "justificat
 
 [[function]]
 c_symbol = "glfwGetX11Display"
-rust_wrappers = ["PWindow::display_handle"]
+rust_wrappers = ["PWindow::display_handle", "Glfw::get_x11_display"]
 category = "native-handle"
 introduced = "3.0"
-vmnl_usage = ["internal Vulkan surface creation"]
+vmnl_usage = ["internal Vulkan surface creation", "test-only X11 NoApi initial contents"]
 public_api = []
 backends = [{ name = "x11", status = "conditional", conditions = "X11 backend is active and initialized.", behavior = "Returns the Display pointer consumed by raw-window-handle.", errors = ["GLFW_PLATFORM_UNAVAILABLE"], sentinel = "null display on error", source = "https://www.glfw.org/docs/3.4/group__native.html" }]
-proofs = ["test:tests/gpu surface creation on X11", "justification:platform probe deliberately creates no surface"]
+proofs = ["test:tests/gpu surface creation on X11", "test:tests/platform visible native input probes paint the X11 drawable before focus without OpenGL/Vulkan"]
 
 [[function]]
 c_symbol = "glfwGetX11Window"
-rust_wrappers = ["PWindow::window_handle"]
+rust_wrappers = ["PWindow::window_handle", "Window::get_x11_window"]
 category = "native-handle"
 introduced = "3.0"
-vmnl_usage = ["internal Vulkan surface creation"]
+vmnl_usage = ["internal Vulkan surface creation", "test-only X11 NoApi initial contents"]
 public_api = []
 backends = [{ name = "x11", status = "conditional", conditions = "X11 backend is active and the window is live.", behavior = "Returns the X11 Window identifier consumed by raw-window-handle.", errors = ["GLFW_PLATFORM_UNAVAILABLE"], sentinel = "zero handle on error", source = "https://www.glfw.org/docs/3.4/group__native.html" }]
-proofs = ["test:tests/gpu surface creation on X11", "justification:platform probe deliberately creates no surface"]
+proofs = ["test:tests/gpu surface creation on X11", "test:tests/platform visible native input probes paint the X11 drawable before focus without OpenGL/Vulkan"]
 
 [[function]]
 c_symbol = "glfwGetWaylandDisplay"

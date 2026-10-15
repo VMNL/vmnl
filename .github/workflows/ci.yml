@@ -104,10 +104,8 @@ jobs:
         run: cargo test -p vmnl-api-tests --locked
       - name: Run Smoke Tests
         run: cargo run -p vmnl-smoke-tests --locked
-      - name: Test total error conversion and Null backend
-        run: >-
-          cargo test -p vmnl-platform-tests --locked
-          --test error_codes --test native_window
+      - name: Run portable platform tests
+        run: cargo test -p vmnl-platform-tests --locked
       - name: Test Wayland under Weston/Xvfb with Pixman
         if: runner.os == 'Linux'
         env:

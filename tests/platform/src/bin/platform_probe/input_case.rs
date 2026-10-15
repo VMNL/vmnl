@@ -67,9 +67,15 @@ pub(super) fn run(
         glfw.wait_events_timeout(0.01);
         glfw::flush_messages(events).for_each(drop);
     }
-    if platform != glfw::Platform::Wayland {
-        let (width, height) = window.get_size();
-        window.set_cursor_pos(f64::from(width) / 2.0, f64::from(height) / 2.0);
+    if let Err(error) = super::prepare_probe_pointer(
+        glfw,
+        window,
+        events,
+        platform,
+        std::path::Path::new(&ready),
+        deadline,
+    ) {
+        return failure("pointer-preparation", &error);
     }
     while !(window.is_focused() && window.is_hovered()) && Instant::now() < deadline {
         glfw.wait_events_timeout(0.01);
@@ -87,7 +93,7 @@ pub(super) fn run(
     let deadline = Instant::now() + DEADLINE;
     let mut observed = Vec::new();
     let mut pressed_snapshot = Value::Null;
-    let mut minimized = false;
+    let mut focus_loss_requested = false;
     // Wait for the parent's completion marker as well as events. A fixed settling interval
     // rejects extra callbacks, including delayed repeats, instead of accepting a matching prefix.
     let mut completed_at = None;
@@ -146,10 +152,16 @@ pub(super) fn run(
                 return failure("handshake", &error);
             }
         }
-        if spec["family"] == "focus-loss" && !minimized && observed.len() >= 2 {
+        if spec["family"] == "focus-loss" && !focus_loss_requested && observed.len() >= 2 {
             pressed_snapshot = states(window, &spec);
-            window.iconify();
-            minimized = true;
+            if platform == glfw::Platform::X11 {
+                // Iconification is a window-manager request that Xwayland compositors may ignore.
+                // Unmapping this owned window generates native focus loss with the inputs held.
+                window.hide();
+            } else {
+                window.iconify();
+            }
+            focus_loss_requested = true;
         }
         if spec["family"] == "focus-loss"
             && observed.len() >= expected.len()

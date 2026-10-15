@@ -37,6 +37,12 @@ focus loss/batch boundaries or other desktop environments. The first pointer-mot
 failed before keyboard injection; the diagnostic and final runs passed, with no established
 cause for the initial timeout. Details and counts are in the linked execution record.
 
+On 2026-10-15, the local Hyprland/Xwayland NoApi profile passed three consecutive complete
+executions: 19 baseline operations and 161 eligible extended cases per run. Initial Xlib contents,
+parent-side XTEST pointer preparation and hiding for held-input focus loss are required by this
+probe profile. See [native probe preparation and results](testing.md#continuous-integration). These automatic
+backend results remain separate from public VMNL, other desktops and physical-device validation.
+
 ## Validation Matrix
 
 | Platform | CI validation | Local Justfile | Status |

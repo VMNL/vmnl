@@ -159,6 +159,22 @@ fn main() -> ExitCode {
         return ExitCode::from(12);
     };
 
+    #[cfg(target_os = "linux")]
+    if actual == glfw::Platform::X11 && visible {
+        if let Err(reason) = paint_x11_probe(&glfw, &window) {
+            emit(
+                &requested_name,
+                Some(actual),
+                &operation,
+                "window-content",
+                &callbacks,
+                &json!({"qualified": false, "stage": "window-content", "reason": reason}),
+                "error",
+            );
+            return ExitCode::from(13);
+        }
+    }
+
     let value = match operation.as_str() {
         "create" => json!(true),
         "set-position" => {
@@ -549,6 +565,7 @@ struct WaylandProbeBuffer(*mut c_void);
 
 #[cfg(target_os = "linux")]
 unsafe extern "C" {
+    fn vmnl_paint_x11_probe(display: *mut c_void, window: usize, width: i32, height: i32) -> i32;
     fn vmnl_map_wayland_probe(
         display: *mut c_void,
         surface: *mut c_void,
@@ -557,6 +574,31 @@ unsafe extern "C" {
         error: *mut i32,
     ) -> *mut c_void;
     fn vmnl_destroy_wayland_probe_buffer(buffer: *mut c_void);
+}
+
+#[cfg(target_os = "linux")]
+fn paint_x11_probe(glfw: &glfw::Glfw, window: &glfw::PWindow) -> Result<(), String> {
+    let (width, height) = window.get_framebuffer_size();
+    // SAFETY: Called only for the active X11 backend on the GLFW main thread. GLFW owns the
+    // live display and window throughout this synchronous call; the helper retains neither
+    // handle and frees its GC before returning. uintptr_t matches Rust's usize on Linux.
+    let error = unsafe {
+        vmnl_paint_x11_probe(
+            glfw.get_x11_display(),
+            window.get_x11_window(),
+            width,
+            height,
+        )
+    };
+    match error {
+        0 => Ok(()),
+        1 => Err(format!(
+            "Invalid X11 window contents parameters: framebuffer={width}x{height}"
+        )),
+        _ => Err(format!(
+            "X11 graphics context allocation failed: code={error}"
+        )),
+    }
 }
 
 #[cfg(target_os = "linux")]
@@ -903,6 +945,40 @@ fn mouse_button_press_release(button: &str) -> [Value; 2] {
     ]
 }
 
+fn prepare_probe_pointer(
+    glfw: &mut glfw::Glfw,
+    window: &mut glfw::PWindow,
+    events: &glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+    platform: glfw::Platform,
+    ready_file: &std::path::Path,
+    deadline: Instant,
+) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    if platform == glfw::Platform::X11 {
+        fs::write(ready_file, format!("POINTER {}\n", window.get_x11_window()))
+            .map_err(|e| e.to_string())?;
+        loop {
+            if fs::read_to_string(ready_file).map_err(|e| e.to_string())? == "POSITIONED\n" {
+                return Ok(());
+            }
+            if Instant::now() >= deadline {
+                return Err(
+                    "parent did not confirm X11 pointer preparation before deadline".to_owned(),
+                );
+            }
+            glfw.wait_events_timeout(0.01);
+            glfw::flush_messages(events).for_each(drop);
+        }
+    }
+    #[cfg(not(target_os = "linux"))]
+    let _ = (glfw, events, ready_file, deadline);
+    if platform != glfw::Platform::Wayland {
+        let (width, height) = window.get_size();
+        window.set_cursor_pos(f64::from(width) / 2.0, f64::from(height) / 2.0);
+    }
+    Ok(())
+}
+
 fn native_mouse_input(
     glfw: &mut glfw::Glfw,
     window: &mut glfw::PWindow,
@@ -1000,11 +1076,17 @@ fn native_mouse_input(
         });
     }
 
-    if platform != glfw::Platform::Wayland {
-        let (width, height) = window.get_size();
-        window.set_cursor_pos(f64::from(width) / 2.0, f64::from(height) / 2.0);
-    }
     let hover_deadline = Instant::now() + NATIVE_INPUT_TIMEOUT;
+    if let Err(reason) = prepare_probe_pointer(
+        glfw,
+        window,
+        events,
+        platform,
+        std::path::Path::new(&ready_file),
+        hover_deadline,
+    ) {
+        return json!({"qualified": false, "stage": "pointer-preparation", "failure_reason": reason});
+    }
     while !(window.is_focused() && window.is_hovered()) && Instant::now() < hover_deadline {
         glfw.wait_events_timeout(0.01);
         glfw::flush_messages(events).for_each(drop);

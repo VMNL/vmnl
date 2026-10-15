@@ -79,8 +79,9 @@ just test
 just doctest
 ```
 
-`just test` intentionally excludes platform, GPU/display tests, and doctests. `just validate` adds
-the portable error-conversion and GLFW Null-backend suite after smoke tests.
+`just test` runs unit, API, smoke, and portable platform tests (error conversion and the GLFW Null
+backend). It excludes native platform probes, GPU/display tests, and doctests. `just validate` adds
+the workspace build, formatting, Clippy, doctests, and documentation checks.
 
 ### Native input contract
 
@@ -408,7 +409,8 @@ Additional families cover:
 - A bounded 1.5-second hold requiring actual repeat callbacks on X11/nested Wayland. Win32/Cocoa
   event posting does not provide a qualified hardware repeat source; synthesized repeated presses
   would not prove that contract and are recorded as non-injectable for this profile.
-- A held A and left button followed by iconification: require both getters to report pressed,
+- A held A and left button followed by hiding the X11 window, or iconification on other backends:
+  require both getters to report pressed,
   focus loss, synthetic releases in GLFW order, and released getters before OS-input cleanup.
   Freeze the trace after a 100 ms settling interval, then acknowledge cleanup without polling
   its extra mouse-up callbacks into the synthetic-release phase.
@@ -441,7 +443,11 @@ Quality (format -> Clippy)
 ```
 
 Each OS validation job reuses one Cargo target directory for compilation and every test stage; no
-target directory is cached or transferred between runners. Linux then forces the GLFW Wayland
+target directory is cached or transferred between runners. Every OS runs the full portable
+`vmnl-platform-tests` suite with `cargo test -p vmnl-platform-tests --locked`, including error
+conversion, the GLFW Null backend, the portability inventory and applicable headless tests for probe
+helpers. `selected_backend_contract` requires a display, so Cargo skips it in this invocation and the
+native stages enable it explicitly. Linux then forces the GLFW Wayland
 backend under Weston with Pixman nested on Xvfb with Openbox, then tests the GLFW X11 backend
 under Xvfb with Openbox. Both paths run visible keyboard and mouse probes. Separate probe
 processes wait for readiness, inject `A`, Shift+A, and left-button press/release through XTEST, and
@@ -485,6 +491,35 @@ injection, the parent also requires Weston to hold the parent X11 keyboard focus
 if necessary. The mouse probe drains activation clicks before READY and the parent does not issue
 another activation click after READY, so activation cannot satisfy the tested button sequence.
 MAPPED or Wayland READY alone never authorizes input injection.
+
+Visible X11 NoApi input probes fill their initial drawable with Xlib before requesting focus.
+This supplies contents needed for mapping on Hyprland/Xwayland without initializing OpenGL or
+Vulkan. The test-only helper borrows GLFW's live display/window, releases its graphics context
+and synchronizes the drawing request. Preparation failures produce an error JSON record;
+successful drawing alone never signals READY or bypasses focus/hover checks.
+
+After acquiring focus, X11 mouse and extended probes signal `POINTER <window-id>`. The parent
+checks that the native window belongs to its child PID and has X11 focus, queries its live geometry,
+then posts an inside-window XTEST motion and waits up to 500 ms for the requested root coordinates.
+Only then does it acknowledge `POSITIONED`. The probe continues processing events while waiting;
+after the acknowledgement it requires focus/hover and drains preparation events before `READY`.
+The parent rejects premature `READY`; it sends no preparation motion after `READY`. A GLFW
+`set_cursor_pos`/XWarpPointer alone can update X11 coordinates without delivering a crossing on
+the local Hyprland/Xwayland stack. The X11 held-input focus case hides its owned window to obtain
+native focus loss because iconification can be ignored there. Its strict event order, synthetic
+releases and released getters remain required before physical-input cleanup.
+
+On 2026-10-15, three consecutive automatic `just input-test x11` executions passed on the local
+Fedora/Hyprland 0.56.2/Xwayland stack: all 19 baseline operations and all 161 eligible extended
+cases, including 118 named keys and held-input focus loss. The eligibility manifest records 18
+non-injectable rows with reasons; the button operation separately records buttons 7–8 above the
+active X11 pointer-map limit. The first diagnostic passed pointer preparation but exposed ignored
+iconification; a targeted native unmap observed synthetic releases before OS cleanup, followed by
+the three complete passes. This is automatic NoApi evidence for this local profile, separate from
+the public VMNL/Vulkan runs, other backends and physical or human graphical validation.
+A later completion recheck missed all callbacks in the legacy A probe despite reported focus.
+Two isolated diagnostic runs and the next complete X11 run passed; the intermittent failure's
+cause remains unresolved.
 
 Win32 uses `SendInput` for keyboard, button, motion, and scroll injection; `SetCursorPos` moves
 outside and back into the window for its hover-boundary case. Cocoa uses `CGEventPost` for keyboard,
