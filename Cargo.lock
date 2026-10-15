@@ -674,6 +674,7 @@ name = "vmnl-gpu-tests"
 version = "0.1.0"
 dependencies = [
  "vmnl",
+ "x11rb",
 ]
 
 [[package]]
@@ -687,6 +688,13 @@ dependencies = [
  "smallvec",
  "vmnl-macros",
  "vulkano",
+]
+
+[[package]]
+name = "vmnl-input-client"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
 ]
 
 [[package]]

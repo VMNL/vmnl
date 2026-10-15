@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Build the test-only Wayland shm surface helper on Linux.
+//! Build the test-only native window content helpers on Linux.
 
 fn main() {
     #[cfg(target_os = "linux")]
@@ -11,5 +11,10 @@ fn main() {
             .file("src/wayland_probe_buffer.c")
             .compile("vmnl_wayland_probe_buffer");
         println!("cargo:rustc-link-lib=wayland-client");
+        println!("cargo:rerun-if-changed=src/x11_probe_buffer.c");
+        cc::Build::new()
+            .file("src/x11_probe_buffer.c")
+            .compile("vmnl_x11_probe_buffer");
+        println!("cargo:rustc-link-lib=X11");
     }
 }

@@ -444,6 +444,79 @@ mod tests {
     }
 
     #[test]
+    fn translates_press_repeat_and_release_for_every_named_key() {
+        let glfw_modifiers = GlfwModifiers::Shift
+            | GlfwModifiers::Control
+            | GlfwModifiers::Alt
+            | GlfwModifiers::Super
+            | GlfwModifiers::CapsLock
+            | GlfwModifiers::NumLock;
+        let modifiers = Modifiers::SHIFT
+            | Modifiers::CONTROL
+            | Modifiers::ALT
+            | Modifiers::SUPER
+            | Modifiers::CAPS_LOCK
+            | Modifiers::NUM_LOCK;
+        let keys = KeyboardState::named_keys();
+
+        assert_eq!(keys.len(), 120);
+        for &key in keys {
+            let glfw_key = KeyboardState::to_glfw(key);
+            assert!(glfw_key.is_some(), "every named key has a GLFW code");
+            let glfw_key = glfw_key.unwrap_or(Key::Unknown);
+            let scancode = Scancode::from_raw(0);
+
+            assert_eq!(
+                translate(&WindowEvent::Key(
+                    glfw_key,
+                    scancode.as_raw(),
+                    Action::Press,
+                    glfw_modifiers,
+                ))
+                .map(Event::into_kind),
+                Some(EventKind::KeyPressed {
+                    key,
+                    scancode,
+                    modifiers,
+                    repeat: false,
+                }),
+                "press translation for {key:?}",
+            );
+            assert_eq!(
+                translate(&WindowEvent::Key(
+                    glfw_key,
+                    scancode.as_raw(),
+                    Action::Repeat,
+                    glfw_modifiers,
+                ))
+                .map(Event::into_kind),
+                Some(EventKind::KeyPressed {
+                    key,
+                    scancode,
+                    modifiers,
+                    repeat: true,
+                }),
+                "repeat translation for {key:?}",
+            );
+            assert_eq!(
+                translate(&WindowEvent::Key(
+                    glfw_key,
+                    scancode.as_raw(),
+                    Action::Release,
+                    glfw_modifiers,
+                ))
+                .map(Event::into_kind),
+                Some(EventKind::KeyReleased {
+                    key,
+                    scancode,
+                    modifiers,
+                }),
+                "release translation for {key:?}",
+            );
+        }
+    }
+
+    #[test]
     fn retains_unknown_key_events_without_tracking_state() {
         let mut input = Input::new();
         let mut delivery = EventDelivery::default();
@@ -533,6 +606,46 @@ mod tests {
                     | Modifiers::NUM_LOCK,
             })
         );
+    }
+
+    #[test]
+    fn translates_press_and_release_for_every_mouse_button() {
+        let buttons = [
+            VMNLMouseButton::Left,
+            VMNLMouseButton::Right,
+            VMNLMouseButton::Middle,
+            VMNLMouseButton::Button4,
+            VMNLMouseButton::Button5,
+            VMNLMouseButton::Button6,
+            VMNLMouseButton::Button7,
+            VMNLMouseButton::Button8,
+        ];
+        let glfw_modifiers = GlfwModifiers::Shift | GlfwModifiers::CapsLock;
+        let modifiers = Modifiers::SHIFT | Modifiers::CAPS_LOCK;
+
+        for button in buttons {
+            let glfw_button = MouseState::to_glfw(button);
+            assert_eq!(
+                translate(&WindowEvent::MouseButton(
+                    glfw_button,
+                    Action::Press,
+                    glfw_modifiers,
+                ))
+                .map(Event::into_kind),
+                Some(EventKind::MouseButtonPressed { button, modifiers }),
+                "press translation for {button:?}",
+            );
+            assert_eq!(
+                translate(&WindowEvent::MouseButton(
+                    glfw_button,
+                    Action::Release,
+                    glfw_modifiers,
+                ))
+                .map(Event::into_kind),
+                Some(EventKind::MouseButtonReleased { button, modifiers }),
+                "release translation for {button:?}",
+            );
+        }
     }
 
     #[test]
@@ -634,6 +747,119 @@ mod tests {
         assert!(events.is_empty());
         assert!(!input.keyboard().is_pressed(VMNLKey::A));
         assert!(!input.keyboard().is_released(VMNLKey::A));
+    }
+
+    #[test]
+    fn all_named_key_short_presses_are_retained_for_one_batch() {
+        let mut input = Input::new();
+        let mut delivery = EventDelivery::default();
+        delivery.set(EventDelivery::KEY, true);
+        let keys = KeyboardState::named_keys();
+        let mut pending = Vec::with_capacity(keys.len() * 2);
+
+        for &key in keys {
+            let glfw_key = KeyboardState::to_glfw(key);
+            assert!(glfw_key.is_some(), "every named key has a GLFW code");
+            let glfw_key = glfw_key.unwrap_or(Key::Unknown);
+            pending.push((
+                TIMESTAMP,
+                WindowEvent::Key(glfw_key, 0, Action::Press, GlfwModifiers::empty()),
+            ));
+            pending.push((
+                TIMESTAMP,
+                WindowEvent::Key(glfw_key, 0, Action::Release, GlfwModifiers::empty()),
+            ));
+        }
+
+        let events = EventQueue::process_batch(&delivery, &mut input, pending);
+
+        assert_eq!(events.len(), keys.len() * 2);
+        for &key in keys {
+            assert!(!input.keyboard().is_down(key), "down state for {key:?}");
+            assert!(
+                input.keyboard().is_pressed(key),
+                "press transition for {key:?}"
+            );
+            assert!(
+                input.keyboard().is_released(key),
+                "release transition for {key:?}"
+            );
+        }
+
+        let events = EventQueue::process_batch(&delivery, &mut input, []);
+
+        assert!(events.is_empty());
+        for &key in keys {
+            assert!(!input.keyboard().is_down(key), "down state for {key:?}");
+            assert!(
+                !input.keyboard().is_pressed(key),
+                "cleared press for {key:?}"
+            );
+            assert!(
+                !input.keyboard().is_released(key),
+                "cleared release for {key:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn all_mouse_button_short_presses_are_retained_for_one_batch() {
+        let mut input = Input::new();
+        let mut delivery = EventDelivery::default();
+        delivery.set(EventDelivery::MOUSE_BUTTON, true);
+        let buttons = [
+            VMNLMouseButton::Left,
+            VMNLMouseButton::Right,
+            VMNLMouseButton::Middle,
+            VMNLMouseButton::Button4,
+            VMNLMouseButton::Button5,
+            VMNLMouseButton::Button6,
+            VMNLMouseButton::Button7,
+            VMNLMouseButton::Button8,
+        ];
+        let mut pending = Vec::with_capacity(buttons.len() * 2);
+
+        for button in buttons.iter().copied() {
+            let glfw_button = MouseState::to_glfw(button);
+            pending.push((
+                TIMESTAMP,
+                WindowEvent::MouseButton(glfw_button, Action::Press, GlfwModifiers::empty()),
+            ));
+            pending.push((
+                TIMESTAMP,
+                WindowEvent::MouseButton(glfw_button, Action::Release, GlfwModifiers::empty()),
+            ));
+        }
+
+        let events = EventQueue::process_batch(&delivery, &mut input, pending);
+
+        assert_eq!(events.len(), buttons.len() * 2);
+        for button in buttons {
+            assert!(!input.mouse().is_down(button), "down state for {button:?}");
+            assert!(
+                input.mouse().is_pressed(button),
+                "press transition for {button:?}"
+            );
+            assert!(
+                input.mouse().is_released(button),
+                "release transition for {button:?}"
+            );
+        }
+
+        let events = EventQueue::process_batch(&delivery, &mut input, []);
+
+        assert!(events.is_empty());
+        for button in buttons {
+            assert!(!input.mouse().is_down(button), "down state for {button:?}");
+            assert!(
+                !input.mouse().is_pressed(button),
+                "cleared press for {button:?}"
+            );
+            assert!(
+                !input.mouse().is_released(button),
+                "cleared release for {button:?}"
+            );
+        }
     }
 
     #[test]

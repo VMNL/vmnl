@@ -55,4 +55,17 @@ Hypothesis: GLFW cannot initialize a window or the display server is unavailable
 - Compile display-dependent tests with `just test-gpu-compile`.
 - Run `just test-gpu` only in a graphical session with Vulkan available.
 
-If headless tests pass and GPU tests cannot create a window, the failure is environmental rather than an API contract regression.
+Passing headless tests does not identify the cause of a GPU/window failure. Retain the first
+GLFW/Vulkan error and distinguish unavailable runtime prerequisites from a VMNL backend defect.
+
+## X11 Vulkan Surface Extension Mismatch
+
+If initialization succeeds but window creation reports `VulkanSurfaceCreationFailed`, compare
+the enabled instance extensions with the raw window handle used to create the surface. GLFW can
+prefer `VK_KHR_xcb_surface` on X11 while its Rust raw-window-handle implementation exposes Xlib.
+Vulkano's `Surface::from_window_ref` then requires `VK_KHR_xlib_surface` too. VMNL enables it when
+GLFW requests XCB; the raw surface and instance extension selection must agree.
+
+The earlier error mapping in `window/inner/surface.rs` discards the Vulkano cause, so the VMNL error
+alone cannot distinguish an extension mismatch from a driver or native-handle failure. Inspect
+the surface-creation validation path before changing the driver or the display configuration.
