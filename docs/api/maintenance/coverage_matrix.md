@@ -42,7 +42,6 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | struct | `vmnl::Window` | [Window](../reference/window/window.md) | [Rustdoc](../../../target/doc/vmnl/struct.Window.html) | [GPU window runtime](../../../tests/gpu/tests/window_runtime.rs) |
 | struct | `vmnl::WindowBuilder` | [WindowBuilder](../reference/window/window_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.WindowBuilder.html) | [API errors](../../../tests/api/tests/errors.rs) |
 | struct | `vmnl::common::Rgba` | [Rgba](../reference/common/rgba.md) | [Rustdoc](../../../target/doc/vmnl/common/struct.Rgba.html) | [API common types](../../../tests/api/tests/common_types.rs) |
-| struct | `vmnl::d2::EllipseBuilder` | [EllipseBuilder](../reference/d2/shapes/ellipse_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.EllipseBuilder.html) | [API common types](../../../tests/api/tests/common_types.rs) |
 | struct | `vmnl::d2::IndexedShapeBuilder` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html) | [indexed geometry GPU test](../../../tests/gpu/tests/gpu_geometry.rs) |
 | struct | `vmnl::d2::LineBuilder` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.LineBuilder.html) | [2D shapes example](../../../examples/d2/shapes/src/main.rs) |
 | struct | `vmnl::d2::PolygonBuilder` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.PolygonBuilder.html) | [polygon API test](../../../tests/api/tests/d2_polygone.rs) |
@@ -75,5 +74,11 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | trait | `vmnl::raw::Pod` | [Pod trait](../reference/raw/traits/pod.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Pod.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
 | trait | `vmnl::raw::Vertex` | [Vertex trait](../reference/raw/traits/vertex.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Vertex.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
 | trait | `vmnl::raw::Zeroable` | [Zeroable trait](../reference/raw/traits/zeroable.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Zeroable.html) | [API raw traits](../../../tests/api/tests/raw_traits.rs) |
+
+`Shape::circle` returns `CircleBuilder` through private modules without a public type reexport.
+It therefore has no standalone item in the extracted public inventory or generated Rustdoc.
+Its callable builder methods are documented on the [circle builder page](../reference/d2/shapes/circle_builder.md)
+and in source Rustdoc; CPU geometry/validation tests are in
+[`circle.rs`](../../../crates/vmnl_graphics/src/2d/shape/circle.rs).
 
 Coverage is complete only when `tools/api_docs.py check` reports no missing, duplicate, stale, or unresolvable entry.

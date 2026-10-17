@@ -103,6 +103,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "d2_circles"
+version = "0.1.0"
+dependencies = [
+ "vmnl",
+]
+
+[[package]]
 name = "d2_shapes"
 version = "0.1.0"
 dependencies = [

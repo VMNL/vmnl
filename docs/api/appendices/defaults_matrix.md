@@ -19,9 +19,8 @@
 | `LineJoin` | `Bevel` |
 | Polyline | open; width `1.0`; butt cap; bevel join; miter limit `4.0`; opaque white; device memory preference |
 | Rectangle | position `(0,0)`, white, rotation `0°`, top-left origin, device memory preference |
-| Circle | center `(0,0)`, white, 32-triangle tessellation, device memory preference |
+| Circle / ellipse through `Shape::circle` | equal required radii until `.ellipse(ry)`; center `(0,0)`, filled, white, 32 segments, inner/outer offsets `0.5`, no sector or cap, device memory preference; outer offset applies even when filled |
 | Polygon | ordered strictly convex boundary; white from points, supplied colors from vertices; device memory preference; implicit closure and triangle fan |
-| Ellipse | center `(0,0)`, white, 32-triangle tessellation, device memory preference |
 | Triangle | white per vertex unless created from colored vertices; device memory preference |
 | Line | width `1.0`, butt cap, white, device memory preference |
 | Indexed shape / mesh / raw geometry / uniform | device memory preference |
