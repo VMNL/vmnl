@@ -348,9 +348,9 @@ impl CircleBuilder {
                         .to_string(),
                 )));
             }
-            if options.cap.is_none() {
+            if options.cap.is_none() && !options.filled {
                 return Err(VMNLError::new(VMNLErrorKind::InvalidState(
-                    "Line Cap must be set when using Sector".to_string(),
+                    "Line Cap must be set when using unfilled Sector".to_string(),
                 )));
             }
         } else if options.cap.is_some() {

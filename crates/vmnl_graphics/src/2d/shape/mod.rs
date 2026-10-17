@@ -87,7 +87,7 @@ impl Shape {
     /// import path. Setters configure CPU data; `build(&Context)` consumes the builder
     /// and allocates/uploads context-associated vertex and index buffers.
     ///
-    /// Defaults: filled, 32 segments, equal radii, inner/outer offsets of `0.5`, no sector
+    /// Defaults: unfilled, 32 segments, equal radii, inner/outer offsets of `0.5`, no sector
     /// or cap, and device memory preference. The outer offset applies even when filled,
     /// so the default boundary radius is `radius + 0.5`.
     ///
@@ -123,7 +123,7 @@ impl Shape {
     /// ```
     #[must_use]
     pub fn circle(radius: f32) -> CircleBuilder {
-        CircleBuilder::new(radius).filled(true)
+        CircleBuilder::new(radius)
     }
 
     pub(crate) fn blend_mode_from_vertices(vertices: &[Vertex2D]) -> BlendMode {

@@ -131,12 +131,10 @@ fn post(action: &Value) -> Result<(), String> {
         } else {
             BUTTON_RELEASE_EVENT
         }
+    } else if down {
+        KEY_PRESS_EVENT
     } else {
-        if down {
-            KEY_PRESS_EVENT
-        } else {
-            KEY_RELEASE_EVENT
-        }
+        KEY_RELEASE_EVENT
     };
     let code = action["code"]
         .as_u64()
