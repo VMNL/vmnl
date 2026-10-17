@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Anexoms
 // SPDX-License-Identifier: MIT
 
-//! circle shape builder to create 2D circle-like shapes.
+//! Circle, ellipse, ring, and sector geometry behind `Shape::circle`.
 
 use std::f32;
 
@@ -58,7 +58,21 @@ struct CircleOptions {
     buffer_memory_preference: BufferMemoryPreference,
 }
 
-/// Builder to create circle-like shapes.
+/// Builder for filled or outlined circles, ellipses, and sectors.
+///
+/// Obtain it through [`Shape::circle`]; the builder currently has no public import path.
+/// That entry point starts filled, centered at `(0, 0)`, with equal required radii,
+/// opaque white color, 32 segments, inner/outer offsets of `0.5`, no sector or cap,
+/// and [`BufferMemoryPreference::Device`]. Setters only change CPU configuration.
+///
+/// The boundary follows the ellipse normal at the configured radii, offset outward by
+/// the outer width, including for filled shapes. Outlines also have an inward-offset
+/// boundary. Thus a default filled circle of radius `r` has boundary radius `r + 0.5`.
+/// Use [`Self::outer`] followed by [`Self::filled`] to change that filled boundary offset.
+///
+/// Width setters disable filling; `filled(true)` preserves the stored widths and ignores
+/// only the inner width. A sector requires an explicit cap even when filled; cap geometry
+/// is applied only when unfilled. See [`Self::build`] for validation and GPU costs.
 pub struct CircleBuilder {
     /// Configuration options for the circle shape.
     options: CircleOptions,
@@ -108,37 +122,36 @@ impl CircleBuilder {
         self
     }
 
-    /// Set the second radius of the shape.
+    /// Set the vertical radius; the horizontal radius remains the `Shape::circle` argument.
     ///
     /// # Arguments
-    /// - `radius`: radius in pixel-like 2D coordinates.
+    /// - `radius`: Finite, strictly positive vertical radius in pixel-like 2D coordinates.
     #[must_use]
     pub fn ellipse(mut self, radius: f32) -> Self {
         self.options.radii.y = radius;
         self
     }
 
-    /// Set the fill of the shape
+    /// Select a filled triangle fan or an outlined band, both stored as indexed triangles.
     ///
     /// # Arguments
     /// - `filled`: boolean representing the filled state of the shape.
     ///
-    /// # Incompatibility
-    /// - `.width`, `.inner`, `.outer`: no outline width when circle is filled, using this will delete outline settings.
+    /// Stored widths are preserved. Filling omits the inner boundary but still applies
+    /// the outer offset. Later calls to `width`, `inner`, or `outer` disable filling again.
     #[must_use]
     pub fn filled(mut self, filled: bool) -> Self {
         self.options.filled = filled;
         self
     }
 
-    /// Set the inner width of the shape
+    /// Set the inward offset from the ellipse and disable filling.
     ///
     /// # Arguments
-    /// - `w`: size of the inner width of the shape.
+    /// - `w`: Finite, strictly positive inward offset in pixel-like coordinates when unfilled.
     ///
-    /// # Incompatibility
-    /// - `.filled(true)`: no outline width when circle is filled, using this will override filled
-    ///   state as `filled(false)`.
+    /// Leaves the outer offset unchanged. The offset is not constrained to be smaller
+    /// than either radius; excessive offsets can produce overlapping geometry.
     #[must_use]
     pub fn inner(mut self, w: f32) -> Self {
         self.options.outline_width.inner = w;
@@ -146,14 +159,13 @@ impl CircleBuilder {
         self
     }
 
-    /// Set the outer width of the shape
+    /// Set the outward offset from the ellipse and disable filling.
     ///
     /// # Arguments
-    /// - `w`: size of the outer width of the shape.
+    /// - `w`: Outward offset in pixel-like coordinates, finite and strictly positive when unfilled.
     ///
-    /// # Incompatibility
-    /// - `.filled(true)`: no outline width when circle is filled, using this will override filled
-    ///   state as `filled(false)`.
+    /// Leaves the inner offset unchanged. A later `filled(true)` keeps this offset;
+    /// filled builds do not validate either stored width.
     #[must_use]
     pub fn outer(mut self, w: f32) -> Self {
         self.options.outline_width.outer = w;
@@ -161,14 +173,13 @@ impl CircleBuilder {
         self
     }
 
-    /// Set the width of the shape.
+    /// Set equal inner/outer offsets to half the total width and disable filling.
     ///
     /// # Arguments
-    /// - `width`: width in pixels, must be strictly positive.
+    /// - `width`: Total width in pixel-like coordinates. Both computed offsets must
+    ///   be finite and strictly positive when building an outline.
     ///
-    /// # Incompatibility
-    /// - `.filled(true)`: no outline width when circle is filled, using this will override filled
-    ///   state as `filled(false)`.
+    /// Replaces both previously configured offsets.
     #[must_use]
     pub fn width(mut self, width: f32) -> Self {
         self.options.outline_width = Outline {
@@ -179,25 +190,33 @@ impl CircleBuilder {
         self
     }
 
-    /// Cutting the circle into a sector.
+    /// Select a sector, preserving the current fill mode.
     ///
     /// # Arguments
-    /// - `start`: Start position in degrees, assuming 0 is the top of the virtual circle.
-    /// - `sweep`: Length of the arc in degrees, between 1 and 360, positive visual rotation direction,
-    ///   negative the opposite.
+    /// - `start`: Finite starting angle in degrees in `0..=360`, with zero at the top.
+    /// - `sweep`: Finite, nonzero signed angle in degrees with absolute value at most `360`.
+    ///   Positive sweeps move clockwise in the built-in X-right/Y-down coordinate system.
+    ///
+    /// Requires an explicit [`Self::cap`] before building, including for filled sectors
+    /// and full `360`-degree sweeps. Angles are not normalized. `segments` controls the
+    /// entire requested sweep, rather than a proportion of a full-circle segment count.
     #[must_use]
     pub fn sector(mut self, start: f32, sweep: f32) -> Self {
         self.options.sector = Some(Sector { start, sweep });
         self
     }
 
-    /// Sets the cap of the shape's end.
+    /// Select the endpoint style of an outlined sector.
     ///
     /// # Arguments
     /// - `cap`: shape of the cap as `LineCap`.
     ///
-    /// # Dependencies
-    /// - `.sector(...)`: *MUST* be used for this to be used.
+    /// Requires [`Self::sector`]; a cap without a sector is rejected at build time.
+    /// A sector without a cap is also rejected. Filled sectors require the selection
+    /// but ignore cap geometry. `Butt` keeps endpoints unchanged; `Square` extends
+    /// them tangentially by half the total width; `Round` adds two 32-segment semicircles.
+    /// Caps also apply to explicit full sweeps when unfilled; omit both sector and cap
+    /// to create a closed ring without endpoint geometry.
     #[must_use]
     pub fn cap(mut self, cap: LineCap) -> Self {
         self.options.cap = Some(cap);
@@ -207,7 +226,9 @@ impl CircleBuilder {
     /// Sets the number of segments forming the shape.
     ///
     /// # Arguments
-    /// - `segments`: number of segments, must be strictly positive.
+    /// - `segments`: Number of subdivisions over the complete circle or configured sweep,
+    ///   in `1..=65535`. Defaults to `32`; there is no minimum-three or nondegeneracy check.
+    ///   Round-cap subdivision remains fixed at `32` independently of this setting.
     #[must_use]
     pub fn segments(mut self, segments: u16) -> Self {
         self.options.segment_count = segments;
@@ -239,12 +260,26 @@ impl CircleBuilder {
 
     /// Build a circle-like shape from the configured modifications.
     ///
-    /// The shape is represented by `segment_count` triangles. The builder validates its numeric geometry and
-    /// allocates/uploads its vertex and index buffers.
+    /// Consumes the builder, validates parameters, generates CPU vertices/indices, checks
+    /// triangle topology/counts, then allocates/uploads one vertex and one index buffer.
+    /// For `n` segments, a filled shape has `n + 2` vertices and `3n` indices; an outline
+    /// has `2(n + 1)` vertices and `6n` indices. Round caps add 68 vertices and 192 indices
+    /// to an outlined sector. Drawing reuses the context-associated buffers; rebuilding
+    /// is required to change geometry or style. No worker thread is created.
     ///
     /// # Errors
-    /// Returns an error if the parameters is invalid, the bounds overflow, or GPU buffer
-    /// creation fails.
+    /// Returns [`VMNLErrorKind::InvalidState`] for non-finite centers, non-positive or
+    /// non-finite radii, invalid sector angles, an unmatched sector/cap pair, zero segments,
+    /// or invalid generated topology/counts. Unfilled shapes also reject non-positive or
+    /// non-finite inner/outer offsets. Buffer creation/upload failures are propagated.
+    ///
+    /// Generated vertex coordinates are not rechecked for finiteness, degeneracy, or
+    /// self-intersection. Finite parameters can still overflow during geometry generation;
+    /// filled shapes skip width validation although their boundary uses the outer width.
+    /// No rendering guarantee is made for those configurations.
+    ///
+    /// Building requires a Vulkan context; drawing additionally requires a compatible
+    /// window/render backend. Exact timing and synchronization costs are unspecified.
     ///
     /// # Example
     /// ```rust,no_run

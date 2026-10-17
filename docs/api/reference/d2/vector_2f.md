@@ -10,7 +10,7 @@ Stores 2D positions, dimensions, offsets, and application-defined vector values.
 
 ## Public API
 
-Public fields: `x: f32`, `y: f32`. `#[repr(C)]`; derives `Clone`, `Copy`, `Debug`, `Default`, `Pod`, `Zeroable`, and `PartialEq`; implements `Sub`, `SubAssign`, `AddAssign`, and `Mul<f32>`.
+Public fields: `x: f32`, `y: f32`. `#[repr(C)]`; derives `Clone`, `Copy`, `Debug`, `Default`, `Pod`, `Zeroable`, and `PartialEq`; implements component-wise `Add`, `Sub`, `SubAssign`, `AddAssign`, and `Mul<f32>`, plus `Eq`, `Ord::cmp`, and `PartialOrd::partial_cmp`.
 
 ## Construction, defaults, and validation
 
@@ -19,6 +19,11 @@ Construct with a literal. Default/zeroed value is `(0.0, 0.0)`. Every `f32` bit 
 ## Units, coordinates, and valid ranges
 
 Units are determined by the consuming API; 2D shape builders use pixel-like coordinates. Partial equality compares components using IEEE-754 semantics: NaN is unequal to itself, and signed zeros compare equal.
+
+Ordering compares X then Y with `f32::total_cmp`; `partial_cmp` always returns `Some(cmp(...))`.
+Current limitation: this order and the `Eq` implementation conflict with partial equality for NaN
+and signed zero. Equal signed-zero vectors can sort differently, while a NaN-containing vector
+is unequal to itself. These traits do not provide a lawful total order for all representable values.
 
 ## Ownership, lifecycle, and threading
 
@@ -45,6 +50,7 @@ use vmnl::d2::Vector2f;
 let mut value = Vector2f { x: 1.0, y: 2.0 };
 value += Vector2f { x: 3.0, y: 4.0 };
 assert_eq!(value, Vector2f { x: 4.0, y: 6.0 });
+assert_eq!(value + Vector2f { x: 1.0, y: 2.0 }, Vector2f { x: 5.0, y: 8.0 });
 ```
 
 Related: [`Vertex2D`](vertex_2d.md) and [`Shape`](shapes/shape.md).

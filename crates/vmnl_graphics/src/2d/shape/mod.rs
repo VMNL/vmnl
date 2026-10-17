@@ -83,9 +83,32 @@ impl Shape {
     /// Create a filled circle builder with a required radius.
     ///
     /// The circle center defaults to `(0, 0)` and its color defaults to white.
+    /// The returned builder is currently usable through type inference and has no public
+    /// import path. Setters configure CPU data; `build(&Context)` consumes the builder
+    /// and allocates/uploads context-associated vertex and index buffers.
+    ///
+    /// Defaults: filled, 32 segments, equal radii, inner/outer offsets of `0.5`, no sector
+    /// or cap, and device memory preference. The outer offset applies even when filled,
+    /// so the default boundary radius is `radius + 0.5`.
+    ///
+    /// Configure an ellipse with `.ellipse(radius_y)`. `.width(w)` sets both offsets to
+    /// `w / 2`; `.inner(w)` and `.outer(w)` change one offset. Each width setter disables
+    /// filling. `.filled(true)` preserves offsets and ignores only the inner boundary.
+    /// `.segments(n)` sets subdivisions across the complete shape or requested sweep.
+    ///
+    /// `.sector(start, sweep)` uses degrees, zero at the top, positive clockwise in the
+    /// built-in X-right/Y-down coordinates. Every sector requires `.cap(LineCap::...)`,
+    /// even when filled or covering a full turn. Caps affect only unfilled sectors;
+    /// a cap without a sector is rejected. Round caps use 32 fixed subdivisions per end.
+    ///
+    /// `build` rejects non-finite centers, non-positive/non-finite radii, zero segments,
+    /// starts outside `0..=360`, zero or over-360-degree absolute sweeps, and unmatched
+    /// sector/cap pairs with `InvalidState`. Unfilled shapes additionally require finite,
+    /// strictly positive inner and outer offsets. Generated coordinates are not rechecked
+    /// for overflow or degeneracy. GPU allocation/upload errors are propagated.
     ///
     /// # Arguments
-    /// - `radius`: Circle radius in pixel-like 2D coordinates.
+    /// - `radius`: Finite, strictly positive reference radius in pixel-like 2D coordinates.
     ///
     /// # Example
     /// ```rust,no_run

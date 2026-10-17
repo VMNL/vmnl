@@ -11,6 +11,11 @@ use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 ///
 /// Partial equality compares components using IEEE-754 semantics: NaN is unequal to itself, and
 /// signed zeros compare equal.
+///
+/// Addition, subtraction, assignment variants, and scalar multiplication are component-wise.
+/// The current `Ord` implementation compares X then Y with `f32::total_cmp`; `PartialOrd`
+/// always returns that ordering. These implementations and `Eq` are inconsistent with
+/// IEEE partial equality for NaN and signed zero, so they do not provide a lawful total order.
 #[derive(Clone, Copy, Debug, Default, Pod, Zeroable, PartialEq)]
 #[repr(C)]
 pub struct Vector2f {
