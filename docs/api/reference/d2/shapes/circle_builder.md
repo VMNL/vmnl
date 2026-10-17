@@ -34,7 +34,7 @@ public `Default`, `Clone`, or `Copy` implementation.
 
 ## Construction, defaults, and validation
 
-`Shape::circle(r)` starts with horizontal and vertical radii equal to `r`, center `(0, 0)`, filled
+`Shape::circle(r)` starts with horizontal and vertical radii equal to `r`, center `(0, 0)`, unfilled
 geometry, opaque white, 32 segments, inner and outer offsets of `0.5`, no sector, no cap, and
 `BufferMemoryPreference::Device`.
 
@@ -63,7 +63,7 @@ Validation occurs on `build`, before GPU allocation:
 
 Without a sector, geometry covers a full turn and cannot have caps. An explicit sector with a
 `360` or `-360` sweep still requires a cap and receives cap geometry when unfilled. Cap selection
-is mandatory but has no geometric effect when filled. `Butt` leaves the endpoints unchanged;
+is mandatory when unfilled and has no geometric effect when filled. `Butt` leaves the endpoints unchanged;
 `Square` extends each endpoint tangentially by `(inner + outer) / 2`; `Round` adds a semicircle of
 that radius at each end, with its center shifted for asymmetric offsets. Round caps use 32 fixed
 subdivisions each, independently of `segments`.
