@@ -332,19 +332,6 @@ impl core::marker::Unpin for vmnl::d2::LineJoin
 impl core::marker::UnsafeUnpin for vmnl::d2::LineJoin
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::LineJoin
 impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::LineJoin
-pub struct vmnl::d2::EllipseBuilder
-impl vmnl::d2::EllipseBuilder
-pub const fn vmnl::d2::EllipseBuilder::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
-pub fn vmnl::d2::EllipseBuilder::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::d2::Shape>
-pub fn vmnl::d2::EllipseBuilder::color<C>(self, C) -> Self where C: core::convert::Into<vmnl::common::Rgba>
-pub fn vmnl::d2::EllipseBuilder::position(self, f32, f32) -> Self
-impl core::marker::Freeze for vmnl::d2::EllipseBuilder
-impl core::marker::Send for vmnl::d2::EllipseBuilder
-impl core::marker::Sync for vmnl::d2::EllipseBuilder
-impl core::marker::Unpin for vmnl::d2::EllipseBuilder
-impl core::marker::UnsafeUnpin for vmnl::d2::EllipseBuilder
-impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::EllipseBuilder
-impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::EllipseBuilder
 pub struct vmnl::d2::IndexedShapeBuilder
 impl vmnl::d2::IndexedShapeBuilder
 pub fn vmnl::d2::IndexedShapeBuilder::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
@@ -430,8 +417,7 @@ impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::RenderItem2D
 impl !core::panic::unwind_safe::UnwindSafe for vmnl::d2::RenderItem2D
 pub struct vmnl::d2::Shape
 impl vmnl::d2::Shape
-pub fn vmnl::d2::Shape::circle(f32) -> vmnl::d2::EllipseBuilder
-pub fn vmnl::d2::Shape::ellipse(f32, f32) -> vmnl::d2::EllipseBuilder
+pub fn vmnl::d2::Shape::circle(f32) -> vmnl::d2::shape::circle::CircleBuilder
 pub fn vmnl::d2::Shape::indexed<V, I>(V, I) -> vmnl::d2::IndexedShapeBuilder where V: core::convert::Into<alloc::vec::Vec<vmnl::d2::Vertex2D>>, I: core::convert::Into<alloc::vec::Vec<u32>>
 pub fn vmnl::d2::Shape::line(vmnl::d2::Vector2f, vmnl::d2::Vector2f) -> vmnl::d2::LineBuilder
 pub fn vmnl::d2::Shape::polygon<P>(P) -> vmnl::d2::PolygonBuilder where P: core::convert::Into<alloc::vec::Vec<vmnl::d2::Vector2f>>
@@ -473,14 +459,22 @@ impl bytemuck::pod::Pod for vmnl::d2::Vector2f
 impl bytemuck::zeroable::Zeroable for vmnl::d2::Vector2f
 impl core::clone::Clone for vmnl::d2::Vector2f
 pub fn vmnl::d2::Vector2f::clone(&self) -> vmnl::d2::Vector2f
+impl core::cmp::Eq for vmnl::d2::Vector2f
+impl core::cmp::Ord for vmnl::d2::Vector2f
+pub fn vmnl::d2::Vector2f::cmp(&self, &Self) -> core::cmp::Ordering
 impl core::cmp::PartialEq for vmnl::d2::Vector2f
 pub fn vmnl::d2::Vector2f::eq(&self, &vmnl::d2::Vector2f) -> bool
+impl core::cmp::PartialOrd for vmnl::d2::Vector2f
+pub fn vmnl::d2::Vector2f::partial_cmp(&self, &Self) -> core::option::Option<core::cmp::Ordering>
 impl core::default::Default for vmnl::d2::Vector2f
 pub fn vmnl::d2::Vector2f::default() -> vmnl::d2::Vector2f
 impl core::fmt::Debug for vmnl::d2::Vector2f
 pub fn vmnl::d2::Vector2f::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for vmnl::d2::Vector2f
 impl core::marker::StructuralPartialEq for vmnl::d2::Vector2f
+impl core::ops::arith::Add for vmnl::d2::Vector2f
+pub type vmnl::d2::Vector2f::Output = vmnl::d2::Vector2f
+pub fn vmnl::d2::Vector2f::add(self, Self) -> Self
 impl core::ops::arith::AddAssign for vmnl::d2::Vector2f
 pub fn vmnl::d2::Vector2f::add_assign(&mut self, Self)
 impl core::ops::arith::Mul<f32> for vmnl::d2::Vector2f

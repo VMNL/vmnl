@@ -11,6 +11,7 @@
 | `StickConfig` construction | dead zone outside finite `[0, 1)` (`InvalidState`) | Choose a finite threshold in `[0, 1)` |
 | Cursor resource build/assign | invalid image/hotspot (`InvalidState`); unavailable theme shape (`GlfwUnsupportedPlatform`); native GLFW failure | Correct image data, choose another shape, or restore the default cursor |
 | Shape/mesh build | invalid/overflowing geometry; vertex/index allocation failure | Correct geometry or release/reduce resources |
+| Circle-family build | `InvalidState` for invalid parameters, sector/cap mismatch, zero segments, or invalid topology/counts; generated coordinates are not rechecked and filled widths are not validated | Supply both sector and cap or neither; keep outline offsets finite/positive and generated geometry within usable bounds |
 | Raw pipeline build | missing/read/compile/interface/layout/pipeline failures | Correct shaders/layout; verify device support |
 | Raw geometry/uniform build | invalid counts/indices or buffer allocation | Correct data/reduce allocation |
 | Raw resources build | context/device/layout/set/binding/type/array/duplicate/missing mismatch; descriptor allocation | Align shader and resource contract |

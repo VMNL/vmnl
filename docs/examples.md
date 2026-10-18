@@ -9,6 +9,7 @@ GLFW and requires a usable platform backend, so it is not a headless guarantee.
 
 ```text
 examples/d2/advanced_geometry
+examples/d2/circles
 examples/d2/shapes
 examples/input/joystick_runtime
 examples/raw/d2_composition
@@ -24,12 +25,21 @@ examples/window/wait_events
 
 ```bash
 just run d2_shapes
+just run d2_circles
 just run d2_advanced_geometry
 just run joystick_runtime
 just run window_wait_events
 just run raw_d2_composition
 just build raw_pipeline
 ```
+
+`d2_circles` demonstrates circles, ellipses, rings, filled sectors, and an outlined elliptical arc
+with round caps. The [circle builder contract](api/reference/d2/shapes/circle_builder.md) defines
+setter order, angles, widths, and the required sector/cap pair.
+
+Current limitation: `d2_shapes` configures a sector without `.cap(...)`, so its shape construction
+returns `InvalidState` before entering the render loop. Use `d2_circles` for the circle-family
+workflow while that example is corrected.
 
 ## Invariants
 

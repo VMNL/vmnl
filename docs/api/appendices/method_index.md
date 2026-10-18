@@ -383,10 +383,6 @@
 | `vmnl::d2::Anchor` | `fmt` | [Anchor](../reference/d2/shapes/anchor.md) | [`fmt`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.fmt) |
 | `vmnl::d2::Anchor` | `hash` | [Anchor](../reference/d2/shapes/anchor.md) | [`hash`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.hash) |
 | `vmnl::d2::Drawable2D` | `render_item_2d` | [Drawable2D](../reference/d2/drawable_2d.md) | [`render_item_2d`](../../../target/doc/vmnl/d2/trait.Drawable2D.html#tymethod.render_item_2d) |
-| `vmnl::d2::EllipseBuilder` | `buffer_memory_preference` | [EllipseBuilder](../reference/d2/shapes/ellipse_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.EllipseBuilder.html#method.buffer_memory_preference) |
-| `vmnl::d2::EllipseBuilder` | `build` | [EllipseBuilder](../reference/d2/shapes/ellipse_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.EllipseBuilder.html#method.build) |
-| `vmnl::d2::EllipseBuilder` | `color` | [EllipseBuilder](../reference/d2/shapes/ellipse_builder.md) | [`color`](../../../target/doc/vmnl/d2/struct.EllipseBuilder.html#method.color) |
-| `vmnl::d2::EllipseBuilder` | `position` | [EllipseBuilder](../reference/d2/shapes/ellipse_builder.md) | [`position`](../../../target/doc/vmnl/d2/struct.EllipseBuilder.html#method.position) |
 | `vmnl::d2::IndexedShapeBuilder` | `buffer_memory_preference` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html#method.buffer_memory_preference) |
 | `vmnl::d2::IndexedShapeBuilder` | `build` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html#method.build) |
 | `vmnl::d2::LineBuilder` | `buffer_memory_preference` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.LineBuilder.html#method.buffer_memory_preference) |
@@ -429,7 +425,6 @@
 | `vmnl::d2::Shape` | `as_ref` | [Shape](../reference/d2/shapes/shape.md) | [`as_ref`](../../../target/doc/vmnl/d2/struct.Shape.html#method.as_ref) |
 | `vmnl::d2::Shape` | `circle` | [Shape](../reference/d2/shapes/shape.md) | [`circle`](../../../target/doc/vmnl/d2/struct.Shape.html#method.circle) |
 | `vmnl::d2::Shape` | `drop` | [Shape](../reference/d2/shapes/shape.md) | [`drop`](../../../target/doc/vmnl/d2/struct.Shape.html#method.drop) |
-| `vmnl::d2::Shape` | `ellipse` | [Shape](../reference/d2/shapes/shape.md) | [`ellipse`](../../../target/doc/vmnl/d2/struct.Shape.html#method.ellipse) |
 | `vmnl::d2::Shape` | `indexed` | [Shape](../reference/d2/shapes/shape.md) | [`indexed`](../../../target/doc/vmnl/d2/struct.Shape.html#method.indexed) |
 | `vmnl::d2::Shape` | `line` | [Shape](../reference/d2/shapes/shape.md) | [`line`](../../../target/doc/vmnl/d2/struct.Shape.html#method.line) |
 | `vmnl::d2::Shape` | `polygon` | [Shape](../reference/d2/shapes/shape.md) | [`polygon`](../../../target/doc/vmnl/d2/struct.Shape.html#method.polygon) |
@@ -443,12 +438,15 @@
 | `vmnl::d2::TriangleBuilder` | `build` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.TriangleBuilder.html#method.build) |
 | `vmnl::d2::TriangleBuilder` | `color` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [`color`](../../../target/doc/vmnl/d2/struct.TriangleBuilder.html#method.color) |
 | `vmnl::d2::TriangleBuilder` | `vertex_colors` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [`vertex_colors`](../../../target/doc/vmnl/d2/struct.TriangleBuilder.html#method.vertex_colors) |
+| `vmnl::d2::Vector2f` | `add` | [Vector2f](../reference/d2/vector_2f.md) | [`add`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.add) |
 | `vmnl::d2::Vector2f` | `add_assign` | [Vector2f](../reference/d2/vector_2f.md) | [`add_assign`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.add_assign) |
 | `vmnl::d2::Vector2f` | `clone` | [Vector2f](../reference/d2/vector_2f.md) | [`clone`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.clone) |
+| `vmnl::d2::Vector2f` | `cmp` | [Vector2f](../reference/d2/vector_2f.md) | [`cmp`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.cmp) |
 | `vmnl::d2::Vector2f` | `default` | [Vector2f](../reference/d2/vector_2f.md) | [`default`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.default) |
 | `vmnl::d2::Vector2f` | `eq` | [Vector2f](../reference/d2/vector_2f.md) | [`eq`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.eq) |
 | `vmnl::d2::Vector2f` | `fmt` | [Vector2f](../reference/d2/vector_2f.md) | [`fmt`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.fmt) |
 | `vmnl::d2::Vector2f` | `mul` | [Vector2f](../reference/d2/vector_2f.md) | [`mul`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.mul) |
+| `vmnl::d2::Vector2f` | `partial_cmp` | [Vector2f](../reference/d2/vector_2f.md) | [`partial_cmp`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.partial_cmp) |
 | `vmnl::d2::Vector2f` | `sub` | [Vector2f](../reference/d2/vector_2f.md) | [`sub`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.sub) |
 | `vmnl::d2::Vector2f` | `sub_assign` | [Vector2f](../reference/d2/vector_2f.md) | [`sub_assign`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.sub_assign) |
 | `vmnl::d2::Vertex2D` | `add_assign` | [Vertex2D](../reference/d2/vertex_2d.md) | [`add_assign`](../../../target/doc/vmnl/d2/struct.Vertex2D.html#method.add_assign) |

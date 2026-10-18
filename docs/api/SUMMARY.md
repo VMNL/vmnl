@@ -68,7 +68,7 @@
     - [Vertex2D](reference/d2/vertex_2d.md)
     - [Shapes](reference/d2/shapes/README.md)
     - [Shape](reference/d2/shapes/shape.md)
-      - [EllipseBuilder](reference/d2/shapes/ellipse_builder.md)
+      - [CircleBuilder](reference/d2/shapes/circle_builder.md)
       - [IndexedShapeBuilder](reference/d2/shapes/indexed_shape_builder.md)
       - [PolygonBuilder](reference/d2/shapes/polygon_builder.md)
       - [TriangleBuilder](reference/d2/shapes/triangle_builder.md)
