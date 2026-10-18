@@ -9,7 +9,7 @@
 #[path = "../src/native_input_keys.rs"]
 mod native_input_keys;
 
-#[path = "../src/native_input_report.rs"]
+#[path = "../../support/input_report.rs"]
 mod native_input_report;
 
 #[path = "../../platform/src/input_key_table.rs"]
@@ -22,7 +22,7 @@ use native_input_keys::physical_keycode;
 use native_input_process::ClientProcess;
 use native_input_report::InputTestReport;
 
-#[path = "../src/native_input_process.rs"]
+#[path = "../../support/input_process.rs"]
 mod native_input_process;
 use std::panic::{catch_unwind, resume_unwind, AssertUnwindSafe};
 use std::process::Command;

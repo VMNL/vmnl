@@ -502,9 +502,9 @@ fn nested_wayland_uses_evdev_transport_code_even_with_another_xkb_name() {
 #[path = "../../gpu/src/native_input_keys.rs"]
 mod native_input_keys;
 
-#[path = "../../gpu/src/native_input_report.rs"]
+#[path = "../../support/input_report.rs"]
 mod native_input_report;
 
-#[path = "../../gpu/src/native_input_process.rs"]
+#[path = "../../support/input_process.rs"]
 #[cfg(target_os = "linux")]
 mod native_input_process;

@@ -206,6 +206,7 @@ pub(crate) fn expect_record(actual: &str, expected: &str) -> Result<(), String> 
 }
 
 #[cfg(test)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 

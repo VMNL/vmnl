@@ -1,5 +1,88 @@
 # Testing
 
+## Virtual joystick/gamepad scenarios (issue #94)
+
+These tests preserve the existing unit/API/Null suites and reuse #91's bounded, continuously
+drained process transport, strict READY/INJECTED/OBSERVED barriers, five-second observation
+deadlines and per-check terminal report. Shared transport/report code lives in `tests/support`.
+The Linux uinput fixture stays in the driver; the separate client depends directly only on
+`vmnl`. There is no production API or synthetic VMNL event injection added for testing.
+
+```bash
+just joystick-test x11 runtime     # public InputRuntime; no window or Vulkan initialization
+just joystick-test x11 window      # Window::poll_events -> Event/Input; requires Vulkan/display
+# wayland can be selected in either command; that profile remains unqualified
+VMNL_JOYSTICK_REPORT=/tmp/vmnl-joystick.json just joystick-test x11 runtime
+```
+
+Linux needs a usable selected GLFW display backend, uinput ABI >= 5, write access to
+`/dev/uinput`, and read access to the **new fixture's** `/dev/input/eventN` node. Readable
+existing nodes alone do not prove that newly created nodes will be accessible. The launcher
+checks prerequisites before building or injecting. The driver obtains its owned sysname through
+UI_GET_SYSNAME and waits at most five seconds for its event node to become readable. No command
+installs rules, changes permissions, loads modules or invokes sudo. A missing prerequisite is
+an error, never an exclusion or successful test. The kernel's
+[uinput documentation](https://docs.kernel.org/input/uinput.html) describes this interface.
+
+Every run starts four fresh clients: hat_buttons false/true, each with runtime/window consumer
+order AB/BA. The driver creates the device only after subscription and READY, holds each
+injected state until complete observation, and destroys only its own fixture. It compares native
+integer injection with independent literal public values: all 15 button pairs, distinct vectors
+and endpoints for all six axes, nine hat positions, and four appended hat buttons when enabled.
+Controlled mapping cases cover all standard controls, hat-to-Dpad, A/B replacement, mapping
+unavailability and restoration. Identity is discovered across all public slots, then checked by
+name/GUID; no joystick slot is assumed. Reconnection is identified again.
+
+The runtime case also checks independent notification queues, late subscription without replay,
+owned sample stability, callback thread, and an owned pointer before native disconnect cleanup.
+The window case uses two tracking/delivery consumers plus tracking-only and delivery-only
+windows. It checks their Event identity/timestamps, independent snapshots, non-consuming
+transitions, explicit and next-poll clearing, tracking versus delivery controls and held-button
+disconnect releases, including the batch where gamepad() is None. Runtime polling never advances
+window snapshots. A press/release wholly between samples is deliberately not tested as
+observable; every state under test must survive until its acknowledgement.
+
+Client mismatch, missing injection, invalid protocol, timeout or unsuccessful exit fails.
+On failure the report retains FAIL and NOT RUN entries. The driver releases controls and removes
+the virtual device during error cleanup, and the existing transport kills/reaps a failed or
+timed-out client while draining both pipes. Explicit held-disconnect cases remove the held
+device before physical cleanup so cleanup cannot satisfy the VMNL release oracle.
+
+Native tests are ignored by default. `just test` and `just validate` remain display-free;
+the ordinary `just test-gpu` also skips the uinput scenario. CI executes the portable transport,
+report and driver regressions, not native joystick qualification. The optional
+`VMNL_JOYSTICK_REPORT` path receives schema-version-1 JSON once the Rust driver starts, including
+PASS/FAIL/NOT RUN, reasons and qualified=false for incomplete/failed runs. Preflight rejection
+occurs before the Rust report exists. The backend field records a request, not backend proof.
+
+On 2026-10-17, actual host preflight found `/dev/uinput` root-owned mode 0600 and open returned
+EACCES; current event nodes were readable. Sandbox inspection initially hid the nodes, so host
+access was checked separately. Neither fixture detection by the pinned GLFW nor the public
+native scenarios could be qualified. Deterministic tests, Null, native virtual-device tests and
+physical-controller observations are separate evidence levels. Windows/macOS fixtures and all
+physical controllers remain unqualified. See the
+[capability matrix](api/maintenance/joystick_capability_matrix.md#functional-linux-coverage-added-for-issue-94).
+
+On 2026-10-18, an explicitly operator-authorized temporary ACL granted UID 1000 access to
+uinput. The native Linux fixture was then detected by the pinned GLFW through the public client;
+its new event nodes were readable without an additional permission change. Three consecutive
+executions of each command with the X11 profile selected passed after adding sample/slot identity
+checks: runtime 244/244 report checks and window 268/268 per execution, with no failures,
+exclusions or unexecuted checks. Each execution includes both hat_buttons settings and both
+poll orders in fresh client processes. The window case also passed window-first connection and
+disconnection fan-out. Initial successful runs before the identity assertion are separate from
+these final repetitions. This qualifies the exercised Linux virtual-device paths, not physical
+controllers, another display profile, Windows/macOS, rendered frames or human graphical behavior.
+
+The local environment was Fedora 44, kernel 7.2.8-200.fc44.x86_64, Hyprland 0.56.2 and Xwayland;
+Vulkan enumeration reported Mesa 26.2.3 with Intel Iris Xe and llvmpipe available. This does not
+identify the client's selected GPU or prove presentation. Production source remained PR #97 at
+6488761, with the test patch in the worktree. The main/PR conflict was still present against
+2ead9f4, so integration requires revalidation. The backend field in each JSON remains a request,
+not an independent backend observation. After all six final runs, the guard restored and verified
+the original root:root 0600 uinput ACL with no added named user entry. The repository commands
+never grant access themselves; another execution still requires suitable pre-existing access.
+
 ## Test Types
 
 ```text

@@ -78,6 +78,19 @@ source identification and the preceding text-fixture failure. This is automatic 
 
 ## Runtime Constraints
 
+Joystick/gamepad native coverage is separate from the keyboard/mouse qualifications above.
+On 2026-10-18, the opt-in Linux uinput scenarios passed three consecutive executions each with
+the X11 profile selected: public `InputRuntime` 244/244 report checks and `Window::poll_events`
+268/268 per execution, without failures, exclusions or unexecuted checks. Both hat_buttons
+settings and consumer orders run in fresh clients. An explicitly authorized temporary uinput
+ACL enabled these runs; its original root:root 0600 state was restored and verified afterwards.
+This is local virtual-device evidence, not physical-controller, independent backend-selection,
+rendered-frame or human graphical validation. The Wayland joystick profile, Windows/macOS
+virtual injection and physical-controller behavior remain unqualified. Deterministic and Null
+results do not establish present-device behavior.
+See the [scenario matrix](api/maintenance/joystick_capability_matrix.md#functional-linux-coverage-added-for-issue-94)
+and [opt-in commands](testing.md#virtual-joystickgamepad-scenarios-issue-94).
+
 - Visual examples and GPU tests require a Vulkan-capable GPU, a Vulkan loader, GLFW, and a display server.
 - Headless verification uses `just test`; it excludes GPU/display tests.
 - GLFW portability probes use `ClientApi::NoApi`; they create no Vulkan instance, surface, or GPU resource.

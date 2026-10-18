@@ -170,6 +170,54 @@ class InputTestPrerequisiteTests(unittest.TestCase):
             with self.subTest(output=output), self.assertRaises(input_test.PrerequisiteError):
                 input_test.vmnl_client_executable(output)
 
+    def test_joystick_missing_access_does_not_build_or_inject(self) -> None:
+        with (
+            patch.object(input_test.platform, "system", return_value="Linux"),
+            patch.object(input_test.os, "open", side_effect=PermissionError("denied")),
+            patch.object(input_test.subprocess, "run") as run,
+        ):
+            with self.assertRaisesRegex(input_test.PrerequisiteError, "uinput/input access"):
+                input_test.run_joystick_test("x11", "runtime")
+        run.assert_not_called()
+
+    def test_joystick_is_opt_in_and_other_hosts_remain_unqualified(self) -> None:
+        for backend, host in [("win32", "Windows"), ("cocoa", "Darwin"), ("x11", "Darwin")]:
+            with self.subTest(backend=backend, host=host), patch.object(input_test.platform, "system", return_value=host):
+                with self.assertRaisesRegex(input_test.PrerequisiteError, "Linux-only"):
+                    input_test.check_joystick_prerequisites(backend)
+
+    def test_joystick_launches_only_requested_public_path(self) -> None:
+        artifact = json.dumps({
+            "reason": "compiler-artifact", "target": {"name": "vmnl-joystick-client"},
+            "executable": "/custom-target/debug/vmnl-joystick-client",
+        })
+        for mode, crate in [("runtime", "vmnl-platform-tests"), ("window", "vmnl-gpu-tests")]:
+            with (
+                self.subTest(mode=mode),
+                patch.object(input_test, "check_joystick_prerequisites"),
+                patch.object(input_test.subprocess, "run", side_effect=[
+                    SimpleNamespace(returncode=0, stdout=artifact), SimpleNamespace(returncode=17),
+                ]) as run,
+            ):
+                self.assertEqual(input_test.run_joystick_test("x11", mode), 17)
+                command = run.call_args.args[0]
+                self.assertIn(crate, command)
+                self.assertIn("native_joystick", command)
+                self.assertIn("--ignored", command)
+                self.assertIn("--exact", command)
+                env = run.call_args.kwargs["env"]
+                self.assertEqual(env["VMNL_JOYSTICK_CLIENT"], "/custom-target/debug/vmnl-joystick-client")
+                self.assertEqual(env["XDG_SESSION_TYPE"], "x11")
+                self.assertNotIn("WAYLAND_DISPLAY", env)
+
+    def test_joystick_build_failure_never_starts_the_driver(self) -> None:
+        with (
+            patch.object(input_test, "check_joystick_prerequisites"),
+            patch.object(input_test.subprocess, "run", return_value=SimpleNamespace(returncode=101)) as run,
+        ):
+            self.assertEqual(input_test.run_joystick_test("x11", "runtime"), 101)
+        run.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

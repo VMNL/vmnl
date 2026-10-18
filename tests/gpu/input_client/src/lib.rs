@@ -15,7 +15,19 @@ mod input_keys;
 
 use input_keys::KEYS;
 
+mod joystick;
 mod scenarios;
+
+/// Runs public joystick observations in a separate test-client process.
+///
+/// The driver selects standalone runtime or window snapshots; native injection stays outside
+/// this crate. This entry point is test tooling, not a VMNL facade API.
+///
+/// # Errors
+/// Returns an error for initialization, invalid protocol, timeout or an incorrect observation.
+pub fn run_joystick() -> VMNLResult<()> {
+    joystick::run()
+}
 
 const INPUT_TIMEOUT: Duration = Duration::from_secs(5);
 const SCROLL_SETTLE_TIME: Duration = Duration::from_millis(100);

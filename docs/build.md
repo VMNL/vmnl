@@ -46,6 +46,7 @@ just test-platform-null    isolated GLFW Null-backend probe
 just test-platform-wayland Wayland contract; caller supplies nested Weston + X11 parent
 just test-platform-x11     X11 contract; caller supplies X server/window manager
 just input-test <backend>  native input contract; requires an explicit backend and active desktop
+just joystick-test <backend> <mode> opt-in Linux virtual joystick; runtime or window mode
 just test-gpu-compile      compile GPU tests without running them
 just test-gpu              GPU/display tests
 just doctest               Rustdoc examples
@@ -69,6 +70,12 @@ creates a commit. It does not modify commit messages.
 Use `just input-test x11|wayland|win32|cocoa` to run one native input contract. The selected
 backend must match the host; display and permission prerequisites are checked before input is
 injected. See [Testing](testing.md#native-input-contract) for backend-specific setup.
+
+`just joystick-test x11|wayland runtime|window` requires pre-existing uinput write access and
+read access to the newly created event node. The runtime client creates neither a window nor
+Vulkan resources; the window client requires Vulkan/display support. Commands never change host
+permissions. See [virtual joystick tests](testing.md#virtual-joystickgamepad-scenarios-issue-94)
+for qualification scope, reports and the initialization profiles.
 
 ## Test Summaries
 

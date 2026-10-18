@@ -681,6 +681,8 @@ dependencies = [
 name = "vmnl-gpu-tests"
 version = "0.1.0"
 dependencies = [
+ "libc",
+ "serde_json",
  "vmnl",
  "x11rb",
 ]
@@ -721,6 +723,7 @@ version = "0.1.0"
 dependencies = [
  "cc",
  "glfw",
+ "libc",
  "serde_json",
  "windows-sys",
  "x11rb",
