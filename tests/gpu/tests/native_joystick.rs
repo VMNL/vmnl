@@ -1,10 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Opt-in Window::poll_events/Event/Input scenario with a virtual joystick.
+//! Opt-in public window scenarios with virtual or operator-controlled physical joysticks.
 
-#![cfg(target_os = "linux")]
+#![cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 
+#[path = "../../support/joystick_backend.rs"]
+mod joystick_backend;
+#[cfg(target_os = "linux")]
 #[path = "../../support/joystick_driver.rs"]
 mod joystick_driver;
 #[path = "../../support/input_process.rs"]
@@ -15,9 +18,11 @@ mod native_input_report;
 mod physical_joystick_driver;
 #[path = "../../support/physical_joystick_profile.rs"]
 mod physical_joystick_profile;
+#[cfg(target_os = "linux")]
 #[path = "../../support/virtual_joystick.rs"]
 mod virtual_joystick;
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore = "requires Vulkan/display, writable uinput and readable fixture event node"]
 fn public_windows_observe_virtual_joystick() -> Result<(), String> {

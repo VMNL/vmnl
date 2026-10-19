@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Linux physical-controller operator protocol over the existing #91 transport.
+//! Physical-controller operator protocol over the existing #91 transport.
 
 use super::{
-    joystick_driver, native_input_process::ClientProcess, native_input_report::InputTestReport,
+    joystick_backend, native_input_process::ClientProcess, native_input_report::InputTestReport,
     physical_joystick_profile,
 };
 use serde_json::{json, Value};
@@ -148,7 +148,7 @@ fn start(mode: &str) -> Result<ClientProcess, String> {
         .args(["physical", mode])
         .env_remove("SDL_GAMECONTROLLERCONFIG");
     if std::env::var("VMNL_JOYSTICK_BACKEND").as_deref() == Ok("wayland") {
-        joystick_driver::configure_wayland(&mut command);
+        joystick_backend::configure_wayland(&mut command);
     }
     let mut client = ClientProcess::spawn(&mut command)?;
     client.expect("HELLO\tPHYSICAL\t1", Duration::from_secs(15))?;
@@ -159,6 +159,9 @@ fn start(mode: &str) -> Result<ClientProcess, String> {
 fn execute(mode: &str, report: &mut InputTestReport, metadata: &mut Value) -> Result<(), String> {
     let (profile, mut client, devices, console) =
         report.run("Physical", "Environment", "Readiness", || {
+            let backend = std::env::var("VMNL_JOYSTICK_BACKEND")
+                .map_err(|_| "physical joystick backend is unset")?;
+            joystick_backend::validate_backend(&backend, std::env::consts::OS)?;
             let profile = profile()?;
             let mut client = start(mode)?;
             let devices = catalog(&mut client)?;
@@ -207,7 +210,7 @@ fn execute(mode: &str, report: &mut InputTestReport, metadata: &mut Value) -> Re
         metadata["backend_observations"] =
             json!([
                 report.run("Physical", "Environment", "Wayland roundtrip", || {
-                    joystick_driver::observe_wayland(&client, "physical", Duration::from_secs(5))
+                    joystick_backend::observe_wayland(&client, "physical", Duration::from_secs(5))
                 })?
             ]);
     }
@@ -251,14 +254,14 @@ pub(crate) fn run(mode: &str) -> Result<(), String> {
         &["Readiness", "Selection/profile", "Client shutdown"],
     );
     report.plan("Physical", "Selection", &["Observation"]);
-    let mut metadata = json!({"operator_confirmed":false});
+    let mut metadata = json!({"operator_confirmed":false,"host_os":std::env::consts::OS,"host_arch":std::env::consts::ARCH,"backend_observations":[]});
     let outcome = catch_unwind(AssertUnwindSafe(|| {
         execute(mode, &mut report, &mut metadata)
     }));
     eprintln!(
         "{}",
         report.render_for(
-            "VMNL PHYSICAL JOYSTICK TEST — Linux",
+            &format!("VMNL PHYSICAL JOYSTICK TEST — {}", std::env::consts::OS),
             "operator → physical controller → public VMNL client"
         )
     );
@@ -309,6 +312,7 @@ mod tests {
         }
     }
     #[test]
+    #[cfg(target_os = "linux")]
     fn absent_hardware_fails_instead_of_qualifying() {
         let mut command = Command::new("python3");
         command.args(["-c", "print('CATALOG_END', flush=True)"]);

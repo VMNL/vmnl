@@ -12,6 +12,9 @@ mod native_input_keys;
 #[path = "../../support/input_report.rs"]
 mod native_input_report;
 
+#[path = "../../support/input_pointer_readiness.rs"]
+mod native_pointer_readiness;
+
 #[path = "../../platform/src/input_key_table.rs"]
 mod input_key_table;
 
@@ -21,6 +24,9 @@ mod native_input_scenarios;
 use native_input_keys::physical_keycode;
 use native_input_process::ClientProcess;
 use native_input_report::InputTestReport;
+use native_pointer_readiness::{
+    PointerPreparation, PointerReadiness, PointerSnapshot, POINTER_SETTLE_TIME,
+};
 
 #[path = "../../support/input_process.rs"]
 mod native_input_process;
@@ -41,6 +47,60 @@ const BUTTON_SCROLL_UP: u8 = 4;
 const BUTTON_SCROLL_DOWN: u8 = 5;
 const BUTTON_SCROLL_POSITIVE_X: u8 = 6;
 const BUTTON_SCROLL_NEGATIVE_X: u8 = 7;
+
+#[test]
+#[ignore = "requires Vulkan, an X11 EWMH display, XTEST, and moves pointer/focus"]
+fn vmnl_public_native_focus_preparation() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let mut report = InputTestReport::default();
+    report.plan(
+        "Environment",
+        "X11 / Vulkan / XTEST",
+        &["Readiness", "Lock state restoration", "Client shutdown"],
+    );
+    report.plan(
+        "Focus",
+        "Cycle",
+        &[
+            "Receiver prepared",
+            "Receiver ready",
+            "Focus restored after cleanup",
+        ],
+    );
+    let result = (|| -> VMNLResult<()> {
+        let (mut client, injector, _) = start_input_client(&mut report)?;
+        native_input_scenarios::prepare_focus(&mut report, &mut client, &injector)?;
+        client
+            .observe(
+                &mut report,
+                "Focus",
+                "Cycle",
+                &["Focus restored after cleanup"],
+                "RESTORE_FOCUS",
+                || Ok(()),
+            )
+            .map_err(invalid_state)?;
+        report.run(
+            "Environment",
+            "X11 / Vulkan / XTEST",
+            "Lock state restoration",
+            || injector.restore_locks().map_err(invalid_state),
+        )?;
+        report.run(
+            "Environment",
+            "X11 / Vulkan / XTEST",
+            "Client shutdown",
+            || client.finish(INPUT_TIMEOUT).map_err(invalid_state),
+        )?;
+        if !report.is_complete() {
+            return Err(invalid_state("focus preparation report is incomplete"));
+        }
+        Ok(())
+    })();
+    eprintln!("{}", report.render());
+    result
+}
+
 #[derive(Clone, Copy)]
 struct KeyVariant {
     key: Key,
@@ -172,9 +232,10 @@ const MOUSE_BUTTON_MAPPINGS: [(u8, MouseButton); 8] = [
     (12, MouseButton::Button8),
 ];
 
-fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
-    let _guard = gpu_test_guard();
-    let (mut client, mut injector, initial_cursor_position) = report.run(
+fn start_input_client(
+    report: &mut InputTestReport,
+) -> VMNLResult<(ClientProcess, X11Injector, (f64, f64))> {
+    report.run(
         "Environment", "X11 / Vulkan / XTEST", "Readiness", || -> VMNLResult<_> {
             let mut injector = X11Injector::connect().map_err(invalid_state)?;
             let executable = std::env::var_os("VMNL_INPUT_CLIENT").ok_or_else(||
@@ -184,14 +245,14 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
             command.env("XDG_SESSION_TYPE", "x11").env_remove("WAYLAND_DISPLAY").env_remove("WAYLAND_SOCKET");
             let mut process = ClientProcess::spawn(&mut command).map_err(invalid_state)?;
             let title = format!("VMNL input client {}", process.id());
-            process.expect(&format!("MAPPED\t3\t{title}"), INPUT_TIMEOUT + Duration::from_secs(5)).map_err(invalid_state)?;
+            process.expect(&format!("MAPPED\t4\t{title}"), INPUT_TIMEOUT + Duration::from_secs(5)).map_err(invalid_state)?;
             injector.confirm_client_window(&title, process.id()).map_err(invalid_state)?;
             // Confirm the live X11 geometry and prepare the actual OS pointer before HELLO.
             injector.move_to_boundary(true).map_err(invalid_state)?;
             process.send("START").map_err(invalid_state)?;
             let hello = process.receive(INPUT_TIMEOUT + Duration::from_secs(5)).map_err(invalid_state)?;
             let fields: Vec<_> = hello.split('\t').collect();
-            if fields.len() != 5 || fields[0] != "HELLO" || fields[1] != "3" || fields[2] != title {
+            if fields.len() != 5 || fields[0] != "HELLO" || fields[1] != "4" || fields[2] != title {
                 return Err(invalid_state(format!("invalid client greeting: {hello:?}")));
             }
             let x = fields[3].parse::<f64>().map_err(|error| invalid_state(error.to_string()))?;
@@ -201,7 +262,12 @@ fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
             injector.confirm_client_window(&title, process.id()).map_err(invalid_state)?;
             Ok((process, injector, (x, y)))
         },
-    )?;
+    )
+}
+
+fn run_input_scenario(report: &mut InputTestReport) -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let (mut client, mut injector, initial_cursor_position) = start_input_client(report)?;
 
     for case in KEY_CASES {
         if injector.keycode(case.key).is_none() {
@@ -789,11 +855,82 @@ impl X11Injector {
         self.move_pointer_to(x, y)
     }
 
-    fn move_pointer_to(&self, x: i16, y: i16) -> Result<(), String> {
-        use x11rb::{
-            connection::Connection as _, protocol::xproto::ConnectionExt as _,
-            protocol::xtest::ConnectionExt as _,
-        };
+    fn prepare_focus_pointer(&self) -> Result<(), String> {
+        let started = Instant::now();
+        // Reserve the existing 100 ms public assertion within the five-second budget.
+        let mut readiness = PointerReadiness::new(INPUT_TIMEOUT - POINTER_SETTLE_TIME);
+        loop {
+            let snapshot = self.pointer_snapshot()?;
+            match readiness.observe(started.elapsed(), snapshot)? {
+                PointerPreparation::Wait => {}
+                PointerPreparation::Position(x, y) => self.inject_pointer_motion(x, y)?,
+                PointerPreparation::Ready => return Ok(()),
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+
+    fn pointer_snapshot(&self) -> Result<PointerSnapshot, String> {
+        use x11rb::protocol::xproto::ConnectionExt as _;
+        let window = self
+            .client_window
+            .ok_or("client X11 window is unconfirmed")?;
+        let geometry = self
+            .connection
+            .get_geometry(window)
+            .map_err(|e| e.to_string())?
+            .reply()
+            .map_err(|e| e.to_string())?;
+        let origin = self
+            .connection
+            .translate_coordinates(window, self.root, 0, 0)
+            .map_err(|e| e.to_string())?
+            .reply()
+            .map_err(|e| e.to_string())?;
+        let focus = self
+            .connection
+            .get_input_focus()
+            .map_err(|e| e.to_string())?
+            .reply()
+            .map_err(|e| e.to_string())?;
+        let pointer = self
+            .connection
+            .query_pointer(self.root)
+            .map_err(|e| e.to_string())?
+            .reply()
+            .map_err(|e| e.to_string())?;
+        if !origin.same_screen || !pointer.same_screen {
+            return Err("client and pointer are on different X11 screens".into());
+        }
+        // Root children may be WM frames; inspect the same ancestry as the native hover query.
+        let mut child = pointer.child;
+        let mut hovered = false;
+        for _ in 0..16 {
+            if child == window {
+                hovered = true;
+                break;
+            }
+            if child == 0 {
+                break;
+            }
+            child = self
+                .connection
+                .query_pointer(child)
+                .map_err(|e| e.to_string())?
+                .reply()
+                .map_err(|e| e.to_string())?
+                .child;
+        }
+        Ok(PointerSnapshot {
+            geometry: (origin.dst_x, origin.dst_y, geometry.width, geometry.height),
+            focused: focus.focus == window,
+            hovered,
+            position: (pointer.root_x, pointer.root_y),
+        })
+    }
+
+    fn inject_pointer_motion(&self, x: i16, y: i16) -> Result<(), String> {
+        use x11rb::{connection::Connection as _, protocol::xtest::ConnectionExt as _};
         self.connection
             .xtest_fake_input(MOTION_NOTIFY, 0, 0, self.root, x, y, 0)
             .map_err(|error| format!("could not enqueue XTEST pointer motion: {error}"))?
@@ -802,6 +939,12 @@ impl X11Injector {
         self.connection
             .flush()
             .map_err(|error| format!("could not flush XTEST pointer motion: {error}"))?;
+        Ok(())
+    }
+
+    fn move_pointer_to(&self, x: i16, y: i16) -> Result<(), String> {
+        use x11rb::protocol::xproto::ConnectionExt as _;
+        self.inject_pointer_motion(x, y)?;
         // Xwayland can acknowledge XTEST before compositor feedback updates the
         // X11 pointer. Request completion alone does not prove delivered motion.
         let deadline = Instant::now() + Duration::from_millis(500);

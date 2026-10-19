@@ -505,6 +505,9 @@ mod native_input_keys;
 #[path = "../../support/input_report.rs"]
 mod native_input_report;
 
+#[path = "../../support/input_pointer_readiness.rs"]
+mod native_pointer_readiness;
+
 #[path = "../../support/input_process.rs"]
 #[cfg(target_os = "linux")]
 mod native_input_process;

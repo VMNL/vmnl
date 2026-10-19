@@ -105,22 +105,31 @@ Reports, logs and source/environment metadata are retained locally under
 observations through public VMNL APIs; they do not qualify physical controllers, Windows/macOS,
 rendered presentation or human graphical behavior.
 
-## Physical joystick operator protocol (Linux)
+## Physical joystick operator protocol
 
 The physical path reuses the public joystick client, #91 process transport, strict
 READY/INJECTED/OBSERVED barriers, per-check report and Wayland backend observation. It does
 not create a virtual device, write input events, change mappings or request uinput access.
-It requires a Linux display backend, readable controller nodes, a connected controller and
-an interactive operator terminal. Window mode also requires Vulkan. The operator declares
-the model and USB/Bluetooth connection; neither a GUID nor a virtual HID node proves physical
-hardware by itself. Known VMNL virtual fixtures are rejected.
+The launcher accepts `x11`/`wayland` on Linux, `win32` on Windows and `cocoa` on macOS;
+a backend/host mismatch fails before compilation. The Rust driver checks the pair again before
+starting its client. A connected controller accessible to the current user and an interactive
+operator terminal are required. Linux additionally needs its selected display backend and
+readable controller nodes. Window mode also requires Vulkan and a native display. The operator
+declares the model and USB/Bluetooth connection; neither a GUID nor a virtual HID node proves physical
+hardware by itself. Known VMNL virtual fixtures are rejected. No keyboard/mouse injection
+permission (SendInput desktop access or Cocoa event-posting permission) is requested by this
+read-only controller path.
 
 ```bash
 VMNL_JOYSTICK_REPORT=/tmp/physical-runtime.json \
   just joystick-physical-test wayland controller.json runtime
 VMNL_JOYSTICK_REPORT=/tmp/physical-window.json \
   just joystick-physical-test wayland controller.json window
-# x11 is also selectable; requested_backend alone does not independently prove X11 selection
+# Native Windows, from its operator terminal (use python if python3 is not on PATH):
+python3 tools/input_test.py --joystick-physical runtime --physical-profile controller.json win32
+# Native macOS, with its own independently prepared controller profile:
+python3 tools/input_test.py --joystick-physical window --physical-profile controller.json cocoa
+# x11 is also selectable; requested_backend alone does not independently prove backend selection
 ```
 
 Prepare a schema-version-1 JSON profile from the device specification or an independent
@@ -173,11 +182,22 @@ No device, invalid profile/protocol, cancellation, EOF, timeout, wrong value or 
 child exit fails the run. Remaining planned checks stay NOT RUN. On error the child is reaped;
 the operator must release the physical controls. JSON uses evidence=physical-operator-declared
 and records the profile, operator declaration and selected identity. It does not independently
-authenticate the hardware. The physical scenarios remain ignored and excluded from normal GPU
-validation. CI tests their deterministic oracles and failure handling, not physical hardware.
+authenticate the hardware. The physical metadata records the driver host OS/architecture.
+Only the Wayland path currently supplies independent backend protocol observations; an empty
+backend_observations array on other profiles is not backend-selection proof. Windows/macOS
+launches discard inherited Linux display/session variables. The physical scenarios remain
+ignored and excluded from normal GPU validation. CI tests their deterministic oracles and failure handling, not physical hardware.
 
 On 2026-10-19 the operator reported no controller available. Physical qualification remains
 pending; implementation, compilation and simulated driver tests are not hardware evidence.
+The Windows/macOS protocol is prepared for native execution, with the same slot selection,
+barriers, deadlines, tolerances and held-disconnection checks. Neither OS is qualified without
+its native runtime and window reports. Profiles must be prepared independently for each
+OS/driver/connection: raw control order and available mappings are not assumed portable.
+The existing CI platform build/test steps compile the physical driver and run its portable
+oracles on each native runner; they never invoke the ignored operator scenario. Cross-OS
+compilation is not established by a local Linux build. No Windows/macOS virtual fixture is
+implemented or installed by this protocol; those separate injection paths remain unqualified.
 
 ## Test Types
 
@@ -305,7 +325,7 @@ X11 title/PID and live geometry, posts an actual XTEST inside-window pointer mov
 its root position. The client must then confirm focus/hover and report its public cursor position
 before any scenario begins; a cached public position alone is not readiness evidence.
 
-The client greeting uses protocol version 3. Key commands contain only the expected public
+The client greeting uses protocol version 4. Key commands contain only the expected public
 key name and press/release or mapping-check action; XKB injection codes remain private to the driver.
 Each action has a numbered `ARM` → `READY` → native injection → `INJECTED` → checks → `OBSERVED` exchange over pipes. The
 client clears the previous event batch before `READY`, except when a control scenario explicitly
@@ -358,10 +378,39 @@ the failing exit status; an incomplete report also fails the command. Formatting
 accounting, physical-name selection and Right Alt fallback priority are tested without a display.
 The separate-client version adds `Client shutdown` to the previous 640 checks, and the
 four physical alternates add sixteen checks, for 657 in the protocol-2 workload;
-the extended protocol-3 workload plans 848 checks;
+the historical extended protocol-3 workload plans 848 checks; protocol 4 plans 849 checks
+with the separate focus-receiver preparation acknowledgement;
 the shutdown check rejects extra records after `DONE` and unsuccessful exits. Headless driver
 fixtures verify that injection waits for `READY` and release waits for the complete press
 observation, and exercise crashes, timeouts, malformed records and large output on both pipes.
+
+Focus preparation uses two numbered observations. `PREPARE_FOCUS` creates, presents and
+hides the receiver, requests primary focus, then acknowledges `Receiver prepared`.
+`FOCUS_READY` emits `READY` before the driver prepares the native pointer. The driver reads
+actual focus, hover ancestry, geometry and pointer coordinates; it injects XTEST motion to an
+interior point derived from the current native geometry. A geometry, focus, hover or pointer
+change resets its 100 ms settling interval and requires a new placement when focused.
+A request acknowledgement alone never qualifies the pointer. A fixed 4.9-second native
+preparation deadline reserves the existing final 100 ms public check from the five-second
+budget. After `INJECTED`, the client requires focus and hover throughout that 100 ms check;
+it does not warp the cursor or recover a lost readiness condition during that assertion.
+Only after `Receiver ready` may the driver hold A and the left button for focus loss.
+The deterministic readiness tests replay a warp followed by reconfiguration and an outside
+pointer, reject missing motion and late readiness, and verify focus/hover/geometry resets.
+They run without a display in the platform suite as well as the GPU driver tests.
+
+An opt-in native regression exercises just these two barriers and receiver cleanup through the
+same client and driver, independently of text/modifier fixtures. After building
+`vmnl-input-client`, set `VMNL_INPUT_CLIENT` to its Cargo-reported executable path and run:
+
+```bash
+cargo test -p vmnl-gpu-tests --locked --test native_input \
+  vmnl_public_native_focus_preparation -- --ignored --exact --nocapture
+```
+
+This command moves pointer/focus and needs the same X11/Vulkan/XTEST prerequisites. It is
+explicitly excluded from `just test-gpu` alongside the full native input scenario. Its success
+qualifies receiver preparation/cleanup only; it does not replace the complete input scenario.
 
 This requires the X11 prerequisites above, XTEST, and a Vulkan-capable GPU with a Vulkan loader.
 The scenario presents a first frame before requesting focus so an Xwayland window has a buffer

@@ -240,13 +240,60 @@ class InputTestPrerequisiteTests(unittest.TestCase):
             self.assertEqual(run.call_args.kwargs["env"]["VMNL_JOYSTICK_PHYSICAL_PROFILE"],
                              str(Path("controller.json").resolve()))
 
-    def test_physical_joystick_requires_profile_and_linux(self) -> None:
-        with patch.object(input_test.platform, "system", return_value="Windows"):
-            with self.assertRaisesRegex(input_test.PrerequisiteError, "Linux-only"):
-                input_test.check_physical_joystick_prerequisites("win32", "unused")
+    def test_physical_joystick_requires_profile_and_matching_host(self) -> None:
+        for backend, expected in input_test.BACKEND_SYSTEM.items():
+            for host in ("Linux", "Windows", "Darwin"):
+                with (
+                    self.subTest(backend=backend, host=host),
+                    patch.object(input_test.platform, "system", return_value=host),
+                    patch.object(input_test.Path, "is_file", return_value=True),
+                    patch.dict(input_test.os.environ, {"DISPLAY": ":99"}),
+                    patch.object(input_test, "_check_wayland_socket"),
+                    patch.object(input_test, "_wayland_socket", return_value=Path("unused")),
+                    patch.object(input_test.os, "open") as open_device,
+                    patch.object(input_test, "_cocoa_post_event_access") as cocoa,
+                    patch.object(input_test, "_windows_input_desktop_access") as windows,
+                ):
+                    if host == expected:
+                        input_test.check_physical_joystick_prerequisites(backend, "profile.json")
+                    else:
+                        with self.assertRaisesRegex(input_test.PrerequisiteError, "requires"):
+                            input_test.check_physical_joystick_prerequisites(backend, "profile.json")
+                    open_device.assert_not_called()
+                    cocoa.assert_not_called()
+                    windows.assert_not_called()
+        with self.assertRaisesRegex(input_test.PrerequisiteError, "unknown joystick backend"):
+            input_test.check_physical_joystick_prerequisites("null", "unused")
         with patch.object(input_test.platform, "system", return_value="Linux"):
             with self.assertRaisesRegex(input_test.PrerequisiteError, "profile file"):
                 input_test.check_physical_joystick_prerequisites("wayland", "/missing/profile")
+
+    def test_physical_native_hosts_do_not_inherit_linux_backend_selection(self) -> None:
+        for backend in ("win32", "cocoa"):
+            for mode in ("runtime", "window"):
+                artifact = json.dumps({
+                    "reason": "compiler-artifact", "target": {"name": "vmnl-joystick-client"},
+                    "executable": "C:/target/client.exe" if backend == "win32" else "/target/client",
+                })
+                inherited = {key: "inherited" for key in (
+                    "DISPLAY", "WAYLAND_DISPLAY", "WAYLAND_SOCKET", "XDG_SESSION_TYPE", "WAYLAND_DEBUG",
+                )}
+                with (
+                    self.subTest(backend=backend, mode=mode),
+                    patch.dict(input_test.os.environ, inherited),
+                    patch.object(input_test, "check_physical_joystick_prerequisites"),
+                    patch.object(input_test.subprocess, "run", side_effect=[
+                        SimpleNamespace(returncode=0, stdout=artifact), SimpleNamespace(returncode=23),
+                    ]) as run,
+                ):
+                    self.assertEqual(input_test.run_joystick_test(
+                        backend, mode, physical_profile="controller.json"), 23)
+                environment = run.call_args.kwargs["env"]
+                self.assertEqual(environment["VMNL_JOYSTICK_BACKEND"], backend)
+                self.assertEqual(environment["VMNL_JOYSTICK_CLIENT"], json.loads(artifact)["executable"])
+                self.assertTrue(all(key not in environment for key in inherited))
+                self.assertIn("--exact", run.call_args.args[0])
+                self.assertIn("physical_joystick", run.call_args.args[0][-5])
 
     def test_joystick_wayland_disables_x11_and_inherited_socket(self) -> None:
         artifact = json.dumps({
