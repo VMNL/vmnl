@@ -301,6 +301,10 @@ def run_joystick_test(backend: str, mode: str) -> int:
         if backend == "x11":
             environment.pop("WAYLAND_DISPLAY", None)
             environment.pop("WAYLAND_SOCKET", None)
+        else:
+            environment.pop("DISPLAY", None)
+            environment.pop("WAYLAND_SOCKET", None)
+            environment.setdefault("WAYLAND_DISPLAY", "wayland-0")
         crate, test = (
             ("vmnl-platform-tests", "public_runtime_observes_virtual_joystick")
             if mode == "runtime" else

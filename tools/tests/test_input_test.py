@@ -218,6 +218,27 @@ class InputTestPrerequisiteTests(unittest.TestCase):
             self.assertEqual(input_test.run_joystick_test("x11", "runtime"), 101)
         run.assert_called_once()
 
+    def test_joystick_wayland_disables_x11_and_inherited_socket(self) -> None:
+        artifact = json.dumps({
+            "reason": "compiler-artifact", "target": {"name": "vmnl-joystick-client"},
+            "executable": "/target/vmnl-joystick-client",
+        })
+        with (
+            patch.dict(input_test.os.environ, {
+                "DISPLAY": ":99", "WAYLAND_SOCKET": "42", "WAYLAND_DISPLAY": "wayland-test",
+            }),
+            patch.object(input_test, "check_joystick_prerequisites"),
+            patch.object(input_test.subprocess, "run", side_effect=[
+                SimpleNamespace(returncode=0, stdout=artifact), SimpleNamespace(returncode=0),
+            ]) as run,
+        ):
+            self.assertEqual(input_test.run_joystick_test("wayland", "runtime"), 0)
+        environment = run.call_args.kwargs["env"]
+        self.assertIsNone(environment.get("DISPLAY"))
+        self.assertIsNone(environment.get("WAYLAND_SOCKET"))
+        self.assertEqual(environment["WAYLAND_DISPLAY"], "wayland-test")
+        self.assertEqual(environment["XDG_SESSION_TYPE"], "wayland")
+
 
 if __name__ == "__main__":
     unittest.main()

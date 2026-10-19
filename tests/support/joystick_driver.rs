@@ -10,8 +10,53 @@ use super::{
 use std::{
     panic::{catch_unwind, resume_unwind, AssertUnwindSafe},
     process::Command,
-    time::Duration,
+    time::{Duration, Instant},
 };
+
+fn wayland_roundtrip(trace: &str) -> Option<Vec<String>> {
+    [
+        ("wl_display", ".get_registry(", true),
+        ("wl_registry", ".global(", false),
+        ("wl_callback", ".done(", false),
+    ]
+    .into_iter()
+    .map(|(interface, operation, outgoing)| {
+        trace.lines().find_map(|line| {
+            let (head, _) = line.split_once(operation)?;
+            let object = head.split_whitespace().last()?.strip_prefix(interface)?;
+            let id = object
+                .strip_prefix('#')
+                .or_else(|| object.strip_prefix('@'))?;
+            (id.parse::<u32>().is_ok() && head.contains("->") == outgoing).then(|| line.to_owned())
+        })
+    })
+    .collect()
+}
+
+fn observe_wayland(
+    client: &ClientProcess,
+    profile: &str,
+    timeout: Duration,
+) -> Result<serde_json::Value, String> {
+    let deadline = Instant::now() + timeout;
+    loop {
+        if let Some(evidence) = wayland_roundtrip(&client.diagnostics()?) {
+            return Ok(serde_json::json!({
+                "profile": profile,
+                "client_pid": client.id(),
+                "observed_backend": "wayland",
+                "method": "client stderr WAYLAND_DEBUG=client, DISPLAY unset",
+                "protocol": evidence,
+            }));
+        }
+        if Instant::now() >= deadline {
+            return Err(
+                "client supplied no complete Wayland protocol roundtrip before deadline".into(),
+            );
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
 
 enum Injection {
     None,
@@ -170,9 +215,62 @@ fn cases() -> Vec<Case> {
     cases
 }
 
+fn start_client(
+    mode: &str,
+    hats: bool,
+    order: &str,
+    wayland: bool,
+) -> Result<(VirtualJoystick, ClientProcess, String), String> {
+    let fixture = VirtualJoystick::open()?;
+    let path = std::env::var_os("VMNL_JOYSTICK_CLIENT")
+        .ok_or("VMNL_JOYSTICK_CLIENT is unset; use just joystick-test <backend> <mode>")?;
+    let name = format!("VMNL virtual joystick {}", std::process::id());
+    let mut command = Command::new(path);
+    command.args([mode, if hats { "true" } else { "false" }, order, &name]);
+    command.env_remove("SDL_GAMECONTROLLERCONFIG");
+    if wayland {
+        command.env_remove("DISPLAY");
+        command.env_remove("WAYLAND_SOCKET");
+        command.env_remove("FORCE_COLOR");
+        command.env("NO_COLOR", "1");
+        command.env("XDG_SESSION_TYPE", "wayland");
+        command.env("WAYLAND_DEBUG", "client");
+        command.env(
+            "WAYLAND_DISPLAY",
+            std::env::var_os("WAYLAND_DISPLAY").unwrap_or_else(|| "wayland-0".into()),
+        );
+    }
+    let mut client = ClientProcess::spawn(&mut command)?;
+    client.expect("HELLO\tJOYSTICK\t1", Duration::from_secs(15))?;
+    Ok((fixture, client, name))
+}
+
+fn write_report(
+    report: &InputTestReport,
+    mode: &str,
+    requested_backend: Option<&str>,
+    observations: &[serde_json::Value],
+) -> Result<(), String> {
+    if let Some(path) = std::env::var_os("VMNL_JOYSTICK_REPORT") {
+        let mut record = report.json(mode);
+        record["requested_backend"] = serde_json::json!(requested_backend);
+        record["backend_observations"] = serde_json::json!(observations);
+        record["fixture_guid"] = serde_json::json!("030000000df000009400000091000000");
+        std::fs::write(
+            path,
+            serde_json::to_vec_pretty(&record).map_err(|e| e.to_string())?,
+        )
+        .map_err(|e| format!("could not write joystick report: {e}"))?;
+    }
+    Ok(())
+}
+
 #[allow(clippy::print_stderr)] // Terminal reporting is the purpose of this test driver.
 pub(crate) fn run(mode: &str) -> Result<(), String> {
     let mut report = InputTestReport::default();
+    let requested_backend = std::env::var("VMNL_JOYSTICK_BACKEND").ok();
+    let wayland = requested_backend.as_deref() == Some("wayland");
+    let mut backend_observations = Vec::new();
     let cases: Vec<_> = cases()
         .into_iter()
         .filter(|case| {
@@ -192,6 +290,9 @@ pub(crate) fn run(mode: &str) -> Result<(), String> {
         for order in ["ab", "ba"] {
             let profile = format!("{mode} / hat_buttons={hats} / order={order}");
             report.plan(&profile, "Environment", &["Readiness", "Client shutdown"]);
+            if wayland {
+                report.plan(&profile, "Environment", &["Wayland roundtrip"]);
+            }
             for case in &cases {
                 report.plan(&profile, &case.name, &["Observation"]);
             }
@@ -201,18 +302,18 @@ pub(crate) fn run(mode: &str) -> Result<(), String> {
         for hats in [false, true] {
             for order in ["ab", "ba"] {
                 let profile = format!("{mode} / hat_buttons={hats} / order={order}");
-                let (mut fixture, mut client, name) = report.run(&profile, "Environment", "Readiness", || -> Result<_, String> {
-                    let fixture = VirtualJoystick::open()?;
-                    let path = std::env::var_os("VMNL_JOYSTICK_CLIENT")
-                        .ok_or("VMNL_JOYSTICK_CLIENT is unset; use just joystick-test <backend> <mode>")?;
-                    let name = format!("VMNL virtual joystick {}", std::process::id());
-                    let mut command = Command::new(path);
-                    command.args([mode, if hats { "true" } else { "false" }, order, &name]);
-                    command.env_remove("SDL_GAMECONTROLLERCONFIG");
-                    let mut client = ClientProcess::spawn(&mut command)?;
-                    client.expect("HELLO\tJOYSTICK\t1", Duration::from_secs(15))?;
-                    Ok((fixture, client, name))
-                })?;
+                let (mut fixture, mut client, name) =
+                    report.run(&profile, "Environment", "Readiness", || {
+                        start_client(mode, hats, order, wayland)
+                    })?;
+                if wayland {
+                    backend_observations.push(report.run(
+                        &profile,
+                        "Environment",
+                        "Wayland roundtrip",
+                        || observe_wayland(&client, &profile, Duration::from_secs(5)),
+                    )?);
+                }
                 for case in &cases {
                     client.observe(
                         &mut report,
@@ -253,17 +354,12 @@ pub(crate) fn run(mode: &str) -> Result<(), String> {
             "uinput → evdev → public VMNL client"
         )
     );
-    if let Some(path) = std::env::var_os("VMNL_JOYSTICK_REPORT") {
-        let mut record = report.json(mode);
-        record["requested_backend"] =
-            serde_json::json!(std::env::var("VMNL_JOYSTICK_BACKEND").ok());
-        record["fixture_guid"] = serde_json::json!("030000000df000009400000091000000");
-        std::fs::write(
-            path,
-            serde_json::to_vec_pretty(&record).map_err(|e| e.to_string())?,
-        )
-        .map_err(|e| format!("could not write joystick report: {e}"))?;
-    }
+    write_report(
+        &report,
+        mode,
+        requested_backend.as_deref(),
+        &backend_observations,
+    )?;
     match outcome {
         Ok(result) => result,
         Err(payload) => resume_unwind(payload),
@@ -274,6 +370,49 @@ pub(crate) fn run(mode: &str) -> Result<(), String> {
 #[allow(clippy::expect_used)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn backend_evidence_requires_outgoing_request_and_incoming_responses() {
+        for separator in ['#', '@'] {
+            let request = format!(
+                "[0.1] -> wl_display{separator}1.get_registry(new id wl_registry{separator}2)"
+            );
+            let global = format!("[0.2] wl_registry{separator}2.global(1, \"wl_compositor\", 6)");
+            let done = format!("[0.3] wl_callback{separator}3.done(9)");
+            let trace = format!("{request}\n{global}\n{done}\n");
+            assert_eq!(
+                wayland_roundtrip(&trace),
+                Some(vec![request.clone(), global.clone(), done.clone()])
+            );
+            for incomplete in [
+                String::new(),
+                format!("{request}\n{global}"),
+                format!("{global}\n{done}"),
+                trace.replace("->", ""),
+                trace.replace("wl_registry", "other_registry"),
+            ] {
+                assert!(wayland_roundtrip(&incomplete).is_none());
+            }
+        }
+    }
+
+    #[test]
+    fn missing_backend_evidence_fails_instead_of_qualifying() {
+        let mut command = Command::new("python3");
+        command.args(["-c", "import sys\nprint('unrelated diagnostics', file=sys.stderr)\nprint('HELLO', flush=True)\ninput()"]);
+        let mut client = ClientProcess::spawn(&mut command).expect("fixture starts");
+        client
+            .expect("HELLO", Duration::from_secs(5))
+            .expect("fixture ready");
+        let mut report = InputTestReport::default();
+        report.plan("Environment", "Backend", &["Wayland roundtrip"]);
+        assert!(report
+            .run("Environment", "Backend", "Wayland roundtrip", || {
+                observe_wayland(&client, "test", Duration::from_millis(20))
+            })
+            .is_err());
+        assert_eq!(report.json("runtime")["qualified"], false);
+    }
 
     #[test]
     fn plan_covers_every_button_and_holds_until_acknowledgement() {

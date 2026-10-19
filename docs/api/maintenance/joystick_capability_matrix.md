@@ -82,7 +82,11 @@ On 2026-10-18, the operator explicitly authorized a temporary UID-1000 uinput AC
 executions passed with the X11 profile selected (three runtime and three window), including both
 hat_buttons settings and polling orders in fresh clients. The original root:root 0600 ACL was
 restored and verified afterwards. The JSON backend field records a request, not independent
-backend-selection proof. The Wayland joystick profile is not qualified.
+backend-selection proof. On 2026-10-19, native Wayland passed three repetitions per mode:
+runtime 248/248 and window 272/272 checks, with both hat_buttons settings and polling orders.
+The four added checks per command require protocol exchanges captured independently from each
+client's stderr with DISPLAY unset. The reports retain those backend observations separately
+from the requested profile. The original uinput ACL was restored and no owned device remained.
 Windows/macOS virtual fixtures and physical controllers on every OS remain unqualified.
 Commands, report semantics and prerequisite limits are in
 [Testing](../../testing.md#virtual-joystickgamepad-scenarios-issue-94).

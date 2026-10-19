@@ -11,7 +11,8 @@ The Linux uinput fixture stays in the driver; the separate client depends direct
 ```bash
 just joystick-test x11 runtime     # public InputRuntime; no window or Vulkan initialization
 just joystick-test x11 window      # Window::poll_events -> Event/Input; requires Vulkan/display
-# wayland can be selected in either command; that profile remains unqualified
+just joystick-test wayland runtime # same Linux fixture; native Wayland compositor
+just joystick-test wayland window  # same public window checks; requires Vulkan/Wayland
 VMNL_JOYSTICK_REPORT=/tmp/vmnl-joystick.json just joystick-test x11 runtime
 ```
 
@@ -53,7 +54,16 @@ the ordinary `just test-gpu` also skips the uinput scenario. CI executes the por
 report and driver regressions, not native joystick qualification. The optional
 `VMNL_JOYSTICK_REPORT` path receives schema-version-1 JSON once the Rust driver starts, including
 PASS/FAIL/NOT RUN, reasons and qualified=false for incomplete/failed runs. Preflight rejection
-occurs before the Rust report exists. The backend field records a request, not backend proof.
+occurs before the Rust report exists. `requested_backend` alone records only a request.
+For the Wayland profile the driver removes `DISPLAY` and inherited `WAYLAND_SOCKET`, selects
+the named/default Wayland display, and enables `WAYLAND_DEBUG=client` only in the separate client.
+Before creating a fixture, each client must provide an outgoing display registry request,
+an incoming registry announcement and an incoming callback completion. The driver reads the
+existing bounded stderr capture (64 KiB) with a five-second deadline; missing or incomplete
+evidence fails the run. `backend_observations` retains these protocol lines, the child PID and
+profile for each fresh client. No GLFW import or backend-query API is added to the public client.
+The trace facility is documented by [Wayland](https://wayland.freedesktop.org/extras.html).
+This joystick route does not require the nested Weston/XTEST seat used by keyboard/mouse probes.
 
 On 2026-10-17, actual host preflight found `/dev/uinput` root-owned mode 0600 and open returned
 EACCES; current event nodes were readable. Sandbox inspection initially hid the nodes, so host
@@ -82,6 +92,18 @@ identify the client's selected GPU or prove presentation. Production source rema
 not an independent backend observation. After all six final runs, the guard restored and verified
 the original root:root 0600 uinput ACL with no added named user entry. The repository commands
 never grant access themselves; another execution still requires suitable pre-existing access.
+
+On 2026-10-19, the Wayland profile passed three consecutive executions per mode on Fedora 44,
+Hyprland 0.56.2 and the native `wayland-1` display, using source commit `0609d2e` plus the local
+test-support patch. Runtime passed 248/248 checks and window passed 272/272 per execution;
+four checks per command are the new backend observations. Every run included both hat_buttons
+settings and both polling orders, with four independently captured Wayland protocol proofs.
+All six reports had zero failures, exclusions or unexecuted checks. The explicitly authorized
+temporary uinput ACL was restored to root:root 0600 and no owned fixture remained afterwards.
+Reports, logs and source/environment metadata are retained locally under
+`target/input-test-artifacts/joystick-wayland-2026-10-19/`. These are native virtual-device
+observations through public VMNL APIs; they do not qualify physical controllers, Windows/macOS,
+rendered presentation or human graphical behavior.
 
 ## Test Types
 

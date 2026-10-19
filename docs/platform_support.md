@@ -85,9 +85,14 @@ the X11 profile selected: public `InputRuntime` 244/244 report checks and `Windo
 settings and consumer orders run in fresh clients. An explicitly authorized temporary uinput
 ACL enabled these runs; its original root:root 0600 state was restored and verified afterwards.
 This is local virtual-device evidence, not physical-controller, independent backend-selection,
-rendered-frame or human graphical validation. The Wayland joystick profile, Windows/macOS
-virtual injection and physical-controller behavior remain unqualified. Deterministic and Null
-results do not establish present-device behavior.
+rendered-frame or human graphical validation.
+On 2026-10-19, the native Wayland joystick profile passed three consecutive runs per mode on
+Hyprland 0.56.2: runtime 248/248 and window 272/272 checks, including one protocol-exchange
+proof per fresh client with X11 unavailable. Both hat_buttons settings and consumer orders
+were exercised. The temporary uinput ACL was restored and all owned devices were removed.
+This qualifies the exercised Linux Wayland virtual-device paths. Windows/macOS virtual
+injection and physical-controller behavior remain unqualified. Deterministic and Null results
+do not establish present-device behavior.
 See the [scenario matrix](api/maintenance/joystick_capability_matrix.md#functional-linux-coverage-added-for-issue-94)
 and [opt-in commands](testing.md#virtual-joystickgamepad-scenarios-issue-94).
 
