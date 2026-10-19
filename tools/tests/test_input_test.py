@@ -218,6 +218,36 @@ class InputTestPrerequisiteTests(unittest.TestCase):
             self.assertEqual(input_test.run_joystick_test("x11", "runtime"), 101)
         run.assert_called_once()
 
+    def test_physical_joystick_uses_existing_launcher_without_uinput(self) -> None:
+        artifact = json.dumps({"reason": "compiler-artifact",
+                               "target": {"name": "vmnl-joystick-client"},
+                               "executable": "/target/physical-client"})
+        for mode, expected in [("runtime", "public_runtime_observes_physical_joystick"),
+                               ("window", "public_windows_observe_physical_joystick")]:
+            with (
+                self.subTest(mode=mode),
+                patch.object(input_test, "check_physical_joystick_prerequisites") as check,
+                patch.object(input_test, "check_joystick_prerequisites") as virtual,
+                patch.object(input_test.subprocess, "run", side_effect=[
+                    SimpleNamespace(returncode=0, stdout=artifact), SimpleNamespace(returncode=19),
+                ]) as run,
+            ):
+                self.assertEqual(input_test.run_joystick_test("wayland", mode,
+                                                           physical_profile="controller.json"), 19)
+            check.assert_called_once_with("wayland", "controller.json")
+            virtual.assert_not_called()
+            self.assertIn(expected, run.call_args.args[0])
+            self.assertEqual(run.call_args.kwargs["env"]["VMNL_JOYSTICK_PHYSICAL_PROFILE"],
+                             str(Path("controller.json").resolve()))
+
+    def test_physical_joystick_requires_profile_and_linux(self) -> None:
+        with patch.object(input_test.platform, "system", return_value="Windows"):
+            with self.assertRaisesRegex(input_test.PrerequisiteError, "Linux-only"):
+                input_test.check_physical_joystick_prerequisites("win32", "unused")
+        with patch.object(input_test.platform, "system", return_value="Linux"):
+            with self.assertRaisesRegex(input_test.PrerequisiteError, "profile file"):
+                input_test.check_physical_joystick_prerequisites("wayland", "/missing/profile")
+
     def test_joystick_wayland_disables_x11_and_inherited_socket(self) -> None:
         artifact = json.dumps({
             "reason": "compiler-artifact", "target": {"name": "vmnl-joystick-client"},

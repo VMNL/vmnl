@@ -33,7 +33,7 @@ fn wayland_roundtrip(trace: &str) -> Option<Vec<String>> {
     .collect()
 }
 
-fn observe_wayland(
+pub(super) fn observe_wayland(
     client: &ClientProcess,
     profile: &str,
     timeout: Duration,
@@ -215,6 +215,19 @@ fn cases() -> Vec<Case> {
     cases
 }
 
+pub(super) fn configure_wayland(command: &mut Command) {
+    command.env_remove("DISPLAY");
+    command.env_remove("WAYLAND_SOCKET");
+    command.env_remove("FORCE_COLOR");
+    command.env("NO_COLOR", "1");
+    command.env("XDG_SESSION_TYPE", "wayland");
+    command.env("WAYLAND_DEBUG", "client");
+    command.env(
+        "WAYLAND_DISPLAY",
+        std::env::var_os("WAYLAND_DISPLAY").unwrap_or_else(|| "wayland-0".into()),
+    );
+}
+
 fn start_client(
     mode: &str,
     hats: bool,
@@ -229,16 +242,7 @@ fn start_client(
     command.args([mode, if hats { "true" } else { "false" }, order, &name]);
     command.env_remove("SDL_GAMECONTROLLERCONFIG");
     if wayland {
-        command.env_remove("DISPLAY");
-        command.env_remove("WAYLAND_SOCKET");
-        command.env_remove("FORCE_COLOR");
-        command.env("NO_COLOR", "1");
-        command.env("XDG_SESSION_TYPE", "wayland");
-        command.env("WAYLAND_DEBUG", "client");
-        command.env(
-            "WAYLAND_DISPLAY",
-            std::env::var_os("WAYLAND_DISPLAY").unwrap_or_else(|| "wayland-0".into()),
-        );
+        configure_wayland(&mut command);
     }
     let mut client = ClientProcess::spawn(&mut command)?;
     client.expect("HELLO\tJOYSTICK\t1", Duration::from_secs(15))?;

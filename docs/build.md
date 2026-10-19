@@ -47,6 +47,7 @@ just test-platform-wayland Wayland contract; caller supplies nested Weston + X11
 just test-platform-x11     X11 contract; caller supplies X server/window manager
 just input-test <backend>  native input contract; requires an explicit backend and active desktop
 just joystick-test <backend> <mode> opt-in Linux virtual joystick; runtime or window mode
+just joystick-physical-test <backend> <profile> <mode> guided Linux physical-controller protocol
 just test-gpu-compile      compile GPU tests without running them
 just test-gpu              GPU/display tests
 just doctest               Rustdoc examples
@@ -76,6 +77,10 @@ read access to the newly created event node. The runtime client creates neither 
 Vulkan resources; the window client requires Vulkan/display support. Commands never change host
 permissions. See [virtual joystick tests](testing.md#virtual-joystickgamepad-scenarios-issue-94)
 for qualification scope, reports and the initialization profiles.
+
+`just joystick-physical-test x11|wayland controller.json runtime|window` uses an explicit
+expectation profile and an interactive operator, without uinput or host permission changes.
+See the [physical protocol](testing.md#physical-joystick-operator-protocol-linux).
 
 ## Test Summaries
 

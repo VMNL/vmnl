@@ -93,6 +93,10 @@ were exercised. The temporary uinput ACL was restored and all owned devices were
 This qualifies the exercised Linux Wayland virtual-device paths. Windows/macOS virtual
 injection and physical-controller behavior remain unqualified. Deterministic and Null results
 do not establish present-device behavior.
+The Linux physical operator protocol is implemented for standalone runtime and window snapshots,
+with explicit profiles, tolerances and exclusions. No controller was available for its native
+qualification on 2026-10-19; it remains pending. See the
+[physical protocol](testing.md#physical-joystick-operator-protocol-linux).
 See the [scenario matrix](api/maintenance/joystick_capability_matrix.md#functional-linux-coverage-added-for-issue-94)
 and [opt-in commands](testing.md#virtual-joystickgamepad-scenarios-issue-94).
 

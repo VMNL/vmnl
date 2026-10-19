@@ -3,6 +3,8 @@
 
 //! Public VMNL observations; native device creation and injection belong to the driver.
 
+mod physical;
+
 use std::{
     cell::RefCell,
     io::{self, BufRead as _, Write as _},
@@ -762,6 +764,9 @@ fn check_events(events: &[Event], id: JoystickId, connected: Option<bool>) -> VM
 
 pub(super) fn run() -> VMNLResult<()> {
     let args: Vec<_> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|arg| arg == "physical") {
+        return physical::run(&args[1..]);
+    }
     require(
         args.len() == 4
             && matches!(args[0].as_str(), "runtime" | "window")

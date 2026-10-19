@@ -105,6 +105,80 @@ Reports, logs and source/environment metadata are retained locally under
 observations through public VMNL APIs; they do not qualify physical controllers, Windows/macOS,
 rendered presentation or human graphical behavior.
 
+## Physical joystick operator protocol (Linux)
+
+The physical path reuses the public joystick client, #91 process transport, strict
+READY/INJECTED/OBSERVED barriers, per-check report and Wayland backend observation. It does
+not create a virtual device, write input events, change mappings or request uinput access.
+It requires a Linux display backend, readable controller nodes, a connected controller and
+an interactive operator terminal. Window mode also requires Vulkan. The operator declares
+the model and USB/Bluetooth connection; neither a GUID nor a virtual HID node proves physical
+hardware by itself. Known VMNL virtual fixtures are rejected.
+
+```bash
+VMNL_JOYSTICK_REPORT=/tmp/physical-runtime.json \
+  just joystick-physical-test wayland controller.json runtime
+VMNL_JOYSTICK_REPORT=/tmp/physical-window.json \
+  just joystick-physical-test wayland controller.json window
+# x11 is also selectable; requested_backend alone does not independently prove X11 selection
+```
+
+Prepare a schema-version-1 JSON profile from the device specification or an independent
+measurement, **not values copied from the VMNL output being tested**. This illustrative
+profile describes one button, one axis and one hat; it is not a qualified controller profile:
+
+```json
+{
+  "schema_version": 1,
+  "model": "replace with the physical controller model",
+  "connection": "usb",
+  "buttons": [{"index": 0, "label": "South face button", "mapped": 0}],
+  "axes": [{
+    "index": 0, "label": "Left stick horizontal",
+    "minimum": -1.0, "neutral": 0.0, "maximum": 1.0, "tolerance": 0.1,
+    "gamepad": {"index": 0, "minimum": -1.0, "neutral": 0.0, "maximum": 1.0}
+  }],
+  "hats": [{"index": 0, "label": "Dpad"}],
+  "exclusions": []
+}
+```
+
+All four arrays are required. Every reported raw button, axis and hat must have a tested
+index or an explicit exclusion, for example
+`{"kind":"button","index":1,"reason":"control unavailable for this session"}`.
+Duplicate/out-of-range indices, an implicit omitted control or an empty reason fail the plan.
+At least one button must be tested to exercise held disconnection. The protocol bounds the
+inventory at 128 raw buttons, 64 axes and eight hats; larger devices fail with a diagnostic.
+`mapped` and axis `gamepad` are optional (or null) for raw-only/unmapped devices. Their indices
+use the public GamepadButton/GamepadAxis order. Mapped controls without independent expectations
+are explicitly EXCLUDED in the report. A successful report qualifies only its tested profile.
+
+The client lists all present slots with names, GUIDs, raw counts and mapping availability.
+Type PHYSICAL to attest the hardware, then select an actually listed zero-based slot; slot 0
+is never assumed. The selected identity and counts must remain unchanged throughout the run.
+Each prompt has a 45-second deadline (q cancels). Perform the action, press Enter, and maintain
+the state until PASS before changing it. VMNL has five seconds to observe values stable for
+150 ms. A press/release completed between samples is not an observable test action.
+
+Each tested button follows initial release, press, release. Axis steps use neutral, minimum,
+maximum and restored neutral, with an explicit absolute tolerance in [0.001, 0.25]; target
+bands must not overlap, except that a trigger's neutral may equal an endpoint. Optional mapped
+axis targets are independent and may be inverted relative to the raw axis. Hats test all nine
+positions then return to center. The final button stays held until the operator disconnects
+the device. The client requires absence and a single disconnect notification in each active
+consumer; window mode also checks mapped transitions, no held controls after disconnection,
+one-batch release flags, and their clearing at the next absent batch.
+
+No device, invalid profile/protocol, cancellation, EOF, timeout, wrong value or unsuccessful
+child exit fails the run. Remaining planned checks stay NOT RUN. On error the child is reaped;
+the operator must release the physical controls. JSON uses evidence=physical-operator-declared
+and records the profile, operator declaration and selected identity. It does not independently
+authenticate the hardware. The physical scenarios remain ignored and excluded from normal GPU
+validation. CI tests their deterministic oracles and failure handling, not physical hardware.
+
+On 2026-10-19 the operator reported no controller available. Physical qualification remains
+pending; implementation, compilation and simulated driver tests are not hardware evidence.
+
 ## Test Types
 
 ```text
