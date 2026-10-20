@@ -93,6 +93,11 @@ were exercised. The temporary uinput ACL was restored and all owned devices were
 This qualifies the exercised Linux Wayland virtual-device paths. Windows/macOS virtual
 injection and physical-controller behavior remain unqualified. Deterministic and Null results
 do not establish present-device behavior.
+The `CI` workflow prepares an opt-in `native_joystick` matrix for Ubuntu Xvfb/Openbox and
+nested Weston/Pixman, with explicit lavapipe Vulkan in window mode and three repetitions
+per backend/mode. These hosted profiles remain unqualified until their native JSON reports
+are observed; local Hyprland evidence does not qualify them. Ordinary CI remains headless
+for joystick scenarios. See [Linux joystick CI](testing.md#linux-joystick-ci).
 The physical operator protocol is prepared for Linux (`x11`/`wayland`), Windows (`win32`) and
 macOS (`cocoa`), in standalone runtime and window modes, with explicit profiles, tolerances
 and exclusions. Host/backend mismatches fail; Linux-only virtual injection is kept separate.

@@ -99,6 +99,11 @@ separate runtime/window hardware reports. Virtual injection on Windows/macOS rem
 and unqualified. See the [physical protocol](../../testing.md#physical-joystick-operator-protocol).
 Commands, report semantics and prerequisite limits are in
 [Testing](../../testing.md#virtual-joystickgamepad-scenarios-issue-94).
+The optional CI matrix now schedules three repetitions per Linux backend/mode, retaining
+native reports and rejecting incomplete evidence. Its Ubuntu Xvfb/nested-Weston/lavapipe
+profiles are prepared but have not been qualified by an observed hosted run. See
+[Linux joystick CI](../../testing.md#linux-joystick-ci); the local results above remain
+separate from hosted-runner and physical-device evidence.
 
 - Unit/API tests prove pure conversion, validation, configuration, stick math, and queue semantics. `tests/platform` proves real GLFW behavior with `ClientApi::NoApi`; it must not create a Vulkan instance or surface.
 - Record Null/simulated, native backend, and physical-controller observations separately. A build or Null probe never counts as physical-controller validation. Windows and macOS native probes remain subject to the repository's platform qualification policy.

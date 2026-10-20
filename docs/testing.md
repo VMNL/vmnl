@@ -50,8 +50,9 @@ timed-out client while draining both pipes. Explicit held-disconnect cases remov
 device before physical cleanup so cleanup cannot satisfy the VMNL release oracle.
 
 Native tests are ignored by default. `just test` and `just validate` remain display-free;
-the ordinary `just test-gpu` also skips the uinput scenario. CI executes the portable transport,
-report and driver regressions, not native joystick qualification. The optional
+the ordinary `just test-gpu` also skips the uinput scenario. Default CI executes the portable
+transport, report and driver regressions. The opt-in [Linux joystick CI](#linux-joystick-ci)
+additionally schedules native virtual-device scenarios. The optional
 `VMNL_JOYSTICK_REPORT` path receives schema-version-1 JSON once the Rust driver starts, including
 PASS/FAIL/NOT RUN, reasons and qualified=false for incomplete/failed runs. Preflight rejection
 occurs before the Rust report exists. `requested_backend` alone records only a request.
@@ -64,6 +65,92 @@ evidence fails the run. `backend_observations` retains these protocol lines, the
 profile for each fresh client. No GLFW import or backend-query API is added to the public client.
 The trace facility is documented by [Wayland](https://wayland.freedesktop.org/extras.html).
 This joystick route does not require the nested Weston/XTEST seat used by keyboard/mouse probes.
+
+### Linux joystick CI
+
+The existing `CI` workflow has a `native_joystick` boolean input, defaulting to false.
+Manually dispatching it with that input enabled schedules four blocking jobs:
+X11/Wayland, each in runtime/window mode, with three consecutive repetitions per job.
+Ordinary pull requests, pushes, `just test` and `just validate` retain their existing scope.
+The workflow does not use `continue-on-error` for joystick scenarios. This is an automatic
+simulation acceptance gate; physical-controller qualification remains a later, separate step.
+
+The opt-in jobs provision disposable Ubuntu runners. They load uinput, save and temporarily
+grant the runner UID access to `/dev/uinput`, and install a volatile udev rule limited to newly
+created event nodes with this fixture's name/vendor/product. An always-run cleanup removes
+the rule and restores/checks the saved uinput ACL. No repository test or local launcher grants
+permissions. Enabling this job must only be done on the disposable hosted runners configured
+in the workflow; it is not a setup script for a developer's machine.
+
+X11 uses Xvfb/Openbox. Wayland uses Weston/Pixman nested in that display; each public client
+still supplies its independent Wayland protocol evidence with DISPLAY unset. Window mode
+uses Mesa's lavapipe software Vulkan ICD selected explicitly through `VK_DRIVER_FILES`;
+the [Vulkan loader](https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md)
+documents this driver override. Runtime jobs do not invoke the Vulkan preflight.
+Missing input access or display, and missing software ICD/surface support in window mode,
+fail the job. No fallback
+to Null or a different display backend qualifies the run. These runner configurations are
+prepared, not yet qualified by an observed hosted execution. Local Hyprland results below
+do not establish Xvfb/Weston/lavapipe behavior on Ubuntu.
+
+`tools/joystick_ci.py` only repeats the existing `tools/input_test.py --joystick` command;
+it does not introduce another injector, transport or client. It requires a new artifact
+directory, rejects unsuccessful exits, missing/malformed reports, unexpected schema/profile,
+duplicates and every FAIL/EXCLUDED/NOT RUN check. Every hat_buttons/poll-order profile must
+match the fixed version-1 acceptance inventory in that validator, independently of the driver's
+reported plan. Missing and unexpected check identities fail, including a check omitted or
+replaced in all four profiles. The expected totals are 244/268 for X11 runtime/window and
+248/272 for Wayland; the inventory comparison checks identities, not just counts. The repetition
+summary records `workload_version` separately from its JSON schema version. Each Wayland
+profile also needs its own backend evidence. A fixed per-repetition timeout terminates the
+complete subprocess group. Failure stops that job's remaining repetitions and leaves its
+summary unqualified.
+
+The same repetition/report validation can be exercised on an already configured desktop:
+
+```bash
+python3 tools/joystick_ci.py x11 runtime target/joystick-local-x11-runtime
+python3 tools/joystick_ci.py wayland window target/joystick-local-wayland-window
+```
+
+Each matrix job uploads its three native schema-version-1 reports, per-run logs, source/host/
+runner/display/ICD metadata, a separate versioned repetition summary, display/Vulkan diagnostics
+and the before/after uinput ACLs, including on failure. Compilation and portable report-validator
+tests do not qualify a native runner. No hosted joystick execution has been observed for this
+workflow patch; physical devices and Windows/macOS virtual fixtures remain unqualified.
+
+### Windows/macOS virtual fixture prerequisites
+
+Windows/macOS virtual injection is not implemented. Preparing the physical operator protocol
+does not provide a virtual-device supplier. The controlled mapping text in the public client
+now has no `platform:Linux` filter; its deterministic test fixes all 21 button/axis selectors
+and their swap, mapping-loss and hat variants. The current fixture identity, native driver
+and native qualification remain Linux-specific. Platform-neutral mapping text alone is not
+Windows/macOS native evidence.
+
+The Windows VHF path needs a separately built/deployed HID source driver. Microsoft's
+[VHF specification](https://learn.microsoft.com/en-us/windows-hardware/drivers/hid/virtual-hid-framework--vhf-)
+supports the source driver in kernel mode; VHF is not a user-mode joystick injection API.
+An existing virtual-device supplier would need an identified version/API and owned-device
+connect, held-state update, disconnect and cleanup semantics before adapter implementation.
+No supplier, driver package or signing/deployment infrastructure has been selected here.
+
+The macOS candidate is an IOHIDUserDevice helper carrying Apple's
+[`com.apple.developer.hid.virtual.device` entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.hid.virtual.device).
+Apple's [IOHIDResourceDeviceUserClient source](https://github.com/apple-oss-distributions/IOHIDFamily/blob/777ccd9698845aadf711e32d843c8c9b777431d9/IOHIDFamily/IOHIDResourceUserClient.cpp)
+checks the developer virtual-device or Apple user-device entitlement when opening that user
+client. The inspected implementation has no administrator/root exception to that check.
+No authorized signing profile/helper is available; sudo, accessibility access or a generic
+physical-controller connection are not substitutes for this capability.
+
+Once provisioned, suppliers must stay outside the public VMNL client and reuse the existing
+driver's barriers, deadlines and cleanup. Expected samples must come from a fixed fixture
+specification, independently of values observed through VMNL. Missing supplier/capability,
+failed creation or timeout must fail qualification. OS injection, compilation, deterministic
+mapping tests and physical hardware results remain separate evidence. No driver, entitlement,
+certificate, security setting or privileged host configuration is installed by these tests.
+
+### Local Linux joystick evidence
 
 On 2026-10-17, actual host preflight found `/dev/uinput` root-owned mode 0600 and open returned
 EACCES; current event nodes were readable. Sandbox inspection initially hid the nodes, so host

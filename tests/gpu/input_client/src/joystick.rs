@@ -36,7 +36,7 @@ const BUTTONS: [GamepadButton; 15] = [
     GamepadButton::DpadDown,
     GamepadButton::DpadLeft,
 ];
-const MAPPING: &str = "x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,dpup:b11,dpright:b12,dpdown:b13,dpleft:b14,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5,platform:Linux,";
+const MAPPING: &str = "x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,dpup:b11,dpright:b12,dpdown:b13,dpleft:b14,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5,";
 
 type CallbackTrace = Rc<RefCell<Vec<(Event, usize, thread::ThreadId)>>>;
 
@@ -46,6 +46,23 @@ enum Mapping {
     Normal,
     Swapped,
     Hat,
+}
+
+fn controlled_mapping(mapping: Mapping) -> String {
+    let prefix = match mapping {
+        Mapping::Normal | Mapping::Hat => "a:b0,b:b1,",
+        Mapping::Swapped => "a:b1,b:b0,",
+        Mapping::None => "a:b99,b:b1,",
+    };
+    let suffix = if mapping == Mapping::Hat {
+        MAPPING.replace(
+            "dpup:b11,dpright:b12,dpdown:b13,dpleft:b14,",
+            "dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,",
+        )
+    } else {
+        MAPPING.to_owned()
+    };
+    format!("{GUID},VMNL Controlled,{prefix}{suffix}")
 }
 
 #[derive(Clone, Debug)]
@@ -529,21 +546,8 @@ impl Client {
     }
 
     fn mapping(&mut self, mapping: Mapping) -> VMNLResult<()> {
-        let prefix = match mapping {
-            Mapping::Normal | Mapping::Hat => "a:b0,b:b1,",
-            Mapping::Swapped => "a:b1,b:b0,",
-            Mapping::None => "a:b99,b:b1,",
-        };
-        let suffix = if mapping == Mapping::Hat {
-            MAPPING.replace(
-                "dpup:b11,dpright:b12,dpdown:b13,dpleft:b14,",
-                "dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,",
-            )
-        } else {
-            MAPPING.to_owned()
-        };
         self.first
-            .update_gamepad_mappings(&format!("{GUID},VMNL Controlled,{prefix}{suffix}"))?;
+            .update_gamepad_mappings(&controlled_mapping(mapping))?;
         self.expected.mapping = mapping;
         Ok(())
     }
@@ -849,6 +853,72 @@ fn invalid(reason: impl std::fmt::Display) -> VMNLError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn controlled_mapping_has_exact_selectors_and_no_platform_restriction() {
+        use std::collections::BTreeMap;
+
+        let selectors = BTreeMap::from([
+            ("a", "b0"),
+            ("b", "b1"),
+            ("x", "b2"),
+            ("y", "b3"),
+            ("leftshoulder", "b4"),
+            ("rightshoulder", "b5"),
+            ("back", "b6"),
+            ("start", "b7"),
+            ("guide", "b8"),
+            ("leftstick", "b9"),
+            ("rightstick", "b10"),
+            ("dpup", "b11"),
+            ("dpright", "b12"),
+            ("dpdown", "b13"),
+            ("dpleft", "b14"),
+            ("leftx", "a0"),
+            ("lefty", "a1"),
+            ("rightx", "a2"),
+            ("righty", "a3"),
+            ("lefttrigger", "a4"),
+            ("righttrigger", "a5"),
+        ]);
+        for mapping in [
+            Mapping::Normal,
+            Mapping::Swapped,
+            Mapping::None,
+            Mapping::Hat,
+        ] {
+            let line = controlled_mapping(mapping);
+            let mut fields = line.split(',');
+            assert_eq!(fields.next(), Some("030000000df000009400000091000000"));
+            assert_eq!(fields.next(), Some("VMNL Controlled"));
+            let entries: Vec<_> = fields.filter(|field| !field.is_empty()).collect();
+            assert_eq!(entries.len(), 21);
+            let actual: Option<BTreeMap<_, _>> = entries
+                .into_iter()
+                .map(|field| field.split_once(':'))
+                .collect();
+            let mut expected = selectors.clone();
+            match mapping {
+                Mapping::Normal => {}
+                Mapping::Swapped => {
+                    expected.insert("a", "b1");
+                    expected.insert("b", "b0");
+                }
+                Mapping::None => {
+                    expected.insert("a", "b99");
+                }
+                Mapping::Hat => {
+                    expected.extend([
+                        ("dpup", "h0.1"),
+                        ("dpright", "h0.2"),
+                        ("dpdown", "h0.4"),
+                        ("dpleft", "h0.8"),
+                    ]);
+                }
+            }
+            assert_eq!(actual, Some(expected));
+        }
+    }
 
     #[test]
     fn axis_oracle_rejects_missing_wrong_and_nonfinite_values() {
