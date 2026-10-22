@@ -167,11 +167,40 @@ pub(super) fn plan(report: &mut InputTestReport) {
         "Focus",
         "Cycle",
         &[
+            "Receiver prepared",
             "Receiver ready",
             "Focus loss and synthetic releases",
             "Focus restored after cleanup",
         ],
     );
+}
+
+pub(super) fn prepare_focus(
+    report: &mut InputTestReport,
+    client: &mut ClientProcess,
+    injector: &X11Injector,
+) -> VMNLResult<()> {
+    client
+        .observe(
+            report,
+            "Focus",
+            "Cycle",
+            &["Receiver prepared"],
+            "PREPARE_FOCUS",
+            || Ok(()),
+        )
+        .map_err(invalid_state)?;
+    client
+        .observe(
+            report,
+            "Focus",
+            "Cycle",
+            &["Receiver ready"],
+            "FOCUS_READY",
+            || injector.prepare_focus_pointer(),
+        )
+        .map_err(invalid_state)?;
+    Ok(())
 }
 
 pub(super) fn run(
@@ -381,16 +410,7 @@ pub(super) fn run(
         )
         .map_err(invalid_state)?;
     if let Some(code) = injector.keycode(Key::A) {
-        client
-            .observe(
-                report,
-                "Focus",
-                "Cycle",
-                &["Receiver ready"],
-                "PREPARE_FOCUS",
-                || Ok(()),
-            )
-            .map_err(invalid_state)?;
+        prepare_focus(report, client, injector)?;
         key_action(report, client, injector, "Focus", "Held A", Key::A, true, 0)?;
         button_action(
             report,
@@ -446,6 +466,7 @@ pub(super) fn run(
             "Focus",
             "Cycle",
             &[
+                "Receiver prepared",
                 "Receiver ready",
                 "Focus loss and synthetic releases",
                 "Focus restored after cleanup",

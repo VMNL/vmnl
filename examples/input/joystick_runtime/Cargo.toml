@@ -1,0 +1,9 @@
+[package]
+name = "joystick_runtime"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+vmnl = { path = "../../../crates/vmnl" }

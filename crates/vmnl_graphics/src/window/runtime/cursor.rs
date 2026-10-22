@@ -86,7 +86,7 @@ impl VMNLWindow {
         let cursor = if let Some(cursor) = &self.handle.hidden_cursor {
             cursor.clone()
         } else {
-            let cursor = Cursor::transparent(&self.handle.instance)?;
+            let cursor = Cursor::transparent(&self.handle.vmnl_instance.glfw)?;
             self.handle.hidden_cursor = Some(cursor.clone());
             cursor
         };

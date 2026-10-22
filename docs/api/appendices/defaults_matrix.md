@@ -6,10 +6,10 @@
 | `Rgba` | `(0, 0, 0, 0)`; named colors are opaque |
 | `Vector2f`, `Vector3f`, `Vertex2D`, `Vertex3D` | Component/field zero defaults |
 | `Camera` | position `(0,0,1)`, target `(0,0,0)`, up `(0,1,0)`; 3D remains scaffolded |
-| `WindowBuilder` | title `VMNL Window`, `800x600`, common event delivery enabled, built-in 2D shaders, opaque black clear, no size limits, automatic present mode |
+| `WindowBuilder` | title `VMNL Window`, `800x600`, common event delivery enabled, joystick event delivery/tracking disabled, zero-dead-zone `Math2D` left/right sticks, built-in 2D shaders, opaque black clear, no size limits, automatic present mode |
 | `PresentMode` | `Auto`: `Mailbox` → `Immediate` → `FifoRelaxed` → `Fifo` among supported modes |
 | `RenderMode` | `PerObject`; `Batched` currently falls back to it |
-| `Input`, `KeyboardState`, `MouseState` | All states inactive |
+| `Input`, `KeyboardState`, `MouseState` | Keyboard and mouse states inactive; each joystick slot is `NotTracked` |
 | Window sticky keys / sticky mouse buttons / lock-key modifier reporting | Disabled |
 | `CursorMode` / new window cursor | `Normal`; backend default cursor; raw mouse motion disabled |
 | `CursorBuilder` | hotspot `(0, 0)`; diagnostic hotspot marker disabled |

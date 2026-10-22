@@ -31,6 +31,7 @@ pub(super) enum Action {
     LockReporting(bool),
     Hover(bool),
     PrepareFocus,
+    FocusReady,
     FocusLoss,
     RestoreFocus,
 }
@@ -86,6 +87,7 @@ impl Action {
             ["HOVER", "ENTER"] => Ok(Self::Hover(true)),
             ["HOVER", "LEAVE"] => Ok(Self::Hover(false)),
             ["PREPARE_FOCUS"] => Ok(Self::PrepareFocus),
+            ["FOCUS_READY"] => Ok(Self::FocusReady),
             ["FOCUS_LOSS"] => Ok(Self::FocusLoss),
             ["RESTORE_FOCUS"] => Ok(Self::RestoreFocus),
             _ => Err(invalid_state("unknown or malformed scenario action")),
@@ -477,7 +479,7 @@ impl State {
                     Err(invalid_state(format!("hover deadline: {events:?}")))
                 },
             )?,
-            Action::PrepareFocus => check(sequence, "Receiver ready", || {
+            Action::PrepareFocus => check(sequence, "Receiver prepared", || {
                 require(
                     self.is_empty(),
                     "focus receiver preparation requires released input",
@@ -491,24 +493,25 @@ impl State {
                 receiver.hide();
                 self.focus_receiver = Some(receiver);
                 window.focus();
-                window.set_cursor_position(120.0, 100.0)?;
-                let deadline = Instant::now() + INPUT_TIMEOUT;
-                let mut stable = None;
-                while Instant::now() < deadline {
+                Ok(())
+            })?,
+            Action::FocusReady => check(sequence, "Receiver ready", || {
+                require(
+                    self.focus_receiver.is_some(),
+                    "focus receiver was not prepared",
+                )?;
+                let started = Instant::now();
+                loop {
                     let _ = window.poll_events();
-                    if window.is_focused() && window.is_cursor_hovered() {
-                        let since = stable.get_or_insert_with(Instant::now);
-                        if since.elapsed() >= Duration::from_millis(100) {
-                            return Ok(());
-                        }
-                    } else {
-                        stable = None;
+                    require(
+                        window.is_focused() && window.is_cursor_hovered(),
+                        &format!("primary window lost readiness after native preparation: focused={}, hovered={}, cursor={:?}", window.is_focused(), window.is_cursor_hovered(), window.get_cursor_position()),
+                    )?;
+                    if started.elapsed() >= Duration::from_millis(100) {
+                        return Ok(());
                     }
                     window.wait_events_timeout(0.01);
                 }
-                Err(invalid_state(
-                    "primary window did not become ready after receiver preparation",
-                ))
             })?,
             Action::FocusLoss => check(sequence, "Focus loss and synthetic releases", || {
                 let scan = self
@@ -863,6 +866,8 @@ mod tests {
             vec!["TEXT", "🦀"],
             vec!["TAP_BATCH", "KEY"],
             vec!["DISABLED_RELEASE", "BUTTON"],
+            vec!["PREPARE_FOCUS"],
+            vec!["FOCUS_READY"],
         ] {
             assert!(Action::parse(&fields).is_ok());
         }
@@ -872,6 +877,7 @@ mod tests {
             vec!["MOD_KEY_PRESS", "A", "1", "38"],
             vec!["TEXT", "ab"],
             vec!["TAP_BATCH", "UNKNOWN"],
+            vec!["FOCUS_READY", "120", "100"],
         ] {
             assert!(Action::parse(&fields).is_err());
         }

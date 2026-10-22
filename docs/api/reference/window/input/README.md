@@ -6,6 +6,9 @@
 | [`CursorBuilder`](cursor_builder.md) | Borrowed RGBA8 custom-cursor configuration |
 | [`CursorMode`](cursor_mode.md) | Cursor visibility and confinement mode |
 | [`Input`](input.md) | Window-owned keyboard/mouse snapshot |
+| [`JoystickState`](../../joystick_gamepad.md) | Per-window joystick/gamepad snapshot and button transitions |
+| [`StickConfig`](../../joystick_gamepad.md) | Processed mapped-stick configuration |
+| [`InputRuntime`](../../input_runtime.md) | Shared GLFW lifetime and initialization settings without Vulkan |
 | [`Key`](key.md) | Supported key identifier |
 | [`KeyboardState`](keyboard_state.md) | Current and transition key queries |
 | [`Modifiers`](modifiers.md) | Modifier flags attached to keyboard, mouse-button, and legacy text events |
@@ -17,6 +20,7 @@
 | [`StandardCursorBuilder`](standard_cursor_builder.md) | Deferred standard-cursor allocation |
 
 Input tracking depends on backend focus and compositor/window-manager policy. Public event delivery
-can be disabled without disabling the keyboard/mouse-button snapshot.
+can be disabled without disabling keyboard/mouse-button tracking. Joystick sampling has a separate
+per-window opt-in and is independent of joystick connection-event delivery.
 See the generated [window platform compatibility matrix](../platform_compatibility.md) and the
 [GLFW inventory](../../../maintenance/glfw_platform_inventory.md) for callback and cursor limits.

@@ -242,7 +242,7 @@ def run_vmnl_input_test(backend: str) -> int:
     return result.returncode
 
 
-def vmnl_client_executable(cargo_output: str) -> str:
+def vmnl_client_executable(cargo_output: str, target: str = "vmnl-input-client") -> str:
     """Use Cargo's artifact path, including a caller's CARGO_TARGET_DIR override."""
     try:
         records = [json.loads(line) for line in cargo_output.splitlines() if line.strip()]
@@ -253,7 +253,7 @@ def vmnl_client_executable(cargo_output: str) -> str:
     executables = [
         record["executable"] for record in records
         if record.get("reason") == "compiler-artifact"
-        and record.get("target", {}).get("name") == "vmnl-input-client"
+        and record.get("target", {}).get("name") == target
         and record.get("executable")
     ]
     if len(executables) != 1:
@@ -261,16 +261,113 @@ def vmnl_client_executable(cargo_output: str) -> str:
     return executables[0]
 
 
+def check_joystick_prerequisites(backend: str) -> None:
+    """Check access without creating a device or changing the host."""
+    if platform.system() != "Linux" or backend not in ("x11", "wayland"):
+        raise PrerequisiteError("virtual joystick injection is currently Linux-only")
+    try:
+        descriptor = os.open("/dev/uinput", os.O_WRONLY | os.O_NONBLOCK)
+        os.close(descriptor)
+        with os.scandir("/dev/input"):
+            pass
+    except OSError as error:
+        raise PrerequisiteError(
+            f"uinput/input access unavailable: {error}; no host permissions were changed"
+        ) from error
+    if backend == "wayland":
+        _check_wayland_socket(_wayland_socket(os.environ))
+    elif not os.environ.get("DISPLAY"):
+        raise PrerequisiteError("DISPLAY is unset")
+
+
+def check_physical_joystick_prerequisites(backend: str, profile: str) -> None:
+    """Physical observations require no virtual injection or host permission changes."""
+    expected_system = BACKEND_SYSTEM.get(backend)
+    if expected_system is None:
+        raise PrerequisiteError(f"unknown joystick backend {backend!r}")
+    if platform.system() != expected_system:
+        raise PrerequisiteError(f"backend {backend!r} requires {expected_system}")
+    if not Path(profile).is_file():
+        raise PrerequisiteError("physical joystick profile file is unavailable")
+    if backend == "wayland":
+        _check_wayland_socket(_wayland_socket(os.environ))
+    elif backend == "x11" and not os.environ.get("DISPLAY"):
+        raise PrerequisiteError("DISPLAY is unset")
+
+
+def run_joystick_test(backend: str, mode: str, *, physical_profile: str | None = None) -> int:
+    """Reuse the public client for virtual injection or physical operator actions."""
+    if mode not in ("runtime", "window"):
+        raise PrerequisiteError("joystick mode must be runtime or window")
+    if physical_profile is None:
+        check_joystick_prerequisites(backend)
+    else:
+        check_physical_joystick_prerequisites(backend, physical_profile)
+    target = "vmnl-joystick-client"
+    try:
+        build = subprocess.run(
+            ["cargo", "build", "-p", "vmnl-input-client", "--bin", target, "--locked",
+             "--message-format=json-render-diagnostics"],
+            cwd=ROOT, check=False, stdout=subprocess.PIPE, text=True,
+        )
+        if build.returncode != 0:
+            return build.returncode
+        environment = os.environ.copy()
+        environment["VMNL_JOYSTICK_CLIENT"] = vmnl_client_executable(build.stdout, target)
+        environment["VMNL_JOYSTICK_BACKEND"] = backend
+        if backend in ("x11", "wayland"):
+            environment["XDG_SESSION_TYPE"] = backend
+        if physical_profile is not None:
+            environment["VMNL_JOYSTICK_PHYSICAL_PROFILE"] = str(Path(physical_profile).resolve())
+        if backend == "x11":
+            environment.pop("WAYLAND_DISPLAY", None)
+            environment.pop("WAYLAND_SOCKET", None)
+        elif backend == "wayland":
+            environment.pop("DISPLAY", None)
+            environment.pop("WAYLAND_SOCKET", None)
+            environment.setdefault("WAYLAND_DISPLAY", "wayland-0")
+        else:
+            for key in ("DISPLAY", "WAYLAND_DISPLAY", "WAYLAND_SOCKET",
+                        "XDG_SESSION_TYPE", "WAYLAND_DEBUG"):
+                environment.pop(key, None)
+        crate, test = (
+            ("vmnl-platform-tests", "public_runtime_observes_virtual_joystick")
+            if mode == "runtime" else
+            ("vmnl-gpu-tests", "public_windows_observe_virtual_joystick")
+        )
+        if physical_profile is not None:
+            test = test.replace("virtual", "physical")
+        command = ["cargo", "test", "-p", crate, "--locked", "--test", "native_joystick",
+                   test, "--", "--ignored", "--exact", "--nocapture"]
+        return subprocess.run(command, cwd=ROOT, env=environment, check=False).returncode
+    except OSError as error:
+        print(f"could not start the VMNL joystick test: {error}", file=sys.stderr)
+        return 1
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    scenario = parser.add_mutually_exclusive_group()
+    scenario.add_argument(
         "--vmnl",
         action="store_true",
         help="run the Vulkan-backed public VMNL scenario instead of the GLFW NoApi probe",
     )
+    scenario.add_argument("--joystick", choices=("runtime", "window"),
+                          help="run an opt-in Linux virtual joystick scenario")
+    scenario.add_argument("--joystick-physical", choices=("runtime", "window"),
+                          help="guide an operator with a physical controller on the native host")
+    parser.add_argument("--physical-profile", help="JSON expectations for the physical controller")
     parser.add_argument("backend", choices=BACKEND_SYSTEM)
     arguments = parser.parse_args(argv)
+    if bool(arguments.joystick_physical) != bool(arguments.physical_profile):
+        parser.error("--joystick-physical and --physical-profile must be used together")
     try:
+        if arguments.joystick_physical:
+            return run_joystick_test(arguments.backend, arguments.joystick_physical,
+                                     physical_profile=arguments.physical_profile)
+        if arguments.joystick:
+            return run_joystick_test(arguments.backend, arguments.joystick)
         if arguments.vmnl:
             return run_vmnl_input_test(arguments.backend)
         return run_input_test(arguments.backend)

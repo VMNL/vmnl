@@ -13,6 +13,22 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Context::new` | `glfwGetRequiredInstanceExtensions` | all: conditional — Returns the platform Vulkan instance extension list. |
 | `Context::new` | `glfwInit` | all: conditional — Initializes GLFW or returns failure after invoking the error callback. |
 | `CursorBuilder::build`, `Window::set_cursor_mode` | `glfwCreateCursor` | all: supported — Copies the supplied non-premultiplied RGBA8 pixels and creates a native cursor resource. |
+| `InputRuntime::builder`, `Context::new` | `glfwInitHint` | wayland: conditional — Stores valid settings for the next initialization: Platform selects the backend and GLFW_JOYSTICK_HAT_BUTTONS controls whether hat directions are also present in the joystick button array; x11-win32-cocoa-null: supported — Stores valid settings for the next initialization: Platform selects the backend and GLFW_JOYSTICK_HAT_BUTTONS controls whether hat directions are also present in the joystick button array |
+| `InputRuntime::joystick_user_pointer`, `InputRuntime::set_joystick_callback` | `glfwGetJoystickUserPointer` | all: conditional — Returns the process-wide opaque pointer; GLFW does not synchronize access and clears it on disconnect. |
+| `InputRuntime::poll_events`, `Window::get_time` | `glfwGetTime` | all: supported — Returns GLFW timer seconds. |
+| `InputRuntime::poll_events`, `Window::poll_events` | `glfwPollEvents` | all: supported — Processes pending native events. |
+| `InputRuntime::poll_events`, `InputRuntime::set_joystick_callback`, `WindowBuilder::joystick_event_delivery`, `Window::set_joystick_event_delivery` | `glfwSetJoystickCallback` | all: conditional — One shared VMNL callback fans the slot ID and event to subscribed runtime queues and event-enabled window queues. A synchronous runtime callback receives the per-slot user pointer before a disconnected slot clears it. |
+| `InputRuntime::sample_joystick` | `glfwGetGamepadName` | all: conditional — Returns the current mapped name; VMNL copies it before another mapping update can invalidate it. |
+| `InputRuntime::sample_joystick` | `glfwGetGamepadState` | all: conditional — Writes all fifteen standard button bytes and six axis values; unavailable device controls report release or 0.0. |
+| `InputRuntime::sample_joystick` | `glfwGetJoystickAxes` | all: conditional — Returns raw axis values in GLFW order and range; VMNL copies them before another query can invalidate the data. |
+| `InputRuntime::sample_joystick` | `glfwGetJoystickButtons` | all: conditional — Returns press/release bytes in GLFW order; hat directions may also appear according to GLFW_JOYSTICK_HAT_BUTTONS. |
+| `InputRuntime::sample_joystick` | `glfwGetJoystickGUID` | all: conditional — Returns its SDL-compatible model GUID; identical device units may share the GUID. VMNL copies it into owned storage. |
+| `InputRuntime::sample_joystick` | `glfwGetJoystickHats` | all: conditional — Returns centered/cardinal/diagonal bit fields in GLFW order; VMNL copies each result immediately. |
+| `InputRuntime::sample_joystick` | `glfwGetJoystickName` | all: conditional — Returns a UTF-8 name copied into VMNL-owned storage. |
+| `InputRuntime::sample_joystick` | `glfwJoystickIsGamepad` | all: conditional — Reports mapping availability; an unmapped device is not an error. |
+| `InputRuntime::sample_joystick` | `glfwJoystickPresent` | all: conditional — Lazily initializes GLFW joystick support and reports whether a device occupies the slot. |
+| `InputRuntime::set_joystick_user_pointer` | `glfwSetJoystickUserPointer` | all: conditional — Stores an opaque process-wide pointer without dereferencing or synchronizing it; GLFW clears it on disconnect. |
+| `InputRuntime::update_gamepad_mappings` | `glfwUpdateGamepadMappings` | all: supported — Adds or replaces GUID mappings. A malformed mapping may invoke GLFW_INVALID_VALUE while the function still returns GLFW_TRUE; VMNL observes both channels. |
 | `KeyboardState`, `Window::is_key_polling_enabled`, `Window::set_key_polling` | `glfwSetKeyCallback` | all: supported — Installs key callback. |
 | `MonitorInfo::available_modes` | `glfwGetVideoModes` | all: conditional — Returns modes reported by the backend. |
 | `MonitorInfo::content_scale` | `glfwGetMonitorContentScale` | wayland: conditional — Fractional scaling may not be represented exactly by GLFW 3.4.; x11-win32-cocoa: supported — Returns content scale reported by the backend. |
@@ -32,7 +48,6 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Window::get_framebuffer_size` | `glfwGetFramebufferSize` | all: supported — Returns framebuffer dimensions in pixels. |
 | `Window::get_opacity` | `glfwGetWindowOpacity` | wayland: unsupported — Opacity factor is unavailable.; x11-win32-cocoa: conditional — Returns the current opacity factor. |
 | `Window::get_position` | `glfwGetWindowPos` | wayland: unsupported — Global window position cannot be queried.; x11-win32-cocoa: conditional — Returns screen coordinates, not necessarily physical pixels. |
-| `Window::get_time` | `glfwGetTime` | all: supported — Returns GLFW timer seconds. |
 | `Window::get_timer_frequency` | `glfwGetTimerFrequency` | all: supported — Returns timer ticks per second. |
 | `Window::get_timer_value` | `glfwGetTimerValue` | all: supported — Returns raw timer ticks. |
 | `Window::hide` | `glfwHideWindow` | all: supported — Hides the native window. |
@@ -44,7 +59,6 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Window::is_open` | `glfwWindowShouldClose` | all: supported — Reads GLFW's local close flag. |
 | `Window::maximize` | `glfwMaximizeWindow` | all: best-effort — Requests maximization. |
 | `Window::opacity` | `glfwSetWindowOpacity` | wayland: unsupported — Invokes GLFW_FEATURE_UNAVAILABLE and has no effect.; x11-win32-cocoa: conditional — Updates opacity or invokes an error callback. |
-| `Window::poll_events` | `glfwPollEvents` | all: supported — Processes pending native events. |
 | `Window::post_empty_event` | `glfwPostEmptyEvent` | all: supported — Wakes an event wait with an empty event. |
 | `Window::restore` | `glfwRestoreWindow` | all: best-effort — Requests restoration; Wayland cannot always restore an iconified window. |
 | `Window::set_aspect_ratio` | `glfwSetWindowAspectRatio` | wayland: conditional — Ratio may only apply after the window becomes visible.; x11-win32-cocoa: conditional — Requests a content-area aspect ratio. |
@@ -56,7 +70,7 @@ Distinct outcomes must not be conflated: a callback reports an error; a no-op le
 | `Window::set_cursor_pos_polling` | `glfwSetCursorPosCallback` | wayland: conditional — Installs callback; delivery depends on compositor and cursor mode.; x11-win32-cocoa: supported — Installs cursor-position callback. |
 | `Window::set_cursor_position` | `glfwSetCursorPos` | wayland: conditional — Updates only GLFW's virtual disabled-mode position; other modes emit GLFW_FEATURE_UNAVAILABLE.; x11-win32-cocoa-null: conditional — Sets the cursor position in content-area coordinates; a physical cursor backend may quantize it. |
 | `Window::set_drag_and_drop_polling` | `glfwSetDropCallback` | all: conditional — Installs drop callback. |
-| `Window::set_error_callback`, `Window::unset_error_callback` | `glfwSetErrorCallback` | all: supported — Installs or clears process-wide GLFW error delivery for the calling thread wrapper. |
+| `Window::set_error_callback`, `Window::unset_error_callback`, `InputRuntime::update_gamepad_mappings` | `glfwSetErrorCallback` | all: supported — VMNL keeps one process-wide dispatcher, routes to a configured callback or default logger, and captures operation-local errors without replacing user delivery. |
 | `Window::set_focus_polling` | `glfwSetWindowFocusCallback` | all: supported — Installs focus callback. |
 | `Window::set_framebuffer_size_polling` | `glfwSetFramebufferSizeCallback` | all: supported — Installs framebuffer-size callback. |
 | `Window::set_iconify_polling` | `glfwSetWindowIconifyCallback` | wayland: conditional — Installs callback but event availability is compositor-dependent.; x11-win32-cocoa: supported — Installs iconify callback. |

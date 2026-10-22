@@ -30,6 +30,7 @@ GENERATED_PUBLIC = ROOT / "docs/api/reference/window/platform_compatibility.md"
 # inventory. Raw GLFW calls are separately restricted to the private adapter.
 RUST_CALL_TO_C = {
     "glfw::init(": "glfwInit",
+    "glfw::init_hint(": "glfwInitHint",
     ".get_platform(": "glfwGetPlatform",
     ".window_hint(": "glfwWindowHint",
     ".create_window(": "glfwCreateWindow",
