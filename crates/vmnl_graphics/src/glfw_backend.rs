@@ -53,6 +53,9 @@ pub(crate) fn callback_message(error: glfw::Error, description: String) -> Strin
 
 /// Copies one GLFW sample while its returned pointers are valid.
 pub(crate) fn sample_joystick(id: JoystickId) -> Result<Option<JoystickSample>, String> {
+    #[cfg(test)]
+    joystick_calls::record(|calls| calls.samples.push(id));
+
     // SAFETY: `JoystickId` restricts `id` to GLFW's documented 0..=15 range. The shared runtime
     // is initialized, and callers obey GLFW's main-platform-thread requirement. Every returned
     // array or string is copied before another operation can invalidate its pointer.
@@ -94,6 +97,48 @@ pub(crate) fn sample_joystick(id: JoystickId) -> Result<Option<JoystickSample>, 
         Ok(Some(JoystickSample::from_native(
             id, name, guid, axes, buttons, hats, gamepad,
         )))
+    }
+}
+
+pub(crate) fn set_joystick_callback(
+    glfw: &mut glfw::Glfw,
+    callback: impl FnMut(glfw::JoystickId, glfw::JoystickEvent) + 'static,
+) {
+    #[cfg(test)]
+    joystick_calls::record(|calls| calls.callback_installs += 1);
+    glfw.set_joystick_callback(callback);
+}
+
+pub(crate) fn unset_joystick_callback(glfw: &mut glfw::Glfw) {
+    #[cfg(test)]
+    joystick_calls::record(|calls| calls.callback_removals += 1);
+    glfw.unset_joystick_callback();
+}
+
+// Observe VMNL's backend calls, not GLFW's internal device enumeration. Thread-local storage
+// keeps parallel pure tests isolated; only the runtime-owning thread makes these calls.
+#[cfg(test)]
+pub(crate) mod joystick_calls {
+    use super::JoystickId;
+    use std::cell::RefCell;
+
+    #[derive(Debug, Default, PartialEq, Eq)]
+    pub(crate) struct Calls {
+        pub(crate) samples: Vec<JoystickId>,
+        pub(crate) callback_installs: usize,
+        pub(crate) callback_removals: usize,
+    }
+
+    thread_local! {
+        static CALLS: RefCell<Calls> = RefCell::new(Calls::default());
+    }
+
+    pub(super) fn record(operation: impl FnOnce(&mut Calls)) {
+        CALLS.with_borrow_mut(operation);
+    }
+
+    pub(crate) fn take() -> Calls {
+        CALLS.with_borrow_mut(std::mem::take)
     }
 }
 

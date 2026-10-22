@@ -52,6 +52,33 @@ fn cases() -> Vec<Case> {
         "LATE",
         Injection::None,
     );
+    for (name, action, injection) in [
+        (
+            "Stick builder configurations",
+            "builder",
+            Injection::Axes([500, 0, 0, 750, -1000, 1000]),
+        ),
+        ("Stick left setter isolation", "left", Injection::None),
+        ("Stick right setter isolation", "right", Injection::None),
+        ("Stick paired setter isolation", "both", Injection::None),
+        (
+            "Stick dead-zone boundaries",
+            "boundary",
+            Injection::Axes([0, -250, -500, 0, -1000, 1000]),
+        ),
+        (
+            "Stick diagonal angles without rescaling",
+            "diagonal",
+            Injection::Axes([750, -1000, 300, 400, -1000, 1000]),
+        ),
+        (
+            "Stick neutral and configuration reset",
+            "reset",
+            Injection::Axes([0; 6]),
+        ),
+    ] {
+        add(name, &format!("STICKS\t{action}"), injection);
+    }
     for index in 0..15 {
         add(
             &format!("Button {index} press"),
@@ -223,15 +250,16 @@ pub(crate) fn run(mode: &str) -> Result<(), String> {
         .into_iter()
         .filter(|case| {
             mode == "window"
-                || ![
-                    "TRACK_OFF",
-                    "TRACK_ON",
-                    "EVENTS_OFF",
-                    "EVENTS_ON",
-                    "WINDOW_CONNECT",
-                    "WINDOW_DISCONNECT",
-                ]
-                .contains(&case.command.as_str())
+                || (!case.command.starts_with("STICKS\t")
+                    && ![
+                        "TRACK_OFF",
+                        "TRACK_ON",
+                        "EVENTS_OFF",
+                        "EVENTS_ON",
+                        "WINDOW_CONNECT",
+                        "WINDOW_DISCONNECT",
+                    ]
+                    .contains(&case.command.as_str()))
         })
         .collect();
     for hats in [false, true] {
@@ -318,6 +346,41 @@ pub(crate) fn run(mode: &str) -> Result<(), String> {
 #[allow(clippy::expect_used)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn stick_plan_holds_axes_through_each_setter_and_restores_neutral() {
+        let cases = cases();
+        let sticks: Vec<_> = cases
+            .iter()
+            .filter(|case| case.command.starts_with("STICKS\t"))
+            .collect();
+        assert_eq!(
+            sticks
+                .iter()
+                .map(|case| case.command.as_str())
+                .collect::<Vec<_>>(),
+            [
+                "STICKS\tbuilder",
+                "STICKS\tleft",
+                "STICKS\tright",
+                "STICKS\tboth",
+                "STICKS\tboundary",
+                "STICKS\tdiagonal",
+                "STICKS\treset",
+            ]
+        );
+        assert!(matches!(
+            sticks[0].injection,
+            Injection::Axes([500, 0, 0, 750, -1000, 1000])
+        ));
+        assert!(sticks[1..4]
+            .iter()
+            .all(|case| matches!(case.injection, Injection::None)));
+        assert!(matches!(
+            sticks[6].injection,
+            Injection::Axes([0, 0, 0, 0, 0, 0])
+        ));
+    }
 
     #[test]
     fn plan_covers_every_button_and_holds_until_acknowledgement() {

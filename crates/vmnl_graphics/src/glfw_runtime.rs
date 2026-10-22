@@ -467,7 +467,7 @@ impl GlfwRuntime {
         if self.joystick_events.borrow_mut().subscribe(&queue) {
             let weak_runtime = Rc::downgrade(self);
             let mut glfw = self.glfw.clone();
-            glfw.set_joystick_callback(move |id, event| {
+            crate::glfw_backend::set_joystick_callback(&mut glfw, move |id, event| {
                 let Some(runtime) = weak_runtime.upgrade() else {
                     return;
                 };
@@ -486,7 +486,7 @@ impl GlfwRuntime {
     pub(crate) fn unsubscribe_joystick_events(&self, queue: &Rc<RefCell<JoystickEventQueue>>) {
         if self.joystick_events.borrow_mut().unsubscribe(queue) {
             let mut glfw = self.glfw.clone();
-            glfw.unset_joystick_callback();
+            crate::glfw_backend::unset_joystick_callback(&mut glfw);
         }
     }
 
@@ -923,8 +923,88 @@ mod tests {
         unsafe { drop(Box::from_raw(expected_pointer.cast::<u8>())) };
     }
 
+    fn assert_lazy_joystick_activation(
+        first: &InputRuntime,
+        acquired: &InputRuntime,
+        context_owner: &Rc<GlfwRuntime>,
+    ) {
+        use crate::glfw_backend::joystick_calls::{self, Calls};
+
+        assert!(!acquired.configuration().hat_buttons());
+        let mut event_pump = context_owner.glfw.clone();
+        for _ in 0..3 {
+            event_pump.poll_events();
+        }
+        drop(event_pump);
+        assert_eq!(joystick_calls::take(), Calls::default());
+
+        for index in 0..crate::JoystickId::COUNT {
+            let id = crate::JoystickId::from_index(index).expect("valid joystick slot");
+            assert!(first
+                .sample_joystick(id)
+                .expect("Null backend query should succeed")
+                .is_none());
+        }
+        let calls = joystick_calls::take();
+        assert_eq!(
+            calls
+                .samples
+                .iter()
+                .map(|id| id.index())
+                .collect::<Vec<_>>(),
+            (0..crate::JoystickId::COUNT).collect::<Vec<_>>()
+        );
+        assert_eq!(calls.callback_installs, 0);
+        assert_eq!(calls.callback_removals, 0);
+
+        let mut subscriber = InputRuntime::acquire().expect("first subscriber handle");
+        let mut other = InputRuntime::acquire().expect("second subscriber handle");
+        subscriber.set_joystick_callback(|_, _| {});
+        other.set_joystick_callback(|_, _| {});
+        subscriber.set_joystick_callback(|_, _| {});
+        subscriber.unset_joystick_callback();
+        assert_eq!(
+            joystick_calls::take(),
+            Calls {
+                callback_installs: 1,
+                ..Calls::default()
+            }
+        );
+        other.unset_joystick_callback();
+        assert_eq!(
+            joystick_calls::take(),
+            Calls {
+                callback_removals: 1,
+                ..Calls::default()
+            }
+        );
+        for _ in 0..3 {
+            assert!(subscriber.poll_events().is_empty());
+        }
+        subscriber.unset_joystick_callback();
+        drop(other);
+        assert_eq!(
+            joystick_calls::take(),
+            Calls {
+                callback_installs: 1,
+                ..Calls::default()
+            }
+        );
+        drop(subscriber);
+        assert_eq!(
+            joystick_calls::take(),
+            Calls {
+                callback_removals: 1,
+                ..Calls::default()
+            }
+        );
+    }
+
     #[test]
     fn input_runtime_shares_configuration_and_drops_glfw_at_last_owner() {
+        use crate::glfw_backend::joystick_calls;
+
+        let _ = joystick_calls::take();
         glfw::init_hint(glfw::InitHint::Platform(glfw::Platform::Null));
 
         let first = InputRuntime::builder()
@@ -939,13 +1019,7 @@ mod tests {
             .build()
             .expect("matching explicit config should reuse runtime");
 
-        for index in 0..crate::JoystickId::COUNT {
-            let id = crate::JoystickId::from_index(index).expect("valid joystick slot");
-            assert!(first
-                .sample_joystick(id)
-                .expect("Null backend query should succeed")
-                .is_none());
-        }
+        assert_lazy_joystick_activation(&first, &acquired, &context_owner);
 
         first
             .update_gamepad_mappings("00000000000000000000000000000001,VMNL test,a:b0,")

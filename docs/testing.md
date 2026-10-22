@@ -20,9 +20,9 @@ Linux needs a usable selected GLFW display backend, uinput ABI >= 5, write acces
 `/dev/uinput`, and read access to the **new fixture's** `/dev/input/eventN` node. Readable
 existing nodes alone do not prove that newly created nodes will be accessible. The launcher
 checks prerequisites before building or injecting. The driver obtains its owned sysname through
-UI_GET_SYSNAME and waits at most five seconds for its event node to become readable. No command
-installs rules, changes permissions, loads modules or invokes sudo. A missing prerequisite is
-an error, never an exclusion or successful test. The kernel's
+UI_GET_SYSNAME and waits at most five seconds for its event node to become readable. Local test
+commands never install rules, change permissions, load modules or invoke sudo. A missing
+prerequisite is an error, never an exclusion or successful test. The kernel's
 [uinput documentation](https://docs.kernel.org/input/uinput.html) describes this interface.
 
 Every run starts four fresh clients: hat_buttons false/true, each with runtime/window consumer
@@ -51,8 +51,8 @@ device before physical cleanup so cleanup cannot satisfy the VMNL release oracle
 
 Native tests are ignored by default. `just test` and `just validate` remain display-free;
 the ordinary `just test-gpu` also skips the uinput scenario. Default CI executes the portable
-transport, report and driver regressions. The opt-in [Linux joystick CI](#linux-joystick-ci)
-additionally schedules native virtual-device scenarios. The optional
+transport, report and driver regressions. Its [Linux validation job](#linux-joystick-ci)
+also schedules the native virtual-device scenarios automatically. The optional
 `VMNL_JOYSTICK_REPORT` path receives schema-version-1 JSON once the Rust driver starts, including
 PASS/FAIL/NOT RUN, reasons and qualified=false for incomplete/failed runs. Preflight rejection
 occurs before the Rust report exists. `requested_backend` alone records only a request.
@@ -66,27 +66,92 @@ profile for each fresh client. No GLFW import or backend-query API is added to t
 The trace facility is documented by [Wayland](https://wayland.freedesktop.org/extras.html).
 This joystick route does not require the nested Weston/XTEST seat used by keyboard/mouse probes.
 
+### Public window stick observations (workload 2)
+
+The window client adds seven acknowledged observations through the public builder, setters
+and `Window::poll_events()`. Native integer axes remain in the driver; client expectations
+are fixed float vectors, magnitudes and worked angles, never derived from VMNL's observed
+values or its angle/dead-zone algorithm. The scalar tolerance is `0.0001`; values must be
+finite and angles must be in `[0, 2π)`. Every injected vector is held until observation.
+
+Window 0 starts with left `(0.5, Math2D)` and right `(0.5, Screen2D)` dead-zone/convention
+settings. Window 1 uses left `(0.0, Heading)` and right `(0.75, Math2D)`. Window 2 keeps the
+defaults; window 3 remains untracked. The latter two preserve tracking/delivery isolation.
+
+| Observation | Injected left / right axes | Expected window-0 behavior after polling |
+| --- | --- | --- |
+| Builder configurations | `(0.5, 0)` / `(0, 0.75)` | Left is centered at the exact threshold; right retains magnitude `0.75`, angle `π/2`. |
+| Left setter | Same held vector | Set left to `(0.0, Heading)`: magnitude `0.5`, angle `π/2`; right unchanged. |
+| Right setter | Same held vector | Set right to `(0.75, Math2D)`: centered; left unchanged. |
+| Paired setter | Same held vector | Set left to `(0.25, Math2D)`, right to `(0.0, Heading)`: retain magnitudes `0.5`/`0.75` and angles `0`/`π`. |
+| Dead-zone boundaries | `(0, -0.25)` / `(-0.5, 0)` | Left centered, right magnitude `0.5` and angle `3π/2`. |
+| Diagonal angles | `(0.75, -1)` / `(0.3, 0.4)` | Retain magnitudes `1.25`/`0.5`, angles approximately `0.9272952`/`2.4980915`; no normalization or rescaling. |
+| Neutral/configuration reset | `(0, 0)` / `(0, 0)` | Reset both configured windows to defaults; magnitudes zero, angles absent. |
+
+Each tracked window has independent fixed expectations. Setters must preserve raw samples,
+presence and button transitions, and leave the other windows unchanged. Processed sticks are
+included in snapshot-isolation and transition-clear comparisons. Unmapped, disconnected and
+untracked slots must expose no processed sticks. Workload 2 requires these seven observations
+in every window profile; earlier window reports do not qualify this expansion.
+
+On 2026-10-22, three consecutive local Linux virtual-device executions passed per backend/mode:
+X11 runtime 244/244, X11 window 296/296, Wayland runtime 248/248 and Wayland window 300/300.
+All twelve reports have zero failures, exclusions or unexecuted checks. Each window execution
+includes the seven stick observations in all four hat_buttons/poll-order profiles, and each
+Wayland client supplied independent protocol evidence. The temporary uinput ACL was restored
+and verified against its initial snapshot; no owned virtual device remained. This qualifies
+the exercised local workload-2 paths, independently of pure oracle tests and compilation.
+Hosted Ubuntu execution, physical controllers and other OSes remain unqualified.
+
+### Lazy joystick activation regressions
+
+Headless unit tests instrument VMNL's private backend boundary only in test builds. The
+shared-runtime Null lifecycle test requires zero slot queries and zero joystick callback
+installations during acquisition, configuration inspection and ordinary GLFW event pumping.
+Explicit sampling must query the requested slots. The first subscription installs one callback,
+additional subscribers and repeated polls reuse it, and the last subscription removes it.
+`InputRuntime::poll_events()` is an explicit subscription; acquisition alone is not.
+
+The private snapshot transaction used by `Window::poll_events()` is tested with fixed
+keyboard/mouse press, release and empty batches: default builder options must invoke no sampler
+and leave all slots `NotTracked`. Explicit tracking queries every slot once per batch; disabled
+tracking stops queries. A failed sweep preserves the previous snapshot and initialization flag
+until a complete retry succeeds. This transaction is extracted without changing its behavior.
+
+These deterministic/Null checks observe calls initiated by VMNL, not GLFW's internal device
+enumeration. They create no Vulkan window, inject no native input, and do not qualify a physical
+controller. Public native-window coverage remains the separate virtual-device workload above.
+The opt-in GPU regression `default_window_joystick_state_stays_untracked_after_polling`
+additionally checks actual default-window construction and three public event polls: tracking
+and connection delivery stay disabled, every slot remains `NotTracked`, and no joystick Event
+is delivered. It does not expose the unit-test counters. No instrumentation API or dependency
+is added to the public clients.
+
 ### Linux joystick CI
 
-The existing `CI` workflow has a `native_joystick` boolean input, defaulting to false.
-Manually dispatching it with that input enabled schedules four blocking jobs:
-X11/Wayland, each in runtime/window mode, with three consecutive repetitions per job.
-Ordinary pull requests, pushes, `just test` and `just validate` retain their existing scope.
-The workflow does not use `continue-on-error` for joystick scenarios. This is an automatic
-simulation acceptance gate; physical-controller qualification remains a later, separate step.
+The `CI` workflow includes four blocking steps in `Validation: Linux` after the keyboard/mouse
+probes: X11/Wayland, each in runtime/window mode, with three consecutive repetitions per step.
+They run on pull requests, pushes to `main` and manual workflow dispatches without a joystick
+opt-in input or separate job. The existing workspace build is reused. `just test` and
+`just validate` remain display-free, and local native commands remain explicitly opt-in.
+The workflow does not use `continue-on-error` for joystick scenarios. Any failed prerequisite,
+scenario or report check fails Linux validation; later scenario steps are skipped after failure.
+Physical-controller qualification remains a later, separate step.
 
-The opt-in jobs provision disposable Ubuntu runners. They load uinput, save and temporarily
-grant the runner UID access to `/dev/uinput`, and install a volatile udev rule limited to newly
+The Linux job provisions its disposable Ubuntu runner. It loads uinput, saves and temporarily
+grants the runner UID access to `/dev/uinput`, and installs a volatile udev rule limited to newly
 created event nodes with this fixture's name/vendor/product. An always-run cleanup removes
 the rule and restores/checks the saved uinput ACL. No repository test or local launcher grants
-permissions. Enabling this job must only be done on the disposable hosted runners configured
-in the workflow; it is not a setup script for a developer's machine.
+permissions. This provisioning is limited to the disposable hosted runner configured in the
+workflow; it is not a setup script for a developer's machine.
 
 X11 uses Xvfb/Openbox. Wayland uses Weston/Pixman nested in that display; each public client
 still supplies its independent Wayland protocol evidence with DISPLAY unset. Window mode
-uses Mesa's lavapipe software Vulkan ICD selected explicitly through `VK_DRIVER_FILES`;
+uses Mesa's lavapipe software Vulkan ICD selected explicitly through `VK_DRIVER_FILES`, scoped
+to the two window steps through a step output;
 the [Vulkan loader](https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md)
-documents this driver override. Runtime jobs do not invoke the Vulkan preflight.
+documents this driver override. Both runtime steps precede ICD selection and do not invoke
+the Vulkan preflight. Each backend/mode uses a fresh display and a separate artifact directory.
 Missing input access or display, and missing software ICD/surface support in window mode,
 fail the job. No fallback
 to Null or a different display backend qualifies the run. These runner configurations are
@@ -97,13 +162,13 @@ do not establish Xvfb/Weston/lavapipe behavior on Ubuntu.
 it does not introduce another injector, transport or client. It requires a new artifact
 directory, rejects unsuccessful exits, missing/malformed reports, unexpected schema/profile,
 duplicates and every FAIL/EXCLUDED/NOT RUN check. Every hat_buttons/poll-order profile must
-match the fixed version-1 acceptance inventory in that validator, independently of the driver's
+match the fixed version-2 acceptance inventory in that validator, independently of the driver's
 reported plan. Missing and unexpected check identities fail, including a check omitted or
-replaced in all four profiles. The expected totals are 244/268 for X11 runtime/window and
-248/272 for Wayland; the inventory comparison checks identities, not just counts. The repetition
+replaced in all four profiles. The expected totals are 244/296 for X11 runtime/window and
+248/300 for Wayland; the inventory comparison checks identities, not just counts. The repetition
 summary records `workload_version` separately from its JSON schema version. Each Wayland
 profile also needs its own backend evidence. A fixed per-repetition timeout terminates the
-complete subprocess group. Failure stops that job's remaining repetitions and leaves its
+complete subprocess group. Failure stops that scenario's remaining repetitions and leaves its
 summary unqualified.
 
 The same repetition/report validation can be exercised on an already configured desktop:
@@ -113,9 +178,11 @@ python3 tools/joystick_ci.py x11 runtime target/joystick-local-x11-runtime
 python3 tools/joystick_ci.py wayland window target/joystick-local-wayland-window
 ```
 
-Each matrix job uploads its three native schema-version-1 reports, per-run logs, source/host/
-runner/display/ICD metadata, a separate versioned repetition summary, display/Vulkan diagnostics
-and the before/after uinput ACLs, including on failure. Compilation and portable report-validator
+The Linux job uploads one joystick artifact containing the four scenario directories, with
+three native schema-version-1 reports per successful scenario, per-run logs, source/host/
+runner/display/ICD metadata, versioned repetition summaries, display/Vulkan diagnostics and
+the before/after uinput ACLs. Upload and access restoration run even after failure; skipped
+steps do not produce successful reports. Compilation and portable report-validator
 tests do not qualify a native runner. No hosted joystick execution has been observed for this
 workflow patch; physical devices and Windows/macOS virtual fixtures remain unqualified.
 

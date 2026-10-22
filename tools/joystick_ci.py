@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 # Pin the acceptance workload independently of the driver's self-reported plan.
-WORKLOAD_VERSION = 1
+WORKLOAD_VERSION = 2
 COMMON_SCENARIOS_V1 = frozenset({
     "Connect and identify unmapped device",
     "Controlled mapping",
@@ -41,20 +41,27 @@ COMMON_SCENARIOS_V1 = frozenset({
 } | {f"Button {index} {action}" for index in range(15) for action in ("press", "release")}
   | {f"Hat {position}" for position in (
       "Centered", "Up", "Right", "Down", "Left", "Right up", "Right down", "Left up", "Left down")})
-WINDOW_SCENARIOS_V1 = frozenset({
+WINDOW_SCENARIOS_V2 = frozenset({
     "Disable tracking immediately",
     "Re-enable tracking without invented press",
     "Disable event delivery independently",
     "Enable delivery without replay",
     "Window-first connection fan-out",
     "Window-first disconnection fan-out",
+    "Stick builder configurations",
+    "Stick left setter isolation",
+    "Stick right setter isolation",
+    "Stick paired setter isolation",
+    "Stick dead-zone boundaries",
+    "Stick diagonal angles without rescaling",
+    "Stick neutral and configuration reset",
 })
 
 
 def expected_workload(backend: str, mode: str) -> set[tuple[str, str]]:
     scenarios = COMMON_SCENARIOS_V1
     if mode == "window":
-        scenarios |= WINDOW_SCENARIOS_V1
+        scenarios |= WINDOW_SCENARIOS_V2
     checks = {(name, "Observation") for name in scenarios}
     checks.update({("Environment", "Readiness"), ("Environment", "Client shutdown")})
     if backend == "wayland":

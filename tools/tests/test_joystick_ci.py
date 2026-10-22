@@ -47,9 +47,9 @@ class JoystickCIReportTests(unittest.TestCase):
                 with self.subTest(backend=backend, mode=mode):
                     data = report(backend, mode)
                     self.assertEqual(joystick_ci.validate_report(data, backend, mode),
-                                     {("x11", "runtime"): 244, ("x11", "window"): 268,
+                                     {("x11", "runtime"): 244, ("x11", "window"): 296,
                                       ("wayland", "runtime"): 248,
-                                      ("wayland", "window"): 272}[backend, mode])
+                                      ("wayland", "window"): 300}[backend, mode])
 
     def test_rejects_each_check_omitted_from_every_profile(self):
         for backend in ("x11", "wayland"):
@@ -80,6 +80,13 @@ class JoystickCIReportTests(unittest.TestCase):
                     with self.subTest(backend=backend, mode=mode, replace=replace):
                         with self.assertRaises(ValueError):
                             joystick_ci.validate_report(data, backend, mode)
+
+    def test_window_workload_two_rejects_reports_without_stick_observations(self):
+        for backend in ("x11", "wayland"):
+            data = report(backend, "window")
+            data["checks"] = [c for c in data["checks"] if not c["input"].startswith("Stick ")]
+            with self.subTest(backend=backend), self.assertRaisesRegex(ValueError, "workload v2 mismatch"):
+                joystick_ci.validate_report(data, backend, "window")
 
     def test_rejects_incomplete_or_incorrect_metadata(self):
         for key, value in (("schema_version", 2), ("schema_version", True),
@@ -135,7 +142,7 @@ class JoystickCIReportTests(unittest.TestCase):
         data = report()
         extra = dict(data["checks"][1], input="Axes")
         data["checks"].append(extra)
-        with self.assertRaisesRegex(ValueError, "workload v1 mismatch"):
+        with self.assertRaisesRegex(ValueError, "workload v2 mismatch"):
             joystick_ci.validate_report(data, "x11", "runtime")
 
 
@@ -162,7 +169,7 @@ class JoystickCIRunnerTests(unittest.TestCase):
             directory = Path(temporary) / "records"
             result, summary, calls = self.run_fixture(directory, data=report())
             self.assertEqual((result, calls, summary["qualified"]), (0, 3, True))
-            self.assertEqual(summary["workload_version"], 1)
+            self.assertEqual(summary["workload_version"], 2)
             self.assertEqual([r["report"] for r in summary["runs"]],
                              ["run-1.json", "run-2.json", "run-3.json"])
 

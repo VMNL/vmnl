@@ -4,6 +4,7 @@
 //! Public VMNL observations; native device creation and injection belong to the driver.
 
 mod physical;
+mod sticks;
 
 use std::{
     cell::RefCell,
@@ -14,7 +15,7 @@ use std::{
 };
 use vmnl::{
     Context, Event, EventKind, GamepadButton, InputRuntime, JoystickButtonState, JoystickId,
-    JoystickSample, JoystickStatus, VMNLError, VMNLErrorKind, VMNLResult, Window,
+    JoystickSample, JoystickStatus, StickState, VMNLError, VMNLErrorKind, VMNLResult, Window,
 };
 
 const TIMEOUT: Duration = Duration::from_secs(5);
@@ -166,6 +167,7 @@ struct Snapshot {
     status: JoystickStatus,
     sample: Option<JoystickSample>,
     buttons: [[bool; 3]; 15],
+    sticks: [Option<StickState>; 2],
 }
 
 fn snapshot(window: &Window, id: JoystickId) -> Snapshot {
@@ -180,6 +182,7 @@ fn snapshot(window: &Window, id: JoystickId) -> Snapshot {
                 state.is_released(button),
             ]
         }),
+        sticks: [state.left_stick(), state.right_stick()],
     }
 }
 
@@ -211,6 +214,7 @@ struct Client {
     tracking: [bool; 4],
     expected: Expected,
     original: Option<JoystickSample>,
+    stick_case: Option<sticks::Case>,
 }
 
 impl Client {
@@ -238,12 +242,19 @@ impl Client {
         };
         let mut windows = Vec::new();
         if let Some(context) = &context {
-            for (tracking, delivery) in [(true, true), (true, true), (true, false), (false, true)] {
+            for (index, (tracking, delivery)) in
+                [(true, true), (true, true), (true, false), (false, true)]
+                    .into_iter()
+                    .enumerate()
+            {
+                let (left, right) = sticks::builder_configs(index)?;
                 let mut window = Window::builder()
                     .title("VMNL virtual joystick")
                     .size(160, 120)
                     .joystick_tracking(tracking)
                     .joystick_event_delivery(delivery)
+                    .left_stick_config(left)
+                    .right_stick_config(right)
                     .build(context)?;
                 // Joystick state is independent of keyboard focus and drawable visibility.
                 window.hide();
@@ -266,10 +277,12 @@ impl Client {
             tracking: [true, true, true, false],
             expected: Expected::default(),
             original: None,
+            stick_case: None,
         })
     }
 
     fn action(&mut self, parts: &[&str]) -> VMNLResult<()> {
+        self.stick_case = None;
         let previous_present = self.expected.present;
         let mut fresh_tracking = false;
         let window_first = matches!(parts, ["WINDOW_CONNECT"] | ["WINDOW_DISCONNECT"]);
@@ -317,6 +330,12 @@ impl Client {
             }
             ["AXES_MAX"] => {
                 self.expected.axes = [1.0; 6];
+            }
+            ["STICKS", action] => {
+                let case = sticks::Case::parse(action)?;
+                case.configure(&mut self.windows)?;
+                self.expected.axes = case.axes();
+                self.stick_case = Some(case);
             }
             ["LATE"] => {
                 let id = self
@@ -370,6 +389,7 @@ impl Client {
                         require(
                             value.status == JoystickStatus::NotTracked
                                 && value.sample.is_none()
+                                && value.sticks == [None; 2]
                                 && value.buttons == [[false; 3]; 15],
                             "tracking disable did not immediately clear state",
                         )?;
@@ -636,6 +656,14 @@ impl Client {
                 )?;
             }
             let state = window.input().joystick(id);
+            sticks::check(
+                self.stick_case,
+                index,
+                state,
+                self.tracking[index]
+                    && self.expected.present
+                    && self.expected.mapping != Mapping::None,
+            )?;
             if self.tracking[index] {
                 require(
                     state.status()
@@ -697,6 +725,7 @@ impl Client {
                 require(
                     cleared.status == held.status
                         && cleared.sample == held.sample
+                        && cleared.sticks == held.sticks
                         && cleared
                             .buttons
                             .iter()
