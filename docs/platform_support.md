@@ -96,15 +96,23 @@ do not establish present-device behavior.
 The `CI` workflow integrates four blocking joystick steps into `Validation: Linux` for Ubuntu
 Xvfb/Openbox and nested Weston/Pixman, with explicit lavapipe Vulkan in window mode and three
 repetitions per backend/mode. They run automatically on pull requests and pushes to `main`.
-These hosted profiles remain unqualified until their native JSON reports are observed; local
-Hyprland evidence does not qualify them. Local default validation remains headless, and native
-local commands remain opt-in. See [Linux joystick CI](testing.md#linux-joystick-ci).
+The inspected `joystick-linux-1` artifact from
+[CI run #39711518595](https://github.com/VMNL/vmnl/actions/runs/39711518595) qualifies these hosted
+workload-2 profiles: X11 runtime/window 244/296 checks and Wayland runtime/window 248/300,
+three executions each, 3,264 PASS and zero failures, exclusions or unexecuted checks. All 24
+Wayland clients supplied protocol evidence, and the before/after uinput ACLs are identical.
+The tested source was CI merge `f3dc914` (PR head `6683cc4` with `main` at `e710938`), on Ubuntu
+24.04 image `20261018.339.1`, Weston 13/Pixman and Mesa 25.2.8 software Vulkan. This qualification
+is separate from local Hyprland, hardware GPU and physical-controller evidence; it does not
+qualify other revisions or runner images. Local default validation remains headless, and native
+local commands remain opt-in. See the
+[hosted evidence record](testing.md#hosted-linux-joystick-evidence-workload-2).
 On 2026-10-22, workload 2 passed three consecutive local Linux virtual-device executions per
 backend/mode: X11 runtime/window 244/296 checks and Wayland runtime/window 248/300. This includes
 the seven public stick observations: builder/setter propagation, independent windows/sticks,
 dead zones, magnitudes and angles. The initial uinput ACL was restored and no owned fixture
-remained. Hosted Ubuntu, other OSes and physical controllers retain their separate qualification
-limits. See [stick observations](testing.md#public-window-stick-observations-workload-2).
+remained. Hosted Ubuntu has the separate qualification above; other OSes and physical controllers
+remain unqualified. See [stick observations](testing.md#public-window-stick-observations-workload-2).
 The physical operator protocol is prepared for Linux (`x11`/`wayland`), Windows (`win32`) and
 macOS (`cocoa`), in standalone runtime and window modes, with explicit profiles, tolerances
 and exclusions. Host/backend mismatches fail; Linux-only virtual injection is kept separate.

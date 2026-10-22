@@ -101,7 +101,9 @@ includes the seven stick observations in all four hat_buttons/poll-order profile
 Wayland client supplied independent protocol evidence. The temporary uinput ACL was restored
 and verified against its initial snapshot; no owned virtual device remained. This qualifies
 the exercised local workload-2 paths, independently of pure oracle tests and compilation.
-Hosted Ubuntu execution, physical controllers and other OSes remain unqualified.
+Hosted Ubuntu execution is qualified separately in the
+[hosted evidence record](#hosted-linux-joystick-evidence-workload-2); physical controllers and
+other OSes remain unqualified.
 
 ### Lazy joystick activation regressions
 
@@ -154,9 +156,9 @@ documents this driver override. Both runtime steps precede ICD selection and do 
 the Vulkan preflight. Each backend/mode uses a fresh display and a separate artifact directory.
 Missing input access or display, and missing software ICD/surface support in window mode,
 fail the job. No fallback
-to Null or a different display backend qualifies the run. These runner configurations are
-prepared, not yet qualified by an observed hosted execution. Local Hyprland results below
-do not establish Xvfb/Weston/lavapipe behavior on Ubuntu.
+to Null or a different display backend qualifies the run. The inspected hosted workload-2
+execution is recorded below. Local Hyprland results remain separate from that
+Xvfb/Weston/lavapipe qualification on Ubuntu.
 
 `tools/joystick_ci.py` only repeats the existing `tools/input_test.py --joystick` command;
 it does not introduce another injector, transport or client. It requires a new artifact
@@ -183,8 +185,48 @@ three native schema-version-1 reports per successful scenario, per-run logs, sou
 runner/display/ICD metadata, versioned repetition summaries, display/Vulkan diagnostics and
 the before/after uinput ACLs. Upload and access restoration run even after failure; skipped
 steps do not produce successful reports. Compilation and portable report-validator
-tests do not qualify a native runner. No hosted joystick execution has been observed for this
-workflow patch; physical devices and Windows/macOS virtual fixtures remain unqualified.
+tests do not qualify a native runner. The inspected hosted execution is recorded below;
+physical devices and Windows/macOS virtual fixtures remain unqualified.
+
+### Hosted Linux joystick evidence (workload 2)
+
+On 2026-10-22, the `joystick-linux-1` artifact from
+[CI run #39711518595](https://github.com/VMNL/vmnl/actions/runs/39711518595), attempt 1, was
+downloaded and checked against its GitHub SHA-256 digest. All twelve native reports were
+revalidated with the existing exact-workload validator, then checked against their repetition
+summaries, client logs and successful Linux job steps.
+
+| Profile | Checks per execution | Consecutive executions | Observed display/Vulkan setup |
+| --- | --- | --- | --- |
+| X11 runtime | 244 | 3/3 PASS | Xvfb/Openbox; no window or Vulkan initialization in the client. |
+| Wayland runtime | 248 | 3/3 PASS | Weston/Pixman nested in Xvfb/Openbox; independent client protocol proof. |
+| X11 window | 296 | 3/3 PASS | Xvfb/Openbox; lavapipe ICD selected explicitly. |
+| Wayland window | 300 | 3/3 PASS | Weston/Pixman nested in Xvfb/Openbox; lavapipe ICD and independent client protocol proof. |
+
+The job ran on Ubuntu 24.04 runner image `20261018.339.1`, Linux x86_64 kernel
+`7.0.0-1017-azure`. Weston reported `13.0.0` with Pixman. Both window profiles selected
+`/usr/share/vulkan/icd.d/lvp_icd.json`; their Vulkan diagnostics reported only llvmpipe,
+Mesa `25.2.8-0ubuntu0.24.04.4`, LLVM `20.1.2`. Runtime summaries had no Vulkan driver override.
+
+The PR head was `6683cc4a3a0cc6ae49090680451d61e12900eb5c`. All four summaries record a clean
+checkout of the CI merge commit `f3dc91434ce98b11a37341372828c0f3186b9cac`, whose parents are
+`main` at `e710938e2029e525c790c069ff76d920b24450b9` and that PR head. These results qualify
+that tested integration, not every future branch revision or runner image.
+
+All 3,264 checks passed, with zero FAIL/EXCLUDED/NOT RUN entries. Each report includes all four
+hat_buttons/poll-order profiles: 48 fresh-client profiles in total. Each window profile includes
+all seven stick observations. The 24 Wayland clients have distinct recorded PIDs and an outgoing
+registry request, incoming global announcement and incoming callback completion. Their evidence
+records DISPLAY unset in the client; the parent retained DISPLAY for nested Weston. X11 reports
+record the requested profile and configured display, without an independent client protocol trace.
+
+The cleanup step removing the fixture rule, reloading udev and restoring input access succeeded.
+The archived `uinput-before.acl` and `uinput-after.acl` are byte-identical: root:root, mode 0600,
+with no named-user ACL entry. No final per-device inventory was archived, so these files alone
+do not establish absence of every fixture node after cleanup. This is native virtual-device
+evidence through public VMNL clients; physical controllers, Windows/macOS virtual injection,
+hardware GPU behavior, rendered presentation and human graphical validation remain unqualified
+by this run.
 
 ### Windows/macOS virtual fixture prerequisites
 
