@@ -33,6 +33,25 @@ fn polygon_pentagon(context: &Context) -> VMNLResult<Shape> {
     .build(context)
 }
 
+fn concave_polygon(context: &Context) -> VMNLResult<Shape> {
+    Shape::polygon([
+        v2(380.0, 30.0),
+        v2(540.0, 30.0),
+        v2(460.0, 90.0),
+        v2(540.0, 150.0),
+        v2(380.0, 150.0),
+    ])
+    .vertex_colors([
+        Rgba::PURPLE,
+        Rgba::BLUE_VIOLET,
+        Rgba::BLUE,
+        Rgba::CYAN,
+        Rgba::GREEN,
+    ])
+    .buffer_memory_preference(BufferMemoryPreference::Host)
+    .build(context)
+}
+
 fn main() -> VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::builder()
@@ -43,6 +62,7 @@ fn main() -> VMNLResult<()> {
         .build(&context)?;
 
     let pentagon = polygon_pentagon(&context)?;
+    let concave = concave_polygon(&context)?;
     let triangle = Shape::triangle_from_vertices([
         vertex(560.0, 120.0, Rgba::rgba(255, 255, 255, 190)),
         vertex(820.0, 180.0, Rgba::rgba(255, 180, 0, 190)),
@@ -133,6 +153,7 @@ fn main() -> VMNLResult<()> {
             .render()
             .mode(mode)
             .draw2d([
+                &concave,
                 &pentagon,
                 &triangle,
                 &centered,
