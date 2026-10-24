@@ -7,6 +7,14 @@
 
 Build a connected stroke with [`Shape::polyline`](../reference/d2/shapes/shape.md) and configure its caps, joins, and color mode with [`PolylineBuilder`](../reference/d2/shapes/polyline_builder.md). The [advanced geometry example](../../../examples/d2/advanced_geometry/src/main.rs) shows bevel, miter, and round joins.
 
+Use [`Shape::circle`](../reference/d2/shapes/circle_builder.md) for the circle family:
+`.ellipse(ry)` changes the vertical radius, `.width(w)` selects an outline, and
+`.sector(start, sweep).cap(LineCap::...)` selects an angular interval. Sector angles are degrees,
+zero at the top, positive clockwise. Every sector requires a cap, including filled sectors.
+Width setters disable filling; a later `.filled(true)` keeps the outer boundary offset.
+The [`d2_circles` example](../../../examples/d2/circles/src/main.rs) demonstrates ellipses,
+sectors, rings, circles, and a round-capped elliptical arc; run it with `just run d2_circles`.
+
 ```rust,no_run
 # extern crate vmnl;
 use vmnl::{Context, Window};

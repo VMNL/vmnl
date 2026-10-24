@@ -106,6 +106,8 @@ impl Context {
     ///
     /// [`Key::Unknown`] and named keys unsupported by the active platform return `None`. The
     /// returned value is platform-specific and must not be persisted as a portable identifier.
+    /// If several physical scancodes map to this key, this query selects one; events from other
+    /// physical variants may carry a different scancode for the same named key.
     #[inline]
     #[must_use]
     pub fn get_key_scancode(&self, key: Key) -> Option<Scancode> {

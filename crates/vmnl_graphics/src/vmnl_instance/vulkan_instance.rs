@@ -32,6 +32,8 @@ impl VMNLInstance {
             .iter()
             .map(String::as_str)
             .collect();
+        let required_instance_extensions =
+            surface_instance_extensions(required_instance_extensions);
         let instance: Arc<Instance> = Instance::new(
             library,
             InstanceCreateInfo {
@@ -46,5 +48,60 @@ impl VMNLInstance {
         .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanInitFailed))?;
 
         Ok(instance)
+    }
+}
+
+fn surface_instance_extensions(mut extensions: InstanceExtensions) -> InstanceExtensions {
+    // GLFW prefers XCB on X11, but its raw-window-handle integration exposes Xlib handles.
+    // Keep GLFW's requirements and enable the extension used by Vulkano::from_window_ref too.
+    if extensions.khr_xcb_surface {
+        extensions.khr_xlib_surface = true;
+    }
+    extensions
+}
+
+#[cfg(test)]
+mod tests {
+    use super::surface_instance_extensions;
+    use vulkano::instance::InstanceExtensions;
+
+    #[test]
+    fn xcb_requirements_also_enable_the_xlib_surface_used_by_raw_handles() {
+        let extensions = surface_instance_extensions(InstanceExtensions {
+            khr_surface: true,
+            khr_xcb_surface: true,
+            ..InstanceExtensions::empty()
+        });
+        assert!(extensions.khr_surface);
+        assert!(extensions.khr_xcb_surface);
+        assert!(extensions.khr_xlib_surface);
+    }
+
+    #[test]
+    fn other_surface_requirements_are_preserved() {
+        for extensions in [
+            InstanceExtensions {
+                khr_surface: true,
+                khr_xlib_surface: true,
+                ..InstanceExtensions::empty()
+            },
+            InstanceExtensions {
+                khr_surface: true,
+                khr_wayland_surface: true,
+                ..InstanceExtensions::empty()
+            },
+            InstanceExtensions {
+                khr_surface: true,
+                khr_win32_surface: true,
+                ..InstanceExtensions::empty()
+            },
+            InstanceExtensions {
+                khr_surface: true,
+                ext_metal_surface: true,
+                ..InstanceExtensions::empty()
+            },
+        ] {
+            assert_eq!(surface_instance_extensions(extensions), extensions);
+        }
     }
 }

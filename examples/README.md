@@ -13,6 +13,7 @@ just build <example>
 | --- | --- | --- |
 | `d2_shapes` | `just run d2_shapes` | minimal 2D rectangle, circle, and triangle rendering |
 | `d2_advanced_geometry` | `just run d2_advanced_geometry` | convex and concave polygons, indices, vertex colors, transforms, line caps, polyline joins/caps/color modes, memory preferences, render modes |
+| `d2_circles` | `just run d2_circles` | circles, ellipses, rings, filled sectors, and an outlined elliptical arc with round caps |
 | `window_events_input` | `just run window_events_input` | window builder/config, polling, keyboard names/scancodes/sticky modes, events, monitors, mouse, cursor resources/modes/raw motion, timers, lifecycle |
 | `window_custom_shaders` | `just run window_custom_shaders` | 2D custom shaders from files; set `VMNL_INLINE_SHADERS=1` for inline shader strings |
 | `window_wait_events` | `just run window_wait_events` | explicit blocking event wait and event-driven redraw |
@@ -20,3 +21,5 @@ just build <example>
 | `raw_pipeline` | `just run raw_pipeline` | raw shader paths, topology variants, blend modes, indexed/non-indexed geometry |
 | `raw_uniform` | `just run raw_uniform` | animated raw pipeline resources backed by `FrameUniform` |
 | `raw_d2_composition` | `just run raw_d2_composition` | ordered 2D and alpha-blended raw passes in one frame |
+
+See the [current `d2_shapes` limitation](../docs/examples.md#commands) before running it.

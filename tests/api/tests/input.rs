@@ -8,6 +8,9 @@ use vmnl::{
     MouseButton, Scancode, StandardCursor, StandardCursorBuilder, VMNLResult, Window,
 };
 
+#[path = "../../support/input_keys.rs"]
+mod input_keys;
+
 fn assert_empty(input: &Input) {
     let keyboard = input.keyboard();
     assert!(!keyboard.is_down(Key::Escape));
@@ -37,27 +40,11 @@ fn input_initial_state_is_empty_through_public_facade() -> VMNLResult<()> {
 
 #[test]
 fn every_named_key_family_is_exposed_through_public_facade() {
-    let representatives = [
-        Key::Space,
-        Key::Apostrophe,
-        Key::World1,
-        Key::Insert,
-        Key::PageDown,
-        Key::CapsLock,
-        Key::PrintScreen,
-        Key::F25,
-        Key::Kp0,
-        Key::KpDecimal,
-        Key::KpEnter,
-        Key::LeftShift,
-        Key::RightControl,
-        Key::LeftAlt,
-        Key::RightSuper,
-        Key::Menu,
-    ];
-
-    assert_eq!(representatives.len(), 16);
-    assert!(representatives.iter().all(|key| *key != Key::Unknown));
+    let keys = input_keys::KEYS;
+    let distinct: std::collections::HashSet<_> = keys.into_iter().collect();
+    assert_eq!(distinct.len(), 120);
+    assert!(keys.into_iter().all(input_keys::is_named_key));
+    assert!(!input_keys::is_named_key(Key::Unknown));
 }
 
 #[test]

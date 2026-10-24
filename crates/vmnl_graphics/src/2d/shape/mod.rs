@@ -3,7 +3,7 @@
 
 //! Shape utilities for the VMNL library.
 
-mod ellipse;
+mod circle;
 mod indexed;
 mod line;
 mod polygon;
@@ -14,8 +14,10 @@ mod triangle;
 mod validation;
 
 use super::{Drawable2D, GpuVertex2D, RenderItem2D, Vector2f, Vertex2D};
-use crate::common::{BlendMode, GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey};
-pub use ellipse::EllipseBuilder;
+use crate::{
+    common::{BlendMode, GpuGeometry, GraphicsResourceFactory, MaterialKey, PipelineKey},
+    d2::shape::circle::CircleBuilder,
+};
 pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
 pub use polygon::PolygonBuilder;
@@ -26,8 +28,8 @@ pub use triangle::TriangleBuilder;
 /// Types of shape data that can be rendered in VMNL.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub(crate) enum ShapeKind {
-    /// Filled ellipse shape.
-    Ellipse,
+    /// Circle-like shape.
+    Circle,
     /// Raw vertex data without indices.
     RawVertices,
     /// Indexed geometry using vertex and index buffers.
@@ -81,9 +83,32 @@ impl Shape {
     /// Create a filled circle builder with a required radius.
     ///
     /// The circle center defaults to `(0, 0)` and its color defaults to white.
+    /// The returned builder is currently usable through type inference and has no public
+    /// import path. Setters configure CPU data; `build(&Context)` consumes the builder
+    /// and allocates/uploads context-associated vertex and index buffers.
+    ///
+    /// Defaults: unfilled, 32 segments, equal radii, inner/outer offsets of `0.5`, no sector
+    /// or cap, and device memory preference. The outer offset applies even when filled,
+    /// so the default boundary radius is `radius + 0.5`.
+    ///
+    /// Configure an ellipse with `.ellipse(radius_y)`. `.width(w)` sets both offsets to
+    /// `w / 2`; `.inner(w)` and `.outer(w)` change one offset. Each width setter disables
+    /// filling. `.filled(true)` preserves offsets and ignores only the inner boundary.
+    /// `.segments(n)` sets subdivisions across the complete shape or requested sweep.
+    ///
+    /// `.sector(start, sweep)` uses degrees, zero at the top, positive clockwise in the
+    /// built-in X-right/Y-down coordinates. Every sector requires `.cap(LineCap::...)`,
+    /// even when filled or covering a full turn. Caps affect only unfilled sectors;
+    /// a cap without a sector is rejected. Round caps use 32 fixed subdivisions per end.
+    ///
+    /// `build` rejects non-finite centers, non-positive/non-finite radii, zero segments,
+    /// starts outside `0..=360`, zero or over-360-degree absolute sweeps, and unmatched
+    /// sector/cap pairs with `InvalidState`. Unfilled shapes additionally require finite,
+    /// strictly positive inner and outer offsets. Generated coordinates are not rechecked
+    /// for overflow or degeneracy. GPU allocation/upload errors are propagated.
     ///
     /// # Arguments
-    /// - `radius`: Circle radius in pixel-like 2D coordinates.
+    /// - `radius`: Finite, strictly positive reference radius in pixel-like 2D coordinates.
     ///
     /// # Example
     /// ```rust,no_run
@@ -97,37 +122,8 @@ impl Shape {
     /// # }
     /// ```
     #[must_use]
-    pub fn circle(radius: f32) -> EllipseBuilder {
-        EllipseBuilder::new(Vector2f {
-            x: radius,
-            y: radius,
-        })
-    }
-
-    /// Create a filled ellipse builder with a required radius.
-    ///
-    /// The ellipse center defaults to `(0, 0)` and its color defaults to white.
-    ///
-    /// # Arguments
-    /// - `radius`: Ellipse radius in pixel-like 2D coordinates.
-    ///
-    /// # Example
-    /// ```rust,no_run
-    /// # use vmnl_graphics::Context;
-    /// # use vmnl_graphics::d2::Shape;
-    /// # fn main() -> vmnl_graphics::VMNLResult<()> {
-    /// # let context = Context::new()?;
-    /// let ellipse = Shape::ellipse(50.0, 40.0).position(100.0, 120.0).build(&context)?;
-    /// # drop(ellipse);
-    /// # Ok(())
-    /// # }
-    /// ```
-    #[must_use]
-    pub fn ellipse(radius_x: f32, radius_y: f32) -> EllipseBuilder {
-        EllipseBuilder::new(Vector2f {
-            x: radius_x,
-            y: radius_y,
-        })
+    pub fn circle(radius: f32) -> CircleBuilder {
+        CircleBuilder::new(radius)
     }
 
     pub(crate) fn blend_mode_from_vertices(vertices: &[Vertex2D]) -> BlendMode {

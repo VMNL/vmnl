@@ -69,6 +69,7 @@ Core crates:
 Runnable visual examples:
 
 - `examples/d2/shapes`
+- `examples/d2/circles`
 - `examples/d2/advanced_geometry`
 - `examples/window/events_input`
 - `examples/window/custom_shaders`

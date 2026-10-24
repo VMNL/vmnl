@@ -3,7 +3,7 @@
 | Item | Role |
 |---|---|
 | [`Shape`](shape.md) | GPU-backed drawable and builder entry points |
-| [`EllipseBuilder`](ellipse_builder.md) | Filled ellipse / circle |
+| [`CircleBuilder`](circle_builder.md) | Filled/outlined circles, ellipses, rings, sectors, and arcs through `Shape::circle` |
 | [`IndexedShapeBuilder`](indexed_shape_builder.md) | Arbitrary triangle-indexed geometry |
 | [`PolygonBuilder`](polygon_builder.md) | Filled simple convex or concave boundary with automatic triangulation |
 | [`TriangleBuilder`](triangle_builder.md) | Three-vertex triangle |

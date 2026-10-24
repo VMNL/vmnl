@@ -10,11 +10,20 @@ Owns GPU-backed 2D geometry accepted by `FrameRenderer::draw2d`.
 
 ## Public API
 
-Builder entry points: `ellipse(radius_x, radiux_y)`, `circle(radius)`, `rect(w, h)`, `indexed(vertices, indices)`, `triangle(a, b, c)`, `triangle_from_vertices([Vertex2D; 3])`,`polygon(points)`, `polygon_from_vertices(vertices)`, `line(from, to)`, and `polyline(points)`. Implements `Drawable2D` and `AsRef<Shape>`; fields and direct construction are private.
+Builder entry points: `circle(radius)`, `rect(w, h)`, `indexed(vertices, indices)`, `triangle(a, b, c)`, `triangle_from_vertices([Vertex2D; 3])`, `polygon(points)`, `polygon_from_vertices(vertices)`, `line(from, to)`, and `polyline(points)`. Implements `Drawable2D` and `AsRef<Shape>`; fields and direct construction are private.
+
+`circle` returns the inferred [`CircleBuilder`](circle_builder.md), with filled geometry by default.
+Use `.ellipse(radius_y)` for a second radius, `.width(w)` for a ring, and
+`.sector(start, sweep).cap(LineCap::...)` for a sector or arc. `Shape::ellipse` and `EllipseBuilder`
+have been removed; the replacement builder currently has no public import path.
 
 ## Construction, defaults, and validation
 
 Each entry point captures required CPU data; its builder validates and allocates on `build(&Context)`. Alpha values select opaque versus alpha blending internally.
+
+Circle-family width setters disable filling. A later `.filled(true)` preserves widths, and the
+outer offset still affects the filled boundary. See the [circle builder contract](circle_builder.md)
+for defaults, setter order, sector/cap validation, and numeric limitations.
 
 ## Units, coordinates, and valid ranges
 

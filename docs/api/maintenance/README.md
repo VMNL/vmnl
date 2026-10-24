@@ -9,6 +9,8 @@ inventory checks.
   inventory and includes GLFW functions not currently exposed by VMNL.
 - [`keyboard_capability_matrix.md`](keyboard_capability_matrix.md) tracks GLFW keyboard
   capabilities through their VMNL contracts, deterministic evidence, and native qualification.
+- [`input_test_capability_matrix.md`](input_test_capability_matrix.md) tracks the cross-platform
+  keyboard and mouse input coverage required by issue #91.
 
 Run `just docs-api-check` before review; run `just docs-api-update` only after an intentional
 surface, inventory, or documentation change.
