@@ -101,10 +101,12 @@ with operator-confirmed slot selection, independent raw/mapped expectations, axi
 explicit exclusions and held disconnection. Runtime and window commands are opt-in; neither
 unit tests nor an absent-device failure qualify hardware. The operator reported no controller
 available on 2026-10-19. The launcher and driver are prepared for native `win32` and `cocoa`
-execution as well as Linux; no Windows/macOS host was available, so their native compilation
-and execution remain unverified locally. Each OS needs an independent expectation profile and
-separate runtime/window hardware reports. Virtual injection on Windows/macOS remains absent
-and unqualified. See the [physical protocol](../../testing.md#physical-joystick-operator-protocol).
+execution as well as Linux. No local Windows/macOS host was available for the operator's
+preparation; native compilation and portable unit/API/Null/driver coverage have since been
+observed on their CI runners. See the [scoped Windows/macOS evidence](../../testing.md#windows-and-macos-joystick-evidence).
+Each OS still needs an independent expectation profile and separate runtime/window hardware
+reports. Virtual injection on Windows/macOS remains absent and unqualified. See the
+[physical protocol](../../testing.md#physical-joystick-operator-protocol).
 Commands, report semantics and prerequisite limits are in
 [Testing](../../testing.md#virtual-joystickgamepad-scenarios-issue-94).
 `Validation: Linux` now schedules three repetitions per backend/mode automatically on each

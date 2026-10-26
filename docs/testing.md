@@ -406,6 +406,25 @@ oracles on each native runner; they never invoke the ignored operator scenario. 
 compilation is not established by a local Linux build. No Windows/macOS virtual fixture is
 implemented or installed by this protocol; those separate injection paths remain unqualified.
 
+### Windows and macOS joystick evidence
+
+[CI run #40248972120](https://github.com/VMNL/vmnl/actions/runs/40248972120) observed successful
+`Validation: Windows` and `Validation: macOS` jobs on `windows-2022` and `macos-14-arm64` runners.
+Both checked out merge `d117935eeafe43f9ff6e1c2840a4a62a578ffe81` (PR head `22a0137`, `main`
+at `e710938`). The evidence is scoped to that source and those runner environments.
+
+| Evidence level | Windows | macOS |
+| --- | --- | --- |
+| Native workspace compilation, including the public client and runtime/window test targets | `cargo build --workspace --all-targets --locked` succeeded. | Same command succeeded. |
+| Deterministic, API/Null and portable driver coverage | Unit, API, smoke and portable platform steps succeeded, including all five callback lifecycle cases and physical-profile/driver oracles. | Same steps and cases succeeded. |
+| Present virtual joystick through public runtime/window paths | Fixture unimplemented; unqualified. | Fixture unimplemented; unqualified. |
+| Physical-controller runtime/window protocol | Operator scenarios not run; qualification pending. | Operator scenarios not run; qualification pending. |
+
+These builds and portable tests do not exercise a present joystick or qualify GPU execution.
+The physical operator's 2026-10-19 preparation had no controller or local Windows/macOS host;
+its runtime/window hardware reports remain outstanding. Virtual injection has the separate
+[supplier and signing prerequisites](#windowsmacos-virtual-fixture-prerequisites).
+
 ## Test Types
 
 ```text

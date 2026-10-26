@@ -116,8 +116,10 @@ remain unqualified. See [stick observations](testing.md#public-window-stick-obse
 The physical operator protocol is prepared for Linux (`x11`/`wayland`), Windows (`win32`) and
 macOS (`cocoa`), in standalone runtime and window modes, with explicit profiles, tolerances
 and exclusions. Host/backend mismatches fail; Linux-only virtual injection is kept separate.
-No controller or native Windows/macOS host was available for this preparation on 2026-10-19;
-physical qualification and native Windows/macOS compilation/execution remain pending.
+No controller or local Windows/macOS host was available for this preparation on 2026-10-19.
+Native Windows/macOS compilation and portable tests have since succeeded in the
+[scoped CI evidence](testing.md#windows-and-macos-joystick-evidence). Their virtual fixtures
+remain unimplemented, and physical runtime/window qualification remains pending on every OS.
 CI compilation and portable oracles do not qualify a present controller. See the
 [physical protocol](testing.md#physical-joystick-operator-protocol).
 See the [scenario matrix](api/maintenance/joystick_capability_matrix.md#functional-linux-coverage-added-for-issue-94)
