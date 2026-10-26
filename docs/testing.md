@@ -129,6 +129,17 @@ and connection delivery stay disabled, every slot remains `NotTracked`, and no j
 is delivered. It does not expose the unit-test counters. No instrumentation API or dependency
 is added to the public clients.
 
+### Joystick callback lifecycle regressions
+
+`cargo test -p vmnl-api-tests --test input_runtime_callbacks` exercises the public facade under
+Null. A separate test driver invokes the installed GLFW C trampoline with synthetic connection
+notifications; it creates no device, window or Vulkan resource. Cases cover callback self-removal,
+self-replacement, last-subscriber removal, immediate resubscription and cleanup before a user
+panic resumes. Polled queues retain their ordered notifications when their callback is removed.
+The driver also checks that the unused native callback is actually unregistered after returning
+to Rust. These are deterministic/Null callback-boundary checks, not hot-plug or physical-device
+qualification.
+
 ### Linux joystick CI
 
 The `CI` workflow includes four blocking steps in `Validation: Linux` after the keyboard/mouse

@@ -48,6 +48,13 @@ handle's next `poll_events` call. If a callback panics, VMNL queues the event fo
 skips further user callbacks for the rest of that GLFW call, then resumes the panic after GLFW
 returns to Rust.
 
+A synchronous callback may remove or replace itself when another consumer processes events.
+The current invocation completes, and subsequent notifications use the updated callback. Removing
+the last subscription defers native unregistration until the enclosing GLFW call returns, before
+any captured panic resumes. A subscription created during that invocation reuses the installed
+native callback. A handle that has already polled keeps its independent event queue when its
+callback is removed; a callback-only handle unsubscribes and clears its queue.
+
 ## Units, coordinates, and valid ranges
 
 Not applicable to runtime configuration. Raw joystick and mapped gamepad values are documented in

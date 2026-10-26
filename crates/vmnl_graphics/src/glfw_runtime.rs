@@ -6,7 +6,7 @@
 use crate::{VMNLError, VMNLErrorKind, VMNLResult};
 use std::{
     any::Any,
-    cell::RefCell,
+    cell::{Cell, RefCell},
     collections::VecDeque,
     ffi::CString,
     panic::{catch_unwind, resume_unwind, AssertUnwindSafe},
@@ -146,7 +146,7 @@ impl InputRuntime {
 
         let mut glfw = self.runtime.glfw.clone();
         glfw.poll_events();
-        self.runtime.resume_joystick_callback_panic();
+        self.runtime.finish_joystick_callbacks();
         self.joystick_events.borrow_mut().drain_events().collect()
     }
 
@@ -160,17 +160,24 @@ impl InputRuntime {
     /// catches a panic at the C boundary and resumes it after the enclosing GLFW call returns. The
     /// event is queued for all subscribers before the panic resumes, and further user callbacks
     /// are skipped for the remainder of that GLFW call.
+    ///
+    /// A callback may replace or remove itself when another consumer processes events. The
+    /// change applies to subsequent notifications; the current invocation completes normally.
     pub fn set_joystick_callback(
         &mut self,
         callback: impl FnMut(&crate::Event, *mut std::ffi::c_void) + 'static,
     ) {
-        self.joystick_events.borrow_mut().callback = Some(Box::new(callback));
+        self.joystick_events.borrow_mut().callback =
+            JoystickCallbackState::Ready(Box::new(callback));
         self.ensure_joystick_subscription();
     }
 
     /// Removes this handle's synchronous joystick callback.
+    ///
+    /// If called from that callback, the current invocation completes. Native unregistration
+    /// waits until GLFW returns to Rust. A handle that has polled retains its event subscription.
     pub fn unset_joystick_callback(&mut self) {
-        self.joystick_events.borrow_mut().callback = None;
+        self.joystick_events.borrow_mut().callback = JoystickCallbackState::Unset;
         if !self.has_polled_joystick_events {
             self.joystick_subscription = None;
             self.joystick_events.borrow_mut().events.clear();
@@ -305,6 +312,8 @@ pub(crate) struct GlfwRuntime {
     pub(crate) configuration: InputRuntimeConfig,
     callbacks: RefCell<GlfwCallbacks>,
     joystick_events: RefCell<JoystickEventDispatcher>,
+    is_joystick_callback_active: Cell<bool>,
+    is_joystick_callback_installed: Cell<bool>,
     joystick_callback_panic: RefCell<Option<Box<dyn Any + Send>>>,
     _lifecycle_guard: RuntimeLifecycleGuard,
 }
@@ -403,6 +412,8 @@ impl GlfwRuntime {
                 configuration,
                 callbacks: RefCell::new(GlfwCallbacks::default()),
                 joystick_events: RefCell::new(JoystickEventDispatcher::default()),
+                is_joystick_callback_active: Cell::new(false),
+                is_joystick_callback_installed: Cell::new(false),
                 joystick_callback_panic: RefCell::new(None),
                 _lifecycle_guard: lifecycle_guard,
             }
@@ -423,7 +434,7 @@ impl GlfwRuntime {
     ) -> VMNLResult<Option<crate::JoystickSample>> {
         let (sample, errors) =
             self.capture_glfw_errors(|| crate::glfw_backend::sample_joystick(id));
-        self.resume_joystick_callback_panic();
+        self.finish_joystick_callbacks();
         finish_joystick_sample(sample, errors)
     }
 
@@ -464,16 +475,19 @@ impl GlfwRuntime {
         self: &Rc<Self>,
         queue: Rc<RefCell<JoystickEventQueue>>,
     ) -> JoystickEventSubscription {
-        if self.joystick_events.borrow_mut().subscribe(&queue) {
+        let was_empty = self.joystick_events.borrow_mut().subscribe(&queue);
+        if was_empty && !self.is_joystick_callback_installed.replace(true) {
             let weak_runtime = Rc::downgrade(self);
             let mut glfw = self.glfw.clone();
             crate::glfw_backend::set_joystick_callback(&mut glfw, move |id, event| {
                 let Some(runtime) = weak_runtime.upgrade() else {
                     return;
                 };
+                runtime.is_joystick_callback_active.set(true);
                 capture_joystick_callback_panic(&runtime.joystick_callback_panic, || {
                     runtime.dispatch_joystick_event(id, event);
                 });
+                runtime.is_joystick_callback_active.set(false);
             });
         }
 
@@ -484,7 +498,25 @@ impl GlfwRuntime {
     }
 
     pub(crate) fn unsubscribe_joystick_events(&self, queue: &Rc<RefCell<JoystickEventQueue>>) {
-        if self.joystick_events.borrow_mut().unsubscribe(queue) {
+        let is_unused = self.joystick_events.borrow_mut().unsubscribe(queue);
+        if is_unused {
+            self.remove_unused_joystick_callback();
+        }
+    }
+
+    fn remove_unused_joystick_callback(&self) {
+        // glfw-rs holds its callback RefCell until the C trampoline returns. Even the end of
+        // our closure is too early to replace/remove it. A new subscriber may reuse it meanwhile.
+        if self.is_joystick_callback_active.get() || !self.is_joystick_callback_installed.get() {
+            return;
+        }
+        let is_unused = {
+            let mut dispatcher = self.joystick_events.borrow_mut();
+            dispatcher.prune();
+            dispatcher.queues.is_empty()
+        };
+        if is_unused {
+            self.is_joystick_callback_installed.set(false);
             let mut glfw = self.glfw.clone();
             crate::glfw_backend::unset_joystick_callback(&mut glfw);
         }
@@ -509,7 +541,11 @@ impl GlfwRuntime {
         );
     }
 
-    pub(crate) fn resume_joystick_callback_panic(&self) {
+    pub(crate) fn finish_joystick_callbacks(&self) {
+        if self.is_joystick_callback_active.get() {
+            return;
+        }
+        self.remove_unused_joystick_callback();
         if let Some(panic) = take_joystick_callback_panic(&self.joystick_callback_panic) {
             resume_unwind(panic);
         }
@@ -610,10 +646,18 @@ impl JoystickEventDispatcher {
 #[derive(Default)]
 pub(crate) struct JoystickEventQueue {
     events: VecDeque<crate::Event>,
-    callback: Option<Box<JoystickEventCallback>>,
+    callback: JoystickCallbackState,
 }
 
 type JoystickEventCallback = dyn FnMut(&crate::Event, *mut std::ffi::c_void);
+
+#[derive(Default)]
+enum JoystickCallbackState {
+    #[default]
+    Unset,
+    Ready(Box<JoystickEventCallback>),
+    Dispatching,
+}
 
 impl JoystickEventQueue {
     pub(crate) fn drain_events(&mut self) -> std::collections::vec_deque::Drain<'_, crate::Event> {
@@ -631,13 +675,17 @@ fn dispatch_joystick_event_to_queue(
     user_pointer: *mut std::ffi::c_void,
     pending_panic: &RefCell<Option<Box<dyn Any + Send>>>,
 ) {
-    let (mut callback, should_call) = {
+    let (callback, should_call) = {
         let mut queue = queue.borrow_mut();
         queue.events.push_back(event.clone());
-        (queue.callback.take(), pending_panic.borrow().is_none())
+        (
+            std::mem::replace(&mut queue.callback, JoystickCallbackState::Dispatching),
+            pending_panic.borrow().is_none(),
+        )
     };
 
-    let Some(mut callback_fn) = callback.take() else {
+    let JoystickCallbackState::Ready(mut callback_fn) = callback else {
+        queue.borrow_mut().callback = callback;
         return;
     };
     let result = if should_call {
@@ -645,7 +693,12 @@ fn dispatch_joystick_event_to_queue(
     } else {
         Ok(())
     };
-    queue.borrow_mut().callback = Some(callback_fn);
+    {
+        let mut queue = queue.borrow_mut();
+        if matches!(queue.callback, JoystickCallbackState::Dispatching) {
+            queue.callback = JoystickCallbackState::Ready(callback_fn);
+        }
+    }
     if let Err(panic) = result {
         let mut pending = pending_panic.borrow_mut();
         if pending.is_none() {
@@ -843,10 +896,11 @@ mod tests {
         let pending = RefCell::new(None);
         let first = Rc::new(RefCell::new(JoystickEventQueue::default()));
         let second = Rc::new(RefCell::new(JoystickEventQueue::default()));
-        first.borrow_mut().callback = Some(Box::new(|_, _| panic!("callback panic")));
+        first.borrow_mut().callback =
+            JoystickCallbackState::Ready(Box::new(|_, _| panic!("callback panic")));
         let second_callback_called = Rc::new(Cell::new(false));
         let second_callback_observed = Rc::clone(&second_callback_called);
-        second.borrow_mut().callback = Some(Box::new(move |_, _| {
+        second.borrow_mut().callback = JoystickCallbackState::Ready(Box::new(move |_, _| {
             second_callback_observed.set(true);
         }));
         let event = crate::Event::new(
@@ -886,19 +940,20 @@ mod tests {
         let observed_callback = Rc::clone(&observed);
         let callback_dispatcher = Rc::clone(&dispatcher);
         let callback_late_queue = Rc::clone(&late_queue);
-        first_queue.borrow_mut().callback = Some(Box::new(move |event, user_pointer| {
-            assert_eq!(user_pointer as usize, expected_address);
-            assert!(matches!(
-                event.kind(),
-                crate::EventKind::JoystickDisconnected {
-                    id: crate::JoystickId::Joystick2
-                }
-            ));
-            callback_dispatcher
-                .borrow_mut()
-                .subscribe(&callback_late_queue);
-            observed_callback.set(true);
-        }));
+        first_queue.borrow_mut().callback =
+            JoystickCallbackState::Ready(Box::new(move |event, user_pointer| {
+                assert_eq!(user_pointer as usize, expected_address);
+                assert!(matches!(
+                    event.kind(),
+                    crate::EventKind::JoystickDisconnected {
+                        id: crate::JoystickId::Joystick2
+                    }
+                ));
+                callback_dispatcher
+                    .borrow_mut()
+                    .subscribe(&callback_late_queue);
+                observed_callback.set(true);
+            }));
 
         let subscribers = dispatcher.borrow_mut().subscribers();
         let pending_panic = RefCell::new(None);

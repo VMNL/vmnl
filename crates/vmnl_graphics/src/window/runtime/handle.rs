@@ -79,10 +79,7 @@ impl VMNLWindow {
     /// Internal implementation backing `Window::poll_events`.
     pub(crate) fn poll_events(&mut self) -> Vec<Event> {
         self.handle.instance.poll_events();
-        self.handle
-            .vmnl_instance
-            .glfw
-            .resume_joystick_callback_panic();
+        self.handle.vmnl_instance.glfw.finish_joystick_callbacks();
         let mut events: Vec<Event> = self.handle.events.poll_events(&mut self.handle.input);
         update_joystick_snapshots(
             self.handle.joystick_tracking_enabled,
@@ -175,19 +172,13 @@ impl VMNLWindow {
     /// Internal implementation backing `Window::wait_events`.
     pub(crate) fn wait_events(&mut self) {
         self.handle.instance.wait_events();
-        self.handle
-            .vmnl_instance
-            .glfw
-            .resume_joystick_callback_panic();
+        self.handle.vmnl_instance.glfw.finish_joystick_callbacks();
     }
 
     /// Internal implementation backing `Window::wait_events_timeout`.
     pub(crate) fn wait_events_timeout(&mut self, timeout: f64) {
         self.handle.instance.wait_events_timeout(timeout);
-        self.handle
-            .vmnl_instance
-            .glfw
-            .resume_joystick_callback_panic();
+        self.handle.vmnl_instance.glfw.finish_joystick_callbacks();
     }
 
     /// Internal implementation backing `Window::post_empty_event`.
