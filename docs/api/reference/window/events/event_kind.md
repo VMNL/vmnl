@@ -16,7 +16,8 @@ Variants: `Closed`, `FocusGained`, `FocusLost`, `Resized { width, height }`,
 `KeyReleased { key, scancode, modifiers }`, `MouseMoved { x, y }`, `MouseEntered`, `MouseLeft`,
 `MouseButtonPressed { button, modifiers }`, `MouseButtonReleased { button, modifiers }`,
 `MouseScrolled { dx, dy }`, `Text(char)`, and
-`TextWithModifiers { character, modifiers }`.
+`TextWithModifiers { character, modifiers }`, `JoystickConnected { id }`, and
+`JoystickDisconnected { id }`.
 
 `TextWithModifiers` preserves GLFW's deprecated modified-character callback for compatibility.
 New code should combine `Text` with key events instead of relying on this legacy source.
@@ -32,7 +33,7 @@ Window/framebuffer sizes are pixels; cursor positions are `f64` window coordinat
 are backend offsets. `repeat` distinguishes native repeated key notifications. Keyboard and
 mouse-button modifier flags describe modifier state at event generation. Scancodes are raw
 platform-specific values. Text payloads contain Unicode scalar values; they are distinct from
-physical `Key` values.
+physical `Key` values. Joystick IDs are reusable GLFW slots, not persistent device identities.
 
 ## Ownership, lifecycle, and threading
 
@@ -49,8 +50,10 @@ Payloads are allocation-free and perform no GPU work.
 ## Platform, Vulkan, and display constraints
 
 Key mapping, cursor coordinates, repeat behavior, modifier reporting, text composition, and
-available events depend on GLFW/platform. The legacy modified-character callback may behave
-differently across platform input methods.
+available events depend on GLFW/platform. Joystick connection events are delivered to windows only
+when that window enables joystick event delivery; standalone handles receive them through
+`InputRuntime::poll_events`. The legacy modified-character callback may behave differently across
+platform input methods.
 
 ## Example and related types
 

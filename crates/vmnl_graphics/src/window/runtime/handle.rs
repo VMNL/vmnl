@@ -5,11 +5,14 @@
 //! to window management and rendering.
 
 use crate::{
-    vmnl_instance::VMNLInstance, window::event::EventQueue, window::inner::VMNLWindow, Cursor,
-    CursorMode, Event, EventKind, Input, VMNLErrorKind,
+    glfw_runtime::{JoystickEventQueue, JoystickEventSubscription},
+    vmnl_instance::VMNLInstance,
+    window::inner::VMNLWindow,
+    window::{event::EventQueue, input::ALL_JOYSTICK_IDS},
+    Cursor, CursorMode, Event, EventKind, Input, VMNLErrorKind,
 };
-use std::rc::Rc;
 use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc};
 use vulkano::{
     pipeline::GraphicsPipeline,
     render_pass::{Framebuffer, RenderPass},
@@ -28,8 +31,6 @@ use vulkano::{
 /// - GLFW windowing: <https://www.glfw.org/docs/latest/window_guide.html>
 /// - glfw-rs: <https://github.com/PistonDevelopers/glfw-rs>
 pub(crate) struct WindowHandle {
-    /// Reference to the core Vulkan instance and context used for rendering.
-    pub(crate) vmnl_instance: Rc<VMNLInstance>,
     /// List of framebuffers associated with the swapchain images.
     pub(crate) framebuffers: Vec<Arc<Framebuffer>>,
     /// Render pass shared by the window pipelines and framebuffers.
@@ -56,6 +57,16 @@ pub(crate) struct WindowHandle {
     pub(crate) events: EventQueue,
     /// Input state manager for keyboard and mouse events.
     pub(crate) input: Input,
+    /// Per-window queue for joystick connection events when delivery is enabled.
+    pub(crate) joystick_events: Rc<RefCell<JoystickEventQueue>>,
+    pub(crate) joystick_event_subscription: Option<JoystickEventSubscription>,
+    /// Whether this window samples the sixteen joystick slots during its own event poll.
+    pub(crate) joystick_tracking_enabled: bool,
+    /// Whether the first successful full slot sweep has established the transition baseline.
+    pub(crate) joystick_snapshot_initialized: bool,
+    /// Reference to the Vulkan context and shared GLFW runtime. Kept last so the native window
+    /// and its GLFW token are destroyed before the runtime can terminate GLFW.
+    pub(crate) vmnl_instance: Rc<VMNLInstance>,
 }
 
 impl VMNLWindow {
@@ -68,7 +79,19 @@ impl VMNLWindow {
     /// Internal implementation backing `Window::poll_events`.
     pub(crate) fn poll_events(&mut self) -> Vec<Event> {
         self.handle.instance.poll_events();
-        let events: Vec<Event> = self.handle.events.poll_events(&mut self.handle.input);
+        self.handle.vmnl_instance.glfw.finish_joystick_callbacks();
+        let mut events: Vec<Event> = self.handle.events.poll_events(&mut self.handle.input);
+        update_joystick_snapshots(
+            self.handle.joystick_tracking_enabled,
+            &mut self.handle.joystick_snapshot_initialized,
+            &mut self.handle.input,
+            |id| self.handle.vmnl_instance.glfw.sample_joystick(id),
+        );
+        events.extend(self.handle.joystick_events.borrow_mut().drain_events());
+        events.sort_by(|left, right| {
+            left.timestamp_seconds()
+                .total_cmp(&right.timestamp_seconds())
+        });
         if self.handle.input.keyboard().is_one_used() {
             self.handle
                 .vmnl_instance
@@ -97,14 +120,65 @@ impl VMNLWindow {
         self.handle.input.clear_transitions();
     }
 
+    pub(crate) fn set_joystick_event_delivery(&mut self, enabled: bool) {
+        if enabled == self.handle.joystick_event_subscription.is_some() {
+            return;
+        }
+
+        if enabled {
+            self.handle.joystick_event_subscription = Some(
+                self.handle
+                    .vmnl_instance
+                    .glfw
+                    .subscribe_joystick_events(Rc::clone(&self.handle.joystick_events)),
+            );
+        } else {
+            self.handle.joystick_event_subscription = None;
+            self.handle.joystick_events.borrow_mut().clear();
+        }
+    }
+
+    pub(crate) const fn is_joystick_event_delivery_enabled(&self) -> bool {
+        self.handle.joystick_event_subscription.is_some()
+    }
+
+    pub(crate) fn set_joystick_tracking(&mut self, enabled: bool) -> crate::VMNLResult<()> {
+        if enabled == self.handle.joystick_tracking_enabled {
+            return Ok(());
+        }
+
+        if enabled {
+            // Explicitly enabling tracking initializes GLFW's lazy joystick-query subsystem.
+            // State is published later, in this window's next `poll_events` batch.
+            self.handle
+                .vmnl_instance
+                .glfw
+                .sample_joystick(crate::JoystickId::Joystick1)?;
+            self.handle.joystick_tracking_enabled = true;
+            self.handle.joystick_snapshot_initialized = false;
+        } else {
+            self.handle.joystick_tracking_enabled = false;
+            self.handle.joystick_snapshot_initialized = false;
+            self.handle.input.clear_joystick_tracking();
+        }
+
+        Ok(())
+    }
+
+    pub(crate) const fn is_joystick_tracking_enabled(&self) -> bool {
+        self.handle.joystick_tracking_enabled
+    }
+
     /// Internal implementation backing `Window::wait_events`.
     pub(crate) fn wait_events(&mut self) {
         self.handle.instance.wait_events();
+        self.handle.vmnl_instance.glfw.finish_joystick_callbacks();
     }
 
     /// Internal implementation backing `Window::wait_events_timeout`.
     pub(crate) fn wait_events_timeout(&mut self, timeout: f64) {
         self.handle.instance.wait_events_timeout(timeout);
+        self.handle.vmnl_instance.glfw.finish_joystick_callbacks();
     }
 
     /// Internal implementation backing `Window::post_empty_event`.
@@ -135,16 +209,17 @@ impl VMNLWindow {
     /// Internal implementation backing `Window::set_error_callback`.
     pub(crate) fn set_error_callback(
         &mut self,
-        mut callback: impl FnMut(VMNLErrorKind, String) + 'static,
+        callback: impl FnMut(VMNLErrorKind, String) + 'static,
     ) {
-        crate::glfw_backend::set_error_callback(&mut self.handle.instance, move |kind, message| {
-            callback(kind, message);
-        });
+        self.handle
+            .vmnl_instance
+            .glfw
+            .set_error_callback(Some(Box::new(callback)));
     }
 
     /// Internal implementation backing `Window::unset_error_callback`.
     pub(crate) fn unset_error_callback(&mut self) {
-        self.handle.instance.unset_error_callback();
+        self.handle.vmnl_instance.glfw.set_error_callback(None);
     }
 
     /// Internal implementation backing `Window::set_char_polling`.
@@ -341,5 +416,189 @@ impl VMNLWindow {
         self.handle.events.set_cursor_pos_delivery(true);
         self.handle.events.set_cursor_enter_delivery(true);
         self.handle.events.set_scroll_delivery(true);
+    }
+}
+
+fn update_joystick_snapshots(
+    tracking: bool,
+    initialized: &mut bool,
+    input: &mut Input,
+    mut sample: impl FnMut(crate::JoystickId) -> crate::VMNLResult<Option<crate::JoystickSample>>,
+) {
+    use crate::JoystickId;
+
+    if !tracking {
+        return;
+    }
+
+    let mut samples: [Option<crate::JoystickSample>; JoystickId::COUNT] =
+        std::array::from_fn(|_| None);
+    let mut errors = Vec::new();
+    for (index, id) in ALL_JOYSTICK_IDS.iter().copied().enumerate() {
+        match sample(id) {
+            Ok(sample) => samples[index] = sample,
+            Err(error) => errors.push(error),
+        }
+    }
+
+    if !errors.is_empty() {
+        for error in errors {
+            log::error!("joystick snapshot update failed: {error}");
+        }
+        return;
+    }
+
+    input.apply_joystick_samples(samples, !*initialized);
+    *initialized = true;
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::panic)]
+
+    use super::*;
+    use crate::{
+        GamepadAxis, GamepadButton, GamepadState, JoystickId, JoystickSample, JoystickStatus,
+    };
+
+    fn held_sample(id: JoystickId) -> Option<JoystickSample> {
+        (id == JoystickId::Joystick6).then(|| {
+            JoystickSample::from_native(
+                id,
+                Some("snapshot fixture".into()),
+                None,
+                vec![],
+                vec![1],
+                vec![],
+                Some(GamepadState::from_native(
+                    None,
+                    [1; GamepadButton::COUNT],
+                    [0.0; GamepadAxis::COUNT],
+                )),
+            )
+        })
+    }
+
+    #[test]
+    fn keyboard_mouse_batches_do_not_sample_joysticks_with_default_options() {
+        let options = crate::Window::builder().options;
+        let mut input = Input::new();
+        let mut initialized = false;
+        assert!(!options.joystick_event_delivery);
+
+        for action in [glfw::Action::Press, glfw::Action::Release] {
+            input.begin_batch();
+            input.apply_event(&glfw::WindowEvent::Key(
+                glfw::Key::A,
+                0,
+                action,
+                glfw::Modifiers::empty(),
+            ));
+            input.apply_event(&glfw::WindowEvent::MouseButton(
+                glfw::MouseButtonLeft,
+                action,
+                glfw::Modifiers::empty(),
+            ));
+            update_joystick_snapshots(
+                options.joystick_tracking,
+                &mut initialized,
+                &mut input,
+                |_| panic!("a keyboard/mouse-only batch must not query any joystick slot"),
+            );
+            let pressed = action == glfw::Action::Press;
+            assert_eq!(input.keyboard().is_down(crate::Key::A), pressed);
+            assert_eq!(input.mouse().is_down(crate::MouseButton::Left), pressed);
+            assert_eq!(input.keyboard().is_pressed(crate::Key::A), pressed);
+            assert_eq!(
+                input.mouse().is_released(crate::MouseButton::Left),
+                !pressed
+            );
+        }
+        input.begin_batch();
+        update_joystick_snapshots(
+            options.joystick_tracking,
+            &mut initialized,
+            &mut input,
+            |_| panic!("an empty keyboard/mouse batch must not query any joystick slot"),
+        );
+        assert!(!initialized);
+        assert!(!input.keyboard().is_released(crate::Key::A));
+        assert!(!input.mouse().is_released(crate::MouseButton::Left));
+        for id in ALL_JOYSTICK_IDS {
+            assert_eq!(input.joystick(id).status(), JoystickStatus::NotTracked);
+        }
+    }
+
+    #[test]
+    fn explicit_tracking_samples_each_slot_once_per_batch_and_stops_when_disabled() {
+        let mut input = Input::new();
+        let mut initialized = false;
+        for _ in 0..2 {
+            let mut slots = Vec::new();
+            update_joystick_snapshots(true, &mut initialized, &mut input, |id| {
+                slots.push(id.index());
+                Ok(held_sample(id))
+            });
+            assert_eq!(slots, (0..JoystickId::COUNT).collect::<Vec<_>>());
+            assert!(initialized);
+            assert!(input
+                .joystick(JoystickId::Joystick6)
+                .is_down(GamepadButton::A));
+            assert!(!input
+                .joystick(JoystickId::Joystick6)
+                .is_pressed(GamepadButton::A));
+        }
+        update_joystick_snapshots(false, &mut initialized, &mut input, |_| {
+            panic!("disabled tracking must stop subsequent slot queries")
+        });
+        assert!(initialized);
+        assert!(input
+            .joystick(JoystickId::Joystick6)
+            .is_down(GamepadButton::A));
+    }
+
+    #[test]
+    fn failed_slot_sweep_preserves_previous_snapshot_and_initialization_state() {
+        for previous_initialized in [false, true] {
+            let mut input = Input::new();
+            let mut initialized = false;
+            if previous_initialized {
+                update_joystick_snapshots(true, &mut initialized, &mut input, |_| Ok(None));
+            }
+            let mut slots = Vec::new();
+            update_joystick_snapshots(true, &mut initialized, &mut input, |id| {
+                slots.push(id.index());
+                if id == JoystickId::Joystick8 {
+                    Err(crate::VMNLError::new(VMNLErrorKind::InvalidState(
+                        "test query failure".into(),
+                    )))
+                } else {
+                    Ok(held_sample(id))
+                }
+            });
+            assert_eq!(slots, (0..JoystickId::COUNT).collect::<Vec<_>>());
+            assert_eq!(initialized, previous_initialized);
+            for id in ALL_JOYSTICK_IDS {
+                assert_eq!(
+                    input.joystick(id).status(),
+                    if previous_initialized {
+                        JoystickStatus::Absent
+                    } else {
+                        JoystickStatus::NotTracked
+                    }
+                );
+            }
+            update_joystick_snapshots(true, &mut initialized, &mut input, |id| Ok(held_sample(id)));
+            assert!(initialized);
+            assert!(input
+                .joystick(JoystickId::Joystick6)
+                .is_down(GamepadButton::A));
+            assert_eq!(
+                input
+                    .joystick(JoystickId::Joystick6)
+                    .is_pressed(GamepadButton::A),
+                previous_initialized
+            );
+        }
     }
 }

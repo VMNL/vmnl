@@ -55,6 +55,8 @@ jobs:
     needs: quality
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
+    env:
+      VMNL_CI_ARTIFACT_DIR: ${{ github.workspace }}/target/joystick-artifacts
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -91,9 +93,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
-            libvulkan-dev vulkan-tools wayland-protocols \
+            libvulkan-dev vulkan-tools mesa-vulkan-drivers wayland-protocols \
             libwayland-dev libxkbcommon-dev xorg-dev \
-            weston xvfb openbox x11-utils
+            weston xvfb xauth openbox x11-utils acl
       - name: Build workspace
         run: cargo build --workspace --all-targets --locked
       - name: Run Unit Tests
@@ -207,6 +209,97 @@ jobs:
             cargo test -p vmnl-platform-tests --locked \
               --test backend_contract selected_backend_contract -- \
               --ignored --exact --nocapture
+      - name: Prepare owned joystick fixture access on disposable runner
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p "$VMNL_CI_ARTIFACT_DIR"
+          sudo modprobe uinput
+          sudo udevadm settle --timeout=10
+          getfacl -p /dev/uinput >"$VMNL_CI_ARTIFACT_DIR/uinput-before.acl"
+          sudo setfacl -m "u:$(id -u):rw" /dev/uinput
+          # Grant only new nodes belonging to this fixture, never unrelated input devices.
+          sudo mkdir -p /run/udev/rules.d
+          printf 'SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="VMNL virtual joystick *", ATTRS{id/vendor}=="f00d", ATTRS{id/product}=="0094", OWNER="%s", MODE="0600"\n' "$(id -u)" \
+            | sudo tee /run/udev/rules.d/99-vmnl-joystick.rules >/dev/null
+          sudo udevadm control --reload-rules
+      - name: Test joystick x11 runtime
+        if: runner.os == 'Linux'
+        timeout-minutes: 20
+        env:
+          VMNL_CI_BACKEND: x11
+          VMNL_CI_MODE: runtime
+          VMNL_CI_ARTIFACT_DIR: ${{ github.workspace }}/target/joystick-artifacts/x11-runtime
+        run: |
+          xvfb-run --auto-servernum --server-args='-screen 0 1280x720x24 -nolisten tcp' \
+            bash tools/joystick_ci_display.sh
+      - name: Test joystick wayland runtime
+        if: runner.os == 'Linux'
+        timeout-minutes: 20
+        env:
+          VMNL_CI_BACKEND: wayland
+          VMNL_CI_MODE: runtime
+          VMNL_CI_ARTIFACT_DIR: ${{ github.workspace }}/target/joystick-artifacts/wayland-runtime
+        run: |
+          xvfb-run --auto-servernum --server-args='-screen 0 1280x720x24 -nolisten tcp' \
+            bash tools/joystick_ci_display.sh
+      - name: Select software Vulkan driver explicitly
+        id: joystick-vulkan
+        if: runner.os == 'Linux'
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          drivers = list(Path('/usr/share/vulkan/icd.d').glob('lvp_icd*.json'))
+          if len(drivers) != 1:
+              raise SystemExit('Exactly one lavapipe ICD is required; no implicit fallback')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'icd={drivers[0]}\n')
+          PY
+      - name: Test joystick x11 window
+        if: runner.os == 'Linux'
+        timeout-minutes: 20
+        env:
+          VMNL_CI_BACKEND: x11
+          VMNL_CI_MODE: window
+          VMNL_CI_ARTIFACT_DIR: ${{ github.workspace }}/target/joystick-artifacts/x11-window
+          VK_DRIVER_FILES: ${{ steps.joystick-vulkan.outputs.icd }}
+        run: |
+          xvfb-run --auto-servernum --server-args='-screen 0 1280x720x24 -nolisten tcp' \
+            bash tools/joystick_ci_display.sh
+      - name: Test joystick wayland window
+        if: runner.os == 'Linux'
+        timeout-minutes: 20
+        env:
+          VMNL_CI_BACKEND: wayland
+          VMNL_CI_MODE: window
+          VMNL_CI_ARTIFACT_DIR: ${{ github.workspace }}/target/joystick-artifacts/wayland-window
+          VK_DRIVER_FILES: ${{ steps.joystick-vulkan.outputs.icd }}
+        run: |
+          xvfb-run --auto-servernum --server-args='-screen 0 1280x720x24 -nolisten tcp' \
+            bash tools/joystick_ci_display.sh
+      - name: Restore joystick fixture access
+        if: always() && runner.os == 'Linux'
+        run: |
+          # Attempt ACL restoration even if removing or reloading the rule fails.
+          cleanup_status=0
+          sudo rm -f /run/udev/rules.d/99-vmnl-joystick.rules || cleanup_status=1
+          sudo udevadm control --reload-rules || cleanup_status=1
+          if [[ -f "$VMNL_CI_ARTIFACT_DIR/uinput-before.acl" ]]; then
+            sudo setfacl --restore="$VMNL_CI_ARTIFACT_DIR/uinput-before.acl" || cleanup_status=1
+            if getfacl -p /dev/uinput >"$VMNL_CI_ARTIFACT_DIR/uinput-after.acl"; then
+              diff -u "$VMNL_CI_ARTIFACT_DIR/uinput-before.acl" "$VMNL_CI_ARTIFACT_DIR/uinput-after.acl" || cleanup_status=1
+            else
+              cleanup_status=1
+            fi
+          fi
+          exit "$cleanup_status"
+      - name: Upload joystick evidence and display diagnostics
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
+        with:
+          name: joystick-linux-${{ github.run_attempt }}
+          path: target/joystick-artifacts/
+          if-no-files-found: error
       - name: Run native platform probes experimentally
         if: runner.os != 'Linux'
         continue-on-error: true

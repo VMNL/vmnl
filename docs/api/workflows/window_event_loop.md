@@ -7,6 +7,17 @@ Choose one loop policy:
 
 Common event delivery is configured by default, but the application still chooses every `poll_events` call. Use `unset_configure_window_polling` when configuring public event delivery source by source.
 
+Joystick connection events are separate and disabled by default. Opt in with
+`WindowBuilder::joystick_event_delivery(true)` or
+`Window::set_joystick_event_delivery(true)`; enabled windows receive connect/disconnect events from
+`poll_events`. These notifications do not enable joystick state tracking.
+
+Joystick state sampling is a separate per-window opt-in with
+`WindowBuilder::joystick_tracking(true)` or `Window::set_joystick_tracking(true)?`. After each
+`window.poll_events()`, inspect `window.input().joystick(id)`. The initial successful sample sets a
+baseline without press/release transitions. Each window advances only its own snapshot; standalone
+`InputRuntime::poll_events()` does not update it.
+
 ```rust,no_run
 # extern crate vmnl;
 use vmnl::{Context, EventKind, Window};

@@ -65,6 +65,14 @@ input-test backend:
 input-test-vmnl backend:
     python3 tools/input_test.py --vmnl {{ quote(backend) }}
 
+# Exercise public joystick input using a Linux virtual device; runtime creates no window/Vulkan.
+joystick-test backend mode='runtime':
+    python3 tools/input_test.py --joystick {{ quote(mode) }} {{ quote(backend) }}
+
+# Guide a native operator using a physical controller and independent expectation profile.
+joystick-physical-test backend profile mode='runtime':
+    python3 tools/input_test.py --joystick-physical {{ quote(mode) }} --physical-profile {{ quote(profile) }} {{ quote(backend) }}
+
 # Compile GPU tests without running them.
 [no-exit-message]
 test-gpu-compile:
@@ -114,7 +122,7 @@ _test-report suite:
             suite_name='GPU'
             suite_scope='Vulkan + GLFW display required'
             suite_kind='tests'
-            test_command=(cargo "${color_args[@]}" test -p vmnl-gpu-tests -- --ignored --skip vmnl_public_native_keyboard_and_mouse_events_update_input)
+            test_command=(cargo "${color_args[@]}" test -p vmnl-gpu-tests -- --ignored --skip vmnl_public_native_keyboard_and_mouse_events_update_input --skip vmnl_public_native_focus_preparation --skip public_windows_observe_virtual_joystick --skip public_windows_observe_physical_joystick)
             ;;
         gpu-compile)
             suite_name='GPU'
