@@ -8,6 +8,7 @@
 | struct | `vmnl::Cursor` | [Cursor](../reference/window/input/cursor.md) | [Rustdoc](../../../target/doc/vmnl/struct.Cursor.html) |
 | struct | `vmnl::CursorBuilder` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.CursorBuilder.html) |
 | enum | `vmnl::CursorMode` | [CursorMode](../reference/window/input/cursor_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.CursorMode.html) |
+| enum | `vmnl::DepthFormat` | [DepthFormat](../reference/window/depth_format.md) | [Rustdoc](../../../target/doc/vmnl/enum.DepthFormat.html) |
 | struct | `vmnl::DeviceConfig` | [DeviceConfig](../reference/device_config.md) | [Rustdoc](../../../target/doc/vmnl/struct.DeviceConfig.html) |
 | enum | `vmnl::DeviceFeature` | [DeviceFeature](../reference/device_feature.md) | [Rustdoc](../../../target/doc/vmnl/enum.DeviceFeature.html) |
 | struct | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/struct.Event.html) |
@@ -36,6 +37,7 @@
 | struct | `vmnl::MouseState` | [MouseState](../reference/window/input/mouse_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.MouseState.html) |
 | enum | `vmnl::PresentMode` | [PresentMode](../reference/window/present_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.PresentMode.html) |
 | enum | `vmnl::RenderMode` | [RenderMode](../reference/window/rendering/render_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.RenderMode.html) |
+| struct | `vmnl::RenderTargetConfig` | [RenderTargetConfig](../reference/window/render_target_config.md) | [Rustdoc](../../../target/doc/vmnl/struct.RenderTargetConfig.html) |
 | struct | `vmnl::Scancode` | [Scancode](../reference/window/input/scancode.md) | [Rustdoc](../../../target/doc/vmnl/struct.Scancode.html) |
 | enum | `vmnl::StandardCursor` | [StandardCursor](../reference/window/input/standard_cursor.md) | [Rustdoc](../../../target/doc/vmnl/enum.StandardCursor.html) |
 | struct | `vmnl::StandardCursorBuilder` | [StandardCursorBuilder](../reference/window/input/standard_cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.StandardCursorBuilder.html) |
@@ -75,7 +77,9 @@
 | struct | `vmnl::d3::Vertex3D` | [Vertex3D](../reference/d3/vertex_3d.md) | [Rustdoc](../../../target/doc/vmnl/d3/struct.Vertex3D.html) |
 | enum | `vmnl::raw::BlendMode` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.BlendMode.html) |
 | trait | `vmnl::raw::BufferContents` | [BufferContents](../reference/raw/traits/buffer_contents.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.BufferContents.html) |
+| enum | `vmnl::raw::CompareOp` | [CompareOp](../reference/raw/pipeline/compare_op.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.CompareOp.html) |
 | enum | `vmnl::raw::CullMode` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.CullMode.html) |
+| enum | `vmnl::raw::DepthState` | [DepthState](../reference/raw/pipeline/depth_state.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.DepthState.html) |
 | struct | `vmnl::raw::FrameUniform` | [FrameUniform](../reference/raw/uniforms/frame_uniform.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.FrameUniform.html) |
 | struct | `vmnl::raw::FrameUniformBuilder` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.FrameUniformBuilder.html) |
 | enum | `vmnl::raw::FrontFace` | [FrontFace](../reference/raw/pipeline/front_face.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.FrontFace.html) |

@@ -30,12 +30,12 @@
 //! ```
 
 pub use vmnl_graphics::{
-    common, d2, d3, raw, Context, ContextBuilder, Cursor, CursorBuilder, CursorMode, DeviceConfig,
-    DeviceFeature, Event, EventKind, FrameRenderer, GamepadAxis, GamepadButton, GamepadState,
-    Input, InputRuntime, InputRuntimeBuilder, InputRuntimeConfig, JoystickButtonState,
-    JoystickHatState, JoystickId, JoystickSample, JoystickState, JoystickStatus, Key,
-    KeyboardState, LineWidthLimits, Modifiers, MonitorInfo, Monitors, MouseButton, MouseState,
-    PresentMode, RenderMode, Scancode, ShaderSource, StandardCursor, StandardCursorBuilder,
-    StickAngleConvention, StickConfig, StickState, VMNLError, VMNLErrorKind, VMNLErrorLocation,
-    VMNLResult, VideoMode, Window, WindowBuilder,
+    common, d2, d3, raw, Context, ContextBuilder, Cursor, CursorBuilder, CursorMode, DepthFormat,
+    DeviceConfig, DeviceFeature, Event, EventKind, FrameRenderer, GamepadAxis, GamepadButton,
+    GamepadState, Input, InputRuntime, InputRuntimeBuilder, InputRuntimeConfig,
+    JoystickButtonState, JoystickHatState, JoystickId, JoystickSample, JoystickState,
+    JoystickStatus, Key, KeyboardState, LineWidthLimits, Modifiers, MonitorInfo, Monitors,
+    MouseButton, MouseState, PresentMode, RenderMode, RenderTargetConfig, Scancode, ShaderSource,
+    StandardCursor, StandardCursorBuilder, StickAngleConvention, StickConfig, StickState,
+    VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult, VideoMode, Window, WindowBuilder,
 };

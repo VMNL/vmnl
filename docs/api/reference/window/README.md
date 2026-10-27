@@ -5,6 +5,7 @@
 | [`Window`](window.md) | Root window handle and method partition |
 | [`WindowBuilder`](window_builder.md) | Creation options and validation |
 | [`PresentMode`](present_mode.md) | Swapchain presentation selection |
+| [`RenderTargetConfig`](render_target_config.md) / [`DepthFormat`](depth_format.md) | Optional depth attachments and per-frame clear |
 | [Configuration](configuration.md) | Title, size, position, opacity, monitors, clear color |
 | [Cursor controls](cursor.md) | Cursor resources, position, hover, modes, and raw mouse motion |
 | [Lifecycle](lifecycle.md) | Visibility, focus, ready/open state, close |

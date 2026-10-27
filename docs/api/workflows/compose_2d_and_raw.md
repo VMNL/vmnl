@@ -46,3 +46,24 @@ assert_eq!(spec.viewport_value().resolve([900, 600])?.extent, [450.0, 300.0]);
 assert_eq!(spec.scissor_value().resolve([900, 600])?.offset, [250, 150]);
 # Ok::<(), vmnl::VMNLError>(())
 ```
+
+## Optional depth attachment regression
+
+Run the same scene with an explicit depth attachment:
+
+```bash
+VMNL_DEPTH_FORMAT=d16 just run raw_d2_composition
+VMNL_DEPTH_FORMAT=d32 just run raw_d2_composition
+```
+
+`VMNL_DEPTH_FORMAT` accepts `none` (also the default), `d16`, or `d32`; invalid values fail explicitly. Unsupported formats fail at window build with `VulkanFormatNotSupported`. Startup prints the validated target configuration. No format or device fallback occurs.
+
+With `none`, the original alpha triangle and `V` / `S` workflow above are unchanged. With a depth format, two opaque, coincident triangles replace that triangle: yellow at `z=0.25`, purple at `z=0.75`, with clear depth `1`. Twelve pipelines are built before the loop; keys select existing state.
+
+- Initially depth is disabled and yellow is drawn before purple: purple wins because it is drawn last.
+- Press `D`: `Less` with writes enabled. Yellow wins because it is nearer. Press `O` to reverse draw order: yellow must still win.
+- Press `D` again: `Less` with writes disabled. Both triangles pass against clear depth `1`; the last drawn triangle wins. `O` must alternate yellow/purple.
+- Press `D` again: depth is disabled. The last drawn triangle wins again. The title and console print depth state and draw order.
+- Repeat with `V`, `S`, and resize. The yellow scissor outline, cyan 2D square and subsequent green depth-disabled raw marker must remain positioned and visible as before. The 2D background must not populate depth or occlude the raw triangles. Depth clears every frame; previous frames must not cause flicker/disappearance.
+
+Closing/reopening should work for both formats when supported. Run `raw_triangle`, `raw_pipeline` (`C` / `F` / `P` / `W`) and `raw_uniform` afterwards for visible regressions. GPU tests exercise pipeline creation, all comparison/write combinations, mixed passes, image reuse and resize; unit tests check backend state translation. They do not assert displayed pixels. These observations require an explicit operator report for manual graphical validation.

@@ -6,11 +6,11 @@ Import path: `vmnl::raw::PipelineSpec<TVertex>`. Status: experimental, operation
 
 ## Purpose and use cases
 
-Configures shaders, topology, blending, triangle culling, front-face winding, polygon mode, line width, viewport/scissor policies, and vertex type before Vulkan pipeline construction.
+Configures shaders, topology, blending, triangle culling, front-face winding, polygon mode, line width, viewport/scissor and depth policies, and vertex type before Vulkan pipeline construction.
 
 ## Public API
 
-`vertex_shader`, `fragment_shader`, `topology`, `blend_mode`, `cull_mode`, `front_face`, `topology_value`, `blend_mode_value`, `cull_mode_value`, `front_face_value`, `polygon_mode`, `line_width`, `polygon_mode_value`, `line_width_value`, `viewport`, `scissor`, `viewport_value`, `scissor_value`, and `build(&Window)`. Implements `Default`; derives `Clone` and `Debug`.
+`vertex_shader`, `fragment_shader`, `topology`, `blend_mode`, `cull_mode`, `front_face`, `topology_value`, `blend_mode_value`, `cull_mode_value`, `front_face_value`, `polygon_mode`, `line_width`, `polygon_mode_value`, `line_width_value`, `viewport`, `scissor`, `viewport_value`, `scissor_value`, `depth(DepthState)`, `depth_value() -> DepthState`, and `build(&Window)`. Implements `Default`; derives `Clone` and `Debug`.
 
 ## Construction, defaults, and validation
 
@@ -41,6 +41,8 @@ Setters are CPU-only; source strings/paths may allocate. Build reads paths, runs
 ## Platform, Vulkan, and display constraints
 
 Requires an operational window and driver support for the generated pipeline.
+
+Depth defaults to [`DepthState::Disabled`](depth_state.md). `DepthState::Test { compare_op, write_enable }` requires a window built with a depth attachment; otherwise build returns `InvalidState` before shader I/O, including `Always` with writes disabled. All eight [`CompareOp`](compare_op.md) values and both write choices are supported without optional device features. State is immutable and inspectable on both spec and built pipeline. No attachment, format fallback or feature is added implicitly. The pipeline remains tied to its window's device/render pass, including attachments. High-level 2D always disables depth testing/writes; high-level 3D remains scaffolded.
 
 ## Example and related types
 

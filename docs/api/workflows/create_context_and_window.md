@@ -23,6 +23,26 @@ fn main() -> vmnl::VMNLResult<()> {
 
 `Context` chooses the device automatically; equal-ranked selection is not deterministic. See [`Context`](../reference/context.md), [`WindowBuilder`](../reference/window/window_builder.md), and [`PresentMode`](../reference/window/present_mode.md).
 
+## Optional depth attachment
+
+Pass a reusable `RenderTargetConfig` directly to `WindowBuilder::render_target`. The default stays color-only. Select an explicit depth-only format; unsupported requests fail rather than substituting a format or selecting another GPU.
+
+```rust,no_run
+# extern crate vmnl;
+use vmnl::{Context, DepthFormat, RenderTargetConfig, Window};
+fn main() -> vmnl::VMNLResult<()> {
+    let context = Context::new()?;
+    let target = RenderTargetConfig::default()
+        .depth(DepthFormat::D32Sfloat).clear_depth(1.0);
+    target.validate()?; // Numeric validation; device support is checked at build.
+    let window = Window::builder().render_target(target).build(&context)?;
+    assert_eq!(window.render_target_config(), target);
+    Ok(())
+}
+```
+
+Each swapchain image receives a separate depth image/view, recreated at its actual framebuffer extent on resize. The depth attachment is cleared each frame and discarded afterwards; format and clear value stay fixed. This adds allocation cost at build/resize, with device memory preferred. High-level 2D always disables depth testing/writes; raw pipelines can opt in through `PipelineSpec::depth`. Reusing an image's depth attachment waits on its prior frame fence and may block the caller; no device-wide wait is added. `draw3d` remains unsupported. See [`RenderTargetConfig`](../reference/window/render_target_config.md) for errors and lifecycle.
+
 ## Require optional device features
 
 Pass a CPU-side `DeviceConfig` to `Context::builder().device(config)`. Configuration can be cloned for reuse; passing another config replaces the previous one. Without a config, `Context::builder().build()` preserves `Context::new()` defaults.

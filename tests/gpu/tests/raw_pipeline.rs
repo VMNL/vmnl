@@ -129,6 +129,182 @@ fn two_uniform_pipeline(window: &Window) -> VMNLResult<raw::Pipeline<RawVertex>>
 
 #[test]
 #[ignore = "Requires Vulkan + GLFW display."]
+fn depth_attachments_submit_raw_resources_and_d2_across_resize() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let geometry = triangle(&context)?;
+    let marker = vmnl::d2::Shape::rect(40.0, 40.0)
+        .position(20.0, 20.0)
+        .build(&context)?;
+    let mut supported = 0;
+    for format in [vmnl::DepthFormat::D16Unorm, vmnl::DepthFormat::D32Sfloat] {
+        let config = vmnl::RenderTargetConfig::default()
+            .depth(format)
+            .clear_depth(0.25);
+        let result = Window::builder()
+            .size(640, 480)
+            .render_target(config)
+            .build(&context);
+        let mut window = match result {
+            Err(error) if matches!(error.kind(), VMNLErrorKind::VulkanFormatNotSupported) => {
+                println!("{format:?} rejected explicitly on this device");
+                continue;
+            }
+            result => result?,
+        };
+        supported += 1;
+        assert_eq!(window.render_target_config(), config);
+        let pipeline = uniform_pipeline(&window)?;
+        let uniform = raw::Uniform::builder(Tint { tint: [1.0; 4] }).build(&context)?;
+        let resources = raw::Resources::builder(&pipeline)
+            .uniform(0, 0, &uniform)
+            .build(&context)?;
+        for (width, height) in [(640, 480), (800, 600), (480, 360), (640, 480)] {
+            window.set_size(width, height)?;
+            for _ in 0..4 {
+                window
+                    .render()
+                    .draw2d([&marker])
+                    .draw_raw_2d_with(&pipeline, &resources, [&geometry])
+                    .draw2d([&marker])
+                    .submit()?;
+            }
+            assert_eq!(window.render_target_config(), config);
+        }
+        println!("{format:?}: raw/resources/D2 submission and resize passed");
+    }
+    assert!(
+        supported > 0,
+        "no depth-only attachment format was available"
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn depth_clear_is_validated_before_window_shader_io() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    for value in [f32::NAN, f32::INFINITY, -0.01, 1.01] {
+        let result = Window::builder()
+            .render_target(vmnl::RenderTargetConfig::default().clear_depth(value))
+            .vertex_shader(raw::ShaderSource::Path(fixture("missing-depth.vert")))
+            .fragment_shader(raw::ShaderSource::Path(fixture("missing-depth.frag")))
+            .build(&context);
+        assert_invalid_state(result, "depth clear value must be finite and within [0, 1]")?;
+    }
+    let mut window = Window::new(&context)?;
+    assert_eq!(
+        window.render_target_config(),
+        vmnl::RenderTargetConfig::default()
+    );
+    window.render().submit()
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn raw_depth_requires_attachment_before_shader_io() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let window = Window::new(&context)?;
+    for compare_op in [raw::CompareOp::Always, raw::CompareOp::Less] {
+        for write_enable in [false, true] {
+            assert_invalid_state(
+                raw::Pipeline::<RawVertex>::builder()
+                    .depth(raw::DepthState::Test {
+                        compare_op,
+                        write_enable,
+                    })
+                    .vertex_shader(raw::ShaderSource::Path(fixture("missing-depth.vert")))
+                    .fragment_shader(raw::ShaderSource::Path(fixture("missing-depth.frag")))
+                    .build(&window),
+                "raw depth testing requires a window depth attachment",
+            )?;
+        }
+    }
+    assert_eq!(
+        uniform_pipeline(&window)?.depth_value(),
+        raw::DepthState::Disabled
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn raw_depth_policies_submit_with_d2_and_survive_resize() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut supported = 0;
+    for format in [vmnl::DepthFormat::D16Unorm, vmnl::DepthFormat::D32Sfloat] {
+        let result = Window::builder()
+            .render_target(vmnl::RenderTargetConfig::default().depth(format))
+            .build(&context);
+        let mut window = match result {
+            Err(error) if matches!(error.kind(), VMNLErrorKind::VulkanFormatNotSupported) => {
+                println!("{format:?}: depth policies unavailable on this device");
+                continue;
+            }
+            result => result?,
+        };
+        supported += 1;
+        let geometry = triangle(&context)?;
+        let marker = vmnl::d2::Shape::rect(40.0, 40.0).build(&context)?;
+        let uniform = raw::Uniform::builder(Tint { tint: [1.0; 4] }).build(&context)?;
+        let disabled = uniform_pipeline(&window)?;
+        let mut pipelines = Vec::new();
+        for compare_op in [
+            raw::CompareOp::Never,
+            raw::CompareOp::Less,
+            raw::CompareOp::Equal,
+            raw::CompareOp::LessOrEqual,
+            raw::CompareOp::Greater,
+            raw::CompareOp::NotEqual,
+            raw::CompareOp::GreaterOrEqual,
+            raw::CompareOp::Always,
+        ] {
+            for write_enable in [false, true] {
+                let state = raw::DepthState::Test {
+                    compare_op,
+                    write_enable,
+                };
+                let pipeline = raw::Pipeline::<RawVertex>::builder()
+                    .vertex_shader(raw::ShaderSource::Src(UNIFORM_VERT.into()))
+                    .fragment_shader(raw::ShaderSource::Src(UNIFORM_FRAG.into()))
+                    .depth(state)
+                    .build(&window)?;
+                assert_eq!(pipeline.depth_value(), state);
+                let resources = raw::Resources::builder(&pipeline)
+                    .uniform(0, 0, &uniform)
+                    .build(&context)?;
+                pipelines.push((pipeline, resources));
+            }
+        }
+        let disabled_resources = raw::Resources::builder(&disabled)
+            .uniform(0, 0, &uniform)
+            .build(&context)?;
+        for (width, height) in [(640, 480), (800, 600), (480, 360)] {
+            window.set_size(width, height)?;
+            for (pipeline, resources) in &pipelines {
+                window
+                    .render()
+                    .draw2d([&marker])
+                    .draw_raw_2d_with(pipeline, resources, [&geometry])
+                    .draw2d([&marker])
+                    .draw_raw_2d_with(&disabled, &disabled_resources, [&geometry])
+                    .submit()?;
+            }
+        }
+        println!("{format:?}: all depth comparison/write policies and resize passed");
+    }
+    assert!(
+        supported > 0,
+        "no depth-only attachment format was available"
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
 fn raw_viewport_scissor_reject_invalid_requests_before_reading_shaders() -> VMNLResult<()> {
     let _guard = gpu_test_guard();
     let context = Context::new()?;

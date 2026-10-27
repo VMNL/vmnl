@@ -6,6 +6,7 @@
 //! This module chains image acquisition, command execution, presentation,
 //! and fence signaling for a rendered frame.
 
+use crate::window::runtime::FrameCompletion;
 use crate::{window::inner::VMNLWindow, VMNLError, VMNLErrorKind, VMNLResult};
 use std::sync::Arc;
 use vulkano::{
@@ -17,7 +18,7 @@ use vulkano::{
 };
 
 pub(super) enum FrameSyncResult {
-    Submitted(Box<dyn GpuFuture>),
+    Submitted(FrameCompletion),
     SwapchainOutOfDate,
 }
 
@@ -33,7 +34,7 @@ impl VMNLWindow {
     /// - `swapchain`: Swapchain used for presentation.
     ///
     pub(super) fn frame_sync(
-        previous_frame_end: &mut Option<Box<dyn GpuFuture>>,
+        previous_frame_end: &mut Option<Box<dyn GpuFuture + Send + Sync>>,
         acquire_future: SwapchainAcquireFuture,
         command_buffer: Arc<PrimaryAutoCommandBuffer>,
         image_index: u32,
@@ -51,8 +52,11 @@ impl VMNLWindow {
             graphics_queue,
             SwapchainPresentInfo::swapchain_image_index(swapchain, image_index),
         );
-        match after_present.then_signal_fence_and_flush() {
-            Ok(flushed) => Ok(FrameSyncResult::Submitted(flushed.boxed())),
+        match after_present
+            .boxed_send_sync()
+            .then_signal_fence_and_flush()
+        {
+            Ok(flushed) => Ok(FrameSyncResult::Submitted(Arc::new(flushed))),
             Err(Validated::Error(VulkanError::OutOfDate)) => {
                 Ok(FrameSyncResult::SwapchainOutOfDate)
             }
@@ -72,15 +76,15 @@ impl VMNLWindow {
     pub(super) fn update_previous_frame_end(
         frame_sync: FrameSyncResult,
         device: Arc<Device>,
-    ) -> (Box<dyn GpuFuture>, bool) {
+    ) -> (Box<dyn GpuFuture + Send + Sync>, bool) {
         match frame_sync {
-            FrameSyncResult::Submitted(future) => (future, false),
+            FrameSyncResult::Submitted(future) => (future.boxed_send_sync(), false),
             FrameSyncResult::SwapchainOutOfDate => {
                 log::warn!(
                     "{}",
                     VMNLError::new(VMNLErrorKind::VulkanOutOfDate).report()
                 );
-                (sync::now(device).boxed(), true)
+                (sync::now(device).boxed_send_sync(), true)
             }
         }
     }

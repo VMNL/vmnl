@@ -8,6 +8,7 @@ mod inner;
 mod input;
 mod monitors;
 mod render;
+mod render_target;
 mod runtime;
 mod shaders;
 use std::sync::Arc;
@@ -28,6 +29,7 @@ pub use input::{
     StandardCursor, StandardCursorBuilder, StickAngleConvention, StickConfig, StickState,
 };
 pub use monitors::{MonitorInfo, Monitors, VideoMode};
+pub use render_target::{DepthFormat, RenderTargetConfig};
 use vulkano::{
     device::Device, memory::allocator::StandardMemoryAllocator, render_pass::RenderPass,
 };
@@ -95,6 +97,7 @@ impl Window {
 
     /// Internal method to create a `Window` instance from the provided `WindowOptions`.
     pub(crate) fn from_options(context: &Context, options: &WindowOptions) -> VMNLResult<Self> {
+        options.render_target.validate()?;
         validate_window_size(options.width, options.height)?;
         validate_size_limits(
             options.min_width,
@@ -117,6 +120,16 @@ impl Window {
         Ok(Self {
             inner: inner_window,
         })
+    }
+
+    /// Returns the immutable attachment configuration validated at window construction.
+    ///
+    /// The returned copy performs no allocation, synchronization or GPU query. Depth
+    /// format and clear value persist across resize; image extent follows the swapchain.
+    /// This does not expose backend image handles or imply that depth testing is enabled.
+    #[must_use]
+    pub const fn render_target_config(&self) -> RenderTargetConfig {
+        self.inner.config.render_target
     }
 
     pub(crate) fn device(&self) -> Arc<Device> {

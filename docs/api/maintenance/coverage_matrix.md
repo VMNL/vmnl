@@ -6,6 +6,7 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 |---|---|---|---|---|
 | alias | `vmnl::VMNLResult` | [VMNLResult](../reference/errors/vmnl_result.md) | [Rustdoc](../../../target/doc/vmnl/type.VMNLResult.html) | [API errors](../../../tests/api/tests/errors.rs) |
 | enum | `vmnl::CursorMode` | [CursorMode](../reference/window/input/cursor_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.CursorMode.html) | [API input](../../../tests/api/tests/input.rs) |
+| enum | `vmnl::DepthFormat` | [DepthFormat](../reference/window/depth_format.md) | [Rustdoc](../../../target/doc/vmnl/enum.DepthFormat.html) | [API render target](../../../tests/api/tests/render_target.rs) |
 | enum | `vmnl::DeviceFeature` | [DeviceFeature](../reference/device_feature.md) | [Rustdoc](../../../target/doc/vmnl/enum.DeviceFeature.html) | [API context configuration](../../../tests/api/tests/context_config.rs) |
 | enum | `vmnl::EventKind` | [EventKind](../reference/window/events/event_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.EventKind.html) | [API input](../../../tests/api/tests/input.rs) |
 | enum | `vmnl::GamepadAxis` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.GamepadAxis.html) | [API input runtime](../../../tests/api/tests/input_runtime.rs) |
@@ -26,7 +27,9 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | enum | `vmnl::d2::LineCap` | [LineCap](../reference/d2/shapes/line_cap.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.LineCap.html) | [2D shapes example](../../../examples/d2/shapes/src/main.rs) |
 | enum | `vmnl::d2::LineJoin` | [LineJoin](../reference/d2/shapes/line_join.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.LineJoin.html) | [2D shape API](../../../tests/api/tests/d2_shapes.rs) |
 | enum | `vmnl::raw::BlendMode` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.BlendMode.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
+| enum | `vmnl::raw::CompareOp` | [CompareOp](../reference/raw/pipeline/compare_op.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.CompareOp.html) | [API raw depth](../../../tests/api/tests/raw_depth.rs) |
 | enum | `vmnl::raw::CullMode` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.CullMode.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
+| enum | `vmnl::raw::DepthState` | [DepthState](../reference/raw/pipeline/depth_state.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.DepthState.html) | [API raw depth](../../../tests/api/tests/raw_depth.rs) |
 | enum | `vmnl::raw::FrontFace` | [FrontFace](../reference/raw/pipeline/front_face.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.FrontFace.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
 | enum | `vmnl::raw::PolygonMode` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PolygonMode.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
 | enum | `vmnl::raw::PrimitiveTopology` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html) | [API raw spec](../../../tests/api/tests/raw_spec.rs) |
@@ -56,6 +59,7 @@ This matrix has one row per distinct public type, trait, alias, or derive macro 
 | struct | `vmnl::Monitors` | [Monitors](../reference/window/monitors/monitors.md) | [Rustdoc](../../../target/doc/vmnl/struct.Monitors.html) | [GPU window runtime](../../../tests/gpu/tests/window_runtime.rs) |
 | struct | `vmnl::Modifiers` | [Modifiers](../reference/window/input/modifiers.md) | [Rustdoc](../../../target/doc/vmnl/struct.Modifiers.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::MouseState` | [MouseState](../reference/window/input/mouse_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.MouseState.html) | [API input](../../../tests/api/tests/input.rs) |
+| struct | `vmnl::RenderTargetConfig` | [RenderTargetConfig](../reference/window/render_target_config.md) | [Rustdoc](../../../target/doc/vmnl/struct.RenderTargetConfig.html) | [API render target](../../../tests/api/tests/render_target.rs) |
 | struct | `vmnl::Scancode` | [Scancode](../reference/window/input/scancode.md) | [Rustdoc](../../../target/doc/vmnl/struct.Scancode.html) | [API input](../../../tests/api/tests/input.rs) |
 | struct | `vmnl::StickConfig` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickConfig.html) | [Stick math tests](../../../crates/vmnl_graphics/src/window/input/joystick.rs) |
 | struct | `vmnl::StickState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickState.html) | [Stick math tests](../../../crates/vmnl_graphics/src/window/input/joystick.rs) |

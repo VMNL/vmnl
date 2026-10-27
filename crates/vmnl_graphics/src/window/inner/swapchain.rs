@@ -153,10 +153,18 @@ impl VMNLWindow {
             .recreate(create_info)
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanSwapchainCreationFailed))?;
         let image_views: Vec<Arc<ImageView>> = Self::create_image_views(&images)?;
-        let framebuffers = Self::create_framebuffers(&image_views, &self.handle.render_pass)?;
+        let framebuffers = Self::create_framebuffers(
+            &image_views,
+            &self.handle.render_pass,
+            &self.handle.vmnl_instance.memory_allocator,
+            self.config.render_target,
+        )?;
 
         self.handle.swapchain = swapchain;
         self.handle.framebuffers = framebuffers;
+        if self.config.render_target.depth_value().is_some() {
+            self.handle.depth_frame_completions = vec![None; images.len()];
+        }
         self.state.swapchain_recreation_requested = false;
         Ok(())
     }

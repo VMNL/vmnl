@@ -3,7 +3,9 @@
 
 //! Low-level raw rendering API.
 
+mod depth;
 mod viewport;
+pub use depth::{CompareOp, DepthState};
 pub(crate) use viewport::resolve_viewport_scissor;
 pub use viewport::{Scissor, ScissorPolicy, Viewport, ViewportPolicy};
 
@@ -199,6 +201,7 @@ pub struct PipelineSpec<TVertex> {
     line_width: f32,
     viewport: ViewportPolicy,
     scissor: ScissorPolicy,
+    depth: DepthState,
     _vertex: PhantomData<TVertex>,
 }
 
@@ -215,12 +218,29 @@ impl<TVertex> Default for PipelineSpec<TVertex> {
             line_width: 1.0,
             viewport: ViewportPolicy::FullFramebuffer,
             scissor: ScissorPolicy::FullFramebuffer,
+            depth: DepthState::Disabled,
             _vertex: PhantomData,
         }
     }
 }
 
 impl<TVertex> PipelineSpec<TVertex> {
+    /// Sets immutable depth comparison/write policy; defaults to disabled.
+    ///
+    /// Any enabled test requires a window depth attachment. Validation occurs at
+    /// [`Self::build`] before shader I/O; no attachment or feature is added implicitly.
+    #[must_use]
+    pub fn depth(mut self, state: DepthState) -> Self {
+        self.depth = state;
+        self
+    }
+
+    /// Returns the configured depth policy without allocation or GPU access.
+    #[must_use]
+    pub const fn depth_value(&self) -> DepthState {
+        self.depth
+    }
+
     /// Sets the vertex shader.
     #[must_use]
     pub fn vertex_shader(mut self, source: ShaderSource) -> Self {
@@ -364,6 +384,8 @@ impl<TVertex> PipelineSpec<TVertex> {
     /// portability-subset point polygons or invalid viewport/scissor parameters
     /// (including device viewport limits) with `InvalidState`. No feature is activated
     /// and no GPU is reselected by this operation.
+    /// An enabled depth test without a window depth attachment returns `InvalidState`
+    /// before shader I/O, including `Always` tests with writes disabled.
     pub fn build(self, window: &Window) -> VMNLResult<Pipeline<TVertex>>
     where
         TVertex: BufferContents + Vertex + 'static,
@@ -378,6 +400,9 @@ impl<TVertex> PipelineSpec<TVertex> {
         )?;
 
         resolve_viewport_scissor(self.viewport, self.scissor, window.render_extent(), &device)?;
+        let depth_stencil_state = self
+            .depth
+            .resolve(window.render_target_config().depth_value().is_some())?;
 
         let vertex_shader = self.vertex_shader.ok_or_else(|| {
             VMNLError::new(VMNLErrorKind::InvalidState(
@@ -446,6 +471,7 @@ impl<TVertex> PipelineSpec<TVertex> {
                     self.line_width,
                 )),
                 multisample_state: Some(MultisampleState::default()),
+                depth_stencil_state,
                 color_blend_state: Some(color_blend_state(self.blend_mode)),
                 dynamic_state: [DynamicState::Viewport, DynamicState::Scissor]
                     .into_iter()
@@ -464,6 +490,7 @@ impl<TVertex> PipelineSpec<TVertex> {
             line_width: self.line_width,
             viewport: self.viewport,
             scissor: self.scissor,
+            depth: self.depth,
             _vertex: PhantomData,
         })
     }
@@ -478,10 +505,17 @@ pub struct Pipeline<TVertex> {
     line_width: f32,
     viewport: ViewportPolicy,
     scissor: ScissorPolicy,
+    depth: DepthState,
     _vertex: PhantomData<TVertex>,
 }
 
 impl<TVertex> Pipeline<TVertex> {
+    /// Returns the immutable depth comparison/write policy used at creation.
+    #[must_use]
+    pub const fn depth_value(&self) -> DepthState {
+        self.depth
+    }
+
     /// Starts a raw pipeline builder.
     #[must_use]
     pub fn builder() -> PipelineSpec<TVertex> {

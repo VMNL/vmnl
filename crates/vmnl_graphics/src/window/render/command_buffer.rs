@@ -75,11 +75,21 @@ impl VMNLWindow {
         // command buffer exists, and Vulkano validates each command before recording it.
         // Raw viewport/device bounds and signed scissor sums are checked for this image;
         // both dynamic states are set after each raw pipeline bind, before any draw.
+        // Optional depth images are owned by their framebuffer and match its extent;
+        // the clear list follows the render pass's color/depth attachment order.
         unsafe {
             builder
                 .begin_render_pass(
                     RenderPassBeginInfo {
-                        clear_values: vec![Some(self.state.clear_color.into())],
+                        clear_values: {
+                            let mut values = vec![Some(self.state.clear_color.into())];
+                            if self.config.render_target.depth_value().is_some() {
+                                values.push(Some(
+                                    self.config.render_target.clear_depth_value().into(),
+                                ));
+                            }
+                            values
+                        },
                         ..RenderPassBeginInfo::framebuffer(framebuffer)
                     },
                     SubpassBeginInfo {
