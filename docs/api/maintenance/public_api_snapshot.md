@@ -919,7 +919,9 @@ pub fn vmnl::raw::Pipeline<TVertex>::builder() -> vmnl::raw::PipelineSpec<TVerte
 pub const fn vmnl::raw::Pipeline<TVertex>::depth_value(&self) -> vmnl::raw::DepthState
 pub const fn vmnl::raw::Pipeline<TVertex>::line_width_value(&self) -> f32
 pub const fn vmnl::raw::Pipeline<TVertex>::polygon_mode_value(&self) -> vmnl::raw::PolygonMode
+pub const fn vmnl::raw::Pipeline<TVertex>::render_target_info(&self) -> vmnl::RenderTargetInfo
 pub const fn vmnl::raw::Pipeline<TVertex>::scissor_value(&self) -> vmnl::raw::ScissorPolicy
+pub fn vmnl::raw::Pipeline<TVertex>::validate_target(&self, &vmnl::Window) -> vmnl::VMNLResult<()>
 pub const fn vmnl::raw::Pipeline<TVertex>::viewport_value(&self) -> vmnl::raw::ViewportPolicy
 impl<TVertex> core::marker::Freeze for vmnl::raw::Pipeline<TVertex>
 impl<TVertex> core::marker::Send for vmnl::raw::Pipeline<TVertex> where TVertex: core::marker::Send
@@ -1682,6 +1684,30 @@ impl core::marker::Unpin for vmnl::VMNLErrorKind
 impl core::marker::UnsafeUnpin for vmnl::VMNLErrorKind
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::VMNLErrorKind
 impl core::panic::unwind_safe::UnwindSafe for vmnl::VMNLErrorKind
+pub struct vmnl::ColorFormat(_)
+impl vmnl::ColorFormat
+pub const vmnl::ColorFormat::B8G8R8A8_SRGB: Self
+pub const vmnl::ColorFormat::B8G8R8A8_UNORM: Self
+pub const vmnl::ColorFormat::R8G8B8A8_SRGB: Self
+pub const vmnl::ColorFormat::R8G8B8A8_UNORM: Self
+impl core::clone::Clone for vmnl::ColorFormat
+pub fn vmnl::ColorFormat::clone(&self) -> vmnl::ColorFormat
+impl core::cmp::Eq for vmnl::ColorFormat
+impl core::cmp::PartialEq for vmnl::ColorFormat
+pub fn vmnl::ColorFormat::eq(&self, &vmnl::ColorFormat) -> bool
+impl core::fmt::Debug for vmnl::ColorFormat
+pub fn vmnl::ColorFormat::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for vmnl::ColorFormat
+pub fn vmnl::ColorFormat::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::ColorFormat
+impl core::marker::StructuralPartialEq for vmnl::ColorFormat
+impl core::marker::Freeze for vmnl::ColorFormat
+impl core::marker::Send for vmnl::ColorFormat
+impl core::marker::Sync for vmnl::ColorFormat
+impl core::marker::Unpin for vmnl::ColorFormat
+impl core::marker::UnsafeUnpin for vmnl::ColorFormat
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::ColorFormat
+impl core::panic::unwind_safe::UnwindSafe for vmnl::ColorFormat
 pub struct vmnl::Context
 impl vmnl::Context
 pub fn vmnl::Context::builder() -> vmnl::ContextBuilder
@@ -2148,6 +2174,27 @@ impl core::marker::Unpin for vmnl::RenderTargetConfig
 impl core::marker::UnsafeUnpin for vmnl::RenderTargetConfig
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::RenderTargetConfig
 impl core::panic::unwind_safe::UnwindSafe for vmnl::RenderTargetConfig
+pub struct vmnl::RenderTargetInfo
+impl vmnl::RenderTargetInfo
+pub const fn vmnl::RenderTargetInfo::color_format(self) -> vmnl::ColorFormat
+pub const fn vmnl::RenderTargetInfo::depth_format(self) -> core::option::Option<vmnl::DepthFormat>
+pub const fn vmnl::RenderTargetInfo::sample_count(self) -> u32
+impl core::clone::Clone for vmnl::RenderTargetInfo
+pub fn vmnl::RenderTargetInfo::clone(&self) -> vmnl::RenderTargetInfo
+impl core::cmp::Eq for vmnl::RenderTargetInfo
+impl core::cmp::PartialEq for vmnl::RenderTargetInfo
+pub fn vmnl::RenderTargetInfo::eq(&self, &vmnl::RenderTargetInfo) -> bool
+impl core::fmt::Debug for vmnl::RenderTargetInfo
+pub fn vmnl::RenderTargetInfo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::RenderTargetInfo
+impl core::marker::StructuralPartialEq for vmnl::RenderTargetInfo
+impl core::marker::Freeze for vmnl::RenderTargetInfo
+impl core::marker::Send for vmnl::RenderTargetInfo
+impl core::marker::Sync for vmnl::RenderTargetInfo
+impl core::marker::Unpin for vmnl::RenderTargetInfo
+impl core::marker::UnsafeUnpin for vmnl::RenderTargetInfo
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::RenderTargetInfo
+impl core::panic::unwind_safe::UnwindSafe for vmnl::RenderTargetInfo
 #[repr(transparent)] pub struct vmnl::Scancode(_)
 impl vmnl::Scancode
 pub const fn vmnl::Scancode::as_raw(self) -> i32
@@ -2292,6 +2339,7 @@ impl vmnl::Window
 pub fn vmnl::Window::builder() -> vmnl::WindowBuilder
 pub fn vmnl::Window::new(&vmnl::Context) -> vmnl::VMNLResult<Self>
 pub const fn vmnl::Window::render_target_config(&self) -> vmnl::RenderTargetConfig
+pub const fn vmnl::Window::render_target_info(&self) -> vmnl::RenderTargetInfo
 impl vmnl::Window
 pub const fn vmnl::Window::clear_input_transitions(&mut self)
 pub fn vmnl::Window::get_time(&mut self) -> f64

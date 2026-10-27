@@ -23,10 +23,10 @@ pub use exception::{VMNLError, VMNLErrorKind, VMNLErrorLocation, VMNLResult};
 pub use glfw_runtime::{InputRuntime, InputRuntimeBuilder, InputRuntimeConfig};
 pub use vmnl_instance::{Context, ContextBuilder, DeviceConfig, DeviceFeature, LineWidthLimits};
 pub use window::{
-    Cursor, CursorBuilder, CursorMode, DepthFormat, Event, EventKind, FrameRenderer, GamepadAxis,
-    GamepadButton, GamepadState, Input, JoystickButtonState, JoystickHatState, JoystickId,
-    JoystickSample, JoystickState, JoystickStatus, Key, KeyboardState, Modifiers, MonitorInfo,
-    Monitors, MouseButton, MouseState, PresentMode, RenderMode, RenderTargetConfig, Scancode,
-    StandardCursor, StandardCursorBuilder, StickAngleConvention, StickConfig, StickState,
-    VideoMode, Window, WindowBuilder,
+    ColorFormat, Cursor, CursorBuilder, CursorMode, DepthFormat, Event, EventKind, FrameRenderer,
+    GamepadAxis, GamepadButton, GamepadState, Input, JoystickButtonState, JoystickHatState,
+    JoystickId, JoystickSample, JoystickState, JoystickStatus, Key, KeyboardState, Modifiers,
+    MonitorInfo, Monitors, MouseButton, MouseState, PresentMode, RenderMode, RenderTargetConfig,
+    RenderTargetInfo, Scancode, StandardCursor, StandardCursorBuilder, StickAngleConvention,
+    StickConfig, StickState, VideoMode, Window, WindowBuilder,
 };

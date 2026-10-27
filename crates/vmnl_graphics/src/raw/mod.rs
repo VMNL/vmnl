@@ -54,7 +54,7 @@ use crate::common::{
     checked_draw_counts, BufferMemoryPreference, GraphicsResourceFactory, IndexBuffer, VertexBuffer,
 };
 use crate::exception::{VMNLError, VMNLErrorKind, VMNLResult};
-use crate::{Context, DeviceFeature, LineWidthLimits, Window};
+use crate::{Context, DeviceFeature, LineWidthLimits, RenderTargetInfo, Window};
 
 const FRAME_UNIFORM_IMAGE_COUNT_MISMATCH: &str =
     "raw frame uniform image count is incompatible with current swapchain image count";
@@ -486,6 +486,7 @@ impl<TVertex> PipelineSpec<TVertex> {
             inner: graphics_pipeline,
             device,
             render_pass,
+            render_target_info: window.render_target_info(),
             polygon_mode: self.polygon_mode,
             line_width: self.line_width,
             viewport: self.viewport,
@@ -501,6 +502,7 @@ pub struct Pipeline<TVertex> {
     inner: Arc<GraphicsPipeline>,
     device: Arc<Device>,
     render_pass: Arc<RenderPass>,
+    render_target_info: RenderTargetInfo,
     polygon_mode: PolygonMode,
     line_width: f32,
     viewport: ViewportPolicy,
@@ -510,6 +512,42 @@ pub struct Pipeline<TVertex> {
 }
 
 impl<TVertex> Pipeline<TVertex> {
+    /// Returns the attachment properties of the window used at pipeline creation.
+    ///
+    /// This is a copied description, without extent, clear value or target identity.
+    /// It allocates nothing and performs no GPU access. Equal descriptions do not
+    /// make a pipeline compatible with another window; use [`Self::validate_target`].
+    #[must_use]
+    pub const fn render_target_info(&self) -> RenderTargetInfo {
+        self.render_target_info
+    }
+
+    /// Checks the same device/render-pass identity rule used by raw submission.
+    ///
+    /// CPU-only, without GPU query, synchronization or shader work. Success
+    /// allocates nothing; an error message may allocate.
+    /// Resize preserves the originating window's render pass, so it preserves this
+    /// check. This does not validate geometry, resources, viewport/scissor bounds or
+    /// framebuffer readiness; submission still validates those separately.
+    ///
+    /// # Errors
+    /// Returns `InvalidState` for any other device or render-pass object, including
+    /// another window on the same context with identical attachment properties.
+    /// Build a separate pipeline for that window.
+    pub fn validate_target(&self, window: &Window) -> VMNLResult<()> {
+        if !pipeline_targets_window(
+            &self.device,
+            &self.render_pass,
+            &window.device(),
+            &window.render_pass(),
+        ) {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "raw pipeline must target this window context and render pass".into(),
+            )));
+        }
+        Ok(())
+    }
+
     /// Returns the immutable depth comparison/write policy used at creation.
     #[must_use]
     pub const fn depth_value(&self) -> DepthState {
@@ -583,6 +621,16 @@ impl<TVertex> Pipeline<TVertex> {
             index_count: geometry.index_count,
         }
     }
+}
+
+pub(crate) fn pipeline_targets_window(
+    pipeline_device: &Arc<Device>,
+    pipeline_render_pass: &Arc<RenderPass>,
+    window_device: &Arc<Device>,
+    window_render_pass: &Arc<RenderPass>,
+) -> bool {
+    Arc::ptr_eq(pipeline_device, window_device)
+        && Arc::ptr_eq(pipeline_render_pass, window_render_pass)
 }
 
 /// Raw typed geometry.

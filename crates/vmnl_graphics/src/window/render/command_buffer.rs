@@ -7,7 +7,7 @@
 //! into the current swapchain framebuffer.
 
 use crate::common::{BlendMode, MaterialKey, PipelineKey};
-use crate::raw::resolve_viewport_scissor;
+use crate::raw::{pipeline_targets_window, resolve_viewport_scissor};
 use crate::window::render::RenderPassCommand;
 use crate::window::PushConstants;
 use crate::{window::inner::VMNLWindow, VMNLError, VMNLErrorKind, VMNLResult};
@@ -170,15 +170,14 @@ impl VMNLWindow {
                     RenderPassCommand::Raw { items } => {
                         current_blend_mode = None;
                         for render_item in items {
-                            if !Arc::ptr_eq(
+                            if !pipeline_targets_window(
                                 &render_item.pipeline_device,
+                                &render_item.pipeline_render_pass,
                                 &self.handle.vmnl_instance.device,
+                                &self.handle.render_pass,
                             ) || !Arc::ptr_eq(
                                 &render_item.geometry_device,
                                 &self.handle.vmnl_instance.device,
-                            ) || !Arc::ptr_eq(
-                                &render_item.pipeline_render_pass,
-                                &self.handle.render_pass,
                             ) {
                                 return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                                     "raw pipeline and geometry must belong to this window context"

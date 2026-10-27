@@ -58,6 +58,8 @@ impl VMNLWindow {
     }
 
     /// Internal implementation backing `Window::new`.
+    // Keep dependency-ordered resource creation and ownership transfer together.
+    #[allow(clippy::too_many_lines)]
     pub(crate) fn new(vmnl_context: &Context, options: &WindowOptions) -> VMNLResult<Self> {
         let (width, height) = (options.width, options.height);
         let title = options.title.as_str();
@@ -102,6 +104,7 @@ impl VMNLWindow {
         let image_views: Vec<Arc<ImageView>> = Self::create_image_views(&images)?;
         let render_pass: Arc<RenderPass> =
             Self::create_render_pass(&vmnl_instance.device, &swapchain, options.render_target)?;
+        let render_target_info = crate::RenderTargetInfo::from_render_pass(&render_pass)?;
         let framebuffers: Vec<Arc<Framebuffer>> = Self::create_framebuffers(
             &image_views,
             &render_pass,
@@ -152,6 +155,7 @@ impl VMNLWindow {
                 height,
                 monitor,
                 render_target: options.render_target,
+                render_target_info,
             },
         };
 

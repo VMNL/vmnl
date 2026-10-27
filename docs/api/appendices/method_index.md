@@ -3,6 +3,9 @@
 
 | Owner | Method | Canonical page | Rustdoc method |
 |---|---|---|---|
+| `vmnl::ColorFormat` | `clone` | [ColorFormat](../reference/window/color_format.md) | [`clone`](../../../target/doc/vmnl/struct.ColorFormat.html#method.clone) |
+| `vmnl::ColorFormat` | `eq` | [ColorFormat](../reference/window/color_format.md) | [`eq`](../../../target/doc/vmnl/struct.ColorFormat.html#method.eq) |
+| `vmnl::ColorFormat` | `fmt` | [ColorFormat](../reference/window/color_format.md) | [`fmt`](../../../target/doc/vmnl/struct.ColorFormat.html#method.fmt) |
 | `vmnl::Context` | `builder` | [Context](../reference/context.md) | [`builder`](../../../target/doc/vmnl/struct.Context.html#method.builder) |
 | `vmnl::Context` | `clone` | [Context](../reference/context.md) | [`clone`](../../../target/doc/vmnl/struct.Context.html#method.clone) |
 | `vmnl::Context` | `device_name` | [Context](../reference/context.md) | [`device_name`](../../../target/doc/vmnl/struct.Context.html#method.device_name) |
@@ -228,6 +231,12 @@
 | `vmnl::RenderTargetConfig` | `fmt` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`fmt`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.fmt) |
 | `vmnl::RenderTargetConfig` | `validate` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`validate`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.validate) |
 | `vmnl::RenderTargetConfig` | `without_depth` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`without_depth`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.without_depth) |
+| `vmnl::RenderTargetInfo` | `clone` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`clone`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.clone) |
+| `vmnl::RenderTargetInfo` | `color_format` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`color_format`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.color_format) |
+| `vmnl::RenderTargetInfo` | `depth_format` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`depth_format`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.depth_format) |
+| `vmnl::RenderTargetInfo` | `eq` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`eq`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.eq) |
+| `vmnl::RenderTargetInfo` | `fmt` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`fmt`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.fmt) |
+| `vmnl::RenderTargetInfo` | `sample_count` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`sample_count`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.sample_count) |
 | `vmnl::Scancode` | `as_raw` | [Scancode](../reference/window/input/scancode.md) | [`as_raw`](../../../target/doc/vmnl/struct.Scancode.html#method.as_raw) |
 | `vmnl::Scancode` | `clone` | [Scancode](../reference/window/input/scancode.md) | [`clone`](../../../target/doc/vmnl/struct.Scancode.html#method.clone) |
 | `vmnl::Scancode` | `eq` | [Scancode](../reference/window/input/scancode.md) | [`eq`](../../../target/doc/vmnl/struct.Scancode.html#method.eq) |
@@ -331,6 +340,7 @@
 | `vmnl::Window` | `post_empty_event` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`post_empty_event`](../../../target/doc/vmnl/struct.Window.html#method.post_empty_event) |
 | `vmnl::Window` | `render` | [Window rendering](../reference/window/rendering/README.md) | [`render`](../../../target/doc/vmnl/struct.Window.html#method.render) |
 | `vmnl::Window` | `render_target_config` | [Window](../reference/window/window.md) | [`render_target_config`](../../../target/doc/vmnl/struct.Window.html#method.render_target_config) |
+| `vmnl::Window` | `render_target_info` | [Window](../reference/window/window.md) | [`render_target_info`](../../../target/doc/vmnl/struct.Window.html#method.render_target_info) |
 | `vmnl::Window` | `restore` | [Window lifecycle](../reference/window/lifecycle.md) | [`restore`](../../../target/doc/vmnl/struct.Window.html#method.restore) |
 | `vmnl::Window` | `set_aspect_ratio` | [Window configuration](../reference/window/configuration.md) | [`set_aspect_ratio`](../../../target/doc/vmnl/struct.Window.html#method.set_aspect_ratio) |
 | `vmnl::Window` | `set_char_mods_polling` | [Window polling](../reference/window/polling.md) | [`set_char_mods_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_char_mods_polling) |
@@ -547,7 +557,9 @@
 | `vmnl::raw::Pipeline` | `depth_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`depth_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.depth_value) |
 | `vmnl::raw::Pipeline` | `line_width_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`line_width_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.line_width_value) |
 | `vmnl::raw::Pipeline` | `polygon_mode_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`polygon_mode_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.polygon_mode_value) |
+| `vmnl::raw::Pipeline` | `render_target_info` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`render_target_info`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.render_target_info) |
 | `vmnl::raw::Pipeline` | `scissor_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`scissor_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.scissor_value) |
+| `vmnl::raw::Pipeline` | `validate_target` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`validate_target`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.validate_target) |
 | `vmnl::raw::Pipeline` | `viewport_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`viewport_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.viewport_value) |
 | `vmnl::raw::PipelineSpec` | `blend_mode` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`blend_mode`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.blend_mode) |
 | `vmnl::raw::PipelineSpec` | `blend_mode_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`blend_mode_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.blend_mode_value) |

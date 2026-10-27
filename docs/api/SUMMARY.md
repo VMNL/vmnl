@@ -36,6 +36,8 @@
     - [WindowBuilder](reference/window/window_builder.md)
     - [PresentMode](reference/window/present_mode.md)
     - [RenderTargetConfig](reference/window/render_target_config.md)
+    - [RenderTargetInfo](reference/window/render_target_info.md)
+    - [ColorFormat](reference/window/color_format.md)
     - [DepthFormat](reference/window/depth_format.md)
     - [Configuration](reference/window/configuration.md)
     - [Cursor controls](reference/window/cursor.md)

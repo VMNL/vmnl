@@ -155,6 +155,11 @@ fn depth_attachments_submit_raw_resources_and_d2_across_resize() -> VMNLResult<(
         supported += 1;
         assert_eq!(window.render_target_config(), config);
         let pipeline = uniform_pipeline(&window)?;
+        let info = window.render_target_info();
+        assert_eq!(info.depth_format(), Some(format));
+        assert_eq!(info.sample_count(), 1);
+        assert_eq!(pipeline.render_target_info(), info);
+        pipeline.validate_target(&window)?;
         let uniform = raw::Uniform::builder(Tint { tint: [1.0; 4] }).build(&context)?;
         let resources = raw::Resources::builder(&pipeline)
             .uniform(0, 0, &uniform)
@@ -170,6 +175,9 @@ fn depth_attachments_submit_raw_resources_and_d2_across_resize() -> VMNLResult<(
                     .submit()?;
             }
             assert_eq!(window.render_target_config(), config);
+            assert_eq!(window.render_target_info(), info);
+            assert_eq!(pipeline.render_target_info(), info);
+            pipeline.validate_target(&window)?;
         }
         println!("{format:?}: raw/resources/D2 submission and resize passed");
     }
@@ -199,6 +207,53 @@ fn depth_clear_is_validated_before_window_shader_io() -> VMNLResult<()> {
         vmnl::RenderTargetConfig::default()
     );
     window.render().submit()
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn raw_target_preflight_rejects_other_windows_even_with_equal_properties() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let source = Window::new(&context)?;
+    let mut same_properties = Window::builder()
+        .render_target(vmnl::RenderTargetConfig::default().clear_depth(0.25))
+        .build(&context)?;
+    let info = source.render_target_info();
+    assert_eq!(info, same_properties.render_target_info());
+    assert_eq!(info.depth_format(), None);
+    assert_eq!(info.sample_count(), 1);
+    let pipeline = uniform_pipeline(&source)?;
+    assert_eq!(pipeline.render_target_info(), info);
+    pipeline.validate_target(&source)?;
+    assert_invalid_state(
+        pipeline.validate_target(&same_properties),
+        "raw pipeline must target this window context and render pass",
+    )?;
+    let geometry = triangle(&context)?;
+    assert_invalid_state(
+        same_properties
+            .render()
+            .draw_raw_2d(&pipeline, [&geometry])
+            .submit(),
+        "raw pipeline and geometry must belong to this window context",
+    )?;
+
+    let depth_window = Window::builder()
+        .render_target(vmnl::RenderTargetConfig::default().depth(vmnl::DepthFormat::D16Unorm))
+        .build(&context)?;
+    assert_ne!(info, depth_window.render_target_info());
+    assert_invalid_state(
+        pipeline.validate_target(&depth_window),
+        "raw pipeline must target this window context and render pass",
+    )?;
+
+    let other_context = Context::new()?;
+    let other_device = Window::new(&other_context)?;
+    assert_invalid_state(
+        pipeline.validate_target(&other_device),
+        "raw pipeline must target this window context and render pass",
+    )?;
+    Ok(())
 }
 
 #[test]

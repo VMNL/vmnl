@@ -67,3 +67,22 @@ With `none`, the original alpha triangle and `V` / `S` workflow above are unchan
 - Repeat with `V`, `S`, and resize. The yellow scissor outline, cyan 2D square and subsequent green depth-disabled raw marker must remain positioned and visible as before. The 2D background must not populate depth or occlude the raw triangles. Depth clears every frame; previous frames must not cause flicker/disappearance.
 
 Closing/reopening should work for both formats when supported. Run `raw_triangle`, `raw_pipeline` (`C` / `F` / `P` / `W`) and `raw_uniform` afterwards for visible regressions. GPU tests exercise pipeline creation, all comparison/write combinations, mixed passes, image reuse and resize; unit tests check backend state translation. They do not assert displayed pixels. These observations require an explicit operator report for manual graphical validation.
+
+## Inspect and preflight the target
+
+The example prints `resolved attachments` at startup and checks each built pipeline against its window. `RenderTargetInfo` reports color format, samples per pixel and optional depth format; it excludes extent and clear values. Current windows use one sample per pixel. Automatic surface format selection and the displayed scene retain their existing policies.
+
+```rust,no_run
+# extern crate vmnl;
+use vmnl::{raw::Pipeline, Window};
+fn inspect<V>(pipeline: &Pipeline<V>, window: &Window) -> vmnl::VMNLResult<()> {
+    let info = window.render_target_info();
+    println!("color: {}, samples: {}, depth: {:?}",
+        info.color_format(), info.sample_count(), info.depth_format());
+    pipeline.validate_target(window)?;
+    assert_eq!(pipeline.render_target_info(), info);
+    Ok(())
+}
+```
+
+Preflight checks device/render-pass identity without GPU work or submission. Another window is rejected even if its description is equal. Resize preserves the originating window's render pass and description. This check does not replace submission validation of geometry/resources, viewport/scissor bounds or framebuffer readiness. See [`RenderTargetInfo`](../reference/window/render_target_info.md).

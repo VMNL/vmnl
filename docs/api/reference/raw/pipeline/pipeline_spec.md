@@ -26,7 +26,7 @@ Shader-defined. Descriptor set/binding indices are reflected from GLSL. Front-fa
 
 ## Ownership, lifecycle, and threading
 
-Owns shader sources and copied options; setters consume/return it; build consumes it and binds the result to the borrowed window's device/render pass.
+Owns shader sources and copied options; setters consume/return it; build consumes it and binds the result to the borrowed window's exact device/render-pass object. The built pipeline exposes its resolved `RenderTargetInfo` and `validate_target(&Window)`. Equal attachment properties do not permit sharing pipelines between windows. Resize retains the same render pass and target description.
 
 ## Errors, panics, and failure conditions
 

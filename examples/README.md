@@ -21,6 +21,6 @@ just build <example>
 | `raw_triangle` | `just run raw_triangle` | minimal raw pipeline triangle |
 | `raw_pipeline` | `just run raw_pipeline` | explicit `LargePoints` / `FillModeNonSolid` / `WideLines` requirements and line-width limits, raw shader paths, topology/blend variants, indexed/non-indexed geometry; `C` culling, `F` winding, `P` fill/wireframe, `W` line width |
 | `raw_uniform` | `just run raw_uniform` | animated raw pipeline resources backed by `FrameUniform` |
-| `raw_d2_composition` | `just run raw_d2_composition` | ordered 2D/raw passes; `V` viewport, `S` scissor; clipping outline, framebuffer diagnostics, isolation markers; optional `VMNL_DEPTH_FORMAT=none/d16/d32`, `D` depth test/write selection and `O` draw-order comparison |
+| `raw_d2_composition` | `just run raw_d2_composition` | ordered 2D/raw passes; `V` viewport, `S` scissor; clipping outline, framebuffer/attachment diagnostics, target preflight, isolation markers; optional `VMNL_DEPTH_FORMAT=none/d16/d32`, `D` depth test/write selection and `O` draw-order comparison |
 
 See the [current `d2_shapes` limitation](../docs/examples.md#commands) before running it.

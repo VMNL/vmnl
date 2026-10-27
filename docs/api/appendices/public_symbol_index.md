@@ -3,6 +3,7 @@
 
 | Kind | Symbol | Canonical page | Rustdoc |
 |---|---|---|---|
+| struct | `vmnl::ColorFormat` | [ColorFormat](../reference/window/color_format.md) | [Rustdoc](../../../target/doc/vmnl/struct.ColorFormat.html) |
 | struct | `vmnl::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.Context.html) |
 | struct | `vmnl::ContextBuilder` | [ContextBuilder](../reference/context_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.ContextBuilder.html) |
 | struct | `vmnl::Cursor` | [Cursor](../reference/window/input/cursor.md) | [Rustdoc](../../../target/doc/vmnl/struct.Cursor.html) |
@@ -38,6 +39,7 @@
 | enum | `vmnl::PresentMode` | [PresentMode](../reference/window/present_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.PresentMode.html) |
 | enum | `vmnl::RenderMode` | [RenderMode](../reference/window/rendering/render_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.RenderMode.html) |
 | struct | `vmnl::RenderTargetConfig` | [RenderTargetConfig](../reference/window/render_target_config.md) | [Rustdoc](../../../target/doc/vmnl/struct.RenderTargetConfig.html) |
+| struct | `vmnl::RenderTargetInfo` | [RenderTargetInfo](../reference/window/render_target_info.md) | [Rustdoc](../../../target/doc/vmnl/struct.RenderTargetInfo.html) |
 | struct | `vmnl::Scancode` | [Scancode](../reference/window/input/scancode.md) | [Rustdoc](../../../target/doc/vmnl/struct.Scancode.html) |
 | enum | `vmnl::StandardCursor` | [StandardCursor](../reference/window/input/standard_cursor.md) | [Rustdoc](../../../target/doc/vmnl/enum.StandardCursor.html) |
 | struct | `vmnl::StandardCursorBuilder` | [StandardCursorBuilder](../reference/window/input/standard_cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.StandardCursorBuilder.html) |

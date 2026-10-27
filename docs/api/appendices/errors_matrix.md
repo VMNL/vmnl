@@ -7,6 +7,7 @@
 | `Context::new` | Vulkan initialization/device/queue/allocator categories | Abort graphics initialization or retry after environment change |
 | `ContextBuilder::build` | initialization categories; `DeviceRequirementsNotMet` with the complete feature list for an unsatisfied nonempty request | Require a compatible GPU or explicitly change the requested configuration; requirements are never silently dropped |
 | `WindowBuilder::build` | invalid size; GLFW/surface/swapchain/shader/render-target failures; unsupported strict present mode | Fix configuration or environment; choose preferred/portable present mode |
+| `Pipeline::validate_target` | `InvalidState` for a different device or render-pass object, including another window with equal properties | Build a separate pipeline for that window; successful preflight does not validate geometry/resources or framebuffer readiness |
 | Raw depth pipeline build | `InvalidState` before shader I/O for any enabled depth test without a depth attachment | Build the window with `RenderTargetConfig::depth`, or explicitly choose `DepthState::Disabled` |
 | Render-target configuration/build/recreation | `InvalidState` for invalid clear depth/actual extent; `VulkanFormatNotSupported` for unsupported requested depth/sample configuration; device-query/image/view/framebuffer failures | Choose a finite clear value in `[0,1]` and a format supported by the selected device; no format or GPU fallback |
 | Runtime window setters | invalid size/range/aspect (`InvalidWindowSize`/`InvalidState`) | Correct input before retry |

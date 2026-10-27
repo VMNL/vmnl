@@ -9,6 +9,7 @@
 | Ordered 2D/raw frame composition | Operational, experimental | GPU/example behavior |
 | Raw typed pipeline/geometry | Operational, experimental | Restricted public contract |
 | Raw uniform buffers/resources | Operational, experimental | Single uniform-buffer descriptors only |
+| Render-target inspection / preflight | Operational, experimental | Actual color/depth formats and samples; strict originating-window identity; resize preserves validity |
 | Optional window depth attachments / raw depth tests | Operational, experimental | Explicit D16/D32, per-image ownership and resize; compare/write state on raw pipelines; high-level 3D remains scaffolded |
 | Raw textures/samplers/storage/descriptors arrays/push constants | Unsupported | Rejected by pipeline/resource validation |
 | `RenderMode::Batched` optimization | Not implemented | Falls back to `PerObject` |

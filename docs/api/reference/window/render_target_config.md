@@ -14,7 +14,7 @@ Methods: `depth(DepthFormat)`, `without_depth()`, `clear_depth(f32)`, `depth_val
 
 ## Construction, defaults, and validation
 
-Defaults to no depth attachment and clear depth `1.0`. Pass a reusable copy to `WindowBuilder::render_target`; another config replaces the whole previous configuration. Inspect the builder with `render_target_value` and a built window with `render_target_config`. Setters are infallible CPU-only configuration; `validate` checks numeric values headlessly, and build repeats validation before native window creation. Format support is checked before native creation on the selected context device; actual extent is checked before image allocation. Color format selection and single-sample rendering retain their existing policies.
+Defaults to no depth attachment and clear depth `1.0`. Pass a reusable copy to `WindowBuilder::render_target`; another config replaces the whole previous configuration. Inspect the builder with `render_target_value` and a built window with `render_target_config`. Setters are infallible CPU-only configuration; `validate` checks numeric values headlessly, and build repeats validation before native window creation. Format support is checked before native creation on the selected context device; actual extent is checked before image allocation. Color format selection and single-sample rendering retain their existing policies. Inspect actual color/depth formats and samples through [`RenderTargetInfo`](render_target_info.md); the requested configuration does not describe the selected color format.
 
 ## Units, coordinates, and valid ranges
 

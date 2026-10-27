@@ -144,7 +144,7 @@ stable compatibility baseline; their present behavior remains documented in the 
 - `InputRuntime` and `Context` share the same GLFW owner; standalone input access does not create a
   Vulkan instance or window.
 - `raw` exposes experimental lower-level VMNL pipeline, geometry, and resource control; polygon rasterization and line width are fixed at pipeline creation and validated against enabled features and inspectable GPU limits.
-- `WindowBuilder::render_target(RenderTargetConfig)` optionally allocates depth-only attachments per swapchain image, recreated on resize. Defaults remain color-only. Raw pipelines opt into immutable depth comparison/writes; high-level 2D always disables them. Submission waits for the acquired image's previous depth-use fence before reuse, without a device-wide wait.
+- `WindowBuilder::render_target(RenderTargetConfig)` optionally allocates depth-only attachments per swapchain image, recreated on resize. Defaults remain color-only. `RenderTargetInfo` exposes actual color format, samples and depth; raw target preflight retains the exact originating window's device/render-pass identity, including across resize. Matching descriptions do not allow cross-window pipeline sharing. Raw pipelines opt into immutable depth comparison/writes; high-level 2D always disables them. Submission waits for the acquired image's previous depth-use fence before reuse, without a device-wide wait.
 - 2D rendering is available.
 - 3D public types exist, but 3D rendering is still scaffolded.
 - Internal backend details stay out of the facade unless they are deliberate public API.

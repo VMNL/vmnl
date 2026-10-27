@@ -139,6 +139,7 @@ fn main() -> VMNLResult<()> {
         "render target: {:?}; depth initially disabled",
         window.render_target_config()
     );
+    println!("resolved attachments: {:?}", window.render_target_info());
 
     let background = Shape::rect(420.0, 300.0)
         .position(240.0, 150.0)
@@ -155,6 +156,9 @@ fn main() -> VMNLResult<()> {
         for state in &DEPTH_STATES[1..] {
             pipelines.extend(build_pipelines(&window, *state)?);
         }
+    }
+    for pipeline in &pipelines {
+        pipeline.validate_target(&window)?;
     }
     let mut vertices = [
         RawVertex {
