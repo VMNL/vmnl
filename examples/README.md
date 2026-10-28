@@ -13,7 +13,7 @@ just build <example>
 | --- | --- | --- |
 | `d2_shapes` | `just run d2_shapes` | minimal 2D rectangle, circle, and triangle rendering |
 | `d2_circles` | `just run d2_circles` | circles, ellipses, rings, filled sectors, and an outlined elliptical arc with round caps |
-| `d2_advanced_geometry` | `just run d2_advanced_geometry` | convex polygons , indices, vertex colors, transforms, line caps, polyline joins/caps/color modes, memory preferences, render modes |
+| `d2_advanced_geometry` | `just run d2_advanced_geometry` | convex polygons , indices, vertex colors, transforms, rounded corners (uniform, asymmetric, rotated, partially sharp), line caps, polyline joins/caps/color modes, memory preferences, render modes |
 | `joystick_runtime` | `just run joystick_runtime` | one-shot joystick/gamepad sampling through `InputRuntime` without a `Context`, Vulkan instance, or window; GLFW still requires a usable platform backend |
 | `window_events_input` | `just run window_events_input` | window builder/config, polling, keyboard names/scancodes/sticky modes, events, monitors, mouse, joystick/gamepad snapshots and stick processing, cursor resources/modes/raw motion, timers, lifecycle |
 | `window_custom_shaders` | `just run window_custom_shaders` | 2D custom shaders from files; set `VMNL_INLINE_SHADERS=1` for inline shader strings |

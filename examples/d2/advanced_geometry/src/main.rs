@@ -5,7 +5,7 @@
 
 use vmnl::{
     common::{BufferMemoryPreference, Rgba},
-    d2::{Anchor, LineCap, LineJoin, Shape, Vector2f, Vertex2D},
+    d2::{Anchor, CornerRadii, LineCap, LineJoin, Shape, Vector2f, Vertex2D},
     Context, Key, PresentMode, RenderMode, VMNLResult, Window,
 };
 
@@ -62,6 +62,29 @@ fn main() -> VMNLResult<()> {
         .origin(20.0, 70.0)
         .rotation(-25.0)
         .buffer_memory_preference(BufferMemoryPreference::Host)
+        .build(&context)?;
+    let rounded_uniform = Shape::rect(200.0, 100.0)
+        .position(40.0, 30.0)
+        .corner_radius(24.0)
+        .color(Rgba::CYAN)
+        .build(&context)?;
+    let rounded_asymmetric = Shape::rect(220.0, 90.0)
+        .position(660.0, 400.0)
+        .corner_radii(CornerRadii::new(28.0, 6.0, 40.0, 0.0))
+        .color(Rgba::MAGENTA)
+        .buffer_memory_preference(BufferMemoryPreference::Host)
+        .build(&context)?;
+    let rounded_rotated = Shape::rect(150.0, 80.0)
+        .position(150.0, 560.0)
+        .corner_radius(16.0)
+        .anchor(Anchor::Center)
+        .rotation(20.0)
+        .color(Rgba::YELLOW)
+        .build(&context)?;
+    let rounded_partially_sharp = Shape::rect(170.0, 80.0)
+        .position(780.0, 560.0)
+        .corner_radii(CornerRadii::new(24.0, 24.0, 0.0, 0.0))
+        .color(Rgba::GREEN)
         .build(&context)?;
     let line_butt = Shape::line(v2(80.0, 610.0), v2(280.0, 630.0))
         .color(Rgba::YELLOW)
@@ -137,6 +160,10 @@ fn main() -> VMNLResult<()> {
                 &triangle,
                 &centered,
                 &custom_origin,
+                &rounded_uniform,
+                &rounded_asymmetric,
+                &rounded_rotated,
+                &rounded_partially_sharp,
                 &line_butt,
                 &line_round,
                 &line_square,

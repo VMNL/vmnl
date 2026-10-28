@@ -622,23 +622,22 @@ impl CircleBuilder {
         let sweep_radians = sector.sweep.to_radians();
 
         for segment in 0..=options.segment_count {
-            let t = f32::from(segment) / f32::from(options.segment_count);
-            let angle = start_radians + sweep_radians * t;
-
-            let (sin, cos) = angle.sin_cos();
-
-            let centerline = Vector2f {
-                x: options.position.x + options.radii.x * cos,
-                y: options.position.y + options.radii.y * sin,
-            };
+            let sample = super::arc_sample(
+                options.position,
+                options.radii,
+                start_radians,
+                sweep_radians,
+                segment,
+                options.segment_count,
+            );
 
             let normal = Vector2f {
-                x: cos / options.radii.x,
-                y: sin / options.radii.y,
+                x: sample.cos / options.radii.x,
+                y: sample.sin / options.radii.y,
             }
             .normalize();
 
-            let outer = centerline + normal * options.outline_width.outer;
+            let outer = sample.position + normal * options.outline_width.outer;
 
             vertices.push(Vertex2D {
                 position: outer,
@@ -646,7 +645,7 @@ impl CircleBuilder {
             });
 
             if !options.filled {
-                let inner = centerline - normal * options.outline_width.inner;
+                let inner = sample.position - normal * options.outline_width.inner;
 
                 vertices.push(Vertex2D {
                     position: inner,

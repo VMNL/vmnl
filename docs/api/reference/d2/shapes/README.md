@@ -7,7 +7,8 @@
 | [`IndexedShapeBuilder`](indexed_shape_builder.md) | Arbitrary triangle-indexed geometry |
 | [`PolygonBuilder`](polygon_builder.md) | Filled strictly convex boundary with automatic triangulation |
 | [`TriangleBuilder`](triangle_builder.md) | Three-vertex triangle |
-| [`RectBuilder`](rect_builder.md) | Positioned/rotated rectangle |
+| [`RectBuilder`](rect_builder.md) | Positioned/rotated rectangle with sharp or rounded corners |
+| [`CornerRadii`](corner_radii.md) | Per-corner circular radii for `RectBuilder` |
 | [`Anchor`](anchor.md) | Rectangle rotation pivot |
 | [`LineBuilder`](line_builder.md) | Thick line geometry |
 | [`LineCap`](line_cap.md) | Line endpoint style |

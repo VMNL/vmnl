@@ -5,7 +5,7 @@
 
 use vmnl::{
     common::{BufferMemoryPreference, Rgba},
-    d2::{LineCap, LineJoin, PolylineBuilder, Shape, Vector2f},
+    d2::{Anchor, CornerRadii, LineCap, LineJoin, PolylineBuilder, RectBuilder, Shape, Vector2f},
     Context, VMNLResult,
 };
 
@@ -39,4 +39,25 @@ fn polyline_builder_and_line_join_are_exported_by_the_facade() {
 
     let _build: fn(PolylineBuilder, &Context) -> VMNLResult<Shape> = build_polyline;
     let _ = (open, closed_gradient);
+}
+
+#[test]
+fn corner_radii_and_rect_builder_corner_methods_are_exported_by_the_facade() {
+    assert_eq!(CornerRadii::default(), CornerRadii::all(0.0));
+    assert_eq!(CornerRadii::all(4.0), CornerRadii::new(4.0, 4.0, 4.0, 4.0));
+
+    let uniform: RectBuilder = Shape::rect(240.0, 120.0)
+        .position(100.0, 80.0)
+        .corner_radius(16.0)
+        .corner_segments(8)
+        .color(Rgba::CYAN)
+        .anchor(Anchor::Center)
+        .rotation(20.0)
+        .buffer_memory_preference(BufferMemoryPreference::Host);
+
+    let independent: RectBuilder =
+        Shape::rect(240.0, 120.0).corner_radii(CornerRadii::new(24.0, 8.0, 32.0, 0.0));
+
+    let _: fn(RectBuilder, &Context) -> VMNLResult<Shape> = RectBuilder::build;
+    let _ = (uniform, independent);
 }
