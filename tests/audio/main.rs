@@ -14,6 +14,7 @@
 mod common;
 mod contracts;
 mod decoding;
+mod gain_semantics;
 mod internal_harness;
 mod playback_states;
 mod runtime_mixer;

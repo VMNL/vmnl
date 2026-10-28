@@ -10,8 +10,8 @@ against which the remaining implementation work is evaluated.
 
 `vmnl_audio` currently uses CPAL. The facade still depends unconditionally on graphics and has no
 audio feature; its optional audio integration remains to be implemented. The control worker
-currently defaults to enabled. Mute behavior and realtime resource reclamation still need to
-be aligned and validated; terminal states, consumed-frame cursors, and live looping have
+currently defaults to enabled. Realtime resource reclamation still needs to be aligned and
+validated; terminal states, consumed-frame cursors, live looping, and mute/pause semantics have
 device-independent regression coverage. The audio test files are registered as
 separate [device-independent and native Cargo targets](testing.md#audio-tests); their assertions
 still expose implementation gaps and are not a passing acceptance record.
@@ -88,7 +88,10 @@ instance.
   volume value. A paused playback stays frozen even when its effective volume is zero.
 
 The mixer must distinguish pause from zero gain; the effective gain alone cannot decide whether
-to consume PCM.
+to consume PCM. Master controls affect both categories; a music/SFX bus controls only its route.
+Resuming the master bus preserves category pauses. Unmuting or restoring volume continues from
+the current position, without replaying silently consumed PCM. Silent playback still requires
+music refill through the selected control mode; underrun silence does not advance its cursor.
 
 ## Position, EOF, and Looping
 

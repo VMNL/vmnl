@@ -387,6 +387,9 @@ impl AudioDevice {
 
     /// Sets the shared master linear gain without changing individual volumes.
     ///
+    /// Zero silences both categories without pausing them. Individual and bus
+    /// pauses still freeze the corresponding playback positions.
+    ///
     /// # Errors
     ///
     /// Returns [`AudioError::InvalidState`] for non-finite gains or values outside

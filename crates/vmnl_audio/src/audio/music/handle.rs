@@ -41,6 +41,9 @@ impl MusicHandle {
 
     /// Sets this instance's finite linear gain in `0.0..=1.0`.
     ///
+    /// Zero silences output while playback continues, unless paused individually
+    /// or through a routing bus. Changing volume preserves the playback state.
+    ///
     /// # Errors
     ///
     /// Returns [`crate::AudioError::InvalidState`] for invalid gains without

@@ -25,6 +25,11 @@ thread, ordered global stop/pause/resume commands, exact-buffer completion, curs
 and dynamic loop changes around decoder EOF and refill. Its cross-thread cases use barriers
 for a deterministic happens-before order; they are not exhaustive concurrency model checking.
 
+`gain_semantics` checks PCM output, cursors, and EOF for mute and zero gain on master/music/SFX
+buses, zero handle volume, pause precedence, independent category/handle states, unmute/volume
+restoration, looping, and silent music underruns. It uses the private implementation harness
+without opening a device; these cases do not qualify audible output or realtime performance.
+
 The independent `Audio` CI matrix compiles both targets and runs only `audio` on Linux, macOS,
 and Windows with Rust 1.87. Linux jobs install the ALSA development files. This matrix has no
 dependency on the Quality job, so Clippy failures do not suppress audio diagnostics. There is

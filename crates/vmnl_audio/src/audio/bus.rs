@@ -24,8 +24,9 @@ struct AudioBusState {
 ///
 /// Volume is a finite linear gain in `0.0..=1.0`, initially `1.0`.
 /// Mute and pause initially are disabled and do not replace the stored volume.
-/// The current mixer skips PCM consumption for both mute and pause, or zero gain;
-/// the acceptance target distinguishes silent progression from a paused cursor.
+/// Mute and zero gain silence output while playing instances continue consuming
+/// PCM and can finish naturally. Pause freezes consumption without replacing
+/// individual playback states; an individual pause still takes precedence.
 #[derive(Clone, Debug)]
 pub struct AudioBus {
     state: Arc<AudioBusState>,
@@ -43,6 +44,8 @@ impl AudioBus {
     }
 
     /// Sets the linear gain without changing mute or pause.
+    ///
+    /// Zero silences output without pausing playback or preventing completion.
     ///
     /// # Errors
     ///
@@ -63,6 +66,9 @@ impl AudioBus {
     }
 
     /// Mutes the bus without replacing its stored volume.
+    ///
+    /// Playing instances continue consuming PCM unless this bus or the master
+    /// bus is paused. Unmuting does not rewind their playback positions.
     pub fn mute(&self) {
         self.state.muted.store(true, Ordering::Relaxed);
     }
@@ -79,6 +85,9 @@ impl AudioBus {
     }
 
     /// Pauses consumption of playbacks routed through this bus.
+    ///
+    /// Takes precedence over mute and zero gain. Individual states are preserved;
+    /// a master-bus pause freezes both music and sound effects.
     pub fn pause(&self) {
         self.state.paused.store(true, Ordering::Relaxed);
     }
@@ -95,6 +104,9 @@ impl AudioBus {
     }
 
     /// Returns zero when muted or paused, otherwise the stored linear gain.
+    ///
+    /// A zero gain alone does not report whether PCM consumption is paused;
+    /// inspect [`Self::is_paused`] separately.
     #[must_use]
     pub fn gain(&self) -> f32 {
         if self.is_muted() || self.is_paused() {

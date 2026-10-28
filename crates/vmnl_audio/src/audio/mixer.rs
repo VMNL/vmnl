@@ -10,19 +10,21 @@ impl AudioMixer {
     pub(crate) fn mix(runtime: &AudioRuntime, output: &mut [f32]) {
         output.fill(0.0);
 
-        let master_gain = runtime.bus_gain(BusKind::Master);
-
-        if master_gain <= 0.0 {
+        let master = runtime.bus(BusKind::Master);
+        if master.is_paused() {
             return;
         }
+        let master_gain = master.gain();
 
         /*
          * ArcSwap:
          * no Mutex/RwLock on the realtime path.
          */
-        let sfx_gain = runtime.bus_gain(BusKind::Sfx);
+        let sfx = runtime.bus(BusKind::Sfx);
 
-        if sfx_gain > 0.0 {
+        // Zero gain silences output; only pause suppresses PCM consumption.
+        if !sfx.is_paused() {
+            let sfx_gain = sfx.gain();
             let voices = runtime.sound_voice_snapshot.load();
 
             for voice in voices.iter() {
@@ -32,9 +34,10 @@ impl AudioMixer {
             }
         }
 
-        let music_gain = runtime.bus_gain(BusKind::Music);
+        let music = runtime.bus(BusKind::Music);
 
-        if music_gain > 0.0 {
+        if !music.is_paused() {
+            let music_gain = music.gain();
             let streams = runtime.music_stream_snapshot.load();
 
             for stream in streams.iter() {

@@ -315,11 +315,11 @@ impl AudioRuntime {
     }
 
     #[must_use]
-    pub(crate) fn bus_gain(&self, bus: BusKind) -> f32 {
+    pub(crate) fn bus(&self, bus: BusKind) -> &AudioBus {
         match bus {
-            BusKind::Master => self.master_bus.gain(),
-            BusKind::Music => self.music_bus.gain(),
-            BusKind::Sfx => self.sfx_bus.gain(),
+            BusKind::Master => &self.master_bus,
+            BusKind::Music => &self.music_bus,
+            BusKind::Sfx => &self.sfx_bus,
         }
     }
 

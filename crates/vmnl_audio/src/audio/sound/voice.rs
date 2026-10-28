@@ -114,7 +114,7 @@ impl SoundVoice {
     }
 
     pub(crate) fn mix_into(&self, output: &mut [f32], gain: f32) {
-        if self.state() != PlaybackState::Playing || gain <= 0.0 {
+        if self.state() != PlaybackState::Playing {
             return;
         }
 
