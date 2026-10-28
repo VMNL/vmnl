@@ -83,10 +83,15 @@ test-gpu-compile:
 test-gpu:
     @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report gpu
 
-# Run audio tests.
+# Run device-independent audio tests.
 [no-exit-message]
 test-audio:
     @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report audio
+
+# Run native audio tests; requires a usable CPAL stereo output device.
+[no-exit-message]
+test-audio-backend:
+    @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report audio-backend
 
 # Run Rustdoc examples.
 [no-exit-message]
@@ -125,9 +130,15 @@ _test-report suite:
     case '{{ suite }}' in
         audio)
             suite_name='AUDIO'
-            suite_scope='audio tests'
+            suite_scope='device-independent audio tests'
             suite_kind='tests'
-            test_command=(cargo "${color_args[@]}" test -p vmnl_audio)
+            test_command=(cargo "${color_args[@]}" test -p vmnl_audio --test audio)
+            ;;
+        audio-backend)
+            suite_name='AUDIO-BACKEND'
+            suite_scope='CPAL stereo output device required'
+            suite_kind='tests'
+            test_command=(cargo "${color_args[@]}" test -p vmnl_audio --test audio-backend -- --ignored)
             ;;
         gpu)
             suite_name='GPU'
@@ -358,6 +369,10 @@ _test-total report:
             test-api)
                 stage_name='API'
                 record_suite='api'
+                ;;
+            test-audio)
+                stage_name='AUDIO'
+                record_suite='audio'
                 ;;
             test-smoke)
                 stage_name='SMOKE'

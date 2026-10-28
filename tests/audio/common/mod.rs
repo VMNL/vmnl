@@ -5,19 +5,17 @@
 
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, MutexGuard};
 use std::thread;
 use std::time::{Duration, Instant};
 
 use tempfile::NamedTempFile;
-use vmnl_audio::{AudioDevice, AudioError};
 
-static BACKEND_TEST_LOCK: Mutex<()> = Mutex::new(());
-
+#[allow(dead_code)]
 pub struct TempAudioFile {
     file: NamedTempFile,
 }
 
+#[allow(dead_code)]
 impl TempAudioFile {
     pub fn new(extension: &str) -> Self {
         let file = tempfile::Builder::new()
@@ -36,13 +34,7 @@ impl TempAudioFile {
         std::fs::write(self.path(), bytes).expect("write temporary fixture");
     }
 
-    pub fn write_pcm16_wav(
-        &self,
-        channels: u16,
-        sample_rate: u32,
-        frames: usize,
-        sample: i16,
-    ) {
+    pub fn write_pcm16_wav(&self, channels: u16, sample_rate: u32, frames: usize, sample: i16) {
         let count = frames
             .checked_mul(usize::from(channels))
             .expect("fixture sample count should fit usize");
@@ -110,41 +102,11 @@ impl TempAudioFile {
     }
 }
 
+#[allow(dead_code)]
 pub fn fixture_path(name: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../tests/audio/fixtures")
         .join(name)
-}
-
-pub fn lock_backend_tests() -> MutexGuard<'static, ()> {
-    BACKEND_TEST_LOCK
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-}
-
-/// Returns `None` only when the current machine cannot initialize a default
-/// stereo output device and hardware tests have not been made mandatory.
-pub fn device_or_skip(threaded: bool) -> Option<AudioDevice> {
-    build_device_or_skip(|| AudioDevice::builder().thread(threaded).build())
-}
-
-pub fn default_device_or_skip() -> Option<AudioDevice> {
-    build_device_or_skip(|| AudioDevice::builder().build())
-}
-
-fn build_device_or_skip(
-    build: impl FnOnce() -> Result<AudioDevice, AudioError>,
-) -> Option<AudioDevice> {
-    match build() {
-        Ok(device) => Some(device),
-        Err(error @ (AudioError::BackendInitFailed(_) | AudioError::UnsupportedFormat(_)))
-            if std::env::var_os("VMNL_AUDIO_TESTS_REQUIRE_DEVICE").is_none() =>
-        {
-            eprintln!("audio integration test skipped (no usable output device): {error}");
-            None
-        }
-        Err(error) => panic!("audio device initialization failed unexpectedly: {error}"),
-    }
 }
 
 pub fn wait_until(timeout: Duration, mut condition: impl FnMut() -> bool) -> bool {

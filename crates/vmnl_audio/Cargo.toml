@@ -15,6 +15,14 @@ categories = ["audio"]
 [lib]
 doctest = false
 
+[[test]]
+name = "audio"
+path = "../../tests/audio/main.rs"
+
+[[test]]
+name = "audio-backend"
+path = "../../tests/audio/backend.rs"
+
 [dependencies]
 thiserror = "1.0"
 

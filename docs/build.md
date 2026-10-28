@@ -39,6 +39,8 @@ test sequence.
 just test                  unit + API + smoke tests
 just test-unit             unit tests
 just test-api              API tests
+just test-audio            device-independent audio tests
+just test-audio-backend    opt-in CPAL tests; requires a usable stereo output device
 just test-smoke            smoke tests
 just test-platform         portable error conversion + GLFW Null backend
 just test-platform-compile compile every platform probe without running it

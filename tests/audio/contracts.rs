@@ -21,7 +21,9 @@ fn audio_config_defaults_to_stereo_at_44100_hz_and_unity_gain() {
 fn audio_config_setters_keep_valid_values_and_reject_invalid_updates() {
     let mut config = AudioConfig::default();
 
-    config.set_master_volume(0.25).expect("intermediate gain is valid");
+    config
+        .set_master_volume(0.25)
+        .expect("intermediate gain is valid");
     assert_eq!(config.master_volume(), 0.25);
 
     for invalid in [-0.01, 1.01, f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
@@ -29,7 +31,11 @@ fn audio_config_setters_keep_valid_values_and_reject_invalid_updates() {
             config.set_master_volume(invalid),
             Err(AudioError::InvalidState(_))
         ));
-        assert_eq!(config.master_volume(), 0.25, "invalid gain must not overwrite state");
+        assert_eq!(
+            config.master_volume(),
+            0.25,
+            "invalid gain must not overwrite state"
+        );
     }
 
     config.set_master_volume(0.0).expect("mute gain is valid");
@@ -37,9 +43,14 @@ fn audio_config_setters_keep_valid_values_and_reject_invalid_updates() {
     config.set_master_volume(1.0).expect("unity gain is valid");
     assert_eq!(config.master_volume(), 1.0);
 
-    config.set_sample_rate(48_000).expect("positive sample rate is valid");
+    config
+        .set_sample_rate(48_000)
+        .expect("positive sample rate is valid");
     assert_eq!(config.sample_rate(), 48_000);
-    assert!(matches!(config.set_sample_rate(0), Err(AudioError::InvalidState(_))));
+    assert!(matches!(
+        config.set_sample_rate(0),
+        Err(AudioError::InvalidState(_))
+    ));
     assert_eq!(config.sample_rate(), 48_000);
 
     config.set_channels(2).expect("stereo output is supported");
@@ -78,11 +89,17 @@ fn playback_configs_have_stable_defaults_and_keep_custom_values() {
     assert_eq!(music_default.volume, 1.0);
     assert!(!music_default.looping);
 
-    let sound_custom = SoundPlayConfig { volume: 0.3, looping: true };
+    let sound_custom = SoundPlayConfig {
+        volume: 0.3,
+        looping: true,
+    };
     assert_eq!(sound_custom.volume, 0.3);
     assert!(sound_custom.looping);
 
-    let music_custom = MusicPlayConfig { volume: 0.7, looping: true };
+    let music_custom = MusicPlayConfig {
+        volume: 0.7,
+        looping: true,
+    };
     assert_eq!(music_custom.volume, 0.7);
     assert!(music_custom.looping);
 }

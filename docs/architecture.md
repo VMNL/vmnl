@@ -31,7 +31,7 @@ directly; an optional high-level runner may provide a simpler path without remov
 | Domain | Direction | Current state |
 | --- | --- | --- |
 | Graphics | Vulkan rendering, windows, input, 2D, 3D, and explicit raw control. | Window/input, 2D, and limited raw capabilities are operational; 3D rendering is scaffolded. |
-| Audio | Independent real-time audio subsystem. Its detailed contract belongs to its maintainers. | Planned outside `main`. |
+| Audio | Independent real-time audio subsystem. Its detailed contract belongs to its maintainers. | In development with CPAL; see the [audio acceptance contract](audio.md). |
 | Network | Transport, framing, and reliable or unreliable channels. Higher-level replication may remain optional. | Planned. |
 | Scene | Optional high-level composition built only from public VMNL capabilities and reproducible manually by clients. | Planned. |
 | ECS | Reference application and dogfooding tool unless a concrete external use case justifies a public contract. | Not a core library contract. |
@@ -64,6 +64,7 @@ Core crates:
 
 - `crates/vmnl`: public facade crate.
 - `crates/vmnl_graphics`: graphics, windowing, input, raw rendering, 2D/3D types.
+- `crates/vmnl_audio`: independent audio domain using a private CPAL device backend.
 - `crates/vmnl_macros`: internal proc macros used by VMNL crates.
 
 Runnable visual examples:
@@ -139,6 +140,8 @@ stable compatibility baseline; their present behavior remains documented in the 
 ## Current Implementation Boundaries
 
 - `vmnl` re-exports the current public graphics API.
+- `vmnl_audio` is directly usable; optional exposure through `vmnl::audio` remains an acceptance
+  target defined in [Audio](audio.md).
 - `vmnl_graphics` owns rendering, windowing, input, and GPU resource behavior.
 - `InputRuntime` and `Context` share the same GLFW owner; standalone input access does not create a
   Vulkan instance or window.

@@ -1,5 +1,9 @@
 # vmnl_audio
 
+The [audio acceptance contract](../../docs/audio.md) defines the target for #84 and its remaining
+implementation gaps. The examples below describe the current implementation, including its
+automatic control-worker default; that default must become opt-in before acceptance.
+
 `vmnl_audio` provides stereo sound effects, streamed music, playback handles and independent master/music/SFX volume controls. The public API intentionally hides the runtime, mixer, decoder state, voice objects and PCM ring buffer.
 
 ## Quick start — automatic mode

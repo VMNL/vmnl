@@ -17,7 +17,9 @@ fn decode_to_vec(path: &std::path::Path, sample_rate: u32, chunk_sizes: &[usize]
     loop {
         let size = chunk_sizes[chunk_index % chunk_sizes.len()];
         let mut chunk = vec![99.0_f32; size];
-        let read = decoder.read_stereo(&mut chunk).expect("read decoded frames");
+        let read = decoder
+            .read_stereo(&mut chunk)
+            .expect("read decoded frames");
         assert_eq!(read % 2, 0, "stereo reads must return whole frames");
         output.extend_from_slice(&chunk[..read]);
         chunk_index += 1;
@@ -37,7 +39,10 @@ fn pcm16_mono_wav_decodes_to_stereo_with_expected_frames_and_samples() {
     assert_eq!(decoded.channels(), 2);
     assert_eq!(decoded.frame_count(), 4);
     assert_eq!(decoded.samples().len(), 8);
-    assert_eq!(decoded.samples(), &[0.0, 0.0, 0.25, 0.25, -0.25, -0.25, 0.5, 0.5]);
+    assert_eq!(
+        decoded.samples(),
+        &[0.0, 0.0, 0.25, 0.25, -0.25, -0.25, 0.5, 0.5]
+    );
 }
 
 #[test]
@@ -104,7 +109,8 @@ fn unknown_extension_and_missing_file_return_specific_error_variants() {
         Err(AudioError::UnsupportedFormat(_))
     ));
 
-    let missing = std::env::temp_dir().join(format!("vmnl-audio-missing-{}.mp3", std::process::id()));
+    let missing =
+        std::env::temp_dir().join(format!("vmnl-audio-missing-{}.mp3", std::process::id()));
     let _ = std::fs::remove_file(&missing);
     assert!(matches!(
         StreamingDecoder::open_native(&missing),
@@ -128,7 +134,10 @@ fn compressed_fixtures_decode_real_samples_for_mp3_ogg_and_flac() {
         let decoded = AudioDecoder::decode_file(&path)
             .unwrap_or_else(|error| panic!("failed to decode {fixture}: {error}"));
         assert_eq!(decoded.channels(), 2, "{fixture} should convert to stereo");
-        assert!(decoded.frame_count() > 0, "{fixture} must produce audio frames");
+        assert!(
+            decoded.frame_count() > 0,
+            "{fixture} must produce audio frames"
+        );
         assert_eq!(decoded.samples().len(), decoded.frame_count() * 2);
         assert!(decoded.samples().iter().all(|sample| sample.is_finite()));
         assert!(decoded.samples().iter().any(|sample| sample.abs() > 0.0001));
@@ -150,7 +159,11 @@ fn varied_read_sizes_match_continuous_reads_across_codec_chunk_boundaries() {
             file.write_pcm16_samples(2, 44_100, &samples);
             let full = decode_to_vec(file.path(), 48_000, &[8_192]);
             let partial = decode_to_vec(file.path(), 48_000, &[2, 14, 6, 102, 18, 514]);
-            assert_same_audio(&full, &partial, "WAV samples must not be lost at buffer boundaries");
+            assert_same_audio(
+                &full,
+                &partial,
+                "WAV samples must not be lost at buffer boundaries",
+            );
             continue;
         } else {
             fixture_path(fixture)
@@ -158,12 +171,20 @@ fn varied_read_sizes_match_continuous_reads_across_codec_chunk_boundaries() {
 
         let full = decode_to_vec(&path, 48_000, &[16_384]);
         let partial = decode_to_vec(&path, 48_000, &[2, 14, 6, 102, 18, 514]);
-        assert_same_audio(&full, &partial, &format!("decoded samples changed across chunks for {fixture}"));
+        assert_same_audio(
+            &full,
+            &partial,
+            &format!("decoded samples changed across chunks for {fixture}"),
+        );
     }
 }
 
 fn assert_same_audio(expected: &[f32], actual: &[f32], message: &str) {
-    assert_eq!(expected.len(), actual.len(), "{message}: sample count differs");
+    assert_eq!(
+        expected.len(),
+        actual.len(),
+        "{message}: sample count differs"
+    );
     for (index, (expected, actual)) in expected.iter().zip(actual).enumerate() {
         assert!(
             (expected - actual).abs() <= 1.0e-5,

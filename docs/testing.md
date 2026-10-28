@@ -1,5 +1,33 @@
 # Testing
 
+## Audio Tests
+
+The `vmnl_audio` manifest registers two integration-test targets from `tests/audio/`. There is
+no separate audio test package or standalone manifest in that directory.
+
+| Command | Scope |
+| --- | --- |
+| `just test-audio` | Target `audio`: configuration/errors through the public domain crate, plus private decoder, ring, mixer, runtime, and worker contracts; no output device is opened. |
+| `cargo test -p vmnl_audio --tests --no-run` | Compile both integration targets without opening a device. |
+| `just test-audio-backend` | Target `audio-backend`: explicitly run ignored native playback, bus, and worker tests against a usable CPAL stereo output device. |
+
+The native tests are ignored by default and excluded from the device-independent target. An
+explicit native run fails if device initialization or format selection fails; missing hardware
+is not reported as a passing test. These tests can produce audible output. No recipe installs
+system packages or changes the host audio configuration. Linux compilation still needs CPAL's
+ALSA development prerequisites even when no output device is opened.
+
+`just test` and `just validate` include `test-audio`, and their aggregate reports retain its
+pass/fail counts. Known audio assertions remain enabled: registering a test does not imply that
+the implementation already satisfies the [acceptance contract](audio.md).
+
+The private implementation harness compiles copies of the production sources in a test-only
+module tree, without making private types public. Its results prove behavior at that private
+seam; they do not replace tests against the compiled public library or qualify a CPAL device.
+The ordinary public contract tests use `vmnl_audio`; facade tests through `vmnl::audio` remain
+required when that feature is implemented. Native backend results are separate from human
+listening validation.
+
 ## Virtual joystick/gamepad scenarios (issue #94)
 
 These tests preserve the existing unit/API/Null suites and reuse #91's bounded, continuously

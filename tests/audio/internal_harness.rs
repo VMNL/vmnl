@@ -11,6 +11,10 @@
 
 #![allow(dead_code, unused_imports)]
 
+// Load this module normally so its inner Rustdoc remains valid.
+#[path = "../../crates/vmnl_audio/src/audio/stream_decoder.rs"]
+pub(crate) mod stream_decoder;
+
 pub(crate) mod audio {
     pub(crate) mod error {
         include!("../../crates/vmnl_audio/src/audio/error.rs");
@@ -20,9 +24,7 @@ pub(crate) mod audio {
         include!("../../crates/vmnl_audio/src/audio/bus.rs");
     }
 
-    pub(crate) mod stream_decoder {
-        include!("../../crates/vmnl_audio/src/audio/stream_decoder.rs");
-    }
+    pub(crate) use super::stream_decoder;
 
     pub(crate) mod decoder {
         include!("../../crates/vmnl_audio/src/audio/decoder.rs");
@@ -36,7 +38,11 @@ pub(crate) mod audio {
                 sample_rate: u32,
                 samples: Vec<f32>,
             ) -> DecodedAudio {
-                DecodedAudio { channels, sample_rate, samples }
+                DecodedAudio {
+                    channels,
+                    sample_rate,
+                    samples,
+                }
             }
         }
 
@@ -54,11 +60,17 @@ pub(crate) mod audio {
                 let empty = decoded_audio(2, 44_100, Vec::new());
                 assert_eq!(empty.frame_count(), 0);
                 assert!(empty.is_empty());
-                let converted_empty = empty.resample_to_stereo(48_000).expect("resample empty input");
+                let converted_empty = empty
+                    .resample_to_stereo(48_000)
+                    .expect("resample empty input");
                 assert_eq!(converted_empty.frame_count(), 0);
                 assert!(converted_empty.is_empty());
 
-                let malformed = DecodedAudio { channels: 0, sample_rate: 44_100, samples: vec![1.0] };
+                let malformed = DecodedAudio {
+                    channels: 0,
+                    sample_rate: 44_100,
+                    samples: vec![1.0],
+                };
                 assert_eq!(malformed.frame_count(), 0);
             }
 
@@ -68,7 +80,10 @@ pub(crate) mod audio {
                 let upsampled = mono.resample_to_stereo(4).expect("upsample mono data");
                 assert_eq!(upsampled.frame_count(), 4);
                 assert_eq!(upsampled.channels(), 2);
-                assert_eq!(upsampled.samples(), &[0.0, 0.0, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0]);
+                assert_eq!(
+                    upsampled.samples(),
+                    &[0.0, 0.0, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0]
+                );
 
                 let downsampled = mono.resample_to_stereo(1).expect("downsample mono data");
                 assert_eq!(downsampled.frame_count(), 1);
@@ -78,7 +93,9 @@ pub(crate) mod audio {
             #[test]
             fn resampling_at_the_same_stereo_sample_rate_preserves_samples() {
                 let stereo = decoded_audio(2, 48_000, vec![0.25, -0.5, 0.75, -1.0]);
-                let converted = stereo.resample_to_stereo(48_000).expect("same rate conversion");
+                let converted = stereo
+                    .resample_to_stereo(48_000)
+                    .expect("same rate conversion");
                 assert_eq!(converted.frame_count(), 2);
                 assert_eq!(converted.samples(), stereo.samples());
             }
@@ -86,7 +103,10 @@ pub(crate) mod audio {
             #[test]
             fn invalid_target_sample_rate_is_rejected_before_arithmetic() {
                 let source = decoded_audio(1, 44_100, vec![0.5]);
-                assert!(matches!(source.resample_to_stereo(0), Err(AudioError::InvalidState(_))));
+                assert!(matches!(
+                    source.resample_to_stereo(0),
+                    Err(AudioError::InvalidState(_))
+                ));
             }
 
             #[test]
@@ -135,22 +155,31 @@ pub(crate) mod audio {
                 fn sound_voice_mixes_exact_stereo_samples_and_advances_by_consumed_frames() {
                     let wav = TempAudioFile::new("wav");
                     wav.write_pcm16_samples(2, 8_000, &[16_384, -8_192, 8_192, -4_096]);
-                    let decoded = Arc::new(AudioDecoder::decode_file(wav.path()).expect("decode fixture"));
+                    let decoded =
+                        Arc::new(AudioDecoder::decode_file(wav.path()).expect("decode fixture"));
                     let voice = SoundVoice::new(1, decoded, 0.5, false, PlaybackState::Playing)
                         .expect("valid voice");
                     let mut output = [0.0_f32; 8];
 
                     voice.mix_into(&mut output, 0.5);
-                    assert_eq!(output, [0.125, -0.0625, 0.0625, -0.03125, 0.0, 0.0, 0.0, 0.0]);
+                    assert_eq!(
+                        output,
+                        [0.125, -0.0625, 0.0625, -0.03125, 0.0, 0.0, 0.0, 0.0]
+                    );
                     assert!(voice.is_stopped());
-                    assert_eq!(voice.cursor_frames(), 2, "cursor should count frames actually consumed");
+                    assert_eq!(
+                        voice.cursor_frames(),
+                        2,
+                        "cursor should count frames actually consumed"
+                    );
                 }
 
                 #[test]
                 fn looping_sound_voice_repeats_source_frames_without_stopping() {
                     let wav = TempAudioFile::new("wav");
                     wav.write_pcm16_samples(2, 8_000, &[16_384, -8_192, 8_192, -4_096]);
-                    let decoded = Arc::new(AudioDecoder::decode_file(wav.path()).expect("decode fixture"));
+                    let decoded =
+                        Arc::new(AudioDecoder::decode_file(wav.path()).expect("decode fixture"));
                     let voice = SoundVoice::new(3, decoded, 0.5, true, PlaybackState::Playing)
                         .expect("valid looping voice");
                     let mut output = [0.0_f32; 8];
@@ -168,7 +197,8 @@ pub(crate) mod audio {
                 fn sound_voice_pause_resume_stop_and_invalid_volume_behave_consistently() {
                     let wav = TempAudioFile::new("wav");
                     wav.write_pcm16_wav(2, 8_000, 32, 1_000);
-                    let decoded = Arc::new(AudioDecoder::decode_file(wav.path()).expect("decode fixture"));
+                    let decoded =
+                        Arc::new(AudioDecoder::decode_file(wav.path()).expect("decode fixture"));
                     let voice = SoundVoice::new(2, decoded, 1.0, true, PlaybackState::Playing)
                         .expect("valid looping voice");
 
@@ -176,14 +206,22 @@ pub(crate) mod audio {
                     assert_eq!(voice.state(), PlaybackState::Playing);
                     let mut empty_output = [];
                     voice.mix_into(&mut empty_output, 1.0);
-                    assert_eq!(voice.state(), PlaybackState::Playing, "empty output must not stop a voice");
+                    assert_eq!(
+                        voice.state(),
+                        PlaybackState::Playing,
+                        "empty output must not stop a voice"
+                    );
                     assert_eq!(voice.cursor_frames(), 0);
                     voice.pause();
                     assert_eq!(voice.state(), PlaybackState::Paused);
                     let cursor = voice.cursor_frames();
                     let mut output = [0.0_f32; 16];
                     voice.mix_into(&mut output, 1.0);
-                    assert_eq!(voice.cursor_frames(), cursor, "paused voice must not advance");
+                    assert_eq!(
+                        voice.cursor_frames(),
+                        cursor,
+                        "paused voice must not advance"
+                    );
 
                     voice.resume();
                     assert_eq!(voice.state(), PlaybackState::Playing);
@@ -224,12 +262,20 @@ pub(crate) mod audio {
                     let ring = SampleRing::new(4);
                     let mut empty = [7.0_f32; 2];
                     assert_eq!(ring.read(&mut empty), 0);
-                    assert_eq!(empty, [7.0, 7.0], "empty read must leave destination untouched");
+                    assert_eq!(
+                        empty,
+                        [7.0, 7.0],
+                        "empty read must leave destination untouched"
+                    );
                     assert_eq!(ring.available_read(), 0);
                     assert_eq!(ring.available_write(), 4);
 
                     assert_eq!(ring.write(&[1.0, 2.0, 3.0, 4.0, 5.0]), 4);
-                    assert_eq!(ring.write(&[6.0]), 0, "full ring must reject further samples");
+                    assert_eq!(
+                        ring.write(&[6.0]),
+                        0,
+                        "full ring must reject further samples"
+                    );
                     assert_eq!(ring.available_read(), 4);
 
                     let mut head = [0.0_f32; 2];
@@ -326,10 +372,16 @@ pub(crate) mod audio {
 
                     producer.join().expect("producer thread must terminate");
                     let received = consumer.join().expect("consumer thread must terminate");
-                    assert!(!timed_out.load(Ordering::Acquire), "SPSC exercise timed out");
+                    assert!(
+                        !timed_out.load(Ordering::Acquire),
+                        "SPSC exercise timed out"
+                    );
                     assert_eq!(received.len(), COUNT);
                     for (index, sample) in received.iter().enumerate() {
-                        assert_eq!(*sample, index as f32, "sample lost, duplicated or reordered at {index}");
+                        assert_eq!(
+                            *sample, index as f32,
+                            "sample lost, duplicated or reordered at {index}"
+                        );
                     }
                 }
             }
@@ -345,20 +397,34 @@ pub(crate) mod audio {
                     let wav = TempAudioFile::new("wav");
                     wav.write_pcm16_samples(2, 8_000, &[16_384, -8_192, 8_192, -4_096]);
                     let stream = MusicStream::new(
-                        wav.path().to_path_buf(), 1.0, false, PlaybackState::Playing, 8_000,
-                    ).expect("create short music stream");
+                        wav.path().to_path_buf(),
+                        1.0,
+                        false,
+                        PlaybackState::Playing,
+                        8_000,
+                    )
+                    .expect("create short music stream");
                     stream.pump().expect("pre-fill ring buffer");
-                    assert!(!stream.is_stopped(), "EOF alone must not stop buffered playback");
+                    assert!(
+                        !stream.is_stopped(),
+                        "EOF alone must not stop buffered playback"
+                    );
 
                     let mut first = [0.0_f32; 2];
                     stream.mix_into(&mut first, 1.0);
                     assert_eq!(first, [0.5, -0.25]);
-                    assert!(!stream.is_stopped(), "remaining buffered samples must stay playable");
+                    assert!(
+                        !stream.is_stopped(),
+                        "remaining buffered samples must stay playable"
+                    );
 
                     let mut second = [0.0_f32; 6];
                     stream.mix_into(&mut second, 1.0);
                     assert_eq!(second, [0.25, -0.125, 0.0, 0.0, 0.0, 0.0]);
-                    assert!(stream.is_stopped(), "stream should stop after EOF and full ring drain");
+                    assert!(
+                        stream.is_stopped(),
+                        "stream should stop after EOF and full ring drain"
+                    );
                     assert_eq!(stream.cursor_frames(), 2);
                 }
 
@@ -367,7 +433,11 @@ pub(crate) mod audio {
                     let wav = TempAudioFile::new("wav");
                     wav.write_pcm16_samples(2, 8_000, &[16_384, -8_192, 8_192, -4_096]);
                     let stream = MusicStream::new(
-                        wav.path().to_path_buf(), 1.0, true, PlaybackState::Playing, 8_000,
+                        wav.path().to_path_buf(),
+                        1.0,
+                        true,
+                        PlaybackState::Playing,
+                        8_000,
                     )
                     .expect("create looping stream");
                     stream.pump().expect("prefill looping stream");
@@ -401,9 +471,16 @@ pub(crate) mod audio {
                     let wav = TempAudioFile::new("wav");
                     wav.write_pcm16_samples(2, 8_000, &[]);
                     let stream = MusicStream::new(
-                        wav.path().to_path_buf(), 1.0, true, PlaybackState::Playing, 8_000,
-                    ).expect("create empty looping stream");
-                    stream.pump().expect("empty looping stream should terminate pump");
+                        wav.path().to_path_buf(),
+                        1.0,
+                        true,
+                        PlaybackState::Playing,
+                        8_000,
+                    )
+                    .expect("create empty looping stream");
+                    stream
+                        .pump()
+                        .expect("empty looping stream should terminate pump");
                     assert!(stream.is_stopped());
                     assert_eq!(stream.cursor_frames(), 0);
                 }
@@ -415,8 +492,13 @@ pub(crate) mod audio {
                     // keeping the test small and deterministic.
                     wav.write_pcm16_samples(2, 24, &[16_384, -8_192, 8_192, -4_096]);
                     let stream = MusicStream::new(
-                        wav.path().to_path_buf(), 1.0, true, PlaybackState::Playing, 24,
-                    ).expect("create looping stream");
+                        wav.path().to_path_buf(),
+                        1.0,
+                        true,
+                        PlaybackState::Playing,
+                        24,
+                    )
+                    .expect("create looping stream");
                     stream.pump().expect("fill looping ring");
                     let mut output = vec![0.0_f32; 24];
                     stream.mix_into(&mut output, 1.0);
