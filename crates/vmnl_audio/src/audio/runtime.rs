@@ -1,8 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Nathan Flachat
-/// SPDX-License-Identifier: MIT
-///
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Nathan Flachat
+// SPDX-License-Identifier: MIT
+
 use crate::audio::bus::{AudioBus, BusKind};
 use crate::audio::decoder::{AudioDecoder, DecodedAudio};
 use crate::audio::error::{AudioError, AudioResult};
@@ -18,6 +16,8 @@ use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 
 #[derive(Debug, Clone)]
+// Each queued command applies to every active playback; retain that explicit scope.
+#[allow(clippy::enum_variant_names)]
 pub(crate) enum AudioCommand {
     PauseAll,
     ResumeAll,

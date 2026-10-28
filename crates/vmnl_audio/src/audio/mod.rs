@@ -1,7 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Nathan Flachat
-/// SPDX-License-Identifier: MIT
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Nathan Flachat
+// SPDX-License-Identifier: MIT
+
+//! Audio devices, resources, playback handles, buses, and errors.
+
 mod bus;
 mod decoder;
 mod device;

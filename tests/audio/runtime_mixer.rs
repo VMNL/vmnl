@@ -81,7 +81,7 @@ fn mixer_multiplies_master_and_sfx_gains_and_preserves_stereo_order() {
     runtime.mix_into(&mut output);
     assert_eq!(
         output,
-        [0.0625, -0.03125, 0.03125, -0.015625, 0.0, 0.0, 0.0, 0.0]
+        [0.0625, -0.03125, 0.03125, -0.015_625, 0.0, 0.0, 0.0, 0.0]
     );
 }
 
@@ -125,7 +125,7 @@ fn mixer_combines_music_and_sfx_using_their_own_bus_gains() {
 
     let mut output = [0.0_f32; 4];
     runtime.mix_into(&mut output);
-    assert_eq!(output, [0.1875, -0.09375, 0.09375, -0.046875]);
+    assert_eq!(output, [0.1875, -0.09375, 0.09375, -0.046_875]);
 }
 
 #[test]

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Nathan Flachat
+// SPDX-License-Identifier: MIT
+
 //! Incremental decoders for the formats already supported by `vmnl_audio`.
 //!
 //! Decoding and resampling run on the control thread, never in the CPAL callback.
@@ -14,6 +17,9 @@ type Mp3Decoder = minimp3::Decoder<BufReader<File>>;
 type OggReader = lewton::inside_ogg::OggStreamReader<BufReader<File>>;
 type FlacReader = claxon::FlacReader<File>;
 
+// Keep codec state inline: boxing it solely for size would change control-side
+// allocation and destruction costs. No backend state is created on the callback.
+#[allow(clippy::large_enum_variant)]
 enum DecoderBackend {
     WavFloat(WavReader),
     WavInt {
@@ -54,6 +60,8 @@ impl StreamingDecoder {
         Self::open_internal(path, None)
     }
 
+    // Keep each codec's metadata extraction next to its validation and setup.
+    #[allow(clippy::too_many_lines)]
     fn open_internal<P: AsRef<Path>>(
         path: P,
         requested_target_sample_rate: Option<u32>,
@@ -107,17 +115,15 @@ impl StreamingDecoder {
                 let mut decoder = minimp3::Decoder::new(BufReader::new(file));
                 // Prime one frame because MP3 channel count and sample rate are
                 // only known after a frame has been decoded.
-                let frame = loop {
-                    match decoder.next_frame() {
-                        Ok(frame) => break frame,
-                        Err(minimp3::Error::Eof) => {
-                            return Err(AudioError::DecoderFailed(
-                                "MP3 contains no decodable audio frames".to_owned(),
-                            ));
-                        }
-                        Err(error) => {
-                            return Err(AudioError::DecoderFailed(error.to_string()));
-                        }
+                let frame = match decoder.next_frame() {
+                    Ok(frame) => frame,
+                    Err(minimp3::Error::Eof) => {
+                        return Err(AudioError::DecoderFailed(
+                            "MP3 contains no decodable audio frames".to_owned(),
+                        ));
+                    }
+                    Err(error) => {
+                        return Err(AudioError::DecoderFailed(error.to_string()));
                     }
                 };
                 let channels = frame.channels;
@@ -212,6 +218,8 @@ impl StreamingDecoder {
         self.target_sample_rate
     }
 
+    // Integer PCM normalization intentionally rounds to the mixer's f32 format.
+    #[allow(clippy::cast_precision_loss)]
     fn read_next_source_chunk(&mut self) -> AudioResult<usize> {
         self.staging.clear();
 
@@ -336,6 +344,13 @@ impl StreamingDecoder {
 
     /// Fills an interleaved stereo output buffer and returns the number of
     /// samples written (not frames). The returned count is always even.
+    // Preserve the existing nonnegative f64 phase and integer-index conversion;
+    // interpolation intentionally narrows the fractional weight to f32.
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        clippy::cast_precision_loss
+    )]
     pub(crate) fn read_stereo(&mut self, output: &mut [f32]) -> AudioResult<usize> {
         if !output.len().is_multiple_of(2) {
             return Err(AudioError::InvalidState(

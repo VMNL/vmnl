@@ -5,7 +5,8 @@
 This document defines the acceptance target for the audio integration in PR #84. It records
 the backend and facade decisions and the behavior required before that integration is complete.
 It is not a claim that the current implementation already satisfies every requirement. Public
-item contracts belong in Rustdoc when the corresponding implementation is brought into alignment.
+Rustdoc describes item-level behavior and current limitations; this document defines the target
+against which the remaining implementation work is evaluated.
 
 `vmnl_audio` currently uses CPAL. The facade still depends unconditionally on graphics and has no
 audio feature; its optional audio integration remains to be implemented. The control worker

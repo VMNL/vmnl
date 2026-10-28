@@ -11,6 +11,10 @@ no separate audio test package or standalone manifest in that directory.
 | `cargo test -p vmnl_audio --tests --no-run` | Compile both integration targets without opening a device. |
 | `just test-audio-backend` | Target `audio-backend`: explicitly run ignored native playback, bus, and worker tests against a usable CPAL stereo output device. |
 
+Audio Rustdoc examples are enabled and included in `just doctest`. To run only those examples,
+use `cargo test -p vmnl_audio --doc --locked`: the configuration example executes without a
+device, while the device-creation example is marked `no_run` and only compiled.
+
 The independent `Audio` CI matrix compiles both targets and runs only `audio` on Linux, macOS,
 and Windows with Rust 1.87. Linux jobs install the ALSA development files. This matrix has no
 dependency on the Quality job, so Clippy failures do not suppress audio diagnostics. There is

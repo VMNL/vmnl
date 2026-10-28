@@ -1,7 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Nathan Flachat
-/// SPDX-License-Identifier: MIT
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Nathan Flachat
+// SPDX-License-Identifier: MIT
+
 mod handle;
 mod voice;
 
@@ -17,6 +16,7 @@ pub use handle::SoundHandle;
 pub use voice::PlaybackState;
 pub(crate) use voice::SoundVoice;
 
+/// Playback settings for one sound instance; defaults to gain 1.0 without looping.
 #[derive(Debug, Clone, Copy)]
 pub struct SoundPlayConfig {
     /// Linear gain between 0.0 (silent) and 1.0 (full volume).
@@ -34,6 +34,11 @@ impl Default for SoundPlayConfig {
     }
 }
 
+/// Reusable sound resource bound to the creating device's runtime.
+///
+/// Loading decodes and converts the complete source. Clones share the decoded
+/// PCM and runtime; every play call creates a separate voice and handle. Resources
+/// retain runtime data but do not keep the owning device's output stream alive.
 #[derive(Clone)]
 pub struct Sound {
     runtime: Arc<AudioRuntime>,
@@ -54,10 +59,24 @@ impl Sound {
         })
     }
 
+    /// Starts a new playback with [`SoundPlayConfig::default`].
+    ///
+    /// # Errors
+    ///
+    /// Reports the same failures as [`Self::play_with_config`].
     pub fn play(&self) -> AudioResult<SoundHandle> {
         self.play_with_config(SoundPlayConfig::default())
     }
 
+    /// Starts an independent playback using these gain and looping settings.
+    ///
+    /// Allocates a new voice and publishes a runtime snapshot on the caller.
+    /// Call this outside the realtime callback. Dropping the returned handle alone
+    /// does not stop the runtime-owned playback.
+    ///
+    /// # Errors
+    ///
+    /// Returns invalid-gain or active-voice-list synchronization errors.
     pub fn play_with_config(&self, config: SoundPlayConfig) -> AudioResult<SoundHandle> {
         let id = self.runtime.next_voice_id();
         let voice = Arc::new(SoundVoice::new(
@@ -73,6 +92,7 @@ impl Sound {
         Ok(SoundHandle::new(voice))
     }
 
+    /// Returns the stored source path as supplied when loading, without canonicalization.
     #[must_use]
     pub fn path(&self) -> &Path {
         &self.path

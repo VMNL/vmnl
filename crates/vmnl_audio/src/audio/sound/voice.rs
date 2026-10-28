@@ -1,18 +1,21 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Nathan Flachat
-/// SPDX-License-Identifier: MIT
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Nathan Flachat
+// SPDX-License-Identifier: MIT
+
 use crate::audio::decoder::DecodedAudio;
 use crate::audio::error::{validate_gain, AudioResult};
 
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
 
+/// State of an individual playback, separate from bus mute and pause controls.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum PlaybackState {
+    /// The instance may consume PCM when its routing bus permits it.
     Playing = 0,
+    /// The instance is paused and does not consume PCM.
     Paused = 1,
+    /// Playback is marked stopped and eligible for runtime cleanup.
     Stopped = 2,
 }
 

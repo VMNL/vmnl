@@ -252,7 +252,7 @@ pub(crate) mod audio {
                 use std::time::{Duration, Instant};
 
                 #[test]
-                #[should_panic]
+                #[should_panic(expected = "capacity > 0")]
                 fn ring_rejects_zero_capacity() {
                     let _ = SampleRing::new(0);
                 }
@@ -292,6 +292,8 @@ pub(crate) mod audio {
                 }
 
                 #[test]
+                // Fixture indices stay below 2,003 and are exact in f32.
+                #[allow(clippy::cast_precision_loss)]
                 fn ring_preserves_order_over_many_physical_wraps() {
                     let ring = SampleRing::new(7);
                     let mut produced = 0usize;
@@ -312,6 +314,8 @@ pub(crate) mod audio {
                 }
 
                 #[test]
+                // Fixture indices stay below 120,000 and are exact in f32.
+                #[allow(clippy::cast_precision_loss)]
                 fn ring_spsc_concurrency_preserves_every_sample_in_order() {
                     const COUNT: usize = 120_000;
                     let ring = Arc::new(SampleRing::new(127));
@@ -332,8 +336,8 @@ pub(crate) mod audio {
                                 break;
                             }
                             let count = (COUNT - index).min(source.len());
-                            for offset in 0..count {
-                                source[offset] = (index + offset) as f32;
+                            for (offset, sample) in source.iter_mut().take(count).enumerate() {
+                                *sample = (index + offset) as f32;
                             }
                             let written = producer_ring.write(&source[..count]);
                             index += written;

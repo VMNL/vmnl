@@ -1,7 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Nathan Flachat
-/// SPDX-License-Identifier: MIT
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Nathan Flachat
+// SPDX-License-Identifier: MIT
+
 use crate::audio::error::{validate_gain, AudioError, AudioResult};
 use crate::audio::stream_decoder::StreamingDecoder;
 use crate::audio::PlaybackState;
@@ -22,10 +21,12 @@ struct SampleRing {
     write_index: AtomicUsize,
 }
 
-// Safety: SampleRing is single-producer/single-consumer. `pump()` is the only
-// producer, and the CPAL output callback is the only consumer. The public API
-// no longer exposes another concurrent rendering path.
+// SAFETY: The ring owns its cells and atomics; moving it transfers that storage
+// without exposing references to its contents.
 unsafe impl Send for SampleRing {}
+// SAFETY: pump() serializes the producer with its decoder/scratch mutexes; the
+// CPAL callback is the sole consumer. Release/acquire publication of write_index
+// protects initialized slots, and read_index prevents overwriting unread slots.
 unsafe impl Sync for SampleRing {}
 
 impl SampleRing {
@@ -63,7 +64,8 @@ impl SampleRing {
 
         for (offset, sample) in samples[..count].iter().copied().enumerate() {
             let index = write.wrapping_add(offset) % self.capacity;
-            // The producer owns these slots until publishing write_index.
+            // SAFETY: count excludes unread slots. Only the serialized producer
+            // writes these cells, before publishing them with a Release store.
             unsafe {
                 *self.data[index].get() = sample;
             }
@@ -83,7 +85,8 @@ impl SampleRing {
 
         for (offset, destination) in output[..count].iter_mut().enumerate() {
             let index = read.wrapping_add(offset) % self.capacity;
-            // The consumer only reads slots published by write_index.
+            // SAFETY: the Acquire load observes initialized slots. Only the
+            // consumer reads them, before releasing them through read_index.
             unsafe {
                 *destination = *self.data[index].get();
             }
@@ -124,7 +127,7 @@ impl MusicStream {
             ));
         }
 
-        let decoder = StreamingDecoder::open(&path, target_sample_rate)?;
+        let decoder = StreamingDecoder::open(path, target_sample_rate)?;
         Ok(Self {
             decoder: Mutex::new(decoder),
             decoder_scratch: Mutex::new(vec![0.0; DECODE_CHUNK_FRAMES * OUTPUT_CHANNELS]),

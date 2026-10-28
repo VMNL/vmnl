@@ -1,25 +1,36 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Nathan Flachat
-/// SPDX-License-Identifier: MIT
-///
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Nathan Flachat
+// SPDX-License-Identifier: MIT
+
 use std::fmt::{Display, Formatter};
 
+/// Failures from configuration, control synchronization, decoding, and device setup.
 #[derive(Debug)]
 pub enum AudioError {
+    /// The default output device or stream could not be queried, built, or started.
     BackendInitFailed(String),
+    /// The optional VMNL control worker could not be spawned.
     ControlThreadStartFailed(String),
+    /// Source metadata, decoding, or format conversion failed.
     DecoderFailed(String),
+    /// A requested gain, rate, or buffer shape is invalid.
     InvalidState(String),
+    /// The codec, channel count, or output sample format is unsupported.
     UnsupportedFormat(String),
+    /// The global command queue mutex was poisoned.
     CommandQueuePoisoned,
+    /// The decoded sound cache lock was poisoned.
     SoundCachePoisoned,
+    /// The active sound list mutex was poisoned.
     ActiveSoundVoicesPoisoned,
+    /// The active music list mutex was poisoned.
     ActiveMusicStreamsPoisoned,
+    /// A streaming decoder or its scratch-buffer mutex was poisoned.
     MusicDecoderPoisoned,
+    /// A source-file operation failed with an I/O error.
     Io(std::io::Error),
 }
 
+/// Result type returned by fallible audio operations.
 pub type AudioResult<T> = Result<T, AudioError>;
 
 impl Display for AudioError {

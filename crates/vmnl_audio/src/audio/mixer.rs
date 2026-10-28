@@ -1,8 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Nathan Flachat
-/// SPDX-License-Identifier: MIT
-///
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Nathan Flachat
+// SPDX-License-Identifier: MIT
+
 use crate::audio::bus::BusKind;
 use crate::audio::{runtime::AudioRuntime, PlaybackState};
 
@@ -12,7 +10,7 @@ impl AudioMixer {
     pub(crate) fn mix(runtime: &AudioRuntime, output: &mut [f32]) {
         output.fill(0.0);
 
-        let master_gain = runtime.master_bus().gain();
+        let master_gain = runtime.bus_gain(BusKind::Master);
 
         if master_gain <= 0.0 {
             return;

@@ -1,7 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Nathan Flachat
-/// SPDX-License-Identifier: MIT
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Nathan Flachat
+// SPDX-License-Identifier: MIT
+
 use crate::audio::error::{AudioError, AudioResult};
 use crate::audio::runtime::AudioRuntime;
 use parking_lot::Mutex;
@@ -48,8 +47,8 @@ impl ControlWorker {
     pub(crate) fn stop(&mut self) {
         self.stop.store(true, Ordering::Release);
         if let Some(join) = self.join.take() {
-            // The worker doesn't hold the stop lock or a realtime lock while
-            // sleeping; joining waits at most approximately one worker interval.
+            // Joining also waits for any in-progress decoding or I/O in tick();
+            // the sleep interval does not bound shutdown latency.
             let _ = join.join();
         }
     }

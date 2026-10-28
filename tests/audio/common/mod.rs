@@ -82,7 +82,8 @@ impl TempAudioFile {
         let block_align: u16 = channels * bits_per_sample.div_ceil(8);
         let byte_rate = sample_rate * u32::from(block_align);
         let data = [0_u8; 5];
-        let riff_size = 4_u32 + (8 + 16) + (8 + data.len() as u32);
+        let data_len = u32::try_from(data.len()).expect("fixed fixture fits u32");
+        let riff_size = 4_u32 + (8 + 16) + (8 + data_len);
 
         let mut bytes = Vec::with_capacity(44 + data.len());
         bytes.extend_from_slice(b"RIFF");
@@ -96,7 +97,7 @@ impl TempAudioFile {
         bytes.extend_from_slice(&block_align.to_le_bytes());
         bytes.extend_from_slice(&bits_per_sample.to_le_bytes());
         bytes.extend_from_slice(b"data");
-        bytes.extend_from_slice(&(data.len() as u32).to_le_bytes());
+        bytes.extend_from_slice(&data_len.to_le_bytes());
         bytes.extend_from_slice(&data);
         self.write_bytes(&bytes);
     }

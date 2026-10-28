@@ -12,9 +12,6 @@ description = "VMNL audio wrapper"
 keywords = ["miniaudio", "sound", "music"]
 categories = ["audio"]
 
-[lib]
-doctest = false
-
 [[test]]
 name = "audio"
 path = "../../tests/audio/main.rs"

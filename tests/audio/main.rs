@@ -6,6 +6,9 @@
 //! This target is registered from `crates/vmnl_audio/Cargo.toml`, but every
 //! test file remains in the repository-level `tests/audio/` directory.
 
+// Test fixtures fail loudly with expect/panic; exact float checks verify
+// round trips and controlled PCM samples, not approximate DSP measurements.
+#![allow(clippy::expect_used, clippy::panic, clippy::float_cmp)]
 #![allow(clippy::module_inception)]
 
 mod common;

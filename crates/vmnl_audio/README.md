@@ -23,7 +23,11 @@ fn main() -> AudioResult<()> {
 }
 ```
 
-The default is `.thread(true)`. The CPAL callback mixes prepared samples; a separate control thread handles command processing, music buffer refill and cleanup. The realtime callback does not open files, decode, allocate vectors or acquire mutexes.
+The default is `.thread(true)`. The CPAL callback mixes prepared samples; a separate control
+thread handles command processing, music buffer refill and cleanup. Allocation and final-owner
+reclamation on the callback remain to be qualified; this is not yet a realtime-safety guarantee.
+Generate the item-level API documentation with `cargo doc -p vmnl_audio --no-deps` for current
+defaults, errors, ownership, and known playback limitations.
 
 ## Music
 

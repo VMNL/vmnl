@@ -1,7 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Nathan Flachat
-/// SPDX-License-Identifier: MIT
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Nathan Flachat
+// SPDX-License-Identifier: MIT
+
 use crate::audio::bus::AudioBus;
 use crate::audio::decoder::DecodedAudio;
 use crate::audio::error::{validate_gain, AudioError, AudioResult};
@@ -16,6 +15,10 @@ use parking_lot::Mutex as ParkingMutex;
 use std::path::Path;
 use std::sync::Arc;
 
+/// Requested output configuration, initially stereo at 44,100 Hz and gain 1.0.
+///
+/// The resolved device rate can differ from this request; inspect
+/// [`AudioDevice::sample_rate`] after creation.
 #[derive(Debug, Clone)]
 pub struct AudioConfig {
     master_volume: f32,
@@ -24,21 +27,34 @@ pub struct AudioConfig {
 }
 
 impl AudioConfig {
+    /// Returns the requested master linear gain.
     #[must_use]
     pub fn master_volume(&self) -> f32 {
         self.master_volume
     }
 
+    /// Sets the requested master gain.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AudioError::InvalidState`] for non-finite gains or values outside
+    /// `0.0..=1.0`, without replacing the previous value.
     pub fn set_master_volume(&mut self, volume: f32) -> AudioResult<()> {
         self.master_volume = validate_gain(volume)?;
         Ok(())
     }
 
+    /// Returns the requested output sample rate in Hz.
     #[must_use]
     pub fn sample_rate(&self) -> u32 {
         self.sample_rate
     }
 
+    /// Sets the requested sample rate in Hz.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AudioError::InvalidState`] for zero; the previous value is preserved.
     pub fn set_sample_rate(&mut self, sample_rate: u32) -> AudioResult<()> {
         if sample_rate == 0 {
             return Err(AudioError::InvalidState(
@@ -49,11 +65,18 @@ impl AudioConfig {
         Ok(())
     }
 
+    /// Returns the requested channel count, currently always two.
     #[must_use]
     pub fn channels(&self) -> u32 {
         self.channels
     }
 
+    /// Sets the requested channel count.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AudioError::UnsupportedFormat`] for any value other than two,
+    /// without changing the previous setting.
     pub fn set_channels(&mut self, channels: u32) -> AudioResult<()> {
         if channels != 2 {
             return Err(AudioError::UnsupportedFormat(
@@ -92,6 +115,7 @@ impl Default for AudioDeviceBuilder {
 }
 
 impl AudioDeviceBuilder {
+    /// Replaces the requested output configuration; validation happens in [`Self::build`].
     #[must_use]
     pub fn config(mut self, config: AudioConfig) -> Self {
         self.config = config;
@@ -99,38 +123,63 @@ impl AudioDeviceBuilder {
     }
 
     /// Enables the control worker. Defaults to `true`.
-    /// The CPAL output callback always has its own realtime execution thread.
+    /// Disabling this worker leaves backend-managed output execution active.
+    /// The current default is scheduled to become opt-in before acceptance.
     #[must_use]
     pub fn thread(mut self, enabled: bool) -> Self {
         self.threaded = enabled;
         self
     }
 
+    /// Requests a sample rate in Hz; zero is rejected when building.
     #[must_use]
     pub fn sample_rate(mut self, sample_rate: u32) -> Self {
         self.config.sample_rate = sample_rate;
         self
     }
 
+    /// Requests a channel count; only stereo is accepted when building.
     #[must_use]
     pub fn channels(mut self, channels: u32) -> Self {
         self.config.channels = channels;
         self
     }
 
+    /// Requests a finite linear gain in `0.0..=1.0`; validation happens when building.
     #[must_use]
     pub fn master_volume(mut self, volume: f32) -> Self {
         self.config.master_volume = volume;
         self
     }
 
+    /// Opens and starts the default output device with these settings.
+    ///
+    /// May allocate, query the backend, and start its stream and the optional
+    /// control worker. See [`AudioDevice`] for rate selection and ownership.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AudioError::InvalidState`] for an invalid rate or gain,
+    /// [`AudioError::UnsupportedFormat`] for unsupported channels or output formats,
+    /// [`AudioError::BackendInitFailed`] for device/stream failures, or
+    /// [`AudioError::ControlThreadStartFailed`] if the requested worker cannot start.
     pub fn build(self) -> AudioResult<AudioDevice> {
-        AudioDevice::build(self.config, self.threaded)
+        AudioDevice::build(&self.config, self.threaded)
     }
 }
 
 /// Owns the audio runtime and the real CPAL playback stream.
 /// This type is deliberately not `Clone`; it owns external backend resources.
+///
+/// Creation chooses the default CPAL host and output device. It requires stereo,
+/// ranks supported formats as F32, I16, U16, I32, U32, F64, then I8/U8, and clamps
+/// the requested rate to a supported range. Format rank takes precedence over
+/// distance from the requested rate. Inspect the actual rate after creation.
+///
+/// Dropping the device stops its output stream and joins its control worker.
+/// Joining may block on control-side decoding or file I/O. Resources and handles
+/// can retain runtime data after this owner is dropped, but cannot keep playback
+/// running without the device. No graphics context is initialized.
 pub struct AudioDevice {
     runtime: Arc<AudioRuntime>,
     sample_rate: u32,
@@ -141,17 +190,25 @@ pub struct AudioDevice {
 }
 
 impl AudioDevice {
+    /// Returns a builder with the current default configuration and worker enabled.
     #[must_use]
     pub fn builder() -> AudioDeviceBuilder {
         AudioDeviceBuilder::default()
     }
 
-    /// Creates a device with the automatic control thread enabled.
+    /// Creates and starts a device with the automatic control thread enabled.
+    ///
+    /// # Errors
+    ///
+    /// Reports the same configuration, backend, and worker-start errors as
+    /// [`AudioDeviceBuilder::build`].
     pub fn new(config: AudioConfig) -> AudioResult<Self> {
         AudioDeviceBuilder::default().config(config).build()
     }
 
-    fn build(config: AudioConfig, threaded: bool) -> AudioResult<Self> {
+    // Keep backend/worker creation and its fallible cleanup order together.
+    #[allow(clippy::too_many_lines)]
+    fn build(config: &AudioConfig, threaded: bool) -> AudioResult<Self> {
         validate_gain(config.master_volume)?;
         if config.sample_rate == 0 {
             return Err(AudioError::InvalidState(
@@ -290,39 +347,68 @@ impl AudioDevice {
         self.runtime.clone()
     }
 
+    /// Returns the resolved output sample rate in Hz.
     #[must_use]
     pub fn sample_rate(&self) -> u32 {
         self.sample_rate
     }
 
+    /// Returns the resolved output channel count, currently two.
     #[must_use]
     pub fn channels(&self) -> u32 {
         self.channels
     }
 
+    /// Loads and caches a complete sound, then converts it to stereo at the device rate.
+    ///
+    /// This performs file I/O and allocates in proportion to the decoded sound;
+    /// call it outside the audio callback.
+    ///
+    /// # Errors
+    ///
+    /// Returns file/decoder errors, [`AudioError::UnsupportedFormat`] for unsupported
+    /// sources, or [`AudioError::SoundCachePoisoned`] if the cache is poisoned.
     pub fn load_sound<P: AsRef<Path>>(&self, path: P) -> AudioResult<Sound> {
         Sound::from_file(self, path)
     }
 
+    /// Validates a music file and creates a reusable streaming resource.
+    ///
+    /// Reads source metadata without loading the complete track. Playback opens
+    /// its own decoder and preallocated PCM buffer.
+    ///
+    /// # Errors
+    ///
+    /// Returns file/decoder errors or [`AudioError::UnsupportedFormat`] for
+    /// unsupported source formats or channel counts.
     pub fn load_music<P: AsRef<Path>>(&self, path: P) -> AudioResult<Music> {
         Music::from_file(self, path)
     }
 
+    /// Sets the shared master linear gain without changing individual volumes.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AudioError::InvalidState`] for non-finite gains or values outside
+    /// `0.0..=1.0`; the previous value is preserved.
     pub fn set_master_volume(&self, volume: f32) -> AudioResult<()> {
         let volume = validate_gain(volume)?;
         self.runtime.master_bus().set_volume(volume)
     }
 
+    /// Returns the shared master linear gain in `0.0..=1.0`.
     #[must_use]
     pub fn master_volume(&self) -> f32 {
         self.runtime.master_bus().volume()
     }
 
+    /// Returns shared controls for all music playback on this runtime.
     #[must_use]
     pub fn music_bus(&self) -> AudioBus {
         self.runtime.music_bus()
     }
 
+    /// Returns shared controls for all sound-effect playback on this runtime.
     #[must_use]
     pub fn sfx_bus(&self) -> AudioBus {
         self.runtime.sfx_bus()
@@ -338,7 +424,16 @@ impl AudioDevice {
     }
 
     /// Advances control work only in manual mode (`thread(false)`). In automatic
-    /// mode this is a harmless no-op; the worker owns the control cycle.
+    /// mode this is a no-op; the worker owns the control cycle.
+    ///
+    /// Manual updates may decode, perform file I/O, lock, and allocate. The caller
+    /// must update often enough to keep music buffered; backend output continues
+    /// independently of this call.
+    ///
+    /// # Errors
+    ///
+    /// Propagates poisoned control-state locks and music decoding/file failures.
+    /// Worker or stream failures are retrieved through [`Self::take_background_error`].
     pub fn update(&self) -> AudioResult<()> {
         self.process_if_manual()
     }
@@ -350,21 +445,48 @@ impl AudioDevice {
         Ok(())
     }
 
+    /// Queues a stop for all active playbacks.
+    ///
+    /// Manual mode also runs the control cycle on the caller; automatic mode
+    /// leaves application of the command to the worker.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AudioError::CommandQueuePoisoned`] if queueing fails. Manual mode
+    /// also propagates control-cycle lock, decoding, or file errors.
     pub fn stop_all(&self) -> AudioResult<()> {
         self.runtime.force_stop_all()?;
         self.process_if_manual()
     }
 
+    /// Queues a pause for all active playbacks, with scheduling as in [`Self::stop_all`].
+    ///
+    /// # Errors
+    ///
+    /// Returns queue or manual control-cycle errors as described by [`Self::stop_all`].
     pub fn pause_all(&self) -> AudioResult<()> {
         self.runtime.force_pause_all()?;
         self.process_if_manual()
     }
 
+    /// Queues a resume for all active playbacks, with scheduling as in [`Self::stop_all`].
+    ///
+    /// # Errors
+    ///
+    /// Returns queue or manual control-cycle errors as described by [`Self::stop_all`].
     pub fn resume_all(&self) -> AudioResult<()> {
         self.runtime.force_resume_all()?;
         self.process_if_manual()
     }
 
+    /// Sets the active sound limit, clamping zero to one; the initial limit is 64.
+    ///
+    /// Immediately stops the oldest excess voices and republishes the snapshot
+    /// on the caller. May lock and allocate; never call it from the audio callback.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AudioError::ActiveSoundVoicesPoisoned`] if the voice list is poisoned.
     pub fn set_max_sound_voices(&self, max: usize) -> AudioResult<()> {
         // This changes active voices immediately on the caller/control thread.
         self.runtime.set_max_sound_voices(max)
@@ -395,8 +517,7 @@ fn sample_format_rank(format: SampleFormat) -> Option<u8> {
         SampleFormat::I32 => 3,
         SampleFormat::U32 => 4,
         SampleFormat::F64 => 5,
-        SampleFormat::I8 => 6,
-        SampleFormat::U8 => 6,
+        SampleFormat::I8 | SampleFormat::U8 => 6,
         _ => return None,
     })
 }

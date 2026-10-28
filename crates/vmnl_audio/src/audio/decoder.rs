@@ -1,7 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
-/// SPDX-FileCopyrightText: 2026 Nathan Flachat
-/// SPDX-License-Identifier: MIT
-////////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2026 Nathan Flachat
+// SPDX-License-Identifier: MIT
+
 use crate::audio::error::{AudioError, AudioResult};
 use crate::audio::stream_decoder::StreamingDecoder;
 use std::path::Path;
@@ -24,6 +23,9 @@ impl DecodedAudio {
     }
 
     #[must_use]
+    // Used by the external source-copy tests, not this crate's empty unit target.
+    #[cfg(test)]
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.samples.is_empty()
     }
@@ -36,6 +38,13 @@ impl DecodedAudio {
         &self.samples
     }
 
+    // Linear interpolation intentionally narrows its fraction to f32; preserve
+    // the existing floating phase/index policy rather than changing the DSP here.
+    #[allow(
+        clippy::cast_precision_loss,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     pub(crate) fn resample_to_stereo(&self, target_sample_rate: u32) -> AudioResult<Self> {
         if target_sample_rate == 0 {
             return Err(AudioError::InvalidState(
@@ -128,6 +137,8 @@ impl DecodedAudio {
 pub(crate) struct AudioDecoder;
 
 impl AudioDecoder {
+    // This bounded 32 KiB scratch belongs to file loading, never the audio callback.
+    #[allow(clippy::large_stack_arrays)]
     pub(crate) fn decode_file<P: AsRef<Path>>(path: P) -> AudioResult<DecodedAudio> {
         let mut decoder = StreamingDecoder::open_native(path)?;
         let sample_rate = decoder.target_sample_rate();
