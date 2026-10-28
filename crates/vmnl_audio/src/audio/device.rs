@@ -176,7 +176,7 @@ impl AudioDeviceBuilder {
 /// the requested rate to a supported range. Format rank takes precedence over
 /// distance from the requested rate. Inspect the actual rate after creation.
 ///
-/// Dropping the device stops its output stream and joins its control worker.
+/// Dropping the device joins its control worker, then destroys its output stream.
 /// Joining may block on control-side decoding or file I/O. Resources and handles
 /// can retain runtime data after this owner is dropped, but cannot keep playback
 /// running without the device. No graphics context is initialized.
@@ -427,24 +427,35 @@ impl AudioDevice {
         Ok(Arc::new(decoded.resample_to_stereo(self.sample_rate)?))
     }
 
-    /// Advances control work only in manual mode (`thread(false)`). In automatic
-    /// mode this is a no-op; the worker owns the control cycle.
+    /// Advances control work only in manual mode (`thread(false)`). With a live
+    /// automatic worker this is a no-op; a stopped worker is reported as an error.
     ///
     /// Manual updates may decode, perform file I/O, lock, and allocate. The caller
     /// must update often enough to keep music buffered; backend output continues
     /// independently of this call.
+    /// Automatic mode never falls back to a manual cycle after worker failure.
     ///
     /// # Errors
     ///
     /// Propagates poisoned control-state locks and music decoding/file failures.
-    /// Worker or stream failures are retrieved through [`Self::take_background_error`].
+    /// Returns [`AudioError::InvalidState`] if the automatic worker has stopped,
+    /// including after its diagnostic has been taken. Worker or stream diagnostics
+    /// are retrieved through [`Self::take_background_error`].
     pub fn update(&self) -> AudioResult<()> {
         self.process_if_manual()
     }
 
     fn process_if_manual(&self) -> AudioResult<()> {
+        self.check_control_worker()?;
         if self.worker.is_none() {
             self.runtime.tick()?;
+        }
+        Ok(())
+    }
+
+    fn check_control_worker(&self) -> AudioResult<()> {
+        if let Some(worker) = &self.worker {
+            worker.ensure_running()?;
         }
         Ok(())
     }
@@ -458,7 +469,10 @@ impl AudioDevice {
     ///
     /// Returns [`AudioError::CommandQueuePoisoned`] if queueing fails. Manual mode
     /// also propagates control-cycle lock, decoding, or file errors.
+    /// A stopped automatic worker returns [`AudioError::InvalidState`] before
+    /// queueing; a concurrent failure can still leave an accepted command unapplied.
     pub fn stop_all(&self) -> AudioResult<()> {
+        self.check_control_worker()?;
         self.runtime.force_stop_all()?;
         self.process_if_manual()
     }
@@ -469,6 +483,7 @@ impl AudioDevice {
     ///
     /// Returns queue or manual control-cycle errors as described by [`Self::stop_all`].
     pub fn pause_all(&self) -> AudioResult<()> {
+        self.check_control_worker()?;
         self.runtime.force_pause_all()?;
         self.process_if_manual()
     }
@@ -479,6 +494,7 @@ impl AudioDevice {
     ///
     /// Returns queue or manual control-cycle errors as described by [`Self::stop_all`].
     pub fn resume_all(&self) -> AudioResult<()> {
+        self.check_control_worker()?;
         self.runtime.force_resume_all()?;
         self.process_if_manual()
     }
@@ -499,6 +515,10 @@ impl AudioDevice {
     /// Returns and clears the last error reported by the control worker or
     /// CPAL's stream-error callback. Errors are not raised from the realtime
     /// data callback.
+    ///
+    /// This is one last-error slot, not an error history: a later report can
+    /// overwrite an unread diagnostic. Taking it does not restart a failed worker.
+    /// Control-cycle panics are reported when unwinding is enabled; aborts are not caught.
     #[must_use]
     pub fn take_background_error(&self) -> Option<String> {
         self.background_error.lock().take()

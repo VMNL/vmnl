@@ -38,6 +38,13 @@ destruction, and whole-view consistency with two concurrent publishers. These ch
 the production sources through the private harness. They do not instrument C/backend allocation,
 prove a callback deadline, or exhaustively model weak-memory interleavings.
 
+Worker tests force a looping source to disappear before refill, checking original-error
+propagation, terminal stream state, cleanup on failure, persistent automatic-worker failure,
+and release of its runtime after join. Private worker unit tests inject a cycle error/panic,
+check an unexpected join panic, and gate an in-flight cycle during stop. Repeated stop/Drop is
+covered. The native target additionally checks public control errors after worker failure;
+compiling that ignored case does not qualify a real device or native shutdown latency.
+
 The independent `Audio` CI matrix compiles both targets and runs only `audio` on Linux, macOS,
 and Windows with Rust 1.87. Linux jobs install the ALSA development files. This matrix has no
 dependency on the Quality job, so Clippy failures do not suppress audio diagnostics. There is

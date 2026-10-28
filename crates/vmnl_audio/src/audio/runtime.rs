@@ -306,7 +306,10 @@ impl AudioRuntime {
             .map_err(|_| AudioError::ActiveMusicStreamsPoisoned)?;
 
         for stream in streams.iter() {
-            stream.pump()?;
+            if let Err(error) = stream.pump() {
+                stream.stop();
+                return Err(error);
+            }
         }
 
         Ok(())
@@ -338,10 +341,12 @@ impl AudioRuntime {
     }
 
     pub(crate) fn tick(&self) -> AudioResult<()> {
-        self.apply_commands()?;
-        self.pump_music_streams()?;
-        self.cleanup()?;
-        Ok(())
+        let control = self
+            .apply_commands()
+            .and_then(|()| self.pump_music_streams());
+        // Cleanup must run on failure too, without replacing the original error.
+        let cleanup = self.cleanup();
+        control.and(cleanup)
     }
 }
 

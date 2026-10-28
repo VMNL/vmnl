@@ -58,7 +58,36 @@ before destroying resources it can access. A worker sleep interval is not an upp
 shutdown time: an in-progress control cycle can include decoding or I/O. Background failures must
 remain observable to the caller.
 
-The callback must perform bounded work without allocation, deallocation, blocking locks, file
+### Control Failures and Shutdown
+
+In manual mode, `update()` returns the original control/refill error. A stream whose refill
+fails is marked `Stopped`; cleanup still runs on a failed cycle, without replacing its original
+error. Later manual updates can service the remaining streams. The failing cycle does not
+guarantee that every other stream was refilled before returning.
+
+In automatic mode, the first control-cycle error or unwinding panic stops the worker. A panic
+is reported, not retried: runtime locks may have been poisoned. Automatic `update()` and queued
+global controls then return `InvalidState`; there is no automatic fallback to manual processing
+or worker restart. A command racing with failure can remain unapplied. Individual handle
+controls still operate on shared state; unaffected playbacks can consume already buffered PCM
+but streamed music eventually underruns without a control producer. Recovery requires a new
+device; existing resources remain bound to their original runtime.
+
+`take_background_error()` takes the last worker/CPAL stream diagnostic from one shared slot.
+A later report can overwrite an unread diagnostic; it is not an error queue. Taking the message
+does not clear the worker's failed state. Backend stream errors are reported separately and do
+not automatically restart a stream or stop the VMNL worker. Their reporting path formats a
+string and locks the shared diagnostic slot, outside the measured data-mixing path.
+Panic capture requires unwinding;
+`panic=abort` and process aborts cannot be recovered this way.
+
+Stopping the worker is idempotent: request stop, unpark its idle wait, and join its thread.
+Joining waits for an in-flight cycle, including decoding and file I/O; it does not cancel that
+work or impose a shutdown deadline. A panic detected by join is retained as a background
+diagnostic. Device destruction joins the worker before dropping the stream and then its runtime
+ownership. Backend-specific stream shutdown still needs native platform qualification.
+
+The data callback must perform bounded work without allocation, deallocation, blocking locks, file
 I/O, decoding, or device lifecycle operations. Publishing snapshots does not by itself prove
 this requirement: final-owner destruction and snapshot acquisition/reclamation require evidence.
 

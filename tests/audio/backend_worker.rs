@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use crate::backend_support::{device, lock_backend_tests};
 use crate::common::{wait_until, TempAudioFile};
-use vmnl_audio::MusicPlayConfig;
+use vmnl_audio::{AudioError, MusicPlayConfig};
 
 #[test]
 #[ignore = "requires a usable CPAL stereo output device"]
@@ -82,4 +82,44 @@ fn manual_mode_requires_update_to_refill_an_exhausted_music_buffer() {
 
     handle.stop();
     assert!(device.take_background_error().is_none());
+}
+
+#[test]
+#[ignore = "requires a usable CPAL stereo output device"]
+fn failed_automatic_worker_rejects_public_control_calls() {
+    let _guard = lock_backend_tests();
+    let device = device(true);
+    let file = TempAudioFile::new("wav");
+    file.write_pcm16_wav(2, 44_100, 512, 0);
+    let music = device.load_music(file.path()).expect("load source");
+    let handle = music
+        .play_with_config(MusicPlayConfig {
+            volume: 0.0,
+            looping: true,
+        })
+        .expect("prefill before removing the source");
+    std::fs::remove_file(file.path()).expect("force looping refill failure");
+    assert!(
+        wait_until(Duration::from_secs(3), || matches!(
+            device.update(),
+            Err(AudioError::InvalidState(_))
+        )),
+        "failed automatic worker must be observable through update"
+    );
+    assert!(handle.is_stopped());
+    assert!(device.take_background_error().is_some());
+    assert!(device.take_background_error().is_none());
+    assert!(matches!(
+        device.stop_all(),
+        Err(AudioError::InvalidState(_))
+    ));
+    assert!(matches!(
+        device.pause_all(),
+        Err(AudioError::InvalidState(_))
+    ));
+    assert!(matches!(
+        device.resume_all(),
+        Err(AudioError::InvalidState(_))
+    ));
+    assert!(matches!(device.update(), Err(AudioError::InvalidState(_))));
 }
