@@ -67,6 +67,47 @@ fn empty_wav_decodes_to_an_empty_signal_without_panicking() {
     assert_eq!(decoded.frame_count(), 0);
 }
 
+fn assert_malformed_wav_is_rejected(path: &std::path::Path) {
+    assert!(matches!(
+        AudioDecoder::decode_file(path),
+        Err(AudioError::DecoderFailed(_))
+    ));
+    let streamed = StreamingDecoder::open(path, 48_000)
+        .and_then(|mut decoder| decoder.read_stereo(&mut [0.0; 4]));
+    assert!(matches!(streamed, Err(AudioError::DecoderFailed(_))));
+}
+
+#[test]
+fn zero_rate_wav_metadata_is_rejected_at_both_decoder_entries() {
+    let file = TempAudioFile::new("wav");
+    file.write_pcm16_samples(2, 8_000, &[8_192, -8_192]);
+    let mut bytes = std::fs::read(file.path()).expect("read valid WAV fixture");
+    assert_eq!(&bytes[12..16], b"fmt ");
+    // Hound puts fmt first: set sample rate and its dependent byte rate to zero.
+    bytes[24..28].copy_from_slice(&0_u32.to_le_bytes());
+    bytes[28..32].copy_from_slice(&0_u32.to_le_bytes());
+    file.write_bytes(&bytes);
+    assert_malformed_wav_is_rejected(file.path());
+}
+
+#[test]
+fn incomplete_stereo_wav_data_is_rejected_at_both_decoder_entries() {
+    let file = TempAudioFile::new("wav");
+    file.write_pcm16_samples(2, 8_000, &[8_192, -8_192]);
+    let mut bytes = std::fs::read(file.path()).expect("read valid WAV fixture");
+    let data = bytes
+        .windows(4)
+        .position(|chunk| chunk == b"data")
+        .expect("data chunk");
+    // Retain one complete i16 sample, but not one complete stereo frame.
+    bytes.truncate(data + 8 + 2);
+    let riff_length = u32::try_from(bytes.len() - 8).expect("small fixture length");
+    bytes[4..8].copy_from_slice(&riff_length.to_le_bytes());
+    bytes[data + 4..data + 8].copy_from_slice(&2_u32.to_le_bytes());
+    file.write_bytes(&bytes);
+    assert_malformed_wav_is_rejected(file.path());
+}
+
 #[test]
 fn float32_wav_decoding_rejects_non_finite_samples() {
     let file = TempAudioFile::new("wav");

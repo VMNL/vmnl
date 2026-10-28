@@ -9,6 +9,7 @@ mod device;
 mod error;
 mod mixer;
 mod music;
+mod output_config;
 mod runtime;
 mod snapshot;
 mod sound;

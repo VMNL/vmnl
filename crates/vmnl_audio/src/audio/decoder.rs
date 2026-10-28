@@ -5,6 +5,8 @@ use crate::audio::error::{AudioError, AudioResult};
 use crate::audio::stream_decoder::StreamingDecoder;
 use std::path::Path;
 
+/// Control-side PCM. Production decoding yields finite, complete stereo frames
+/// at a nonzero rate; the source-copy harness can also construct invalid states.
 #[derive(Debug, Clone)]
 pub struct DecodedAudio {
     channels: u32,
@@ -38,6 +40,8 @@ impl DecodedAudio {
         &self.samples
     }
 
+    /// Rejects malformed scalar metadata and frame alignment before any empty
+    /// or same-rate shortcut, including if an internal caller bypasses decoding.
     // Linear interpolation intentionally narrows its fraction to f32; preserve
     // the existing floating phase/index policy rather than changing the DSP here.
     #[allow(
@@ -61,6 +65,17 @@ impl DecodedAudio {
                         but the mixer accepts mono or stereo"
                 )));
             }
+        }
+
+        if self.sample_rate == 0 {
+            return Err(AudioError::DecoderFailed(
+                "audio source has a zero sample rate".to_owned(),
+            ));
+        }
+        if !self.samples.len().is_multiple_of(self.channels as usize) {
+            return Err(AudioError::DecoderFailed(
+                "decoded audio contains an incomplete PCM frame".to_owned(),
+            ));
         }
 
         let source_frames = self.frame_count();

@@ -45,6 +45,13 @@ check an unexpected join panic, and gate an in-flight cycle during stop. Repeate
 covered. The native target additionally checks public control errors after worker failure;
 compiling that ignored case does not qualify a real device or native shutdown latency.
 
+The resampler's zero-source-rate and incomplete-frame cases deliberately fabricate invalid
+private PCM; they prove internal rejection before empty/same-rate shortcuts, not a state
+constructible by clients. Separate WAV tests corrupt real metadata/data and check both full
+and streaming decoder entries. `output_config` uses valid advertised CPAL ranges to check
+stereo filtering, format preference, nearest/clamped rates, unsupported outputs, and the backend
+default buffer policy. These tests do not require a host or qualify its actual device formats.
+
 The independent `Audio` CI matrix compiles both targets and runs only `audio` on Linux, macOS,
 and Windows with Rust 1.87. Linux jobs install the ALSA development files. This matrix has no
 dependency on the Quality job, so Clippy failures do not suppress audio diagnostics. There is

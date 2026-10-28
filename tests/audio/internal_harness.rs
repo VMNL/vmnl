@@ -18,6 +18,9 @@ pub(crate) mod stream_decoder;
 #[path = "../../crates/vmnl_audio/src/audio/snapshot.rs"]
 pub(crate) mod snapshot;
 
+#[path = "../../crates/vmnl_audio/src/audio/output_config.rs"]
+pub(crate) mod output_config;
+
 pub(crate) mod audio {
     pub(crate) mod error {
         include!("../../crates/vmnl_audio/src/audio/error.rs");
@@ -27,6 +30,7 @@ pub(crate) mod audio {
         include!("../../crates/vmnl_audio/src/audio/bus.rs");
     }
 
+    pub(crate) use super::output_config;
     pub(crate) use super::snapshot;
     pub(crate) use super::stream_decoder;
 
@@ -115,11 +119,16 @@ pub(crate) mod audio {
 
             #[test]
             fn zero_source_sample_rate_is_rejected_instead_of_producing_misleading_audio() {
-                let source = decoded_audio(1, 0, vec![0.5, -0.5]);
-                assert!(matches!(
-                    source.resample_to_stereo(48_000),
-                    Err(AudioError::DecoderFailed(_))
-                ));
+                // Private-seam defense, not a state constructible by library clients.
+                for channels in [1, 2] {
+                    for samples in [Vec::new(), vec![0.5, -0.5]] {
+                        let source = decoded_audio(channels, 0, samples);
+                        assert!(matches!(
+                            source.resample_to_stereo(48_000),
+                            Err(AudioError::DecoderFailed(_))
+                        ));
+                    }
+                }
             }
 
             #[test]
@@ -133,11 +142,15 @@ pub(crate) mod audio {
 
             #[test]
             fn incomplete_interleaved_frame_is_rejected() {
-                let malformed = decoded_audio(2, 48_000, vec![0.25]);
-                assert!(matches!(
-                    malformed.resample_to_stereo(48_000),
-                    Err(AudioError::DecoderFailed(_))
-                ));
+                for samples in [vec![0.25], vec![0.25, -0.5, 0.75]] {
+                    let malformed = decoded_audio(2, 48_000, samples);
+                    for rate in [44_100, 48_000] {
+                        assert!(matches!(
+                            malformed.resample_to_stereo(rate),
+                            Err(AudioError::DecoderFailed(_))
+                        ));
+                    }
+                }
             }
         }
     }

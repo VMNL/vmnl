@@ -13,8 +13,8 @@ audio feature; its optional audio integration remains to be implemented. The con
 currently defaults to enabled. Terminal states, consumed-frame cursors, live looping,
 mute/pause semantics, and snapshot heap behaviour have device-independent regression coverage.
 Native shutdown and realtime timing remain unqualified. The audio test files are registered as
-separate [device-independent and native Cargo targets](testing.md#audio-tests); their assertions
-still expose implementation gaps and are not a passing acceptance record.
+separate [device-independent and native Cargo targets](testing.md#audio-tests); their scope does
+not establish complete acceptance of the facade, execution defaults, or native backend.
 
 ## Backend and Public Boundary
 
@@ -36,6 +36,19 @@ audio as an opt-in domain:
 The graphics dependency must therefore become optional, and its exports must be conditional on
 `graphics`. Using audio does not require a graphics `Context`. Direct use of `vmnl_audio` remains
 supported. Removing the facade or splitting repositories is deferred until after #84.
+
+## Decoding and Output Selection
+
+Source metadata must describe mono/stereo audio at a nonzero rate. Full-resource decoding
+produces finite, complete stereo PCM frames. The control-side resampler also rejects a zero
+source rate or an incomplete frame before its empty/same-rate shortcuts. Clients cannot directly
+construct the private decoded resource; tests that bypass construction check internal defense,
+while malformed-file tests check the actual decoder entry paths.
+
+Device creation selects supported stereo ranges using the format priority documented on
+`AudioDevice`, then the nearest supported rate within that priority. The stream keeps the
+backend's default buffer policy. Availability, resolved rate, and buffer timing can differ by
+platform; inspect the device's resolved rate rather than assuming the requested rate was used.
 
 ## Execution and Ownership
 

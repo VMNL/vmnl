@@ -5,6 +5,7 @@ use crate::audio::bus::AudioBus;
 use crate::audio::decoder::DecodedAudio;
 use crate::audio::error::{validate_gain, AudioError, AudioResult};
 use crate::audio::music::Music;
+use crate::audio::output_config::select_output_config;
 use crate::audio::runtime::AudioRuntime;
 use crate::audio::sound::Sound;
 use crate::audio::worker::ControlWorker;
@@ -175,6 +176,7 @@ impl AudioDeviceBuilder {
 /// ranks supported formats as F32, I16, U16, I32, U32, F64, then I8/U8, and clamps
 /// the requested rate to a supported range. Format rank takes precedence over
 /// distance from the requested rate. Inspect the actual rate after creation.
+/// The stream uses the backend's default buffer size, without a fixed latency request.
 ///
 /// Dropping the device joins its control worker, then destroys its output stream.
 /// Joining may block on control-side decoding or file I/O. Resources and handles
@@ -237,28 +239,10 @@ impl AudioDevice {
             .supported_output_configs()
             .map_err(|error| AudioError::BackendInitFailed(error.to_string()))?;
 
-        let selected = supported_configs
-            .filter(|range| range.channels() == 2)
-            .filter_map(|range| {
-                let rank = sample_format_rank(range.sample_format())?;
-                let minimum = range.min_sample_rate();
-                let maximum = range.max_sample_rate();
-                let actual_rate = config.sample_rate.clamp(minimum, maximum);
-                let rate_distance = config.sample_rate.abs_diff(actual_rate);
-                Some((rank, rate_distance, range, actual_rate))
-            })
-            .min_by_key(|(rank, distance, _, _)| (*rank, *distance))
-            .ok_or_else(|| {
-                AudioError::UnsupportedFormat(
-                    "the default audio device has no supported stereo output format".to_owned(),
-                )
-            })?;
-
-        let (_, _, supported_config, actual_sample_rate) = selected;
+        let supported_config = select_output_config(supported_configs, config.sample_rate)?;
+        let actual_sample_rate = supported_config.sample_rate();
         let sample_format = supported_config.sample_format();
-        let output_config = supported_config
-            .with_sample_rate(actual_sample_rate)
-            .config();
+        let output_config = supported_config.config();
 
         let background_error = Arc::new(ParkingMutex::new(None::<String>));
         let stream = match sample_format {
@@ -531,19 +515,6 @@ impl Drop for AudioDevice {
             worker.stop();
         }
     }
-}
-
-fn sample_format_rank(format: SampleFormat) -> Option<u8> {
-    Some(match format {
-        SampleFormat::F32 => 0,
-        SampleFormat::I16 => 1,
-        SampleFormat::U16 => 2,
-        SampleFormat::I32 => 3,
-        SampleFormat::U32 => 4,
-        SampleFormat::F64 => 5,
-        SampleFormat::I8 | SampleFormat::U8 => 6,
-        _ => return None,
-    })
 }
 
 fn build_output_stream<T>(
