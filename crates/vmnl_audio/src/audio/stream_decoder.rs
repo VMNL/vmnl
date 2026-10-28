@@ -264,10 +264,7 @@ impl StreamingDecoder {
                 Err(error) => return Err(AudioError::DecoderFailed(error.to_string())),
             },
             DecoderBackend::Ogg(reader) => {
-                if let Some(packet) = reader
-                    .read_dec_packet_itl()
-                    .map_err(|error| AudioError::DecoderFailed(error.to_string()))?
-                {
+                if let Some(packet) = read_ogg_pcm_packet(reader)? {
                     self.staging.extend(
                         packet
                             .into_iter()
@@ -407,4 +404,17 @@ impl StreamingDecoder {
     pub(crate) fn reopen(&self) -> AudioResult<Self> {
         Self::open(&self.path, self.target_sample_rate)
     }
+}
+
+fn read_ogg_pcm_packet(reader: &mut OggReader) -> AudioResult<Option<Vec<i16>>> {
+    // Vorbis priming packets can produce no PCM; only None is EOF.
+    while let Some(packet) = reader
+        .read_dec_packet_itl()
+        .map_err(|error| AudioError::DecoderFailed(error.to_string()))?
+    {
+        if !packet.is_empty() {
+            return Ok(Some(packet));
+        }
+    }
+    Ok(None)
 }

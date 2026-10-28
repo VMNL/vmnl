@@ -15,6 +15,11 @@ Audio Rustdoc examples are enabled and included in `just doctest`. To run only t
 use `cargo test -p vmnl_audio --doc --locked`: the configuration example executes without a
 device, while the device-creation example is marked `no_run` and only compiled.
 
+The OGG regressions use the existing `tiny.ogg` fixture, including its empty Vorbis priming
+packet. They check initial PCM against Lewton, complete PCM delivery across small reads,
+agreement with full-resource decoding, and repeated reads after EOF. These checks do not
+qualify container-timing trimming or audible playback.
+
 The independent `Audio` CI matrix compiles both targets and runs only `audio` on Linux, macOS,
 and Windows with Rust 1.87. Linux jobs install the ALSA development files. This matrix has no
 dependency on the Quality job, so Clippy failures do not suppress audio diagnostics. There is

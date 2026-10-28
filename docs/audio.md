@@ -91,6 +91,10 @@ to consume PCM.
 
 ## Position, EOF, and Looping
 
+The OGG adapter must consume empty Vorbis priming packets without treating them as EOF.
+It continues until PCM is available, the upstream decoder reports end of input, or an error
+occurs. This decoding work stays on the control side.
+
 `cursor_frames()` counts complete PCM frames consumed by the mixer at the device's resolved
 sample rate. It does not represent the exact hardware playback position and does not count
 silence inserted for an underrun. A non-looping sound's cursor must not advance beyond its

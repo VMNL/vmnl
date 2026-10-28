@@ -7,6 +7,8 @@ use crate::common::{fixture_path, TempAudioFile};
 use crate::internal_harness::audio::decoder::AudioDecoder;
 use crate::internal_harness::audio::error::AudioError;
 use crate::internal_harness::audio::stream_decoder::StreamingDecoder;
+use std::fs::File;
+use std::io::BufReader;
 
 fn decode_to_vec(path: &std::path::Path, sample_rate: u32, chunk_sizes: &[usize]) -> Vec<f32> {
     let mut decoder = StreamingDecoder::open(path, sample_rate).expect("open decoder");
@@ -125,6 +127,81 @@ fn unknown_extension_and_missing_file_return_specific_error_variants() {
             "corrupt {extension} fixture should be rejected"
         );
     }
+}
+
+#[test]
+fn ogg_empty_priming_packet_does_not_end_decoding() {
+    let path = fixture_path("tiny.ogg");
+    let file = File::open(&path).expect("open OGG fixture");
+    let mut reference = lewton::inside_ogg::OggStreamReader::new(BufReader::new(file))
+        .expect("read Vorbis headers");
+    let priming = reference
+        .read_dec_packet_itl()
+        .expect("decode priming packet")
+        .expect("priming packet exists before EOF");
+    assert!(
+        priming.is_empty(),
+        "fixture must exercise an empty priming packet"
+    );
+    let first_pcm = reference
+        .read_dec_packet_itl()
+        .expect("decode first PCM packet")
+        .expect("PCM packet follows priming");
+    assert!(first_pcm.len() >= 14);
+    let expected: Vec<f32> = first_pcm[..14]
+        .iter()
+        .map(|sample| f32::from(*sample) / f32::from(i16::MAX))
+        .collect();
+
+    let mut decoder = StreamingDecoder::open(&path, 44_100).expect("open OGG decoder");
+    let mut output = [f32::NAN; 14];
+    assert_eq!(
+        decoder.read_stereo(&mut output).expect("read first PCM"),
+        14
+    );
+    assert_eq!(output.as_slice(), expected);
+}
+
+#[test]
+fn ogg_stream_preserves_reference_pcm_and_reports_stable_eof() {
+    // Lewton 0.10.2 and FFmpeg independently emit 9,792 PCM frames here.
+    // The container advertises 8,820 frames; timing/padding is a separate concern.
+    const EXPECTED_FRAMES: usize = 9_792;
+    let path = fixture_path("tiny.ogg");
+    let mut decoder = StreamingDecoder::open(&path, 44_100).expect("open OGG decoder");
+    let mut output = [0.0; 14];
+    let mut samples = Vec::new();
+    let mut reached_eof = false;
+    // Bound the regression even if an erroneous decoder never reports EOF.
+    for _ in 0..=EXPECTED_FRAMES {
+        let count = decoder.read_stereo(&mut output).expect("read OGG chunk");
+        assert_eq!(count % 2, 0);
+        if count == 0 {
+            reached_eof = true;
+            break;
+        }
+        samples.extend_from_slice(&output[..count]);
+    }
+    assert!(
+        reached_eof,
+        "decoder must terminate at the physical end of stream"
+    );
+    assert_eq!(samples.len(), EXPECTED_FRAMES * 2);
+    assert!(samples.iter().any(|sample| sample.abs() > 0.0001));
+    for _ in 0..3 {
+        assert_eq!(
+            decoder.read_stereo(&mut output).expect("repeat EOF read"),
+            0
+        );
+    }
+
+    let resource = AudioDecoder::decode_file(&path).expect("decode complete OGG resource");
+    assert_eq!(resource.frame_count(), EXPECTED_FRAMES);
+    assert_same_audio(
+        resource.samples(),
+        &samples,
+        "streamed OGG differs from full resource",
+    );
 }
 
 #[test]
