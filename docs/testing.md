@@ -11,6 +11,11 @@ no separate audio test package or standalone manifest in that directory.
 | `cargo test -p vmnl_audio --tests --no-run` | Compile both integration targets without opening a device. |
 | `just test-audio-backend` | Target `audio-backend`: explicitly run ignored native playback, bus, and worker tests against a usable CPAL stereo output device. |
 
+The independent `Audio` CI matrix compiles both targets and runs only `audio` on Linux, macOS,
+and Windows with Rust 1.87. Linux jobs install the ALSA development files. This matrix has no
+dependency on the Quality job, so Clippy failures do not suppress audio diagnostics. There is
+no `continue-on-error` for audio failures; native test compilation is not native execution.
+
 The native tests are ignored by default and excluded from the device-independent target. An
 explicit native run fails if device initialization or format selection fails; missing hardware
 is not reported as a passing test. These tests can produce audible output. No recipe installs
@@ -913,15 +918,16 @@ Headless oracle tests and compilation are not native evidence. VMNL batch-transi
 
 ## Continuous Integration
 
-The CI workflow invokes Cargo directly. The Justfile is a local development helper and is never
-invoked in CI.
+CI build and test stages invoke Cargo directly. The documentation job uses pinned Just tooling
+for API-book verification; the local aggregate `just validate` is not a CI entry point.
 
-Its strict job order is:
+Its job dependencies are:
 
 ```text
 Quality (format -> Clippy)
   -> Validation per OS (build -> unit -> API -> smoke -> platform)
-  -> Documentation
+Audio per OS (compile all audio test targets -> device-independent audio tests)
+Validation + Audio -> Documentation
 ```
 
 Each OS validation job reuses one Cargo target directory for compilation and every test stage; no
@@ -1016,9 +1022,9 @@ modifier combinations, eligible text, Linux repeat, and focus loss passed in the
 recorded above. Cocoa lock restoration, Win32/Cocoa hardware repeat, Linux text scalars absent from
 the active map, and public VMNL runtime remain unqualified or non-injectable as recorded per case.
 
-The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
-platform, architecture, and installer-script hash, and the installer still verifies every restored
-tool version before use.
+The documentation job runs only after all OS validation and audio jobs succeed. Its pinned API
+tools are cached by platform, architecture, and installer-script hash, and the installer still
+verifies every restored tool version before use.
 
 CI sets `CARGO_INCREMENTAL=0` because GitHub-hosted jobs use fresh workspaces. This avoids
 producing incremental artifacts that cannot be reused by later jobs.

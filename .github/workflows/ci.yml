@@ -44,11 +44,52 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
+            libshaderc-dev libasound2-dev pkg-config cmake git python3 ninja-build build-essential \
             libvulkan-dev vulkan-tools wayland-protocols \
             libwayland-dev libxkbcommon-dev xorg-dev
       - name: Run Clippy
         run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+
+  audio:
+    name: "Audio: ${{ matrix.name }}"
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - name: Linux
+            runner: ubuntu-24.04
+          - name: macOS
+            runner: macos-14
+          - name: Windows
+            runner: windows-2022
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          toolchain: 1.87.0
+      - name: Restore Cargo cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cargo-
+      - name: Install Linux audio dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev pkg-config
+      - name: Compile audio tests including native backend probes
+        run: cargo test -p vmnl_audio --tests --no-run --locked
+      - name: Run device-independent audio tests
+        run: cargo test -p vmnl_audio --test audio --locked
 
   validation:
     name: "Validation: ${{ matrix.name }}"
@@ -92,7 +133,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
+            libshaderc-dev libasound2-dev pkg-config cmake git python3 ninja-build build-essential \
             libvulkan-dev vulkan-tools mesa-vulkan-drivers wayland-protocols \
             libwayland-dev libxkbcommon-dev xorg-dev \
             weston xvfb xauth openbox x11-utils acl
@@ -334,7 +375,7 @@ jobs:
 
   documentation:
     name: "Documentation"
-    needs: validation
+    needs: [validation, audio]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -366,7 +407,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libshaderc-dev pkg-config cmake git python3 ninja-build build-essential \
+            libshaderc-dev libasound2-dev pkg-config cmake git python3 ninja-build build-essential \
             libvulkan-dev vulkan-tools wayland-protocols \
             libwayland-dev libxkbcommon-dev xorg-dev
       - name: Install pinned API documentation tools

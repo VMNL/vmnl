@@ -11,6 +11,12 @@
 - Vulkan loader and headers.
 - X11 and Wayland development headers used to build the bundled GLFW C sources.
 - shaderc.
+- ALSA development headers and libraries on Linux, including for device-independent audio tests.
+
+Linux audio packages are `libasound2-dev` on Debian/Ubuntu, `alsa-lib-devel` on Fedora/RHEL,
+`alsa-lib` on Arch, and `alsa-devel` on SUSE. `pkg-config --exists alsa` checks discovery without
+opening a device. `./deps` includes these packages in its existing Linux installation paths;
+it remains an explicitly invoked, host-mutating bootstrap script.
 
 Install Just on the development machine and verify it with `just --version`. The Justfile runs
 Cargo directly; system dependencies remain a prerequisite.

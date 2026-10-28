@@ -52,6 +52,10 @@ backend results remain separate from public VMNL, other desktops and physical-de
 | Windows | Configured: build, headless tests and GLFW Null; visible `A` and Shift+A keyboard probes, GLFW mouse buttons 1–5, pointer movement, leave/enter, and vertical/horizontal scroll probes use `SendInput`/`SetCursorPos` and are experimental. GLFW buttons 6–8 have no Win32 mapping. | `just input-test win32` on an accessible interactive desktop. | Experimental probes are non-blocking until qualified. Runs [#38089252090](https://github.com/VMNL/vmnl/actions/runs/38089252090) and [#38109958980](https://github.com/VMNL/vmnl/actions/runs/38109958980) passed the current keyboard, button, motion, boundary, and scroll probes; ten consecutive runs are still required. |
 | macOS | Configured: build, headless tests and GLFW Null; visible `A` and Shift+A keyboard probes, all eight GLFW mouse buttons, pointer movement, leave/enter, and vertical/horizontal scroll probes use `CGEventPost` and are experimental. | `just input-test cocoa` with event-posting access. | Experimental probes are non-blocking until qualified. Runs [#38089252090](https://github.com/VMNL/vmnl/actions/runs/38089252090) and [#38109958980](https://github.com/VMNL/vmnl/actions/runs/38109958980) passed the current keyboard, button, motion, boundary, and scroll probes; ten consecutive runs are still required. |
 
+The independent `Audio` CI matrix is configured on Ubuntu, macOS, and Windows to compile all
+audio test targets and run the device-independent suite. Native CPAL tests are compiled only;
+this configuration does not qualify an output device or human listening behavior on any platform.
+
 `just bootstrap` invokes `./deps`, which requires `/etc/os-release` and only contains Linux
 package-manager paths. CI invokes Cargo directly and never invokes the bootstrap recipe.
 
