@@ -30,6 +30,14 @@ buses, zero handle volume, pause precedence, independent category/handle states,
 restoration, looping, and silent music underruns. It uses the private implementation harness
 without opening a device; these cases do not qualify audible output or realtime performance.
 
+`realtime` instruments the Rust global allocator using const-initialized thread-local counters.
+It checks the first mix on a fresh OS thread, release/adoption of replaced views, actual resource
+reclamation on the control thread, and the probe's ability to observe heap work. `snapshots`
+checks unread-update coalescing, retained-view lifetime, overlapping-reader rejection, owner
+destruction, and whole-view consistency with two concurrent publishers. These checks exercise
+the production sources through the private harness. They do not instrument C/backend allocation,
+prove a callback deadline, or exhaustively model weak-memory interleavings.
+
 The independent `Audio` CI matrix compiles both targets and runs only `audio` on Linux, macOS,
 and Windows with Rust 1.87. Linux jobs install the ALSA development files. This matrix has no
 dependency on the Quality job, so Clippy failures do not suppress audio diagnostics. There is

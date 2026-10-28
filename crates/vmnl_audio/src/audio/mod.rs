@@ -10,6 +10,7 @@ mod error;
 mod mixer;
 mod music;
 mod runtime;
+mod snapshot;
 mod sound;
 mod stream_decoder;
 mod worker;

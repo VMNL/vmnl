@@ -181,12 +181,13 @@ impl AudioDeviceBuilder {
 /// can retain runtime data after this owner is dropped, but cannot keep playback
 /// running without the device. No graphics context is initialized.
 pub struct AudioDevice {
+    // Drop the stream's callback captures before releasing the owner's runtime.
+    _stream: cpal::Stream,
     runtime: Arc<AudioRuntime>,
     sample_rate: u32,
     channels: u32,
     worker: Option<ControlWorker>,
     background_error: Arc<ParkingMutex<Option<String>>>,
-    _stream: cpal::Stream,
 }
 
 impl AudioDevice {

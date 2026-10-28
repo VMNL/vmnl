@@ -16,20 +16,16 @@ impl AudioMixer {
         }
         let master_gain = master.gain();
 
-        /*
-         * ArcSwap:
-         * no Mutex/RwLock on the realtime path.
-         */
         let sfx = runtime.bus(BusKind::Sfx);
 
         // Zero gain silences output; only pause suppresses PCM consumption.
         if !sfx.is_paused() {
             let sfx_gain = sfx.gain();
-            let voices = runtime.sound_voice_snapshot.load();
-
-            for voice in voices.iter() {
-                if voice.state() == PlaybackState::Playing {
-                    voice.mix_into(output, master_gain * sfx_gain);
+            if let Some(voices) = runtime.sound_voice_snapshot.read() {
+                for voice in voices.iter() {
+                    if voice.state() == PlaybackState::Playing {
+                        voice.mix_into(output, master_gain * sfx_gain);
+                    }
                 }
             }
         }
@@ -38,11 +34,11 @@ impl AudioMixer {
 
         if !music.is_paused() {
             let music_gain = music.gain();
-            let streams = runtime.music_stream_snapshot.load();
-
-            for stream in streams.iter() {
-                if stream.state() == PlaybackState::Playing {
-                    stream.mix_into(output, master_gain * music_gain);
+            if let Some(streams) = runtime.music_stream_snapshot.read() {
+                for stream in streams.iter() {
+                    if stream.state() == PlaybackState::Playing {
+                        stream.mix_into(output, master_gain * music_gain);
+                    }
                 }
             }
         }

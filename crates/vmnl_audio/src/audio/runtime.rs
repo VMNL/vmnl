@@ -7,9 +7,9 @@ use crate::audio::error::{AudioError, AudioResult};
 
 use crate::audio::mixer::AudioMixer;
 use crate::audio::music::MusicStream;
+use crate::audio::snapshot::Snapshot;
 use crate::audio::sound::SoundVoice;
 
-use arc_swap::ArcSwap;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -31,8 +31,8 @@ pub(crate) struct AudioRuntime {
     sound_cache: RwLock<HashMap<PathBuf, Arc<DecodedAudio>>>,
     active_sound_voices: Mutex<Vec<Arc<SoundVoice>>>,
     active_music_streams: Mutex<Vec<Arc<MusicStream>>>,
-    pub(crate) sound_voice_snapshot: ArcSwap<Vec<Arc<SoundVoice>>>,
-    pub(crate) music_stream_snapshot: ArcSwap<Vec<Arc<MusicStream>>>,
+    pub(crate) sound_voice_snapshot: Snapshot<SoundVoice>,
+    pub(crate) music_stream_snapshot: Snapshot<MusicStream>,
     command_queue: Mutex<Vec<AudioCommand>>,
     next_voice_id: AtomicU64,
     max_sound_voices: AtomicUsize,
@@ -48,8 +48,8 @@ impl AudioRuntime {
             sound_cache: RwLock::new(HashMap::new()),
             active_sound_voices: Mutex::new(Vec::new()),
             active_music_streams: Mutex::new(Vec::new()),
-            sound_voice_snapshot: ArcSwap::from_pointee(Vec::new()),
-            music_stream_snapshot: ArcSwap::from_pointee(Vec::new()),
+            sound_voice_snapshot: Snapshot::new(),
+            music_stream_snapshot: Snapshot::new(),
             command_queue: Mutex::new(Vec::new()),
             next_voice_id: AtomicU64::new(1),
             max_sound_voices: AtomicUsize::new(64),
@@ -69,11 +69,11 @@ impl AudioRuntime {
     }
 
     fn publish_sound_voice_snapshot(&self, voices: &[Arc<SoundVoice>]) {
-        self.sound_voice_snapshot.store(Arc::new(voices.to_vec()));
+        self.sound_voice_snapshot.publish(voices.to_vec());
     }
 
     fn publish_music_stream_snapshot(&self, streams: &[Arc<MusicStream>]) {
-        self.music_stream_snapshot.store(Arc::new(streams.to_vec()));
+        self.music_stream_snapshot.publish(streams.to_vec());
     }
 
     pub(crate) fn next_voice_id(&self) -> u64 {
@@ -294,6 +294,8 @@ impl AudioRuntime {
             }
         }
 
+        self.sound_voice_snapshot.reclaim();
+        self.music_stream_snapshot.reclaim();
         Ok(())
     }
 

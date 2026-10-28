@@ -298,8 +298,16 @@ fn queued_pause_and_resume_cannot_resurrect_stopped_sound_or_music() {
 
     assert!(voice.is_stopped());
     assert!(stream.is_stopped());
-    assert!(runtime.sound_voice_snapshot.load().is_empty());
-    assert!(runtime.music_stream_snapshot.load().is_empty());
+    assert!(runtime
+        .sound_voice_snapshot
+        .read()
+        .expect("exclusive sound reader")
+        .is_empty());
+    assert!(runtime
+        .music_stream_snapshot
+        .read()
+        .expect("exclusive music reader")
+        .is_empty());
 }
 
 #[test]

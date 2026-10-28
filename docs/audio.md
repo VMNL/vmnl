@@ -10,9 +10,9 @@ against which the remaining implementation work is evaluated.
 
 `vmnl_audio` currently uses CPAL. The facade still depends unconditionally on graphics and has no
 audio feature; its optional audio integration remains to be implemented. The control worker
-currently defaults to enabled. Realtime resource reclamation still needs to be aligned and
-validated; terminal states, consumed-frame cursors, live looping, and mute/pause semantics have
-device-independent regression coverage. The audio test files are registered as
+currently defaults to enabled. Terminal states, consumed-frame cursors, live looping,
+mute/pause semantics, and snapshot heap behaviour have device-independent regression coverage.
+Native shutdown and realtime timing remain unqualified. The audio test files are registered as
 separate [device-independent and native Cargo targets](testing.md#audio-tests); their assertions
 still expose implementation gaps and are not a passing acceptance record.
 
@@ -61,6 +61,38 @@ remain observable to the caller.
 The callback must perform bounded work without allocation, deallocation, blocking locks, file
 I/O, decoding, or device lifecycle operations. Publishing snapshots does not by itself prove
 this requirement: final-owner destruction and snapshot acquisition/reclamation require evidence.
+
+### Snapshot Ownership
+
+Each category has three vector slots: one owned by the control writer, one exchange slot, and
+one owned by the reader. Publishing replaces the writer's contents, then transfers ownership
+with an acquire/release atomic exchange. Unread publications are coalesced; the next reader
+adopts the latest available view without replaying intermediate lists. Playback state remains
+shared, so stopped instances are skipped even in an older view.
+
+The reader uses one atomic admission attempt and at most one slot exchange. It does not use
+thread-local registration, clone/drop snapshot Arcs, lock a mutex, or retry until a writer
+finishes. Overlapping readers are rejected without consuming that category; the native data
+callback remains the sole intended consumer. A read guard retains its slot between calls and
+returns the previous slot only on adopting a later publication.
+
+The writer serializes publication and reclamation on the control side. The three ownership
+indices remain distinct. Acquire/release exchanges publish vector initialization and complete
+the reader's prior accesses before a returned slot is cleared. Reader admission also serializes
+successive readers, including when callback execution moves between OS threads. No vector is
+mutated or cleared while a read guard can reference it.
+
+Control cleanup clears returned views even when active playback lists have not changed. A
+current or unread view can retain resources until a later reader/control cycle or runtime
+destruction. The number of retained views is fixed at three per category; their byte size still
+depends on the playback count and prior vector capacities. There is no growing retirement list.
+The device retains its runtime while its stream is destroyed. Runtime destruction then releases
+any remaining views outside data-callback mixing; native backend teardown still needs platform
+qualification.
+
+These are ownership and heap-operation guarantees for VMNL's snapshot path. They do not bound
+OS scheduling, backend behaviour, total callback duration, or mixing work independently of the
+number of active playbacks.
 
 ## Playback States
 

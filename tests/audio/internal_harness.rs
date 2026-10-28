@@ -15,6 +15,9 @@
 #[path = "../../crates/vmnl_audio/src/audio/stream_decoder.rs"]
 pub(crate) mod stream_decoder;
 
+#[path = "../../crates/vmnl_audio/src/audio/snapshot.rs"]
+pub(crate) mod snapshot;
+
 pub(crate) mod audio {
     pub(crate) mod error {
         include!("../../crates/vmnl_audio/src/audio/error.rs");
@@ -24,6 +27,7 @@ pub(crate) mod audio {
         include!("../../crates/vmnl_audio/src/audio/bus.rs");
     }
 
+    pub(crate) use super::snapshot;
     pub(crate) use super::stream_decoder;
 
     pub(crate) mod decoder {

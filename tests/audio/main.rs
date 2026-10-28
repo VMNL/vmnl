@@ -11,13 +11,16 @@
 #![allow(clippy::expect_used, clippy::panic, clippy::float_cmp)]
 #![allow(clippy::module_inception)]
 
+mod allocation_probe;
 mod common;
 mod contracts;
 mod decoding;
 mod gain_semantics;
 mod internal_harness;
 mod playback_states;
+mod realtime;
 mod runtime_mixer;
+mod snapshots;
 mod worker;
 
 // Included production sources resolve their private paths through `crate::audio`.

@@ -31,7 +31,6 @@ claxon = "0.4"
 parking_lot = "0.12"
 crossbeam-queue = "0.3"
 
-arc-swap = "1.9.2"
 cpal = "0.18.2"
 
 

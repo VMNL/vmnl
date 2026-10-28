@@ -16,8 +16,9 @@
 //!
 //! # Development status
 //!
-//! This API is experimental. Realtime reclamation still requires qualification
-//! or fixes. The required target is recorded in the
+//! This API is experimental. Snapshot heap behaviour has device-independent
+//! regression coverage; native shutdown and realtime timing remain unqualified.
+//! The required target is recorded in the
 //! [audio acceptance contract](https://github.com/VMNL/vmnl/blob/main/docs/audio.md).
 //! The planned facade feature and opt-in worker default are not implemented yet.
 //!

@@ -178,14 +178,24 @@ fn voice_limit_stops_oldest_voice_and_publishes_consistent_snapshot() {
     runtime
         .register_sound_voice(second.clone())
         .expect("register second");
-    assert_eq!(runtime.sound_voice_snapshot.load().len(), 2);
+    assert_eq!(
+        runtime
+            .sound_voice_snapshot
+            .read()
+            .expect("exclusive sound reader")
+            .len(),
+        2
+    );
 
     runtime
         .set_max_sound_voices(1)
         .expect("reduce active voice limit");
     assert!(first.is_stopped());
     assert_eq!(second.state(), PlaybackState::Playing);
-    let snapshot = runtime.sound_voice_snapshot.load();
+    let snapshot = runtime
+        .sound_voice_snapshot
+        .read()
+        .expect("exclusive sound reader");
     assert_eq!(snapshot.len(), 1);
     assert_eq!(snapshot[0].id(), second.id());
 
@@ -218,7 +228,11 @@ fn runtime_commands_are_applied_in_order_and_cleanup_updates_snapshots() {
     runtime.force_stop_all().expect("queue stop");
     runtime.tick().expect("apply stop command and clean up");
     assert!(current.is_stopped());
-    assert!(runtime.sound_voice_snapshot.load().is_empty());
+    assert!(runtime
+        .sound_voice_snapshot
+        .read()
+        .expect("exclusive sound reader")
+        .is_empty());
 }
 
 #[test]
@@ -258,7 +272,14 @@ fn finished_music_is_removed_only_after_the_ring_is_drained() {
     runtime
         .register_music_stream(stream.clone())
         .expect("register stream");
-    assert_eq!(runtime.music_stream_snapshot.load().len(), 1);
+    assert_eq!(
+        runtime
+            .music_stream_snapshot
+            .read()
+            .expect("exclusive music reader")
+            .len(),
+        1
+    );
 
     let mut first_frame = [0.0_f32; 2];
     runtime.mix_into(&mut first_frame);
@@ -266,14 +287,25 @@ fn finished_music_is_removed_only_after_the_ring_is_drained() {
     runtime
         .cleanup()
         .expect("cleanup must retain buffered stream");
-    assert_eq!(runtime.music_stream_snapshot.load().len(), 1);
+    assert_eq!(
+        runtime
+            .music_stream_snapshot
+            .read()
+            .expect("exclusive music reader")
+            .len(),
+        1
+    );
 
     let mut second_frame = [0.0_f32; 2];
     runtime.mix_into(&mut second_frame);
     assert_eq!(second_frame, [0.25, -0.125]);
     assert!(stream.is_stopped());
     runtime.cleanup().expect("remove drained stream");
-    assert!(runtime.music_stream_snapshot.load().is_empty());
+    assert!(runtime
+        .music_stream_snapshot
+        .read()
+        .expect("exclusive music reader")
+        .is_empty());
 }
 
 #[test]
