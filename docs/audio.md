@@ -10,8 +10,9 @@ against which the remaining implementation work is evaluated.
 
 `vmnl_audio` currently uses CPAL. The facade still depends unconditionally on graphics and has no
 audio feature; its optional audio integration remains to be implemented. The control worker
-currently defaults to enabled. Playback transitions, mute behavior, and realtime resource
-reclamation still need to be aligned and validated. The audio test files are registered as
+currently defaults to enabled. Mute behavior and realtime resource reclamation still need to
+be aligned and validated; terminal states, consumed-frame cursors, and live looping have
+device-independent regression coverage. The audio test files are registered as
 separate [device-independent and native Cargo targets](testing.md#audio-tests); their assertions
 still expose implementation gaps and are not a passing acceptance record.
 
@@ -97,13 +98,17 @@ occurs. This decoding work stays on the control side.
 
 `cursor_frames()` counts complete PCM frames consumed by the mixer at the device's resolved
 sample rate. It does not represent the exact hardware playback position and does not count
-silence inserted for an underrun. A non-looping sound's cursor must not advance beyond its
-decoded length; a looping playback reports cumulative progress across repetitions.
+silence inserted for an underrun. A sound that has never looped must not advance beyond its
+decoded length; once looping has been used, progress remains cumulative across repetitions,
+including after looping is disabled.
 
 Decoder EOF does not complete a music playback while decoded PCM remains buffered. Completion
 occurs after the final frame is consumed, including when it exactly fills an output buffer.
 Enabling looping before the playback reaches `Stopped` must allow refill to restart even if
-the decoder has already reached EOF.
+the decoder has already reached EOF. Control changes are observed by subsequent mixing/refill
+work; they do not undo already mixed output or restart an instance whose completion won a race.
+Disabling a sound loop finishes the current repetition without resetting its cumulative cursor.
+Disabling a music loop retains PCM already buffered, including prefetched repetitions.
 
 ## Acceptance Evidence
 

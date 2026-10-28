@@ -9,8 +9,9 @@ use std::sync::Arc;
 /// Shared controls for a single music playback; clones affect the same instance.
 ///
 /// Dropping a handle does not stop playback while the runtime retains it.
-/// Controls use shared state, but the current pause/stop transitions do not yet
-/// enforce a terminal stopped state under every command sequence or race.
+/// Stopped is terminal: pause/resume cannot restart this instance, including
+/// when a control command races with stop or natural completion. Mixed output
+/// already handed to the backend is not withdrawn by a control change.
 #[derive(Clone)]
 pub struct MusicHandle {
     stream: Arc<MusicStream>,
@@ -28,13 +29,12 @@ impl MusicHandle {
 
     /// Pauses this instance without changing its cursor.
     ///
-    /// Current limitation: this also overwrites a stopped state. Do not call it
-    /// on a stopped handle while terminal-state enforcement is pending.
+    /// Has no effect on an instance that is already paused or stopped.
     pub fn pause(&self) {
         self.stream.pause();
     }
 
-    /// Resumes a non-stopped instance; an instance still marked stopped is unchanged.
+    /// Resumes a paused instance; playing and stopped instances are unchanged.
     pub fn resume(&self) {
         self.stream.resume();
     }
@@ -51,8 +51,11 @@ impl MusicHandle {
 
     /// Sets the loop flag used by subsequent decoder refills.
     ///
-    /// Current limitation: enabling it after decoder EOF may not restart refill,
-    /// even while previously decoded frames remain buffered.
+    /// Enabling it on a live instance permits refill after decoder EOF, even if
+    /// preloaded PCM drains before the next control cycle. A stopped instance is
+    /// never restarted; completion racing with a control change may win first.
+    /// Disabling looping preserves already buffered PCM, including prefetched
+    /// repetitions, and stops when that data and the remaining source drain.
     pub fn set_looping(&self, looping: bool) {
         self.stream.set_looping(looping);
     }

@@ -20,6 +20,11 @@ packet. They check initial PCM against Lewton, complete PCM delivery across smal
 agreement with full-resource decoding, and repeated reads after EOF. These checks do not
 qualify container-timing trimming or audible playback.
 
+`playback_states` covers the sound/music state table, repeated commands after stop from another
+thread, ordered global stop/pause/resume commands, exact-buffer completion, cursor accounting,
+and dynamic loop changes around decoder EOF and refill. Its cross-thread cases use barriers
+for a deterministic happens-before order; they are not exhaustive concurrency model checking.
+
 The independent `Audio` CI matrix compiles both targets and runs only `audio` on Linux, macOS,
 and Windows with Rust 1.87. Linux jobs install the ALSA development files. This matrix has no
 dependency on the Quality job, so Clippy failures do not suppress audio diagnostics. There is

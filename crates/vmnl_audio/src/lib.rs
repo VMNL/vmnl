@@ -16,9 +16,8 @@
 //!
 //! # Development status
 //!
-//! This API is experimental. Playback transitions, muted cursor progression,
-//! sound cursor bounds, and realtime reclamation still require
-//! qualification or fixes. The required target is recorded in the
+//! This API is experimental. Muted cursor progression and realtime reclamation
+//! still require qualification or fixes. The required target is recorded in the
 //! [audio acceptance contract](https://github.com/VMNL/vmnl/blob/main/docs/audio.md).
 //! The planned facade feature and opt-in worker default are not implemented yet.
 //!

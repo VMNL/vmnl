@@ -182,13 +182,22 @@ impl MusicStream {
     }
 
     pub(crate) fn pause(&self) {
-        self.set_state(PlaybackState::Paused);
+        // Only Playing can become Paused; a concurrent stop must remain terminal.
+        let _ = self.state.compare_exchange(
+            PlaybackState::Playing as u8,
+            PlaybackState::Paused as u8,
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+        );
     }
 
     pub(crate) fn resume(&self) {
-        if !self.is_stopped() {
-            self.set_state(PlaybackState::Playing);
-        }
+        let _ = self.state.compare_exchange(
+            PlaybackState::Paused as u8,
+            PlaybackState::Playing as u8,
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+        );
     }
 
     pub(crate) fn cursor_frames(&self) -> usize {
@@ -201,10 +210,14 @@ impl MusicStream {
             return Ok(());
         }
         if self.is_decoder_eof() {
-            if self.ring.available_read() == 0 {
-                self.set_state(PlaybackState::Stopped);
+            if !self.looping.load(Ordering::Relaxed) {
+                if self.ring.available_read() == 0 {
+                    self.set_state(PlaybackState::Stopped);
+                }
+                return Ok(());
             }
-            return Ok(());
+            // A live playback can request looping after prefill reached EOF.
+            self.decoder_eof.store(false, Ordering::Release);
         }
 
         let mut decoder = self
@@ -271,12 +284,17 @@ impl MusicStream {
             return;
         }
 
+        let output_samples = output.len() / OUTPUT_CHANNELS * OUTPUT_CHANNELS;
+        if output_samples == 0 {
+            return;
+        }
+
         let volume = self.volume();
         let mut scratch = [0.0f32; 512];
         let mut output_position = 0usize;
 
-        while output_position < output.len() {
-            let chunk_len = (output.len() - output_position).min(scratch.len());
+        while output_position < output_samples {
+            let chunk_len = (output_samples - output_position).min(scratch.len());
             let read = self.ring.read(&mut scratch[..chunk_len]);
             if read == 0 {
                 break;
@@ -291,7 +309,10 @@ impl MusicStream {
         }
 
         // EOF only means finished once all decoded samples have been consumed.
-        if self.is_decoder_eof() && self.ring.available_read() == 0 {
+        if self.is_decoder_eof()
+            && self.ring.available_read() == 0
+            && !self.looping.load(Ordering::Relaxed)
+        {
             self.set_state(PlaybackState::Stopped);
         }
     }

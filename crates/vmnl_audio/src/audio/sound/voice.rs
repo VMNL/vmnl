@@ -91,13 +91,22 @@ impl SoundVoice {
     }
 
     pub(crate) fn pause(&self) {
-        self.set_state(PlaybackState::Paused);
+        // Only Playing can become Paused; a concurrent stop must remain terminal.
+        let _ = self.state.compare_exchange(
+            PlaybackState::Playing as u8,
+            PlaybackState::Paused as u8,
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+        );
     }
 
     pub(crate) fn resume(&self) {
-        if !self.is_stopped() {
-            self.set_state(PlaybackState::Playing);
-        }
+        let _ = self.state.compare_exchange(
+            PlaybackState::Paused as u8,
+            PlaybackState::Playing as u8,
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+        );
     }
 
     pub(crate) fn cursor_frames(&self) -> usize {
@@ -116,21 +125,30 @@ impl SoundVoice {
         let total_frames = decoded.frame_count();
         let frame_count = output.len() / 2;
 
-        if input.is_empty() || total_frames == 0 || frame_count == 0 {
+        if frame_count == 0 {
+            return;
+        }
+        if input.is_empty() || total_frames == 0 {
             self.stop();
             return;
         }
 
-        // CPAL is the only runtime mixing consumer. Keep a monotonic cursor so
-        // the voice remains safe if that backend contract changes in the future.
-        let start = self.cursor_frames.fetch_add(frame_count, Ordering::AcqRel);
+        // The CPAL callback is the only cursor writer; advance after consumption.
+        let start = self.cursor_frames.load(Ordering::Relaxed);
 
         if self.state() != PlaybackState::Playing {
             return;
         }
 
         let looping = self.looping();
-        let available = total_frames.saturating_sub(start);
+        let source_start = start % total_frames;
+        // Disabling looping finishes the active repetition, retaining the
+        // cumulative cursor. An already reached boundary starts no new pass.
+        let available = if start > 0 && source_start == 0 {
+            0
+        } else {
+            total_frames - source_start
+        };
         let frames_to_mix = if looping {
             frame_count
         } else {
@@ -139,9 +157,9 @@ impl SoundVoice {
 
         for frame in 0..frames_to_mix {
             let cursor = if looping {
-                (start + frame) % total_frames
+                (source_start + frame) % total_frames
             } else {
-                start + frame
+                source_start + frame
             };
 
             let base = cursor * channels;
@@ -157,7 +175,9 @@ impl SoundVoice {
             output[out + 1] += right * volume * gain;
         }
 
-        if !looping && frames_to_mix < frame_count {
+        self.cursor_frames
+            .fetch_add(frames_to_mix, Ordering::Relaxed);
+        if !looping && frames_to_mix == available {
             self.stop();
         }
     }

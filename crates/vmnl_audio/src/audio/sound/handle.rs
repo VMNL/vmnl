@@ -9,8 +9,9 @@ use std::sync::Arc;
 /// Shared controls for a single sound playback; clones affect the same instance.
 ///
 /// Dropping a handle does not stop playback while the runtime retains it.
-/// Controls use shared state, but the current pause/stop transitions do not yet
-/// enforce a terminal stopped state under every command sequence or race.
+/// Stopped is terminal: pause/resume cannot restart this instance, including
+/// when a control command races with stop or natural completion. Mixed output
+/// already handed to the backend is not withdrawn by a control change.
 #[derive(Clone)]
 pub struct SoundHandle {
     voice: Arc<SoundVoice>,
@@ -28,13 +29,12 @@ impl SoundHandle {
 
     /// Pauses this instance without changing its cursor.
     ///
-    /// Current limitation: this also overwrites a stopped state. Do not call it
-    /// on a stopped handle while terminal-state enforcement is pending.
+    /// Has no effect on an instance that is already paused or stopped.
     pub fn pause(&self) {
         self.voice.pause();
     }
 
-    /// Resumes a non-stopped instance; an instance still marked stopped is unchanged.
+    /// Resumes a paused instance; playing and stopped instances are unchanged.
     pub fn resume(&self) {
         self.voice.resume();
     }
@@ -49,7 +49,10 @@ impl SoundHandle {
         self.voice.set_volume(volume)
     }
 
-    /// Sets the loop flag; this does not restart an instance marked stopped.
+    /// Sets the loop flag for subsequent mixing; stopped instances stay stopped.
+    ///
+    /// Disabling looping finishes the current repetition and preserves the
+    /// cumulative cursor. At a completed repetition boundary no new pass starts.
     pub fn set_looping(&self, looping: bool) {
         self.voice.set_looping(looping);
     }
@@ -76,8 +79,10 @@ impl SoundHandle {
 
     /// Returns the cumulative voice cursor in frames at the device sample rate.
     ///
-    /// This is not the hardware presentation position. Current limitation: the
-    /// voice counts requested output frames and can overshoot a non-looping source.
+    /// Counts complete PCM frames actually mixed. A buffer without a complete
+    /// frame leaves it unchanged. If playback has never looped, the cursor stops
+    /// at the decoded length; previous loop repetitions remain counted after
+    /// looping is disabled. This is not the hardware presentation position.
     #[must_use]
     pub fn cursor_frames(&self) -> usize {
         self.voice.cursor_frames()
