@@ -371,21 +371,21 @@ impl PolygonBuilder {
             && point.y <= a.y.max(b.y)
     }
     fn segments_intersect(a: Vector2f, b: Vector2f, c: Vector2f, d: Vector2f) -> bool {
-        let abc = Self::turn(a, b, c);
-        let abd = Self::turn(a, b, d);
-        let cda = Self::turn(c, d, a);
-        let cdb = Self::turn(c, d, b);
+        let second_start_orientation = Self::turn(a, b, c);
+        let second_end_orientation = Self::turn(a, b, d);
+        let first_start_orientation = Self::turn(c, d, a);
+        let first_end_orientation = Self::turn(c, d, b);
 
-        if abc == 0.0 && Self::within_segment_bounds(a, b, c) {
+        if second_start_orientation == 0.0 && Self::within_segment_bounds(a, b, c) {
             return true;
         }
-        if abd == 0.0 && Self::within_segment_bounds(a, b, d) {
+        if second_end_orientation == 0.0 && Self::within_segment_bounds(a, b, d) {
             return true;
         }
-        if cda == 0.0 && Self::within_segment_bounds(c, d, a) {
+        if first_start_orientation == 0.0 && Self::within_segment_bounds(c, d, a) {
             return true;
         }
-        if cdb == 0.0 && Self::within_segment_bounds(c, d, b) {
+        if first_end_orientation == 0.0 && Self::within_segment_bounds(c, d, b) {
             return true;
         }
 
@@ -393,7 +393,8 @@ impl PolygonBuilder {
             (first > 0.0 && second < 0.0) || (first < 0.0 && second > 0.0)
         };
 
-        opposite_sides(abc, abd) && opposite_sides(cda, cdb)
+        opposite_sides(second_start_orientation, second_end_orientation)
+            && opposite_sides(first_start_orientation, first_end_orientation)
     }
     fn signed_double_area(&self) -> f64 {
         let origin = self.vertices[0].position;

@@ -1,6 +1,9 @@
 # Facade and modules
 
-Consumers depend on `vmnl`; `vmnl_graphics` is the implementation crate. The facade re-exports the public graphics surface without exposing its private module layout.
+Consumers can use `vmnl` or an independent domain crate. The facade reexports domain types
+without wrapping them: `graphics` is the default and preserves the graphics API, while `audio`
+adds `vmnl::audio`. Disable defaults for audio without graphics, Vulkan or GLFW. With neither
+feature the facade exposes no domain. See [feature selection](../reference/facade.md).
 
 | Public path | Responsibility | Status |
 |---|---|---|
@@ -9,5 +12,6 @@ Consumers depend on `vmnl`; `vmnl_graphics` is the implementation crate. The fac
 | `vmnl::d2` | GPU-backed 2D shapes and draw contracts | Operational, experimental |
 | `vmnl::d3` | 3D data contracts | Scaffolded; rendering unavailable |
 | `vmnl::raw` | Typed custom pipelines, geometry, uniforms | Operational, experimental |
+| `vmnl::audio` | Independent devices, resources, controls and errors | Experimental; native qualification separate |
 
 `pub(crate)`, `pub(super)`, implementation-only re-exports, and `vmnl::raw::__private` are not client API. `__private` exists only so derive macro expansions can name dependencies.

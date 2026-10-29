@@ -47,12 +47,24 @@ MACRO_API_COMMAND = (
     "--omit",
     "blanket-impls",
 )
+AUDIO_API_COMMAND = (
+    "cargo",
+    f"+{PUBLIC_API_NIGHTLY}",
+    "public-api",
+    "--manifest-path",
+    "crates/vmnl_audio/Cargo.toml",
+    "--target-dir",
+    "target/api-public-api",
+    "--omit",
+    "blanket-impls",
+)
 FACADE_API_COMMAND = (
     "cargo",
     f"+{PUBLIC_API_NIGHTLY}",
     "public-api",
     "--manifest-path",
     "crates/vmnl/Cargo.toml",
+    "--all-features",
     "--target-dir",
     "target/api-public-api",
     "--omit",
@@ -223,6 +235,10 @@ def parse_facade_exports(text: str) -> tuple[str, ...]:
 
 
 def parse_surface(text: str, facade_text: str | None = None) -> Surface:
+    # The audio domain exports types both from its public audio module and at
+    # its root. Their one canonical facade path is vmnl::audio, including impls.
+    text = re.sub(r"^pub mod vmnl_audio(?:\n|$)", "", text, flags=re.MULTILINE)
+    text = text.replace("vmnl_audio::audio", "vmnl::audio").replace("vmnl_audio::", "vmnl::audio::")
     text = text.replace("vmnl_graphics::", "vmnl::").replace(
         "pub mod vmnl_graphics", "pub mod vmnl"
     )
@@ -410,7 +426,7 @@ def validate_facade_reexports(surface: Surface) -> None:
     if not surface.facade_exports:
         raise ApiDocsError("vmnl facade exports were not inventoried")
     required: set[str] = set()
-    namespaces = {"common", "d2", "d3", "raw"}
+    namespaces = {"audio", "common", "d2", "d3", "raw"}
     for item in surface.items:
         segments = item.symbol.split("::")[1:]
         if not segments:
@@ -569,7 +585,7 @@ def command_surface() -> Surface:
             f"cargo-public-api {EXPECTED_PUBLIC_API_VERSION} required, observed {version.strip()}"
         )
     outputs: list[str] = []
-    for command in (PUBLIC_API_COMMAND, MACRO_API_COMMAND):
+    for command in (PUBLIC_API_COMMAND, MACRO_API_COMMAND, AUDIO_API_COMMAND):
         completed = subprocess.run(
             command,
             cwd=ROOT,

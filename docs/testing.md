@@ -1,5 +1,195 @@
 # Testing
 
+## Audio Tests
+
+The `vmnl_audio` manifest registers two integration-test targets from `tests/audio/`. There is
+no separate audio test package or standalone manifest in that directory.
+
+| Command | Scope |
+| --- | --- |
+| `just test-audio` | Target `audio`: configuration/errors through the public domain crate, plus private decoder, ring, mixer, runtime, and worker contracts; no output device is opened. |
+| `cargo test -p vmnl_audio --tests --no-run` | Compile both integration targets without opening a device. |
+| `just test-audio-backend` | Target `audio-backend`: explicitly run ignored native playback, bus, and worker tests against a usable CPAL stereo output device. |
+
+Audio Rustdoc examples are enabled and included in `just doctest`. To run only those examples,
+use `cargo test -p vmnl_audio --doc --locked`: the configuration example executes without a
+device, while the device-creation example is marked `no_run` and only compiled.
+
+The OGG regressions use the existing `tiny.ogg` fixture, including its empty Vorbis priming
+packet. They check initial PCM against Lewton, complete PCM delivery across small reads,
+agreement with full-resource decoding, and repeated reads after EOF. These checks do not
+qualify container-timing trimming or audible playback.
+
+`ogg_chains` concatenates two versioned Vorbis segments with distinct stream serials.
+It checks rate-only, channel-only and combined transitions through streaming and full-resource
+decoding. These six rejection regressions require `UnsupportedFormat` when source metadata changes.
+A same-format chain must retain Lewton's PCM
+across four read patterns, empty reads and repeated EOF; a separate check verifies each fixture's
+metadata, serial, empty priming packet and non-silent PCM. The oracle reads packets from the
+actual chain, not the container durations or the sum of separately decoded segments.
+Same-format mono/stereo pairs and a three-segment mono chain also check downsampling, same-rate
+decoding and upsampling to 4,000, 8,000, 11,025 and 48,000 Hz. The integer frame-count oracle,
+full-resource PCM tolerance and exact streaming PCM comparisons apply across four read patterns.
+
+The `chain-*.ogg` fixtures in `tests/audio/fixtures/` encode original synthetic sine waves
+under the repository's MIT license: 100 ms each, except the one-second `chain-start-long-mono-8k.ogg`.
+They were generated once with FFmpeg 8.1.3/libvorbis;
+tests read their committed bytes and never invoke an encoder or require FFmpeg in CI.
+
+| Fixture | Channels | Rate (Hz) | Tone (Hz) | OGG serial |
+| --- | ---: | ---: | ---: | ---: |
+| `chain-start-mono-8k.ogg` | 1 | 8,000 | 440 | 84 |
+| `chain-next-mono-8k.ogg` | 1 | 8,000 | 660 | 85 |
+| `chain-next-mono-16k.ogg` | 1 | 16,000 | 660 | 86 |
+| `chain-next-stereo-8k.ogg` | 2 | 8,000 | 660 | 87 |
+| `chain-next-stereo-16k.ogg` | 2 | 16,000 | 660 | 88 |
+| `chain-start-long-mono-8k.ogg` | 1 | 8,000 | 440 | 89 |
+| `chain-start-stereo-8k.ogg` | 2 | 8,000 | 440 / 660 | 90 |
+
+For each row except `chain-start-stereo-8k.ogg`, encoding used `ffmpeg -f lavfi -i
+"sine=frequency=TONE:sample_rate=RATE:duration=DURATION" -map_metadata -1 -ac CHANNELS
+-c:a libvorbis -q:a 3 -flags:a +bitexact -fflags +bitexact -serial_offset SERIAL FILE`.
+Substitute the table values and duration in seconds; bitexact flags and explicit serials remove
+randomized stream IDs.
+For `chain-start-stereo-8k.ogg`, the lavfi input was instead
+`aevalsrc=0.25*sin(2*PI*440*t)|0.125*sin(2*PI*660*t):s=8000:d=0.1` with the same output options.
+Its channels differ, so swapping or duplicating them cannot satisfy the PCM comparison.
+These source-copy checks qualify neither native playback nor encoder padding/container timing.
+
+`ogg_playback` places a rate/channel transition after a successful 500 ms prefill. Manual and
+automatic cases consume the valid prefix, preserve the decoder's original error, stop and remove
+the failed stream, and check that resume/loop changes cannot restart it. Manual control can run
+another cycle; a failed automatic worker stays failed after taking its diagnostic. A same-format
+chain must finish through later refills with exact PCM and cursor accounting. A resampled chain
+at 11,025 Hz also checks the PCM tolerance, cursor and completion across refills. These
+deterministic source-copy checks are separate from the two native public Sound/Music cases below.
+
+`playback_states` covers the sound/music state table, repeated commands after stop from another
+thread, ordered global stop/pause/resume commands, exact-buffer completion, cursor accounting,
+and dynamic loop changes around decoder EOF and refill. Its cross-thread cases use barriers
+for a deterministic happens-before order; they are not exhaustive concurrency model checking.
+
+`gain_semantics` checks PCM output, cursors, and EOF for mute and zero gain on master/music/SFX
+buses, zero handle volume, pause precedence, independent category/handle states, unmute/volume
+restoration, looping, and silent music underruns. It uses the private implementation harness
+without opening a device; these cases do not qualify audible output or realtime performance.
+
+`realtime` instruments the Rust global allocator using const-initialized thread-local counters.
+It checks the first mix on a fresh OS thread, release/adoption of replaced views, actual resource
+reclamation on the control thread, and the probe's ability to observe heap work. `snapshots`
+checks unread-update coalescing, retained-view lifetime, overlapping-reader rejection, owner
+destruction, and whole-view consistency with two concurrent publishers. These checks exercise
+the production sources through the private harness. They do not instrument C/backend allocation,
+prove a callback deadline, or exhaustively model weak-memory interleavings.
+
+Worker tests force a looping source to disappear before refill, checking original-error
+propagation, terminal stream state, cleanup on failure, persistent automatic-worker failure,
+and release of its runtime after join. Private worker unit tests inject a cycle error/panic,
+check an unexpected join panic, and gate an in-flight cycle during stop. Repeated stop/Drop is
+covered. The native target additionally checks public control errors after worker failure;
+compiling that ignored case does not qualify a real device or native shutdown latency.
+
+Resampling regressions compare full-resource and streaming PCM for mono/stereo WAVs at five
+rate pairs, including 44.1/48 kHz and 22.05/48 kHz in both directions. Seven source lengths
+cover empty input, short exact-rate boundaries and longer refills. Four read patterns must
+produce the exact rational frame count and identical streaming PCM; full-resource PCM is
+compared with the existing interpolation tolerance. Empty reads and repeated EOF preserve
+output. Separate playback regressions check simultaneous completion at 480 output frames
+and three Music/Sound loop repetitions without an extra frame. These private source-copy
+checks do not qualify encoder padding, audible quality or callback timing.
+
+Float32 WAV regressions cover finite extrema of opposite signs at equal, higher and lower
+rates, exact midpoint samples, channel order and source-chunk/read boundaries. `float_wav`
+checks Sound/Music mixing, exact silence and consumed-frame cursors for master/category
+mute, zero bus gain and zero handle volume. Its long valid prefix places extreme PCM after
+the initial music prefill; separate cases reject later NaN/infinity samples without publishing
+them. The native target also checks that extreme finite WAV Sound/Music resources load, play
+and complete through the public API with master volume zero. These checks do not qualify
+audible output or realtime timing.
+
+The resampler's zero-source-rate, non-finite-source and incomplete-frame cases deliberately fabricate invalid
+private PCM; they prove internal rejection before empty/same-rate shortcuts, not a state
+constructible by clients. Separate WAV tests corrupt real metadata/data and check both full
+and streaming decoder entries. `output_config` uses valid advertised CPAL ranges to check
+stereo filtering, format preference, nearest/clamped rates, unsupported outputs, and the backend
+default buffer policy. These tests do not require a host or qualify its actual device formats.
+
+Ring regressions seed valid empty rings near `usize::MAX` and check FIFO order, exact capacity,
+full/empty and partial transfers when the counters overflow together or separately. They cover
+capacities 1, 2, 7, 44,100 and 48,000 samples and measure no Rust heap operations during reads.
+The SPSC exercise checks 120,000 sample identifiers between two threads, both from zero and
+across machine-counter overflow. These use the production source-copy harness on the host's
+word width; they do not constitute native 32-bit execution, exhaustive memory-model checking
+or a callback-deadline measurement.
+
+Facade checks use `python3 tools/test_facade_features.py`, also run by `just test-api`.
+They generate independent client workspaces under `target/`, seed their lockfiles from the root
+lockfile, and test default, explicit graphics, audio-only, both, and empty configurations. Their
+normal/build dependency trees must exclude graphics/Vulkan/GLFW without `graphics`. Audio checks
+import through `vmnl::audio`, verify type identity with `vmnl_audio`, manual/default and explicit
+automatic modes, and reject invalid configuration without opening a device. Empty configuration
+is a compilation/graph check. Facade Rustdoc is also tested for each selected configuration.
+Workspace-wide feature union cannot substitute for these clients.
+`--clippy` checks the same clients with warnings denied. The runner changes only generated
+clients and normal Cargo artifacts; it does not change the root lockfile or host configuration.
+
+The independent `Audio` CI matrix compiles both targets and runs `audio` on Linux, macOS,
+and Windows with Rust 1.87. Linux jobs install the ALSA development files. This matrix has no
+dependency on the Quality job, so Clippy failures do not suppress audio diagnostics. There is
+no `continue-on-error` for audio failures. It also checks isolated empty/audio-only clients
+without graphics prerequisites; Validation checks all five combinations. Native compilation
+is not native execution.
+
+CI checks the selected compiler's actual version before validation. The pinned toolchain action
+must accept its `toolchain` input: a version-specific action can hardcode another compiler and
+ignore that input. Documentation additionally verifies the pinned API-extraction nightly and
+builds the facade/Rustdoc with all features. A successful job on another compiler does not
+qualify Rust 1.87.
+
+The native tests are ignored by default and excluded from the device-independent target. An
+explicit native run fails if device initialization or format selection fails; missing hardware
+is not reported as a passing test. These tests can produce audible output. No recipe installs
+system packages or changes the host audio configuration. Linux compilation still needs CPAL's
+ALSA development prerequisites even when no output device is opened.
+
+`just test` and `just validate` include `test-audio`, and their aggregate reports retain its
+pass/fail counts. Known audio assertions remain enabled: registering a test does not imply that
+the implementation already satisfies the [acceptance contract](audio.md).
+
+The private implementation harness compiles copies of the production sources in a test-only
+module tree, without making private types public. Its results prove behavior at that private
+seam; they do not replace tests against the compiled public library or qualify a CPAL device.
+Ordinary domain contract tests use `vmnl_audio`; isolated clients test `vmnl::audio` through
+the compiled facade. Native backend results are separate from human
+listening validation.
+
+### Native audio qualification
+
+Record the source SHA, OS, compiler, CPAL version, backend/default output route, resolved output
+rate when observed, and initial mute/volume settings. Keep host audio settings fixed during
+a run. Run `just test-audio-backend` on each available platform; preserve named results,
+errors and the process exit status. Use an external watchdog against the test executable to
+bound a hung run. A watchdog timeout is a failure, not an excluded test or a shutdown guarantee.
+Compiling with `cargo test -p vmnl_audio --test audio-backend --no-run --message-format=json`
+provides the executable path without opening an output device.
+
+The ten current probes cover default manual constructors, automatic music refill without
+client updates, manual refill after exhaustion, public errors after automatic worker failure,
+shared bus/handle state, and load errors. Chained OGG cases check Sound loading and Music prefill
+rejection, then public manual update errors and terminal handle state after a successful prefill.
+Each creates and destroys a device. They do not inject
+a backend disconnection or measure callback deadlines, teardown latency, output waveform, or
+listening quality. Track those qualifications separately; no failed/missing device is a pass.
+
+On 2026-10-29, source `ef899d8c098e101f64f8294169c9f3f40a4224be` passed all eight native probes
+on Fedora 44 x86_64, kernel 7.2.11-200.fc44, Rust 1.95.0 and CPAL 0.18.2. ALSA 1.2.16.1's default
+output routed through PipeWire 1.6.10 to the `sof-hda-dsp` speaker sink. The sink stayed muted at
+volume zero before and after the run. The test executable ran serially with
+`--ignored --test-threads=1 --nocapture` under a 45-second watchdog and returned in 2.071 seconds: 8 passed,
+0 failed, 0 ignored. The resolved CPAL rate was not recorded. This is native callback/control
+and ordinary teardown smoke evidence, not human listening or a worst-case shutdown bound.
+Windows/macOS native audio execution remains unqualified.
+
 ## Virtual joystick/gamepad scenarios (issue #94)
 
 These tests preserve the existing unit/API/Null suites and reuse #91's bounded, continuously
@@ -885,15 +1075,16 @@ Headless oracle tests and compilation are not native evidence. VMNL batch-transi
 
 ## Continuous Integration
 
-The CI workflow invokes Cargo directly. The Justfile is a local development helper and is never
-invoked in CI.
+CI build and test stages invoke Cargo directly. The documentation job uses pinned Just tooling
+for API-book verification; the local aggregate `just validate` is not a CI entry point.
 
-Its strict job order is:
+Its job dependencies are:
 
 ```text
 Quality (format -> Clippy)
   -> Validation per OS (build -> unit -> API -> smoke -> platform)
-  -> Documentation
+Audio per OS (compile all audio test targets -> device-independent audio tests)
+Validation + Audio -> Documentation
 ```
 
 Each OS validation job reuses one Cargo target directory for compilation and every test stage; no
@@ -988,9 +1179,9 @@ modifier combinations, eligible text, Linux repeat, and focus loss passed in the
 recorded above. Cocoa lock restoration, Win32/Cocoa hardware repeat, Linux text scalars absent from
 the active map, and public VMNL runtime remain unqualified or non-injectable as recorded per case.
 
-The documentation job runs only after all OS validation jobs. Its pinned API tools are cached by
-platform, architecture, and installer-script hash, and the installer still verifies every restored
-tool version before use.
+The documentation job runs only after all OS validation and audio jobs succeed. Its pinned API
+tools are cached by platform, architecture, and installer-script hash, and the installer still
+verifies every restored tool version before use.
 
 CI sets `CARGO_INCREMENTAL=0` because GitHub-hosted jobs use fresh workspaces. This avoids
 producing incremental artifacts that cannot be reused by later jobs.

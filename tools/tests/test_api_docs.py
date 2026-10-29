@@ -20,6 +20,21 @@ FIXTURE = Path(__file__).parent / "fixtures" / "public_api.txt"
 
 
 class SurfaceTests(unittest.TestCase):
+    def test_audio_aliases_share_one_facade_namespace_and_method_owner(self) -> None:
+        text = ("pub mod vmnl_audio\npub mod vmnl_audio::audio\n"
+                "pub struct vmnl_audio::audio::AudioDevice\n"
+                "pub fn vmnl_audio::AudioDevice::control_mode(&self) -> vmnl_audio::ControlMode\n")
+        surface = api_docs.parse_surface(text, "pub use vmnl::audio\npub use vmnl::common\npub use vmnl::raw\npub use vmnl::ShaderSource\n")
+        self.assertEqual(surface.items, (api_docs.PublicItem("struct", "vmnl::audio::AudioDevice"),))
+        self.assertEqual(surface.methods, (api_docs.PublicMethod("vmnl::audio::AudioDevice", "control_mode"),))
+        self.assertNotIn("audio::audio", surface.text)
+        api_docs.validate_facade_reexports(surface)
+
+    def test_audio_inventory_requires_the_facade_audio_reexport(self) -> None:
+        surface = api_docs.parse_surface("pub struct vmnl_audio::audio::AudioDevice\n", "pub use vmnl::common\n")
+        with self.assertRaisesRegex(api_docs.ApiDocsError, "vmnl::audio"):
+            api_docs.validate_facade_reexports(surface)
+
     def test_parses_reexports_generics_methods_variants_and_macros(self) -> None:
         surface = api_docs.parse_surface(FIXTURE.read_text(encoding="utf-8"))
 

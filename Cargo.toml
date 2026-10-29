@@ -3,6 +3,7 @@ members = [
     "crates/vmnl_graphics",
     "crates/vmnl_macros",
     "crates/vmnl",
+    "crates/vmnl_audio",
     "examples/d2/advanced_geometry",
     "examples/d2/shapes",
     "examples/input/joystick_runtime",
@@ -20,7 +21,7 @@ members = [
     "tests/platform",
     "tests/smoke",
 ]
-default-members = ["crates/vmnl_graphics", "crates/vmnl"]
+default-members = ["crates/vmnl_graphics", "crates/vmnl", "crates/vmnl_audio"]
 resolver = "2"
 
 [workspace.package]

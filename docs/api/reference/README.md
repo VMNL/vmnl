@@ -3,6 +3,7 @@
 | Area | Pages |
 |---|---|
 | Facade and context | [`vmnl`](facade.md), [`Context`](context.md), [`InputRuntime`](input_runtime.md) |
+| Audio | [Devices, control, resources, handles, and errors](audio.md) |
 | Input | [Joystick and gamepad samples](joystick_gamepad.md) |
 | Errors | [Errors](errors/README.md) |
 | Shared values | [Common](common/README.md) |

@@ -28,6 +28,7 @@ test-unit:
 [no-exit-message]
 test-api:
     @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report api
+    python3 tools/test_facade_features.py
 
 # Run smoke tests.
 [no-exit-message]
@@ -83,6 +84,16 @@ test-gpu-compile:
 test-gpu:
     @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report gpu
 
+# Run device-independent audio tests.
+[no-exit-message]
+test-audio:
+    @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report audio
+
+# Run native audio tests; requires a usable CPAL stereo output device.
+[no-exit-message]
+test-audio-backend:
+    @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report audio-backend
+
 # Run Rustdoc examples.
 [no-exit-message]
 doctest:
@@ -118,6 +129,18 @@ _test-report suite:
     fi
 
     case '{{ suite }}' in
+        audio)
+            suite_name='AUDIO'
+            suite_scope='device-independent audio tests'
+            suite_kind='tests'
+            test_command=(cargo "${color_args[@]}" test -p vmnl_audio --test audio)
+            ;;
+        audio-backend)
+            suite_name='AUDIO-BACKEND'
+            suite_scope='CPAL stereo output device required'
+            suite_kind='tests'
+            test_command=(cargo "${color_args[@]}" test -p vmnl_audio --test audio-backend -- --ignored)
+            ;;
         gpu)
             suite_name='GPU'
             suite_scope='Vulkan + GLFW display required'
@@ -275,12 +298,12 @@ _test-total report:
         test)
             report_name='TEST'
             report_unit='suites'
-            recipes=(test-unit test-api test-smoke test-platform)
+            recipes=(test-unit test-api test-audio test-smoke test-platform)
             ;;
         validate)
             report_name='VALIDATION'
             report_unit='steps'
-            recipes=(build-workspace check-fmt check-clippy test-unit test-api test-smoke test-platform doctest docs _docs-api-check)
+            recipes=(build-workspace check-fmt check-clippy doctest docs _docs-api-check test-unit test-api test-audio test-smoke test-platform)
             ;;
         *)
             printf 'unknown VMNL aggregate report: %s\n' '{{ report }}' >&2
@@ -347,6 +370,10 @@ _test-total report:
             test-api)
                 stage_name='API'
                 record_suite='api'
+                ;;
+            test-audio)
+                stage_name='AUDIO'
+                record_suite='audio'
                 ;;
             test-smoke)
                 stage_name='SMOKE'
@@ -420,10 +447,12 @@ check: check-fmt check-clippy
 # Check formatting.
 check-fmt:
     cargo fmt --all --check
+    rustfmt --edition 2021 --check tests/api/facade_features.rs
 
 # Run Clippy with warnings denied.
 check-clippy:
     cargo clippy --workspace --all-targets --all-features -- -D warnings
+    python3 tools/test_facade_features.py --clippy
 
 # Install the repository-owned Git hooks for this clone.
 hooks-install:
@@ -438,7 +467,7 @@ lint:
 
 # Build Rustdoc with warnings denied.
 docs:
-    RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+    RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
 
 # Check the complete API book without changing tracked files.
 [no-exit-message]
@@ -456,6 +485,7 @@ docs-api-tools:
 _docs-api-check:
     #!/usr/bin/env bash
     set -euo pipefail
+    command -v rg >/dev/null
     just docs-api-tools
     export PATH="$PWD/target/api-tools/bin:$PATH"
     [[ $(just --version) == 'just 1.57.0' ]]
@@ -463,7 +493,7 @@ _docs-api-check:
     [[ $(cargo public-api --version) == *'0.52.0'* ]]
     [[ $(lychee --version) == *'0.24.2'* ]]
     rustc +nightly-2026-03-12 --version >/dev/null
-    cargo build -p vmnl
+    cargo build -p vmnl --all-features
     python3 -m unittest discover -s tools/tests
     api_lib_dir="$PWD/target/api-book-libs"
     api_deps_dir="$PWD/target/debug/deps"
@@ -480,7 +510,10 @@ _docs-api-check:
     mdbook build docs/api
     python3 tools/api_docs.py check
     python3 tools/glfw_portability.py check
-    mapfile -t markdown_files < <(rg --files docs -g '*.md')
+    # Assignment propagates discovery errors; process substitution hides them.
+    markdown_list=$(rg --files docs -g '*.md')
+    [[ -n $markdown_list ]]
+    mapfile -t markdown_files <<< "$markdown_list"
     lychee --offline --include-fragments=full "${markdown_files[@]}" CONTRIBUTING.md CHANGELOG.md README.md
 
 # Regenerate the reviewed public API snapshot and indexes.

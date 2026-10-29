@@ -9,11 +9,17 @@ homepage = { workspace = true }
 documentation = { workspace = true }
 readme = "../../README.md"
 description = "VMNL public API crate."
-keywords = ["vulkan", "graphics", "windowing", "rendering"]
+keywords = ["vulkan", "graphics", "windowing", "rendering", "audio"]
 categories = ["graphics", "rendering", "game-development"]
 
+[features]
+default = ["graphics"]
+graphics = ["dep:vmnl-graphics"]
+audio = ["dep:vmnl_audio"]
+
 [dependencies]
-vmnl-graphics = { path = "../vmnl_graphics", version = "0.1.0" }
+vmnl-graphics = { path = "../vmnl_graphics", version = "0.1.0", optional = true }
+vmnl_audio = { path = "../vmnl_audio", version = "0.1.0", optional = true }
 
 [lints]
 workspace = true

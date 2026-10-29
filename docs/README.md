@@ -9,6 +9,7 @@ Local `README.md` files are only navigation aids for their directory. Public API
 - [API](API.md): portal to the exhaustive client-facing API book.
 - [Architecture](architecture.md): project direction, control model, domain scope, boundaries, and
   current workspace layout.
+- [Audio](audio.md): CPAL backend, facade features, execution, and playback acceptance contract.
 - [Build](build.md): toolchain, system dependencies, shaderc/Vulkan discovery, Justfile usage.
 - [Coding Instructions](INSTRUCTIONS.md): project coding and documentation standards.
 - [Contributing](../CONTRIBUTING.md): contribution workflow and commit convention.

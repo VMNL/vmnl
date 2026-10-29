@@ -7,7 +7,7 @@ usage()
     cat >&2 <<'EOF'
 Usage: ./deps
 
-Install the system dependencies used by VMNL's build and graphics tooling.
+Install the system dependencies used by VMNL's build, audio, and graphics tooling.
 This script is Linux-only and requires /etc/os-release.
 EOF
 }
@@ -58,8 +58,9 @@ install_packages()
 
     case "${ID:-}" in
         fedora)
-            cmd "sudo dnf install -y libshaderc-devel libshaderc-static pkgconf-pkg-config cmake git python3 ninja-build gcc-c++ make vulkan-loader-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel libdecor"
+            cmd "sudo dnf install -y alsa-lib-devel libshaderc-devel libshaderc-static pkgconf-pkg-config cmake git python3 ninja-build gcc-c++ make vulkan-loader-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel libdecor"
             sudo dnf install -y \
+                alsa-lib-devel \
                 libshaderc-devel libshaderc-static \
                 pkgconf-pkg-config cmake git python3 ninja-build \
                 gcc-c++ make \
@@ -69,8 +70,9 @@ install_packages()
                 libdecor
             ;;
         rhel|centos|rocky|almalinux)
-            cmd "sudo dnf install -y shaderc-devel pkgconf-pkg-config cmake git python3 ninja-build gcc-c++ make vulkan-loader-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel libdecor"
+            cmd "sudo dnf install -y alsa-lib-devel shaderc-devel pkgconf-pkg-config cmake git python3 ninja-build gcc-c++ make vulkan-loader-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel libdecor"
             sudo dnf install -y \
+                alsa-lib-devel \
                 shaderc-devel \
                 pkgconf-pkg-config cmake git python3 ninja-build \
                 gcc-c++ make \
@@ -82,8 +84,9 @@ install_packages()
         ubuntu|debian)
             cmd "sudo apt-get update"
             sudo apt-get update
-            cmd "sudo apt-get install -y libshaderc-dev pkg-config cmake git python3 ninja-build build-essential libvulkan-dev vulkan-tools libwayland-dev wayland-protocols libxkbcommon-dev xorg-dev libdecor-0-plugin-1-cairo"
+            cmd "sudo apt-get install -y libasound2-dev libshaderc-dev pkg-config cmake git python3 ninja-build build-essential libvulkan-dev vulkan-tools libwayland-dev wayland-protocols libxkbcommon-dev xorg-dev libdecor-0-plugin-1-cairo"
             sudo apt-get install -y \
+                libasound2-dev \
                 libshaderc-dev \
                 pkg-config cmake git python3 ninja-build \
                 build-essential \
@@ -92,8 +95,9 @@ install_packages()
                 libdecor-0-plugin-1-cairo
             ;;
         arch)
-            cmd "sudo pacman -Sy --needed shaderc pkgconf cmake git python ninja base-devel vulkan-headers vulkan-tools wayland wayland-protocols libxkbcommon libxcursor libxi libxinerama libxrandr libdecor"
+            cmd "sudo pacman -Sy --needed alsa-lib shaderc pkgconf cmake git python ninja base-devel vulkan-headers vulkan-tools wayland wayland-protocols libxkbcommon libxcursor libxi libxinerama libxrandr libdecor"
             sudo pacman -Sy --needed \
+                alsa-lib \
                 shaderc pkgconf cmake git python ninja \
                 base-devel \
                 vulkan-headers vulkan-tools \
@@ -102,8 +106,9 @@ install_packages()
                 libdecor
             ;;
         opensuse*)
-            cmd "sudo zypper --non-interactive install shaderc shaderc-devel pkg-config cmake git python3 ninja gcc-c++ make vulkan-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel libdecor"
+            cmd "sudo zypper --non-interactive install alsa-devel shaderc shaderc-devel pkg-config cmake git python3 ninja gcc-c++ make vulkan-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel libdecor"
             sudo zypper --non-interactive install \
+                alsa-devel \
                 shaderc shaderc-devel \
                 pkg-config cmake git python3 ninja \
                 gcc-c++ make \
@@ -113,8 +118,9 @@ install_packages()
                 libdecor
             ;;
         sles)
-            cmd "sudo zypper --non-interactive install shaderc shaderc-devel pkg-config cmake git python3 ninja gcc-c++ make vulkan-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel"
+            cmd "sudo zypper --non-interactive install alsa-devel shaderc shaderc-devel pkg-config cmake git python3 ninja gcc-c++ make vulkan-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel"
             sudo zypper --non-interactive install \
+                alsa-devel \
                 shaderc shaderc-devel \
                 pkg-config cmake git python3 ninja \
                 gcc-c++ make \
@@ -125,8 +131,9 @@ install_packages()
         *)
             case "${ID_LIKE:-}" in
                 *fedora*|*rhel*)
-                    cmd "sudo dnf install -y shaderc-devel pkgconf-pkg-config cmake git python3 ninja-build gcc-c++ make vulkan-loader-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel libdecor"
+                    cmd "sudo dnf install -y alsa-lib-devel shaderc-devel pkgconf-pkg-config cmake git python3 ninja-build gcc-c++ make vulkan-loader-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel libdecor"
                     sudo dnf install -y \
+                        alsa-lib-devel \
                         shaderc-devel \
                         pkgconf-pkg-config cmake git python3 ninja-build \
                         gcc-c++ make \
@@ -138,8 +145,9 @@ install_packages()
                 *debian*)
                     cmd "sudo apt-get update"
                     sudo apt-get update
-                    cmd "sudo apt-get install -y libshaderc-dev pkg-config cmake git python3 ninja-build build-essential libvulkan-dev vulkan-tools libwayland-dev wayland-protocols libxkbcommon-dev xorg-dev libdecor-0-plugin-1-cairo"
+                    cmd "sudo apt-get install -y libasound2-dev libshaderc-dev pkg-config cmake git python3 ninja-build build-essential libvulkan-dev vulkan-tools libwayland-dev wayland-protocols libxkbcommon-dev xorg-dev libdecor-0-plugin-1-cairo"
                     sudo apt-get install -y \
+                        libasound2-dev \
                         libshaderc-dev \
                         pkg-config cmake git python3 ninja-build \
                         build-essential \
@@ -148,8 +156,9 @@ install_packages()
                         libdecor-0-plugin-1-cairo
                     ;;
                 *arch*)
-                    cmd "sudo pacman -Sy --needed shaderc pkgconf cmake git python ninja base-devel vulkan-headers vulkan-tools wayland wayland-protocols libxkbcommon libxcursor libxi libxinerama libxrandr libdecor"
+                    cmd "sudo pacman -Sy --needed alsa-lib shaderc pkgconf cmake git python ninja base-devel vulkan-headers vulkan-tools wayland wayland-protocols libxkbcommon libxcursor libxi libxinerama libxrandr libdecor"
                     sudo pacman -Sy --needed \
+                        alsa-lib \
                         shaderc pkgconf cmake git python ninja \
                         base-devel \
                         vulkan-headers vulkan-tools \
@@ -158,8 +167,9 @@ install_packages()
                         libdecor
                     ;;
                 *opensuse*)
-                    cmd "sudo zypper --non-interactive install shaderc shaderc-devel pkg-config cmake git python3 ninja gcc-c++ make vulkan-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel libdecor"
+                    cmd "sudo zypper --non-interactive install alsa-devel shaderc shaderc-devel pkg-config cmake git python3 ninja gcc-c++ make vulkan-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel libdecor"
                     sudo zypper --non-interactive install \
+                        alsa-devel \
                         shaderc shaderc-devel \
                         pkg-config cmake git python3 ninja \
                         gcc-c++ make \
@@ -169,8 +179,9 @@ install_packages()
                         libdecor
                     ;;
                 *suse*)
-                    cmd "sudo zypper --non-interactive install shaderc shaderc-devel pkg-config cmake git python3 ninja gcc-c++ make vulkan-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel"
+                    cmd "sudo zypper --non-interactive install alsa-devel shaderc shaderc-devel pkg-config cmake git python3 ninja gcc-c++ make vulkan-devel vulkan-tools wayland-devel wayland-protocols-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel"
                     sudo zypper --non-interactive install \
+                        alsa-devel \
                         shaderc shaderc-devel \
                         pkg-config cmake git python3 ninja \
                         gcc-c++ make \

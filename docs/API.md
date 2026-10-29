@@ -8,3 +8,7 @@ The exhaustive client-facing API book is under [`docs/api/`](api/README.md).
 - [Coverage and generated inventories](api/maintenance/README.md)
 
 Rustdoc is canonical for exact signatures and item-local contracts. The API book is canonical for navigation, concepts, workflows, maturity, and cross-cutting matrices.
+
+The optional [audio API](api/reference/audio.md) is exposed through `vmnl::audio` and remains
+directly usable through `vmnl_audio`. Disable default facade features for audio without graphics.
+Its [acceptance contract](audio.md) distinguishes implementation from native qualification.
