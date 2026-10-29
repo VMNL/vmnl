@@ -26,6 +26,9 @@ just run d2_shapes
 Cargo builds `d2_shapes` when needed. Expected result: a window opens and renders the 2D shapes
 example. This requires a Vulkan-capable GPU, a Vulkan loader, GLFW, and a display server.
 
+Current limitation: `d2_shapes` returns `InvalidState` because its sector is missing an explicit
+cap. For the circle-family workflow, use `just run d2_circles`; see [Examples](examples.md#commands).
+
 ## Verify the Checkout
 
 Compile every workspace target:

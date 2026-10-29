@@ -5,6 +5,7 @@ members = [
     "crates/vmnl",
     "examples/d2/advanced_geometry",
     "examples/d2/shapes",
+    "examples/d2/circles",
     "examples/raw/d2_composition",
     "examples/raw/pipeline",
     "examples/raw/triangle",
@@ -14,6 +15,7 @@ members = [
     "examples/window/wait_events",
     "tests/api",
     "tests/gpu",
+    "tests/gpu/input_client",
     "tests/platform",
     "tests/smoke",
 ]

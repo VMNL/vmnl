@@ -20,6 +20,10 @@ use crate::{
 const ROUND_CAP_SEGMENTS: u16 = 12;
 
 /// Line cap styles for rendering line endpoints.
+///
+/// Also used by circle/ellipse sectors returned by [`Shape::circle`]. Every sector
+/// requires an explicit cap, including filled or full-turn sectors. Caps affect geometry
+/// only when unfilled; circle-family round caps use 32 subdivisions per endpoint.
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, Default)]
 pub enum LineCap {
     /// No additional geometry is added at the line endpoints; the line simply ends at the specified points.
