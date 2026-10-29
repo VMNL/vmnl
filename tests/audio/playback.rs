@@ -4,7 +4,8 @@
 //! Public playback-handle contracts. Tests require an explicitly selected native backend.
 
 use crate::backend_support::{device, lock_backend_tests};
-use crate::common::TempAudioFile;
+use crate::common::{ogg_chain, wait_until, TempAudioFile};
+use std::time::Duration;
 use vmnl_audio::{AudioError, MusicPlayConfig, SoundPlayConfig};
 
 #[test]
@@ -105,4 +106,69 @@ fn device_load_methods_report_unknown_extensions_and_missing_files() {
         std::env::temp_dir().join(format!("vmnl-audio-no-file-{}.mp3", std::process::id()));
     let _ = std::fs::remove_file(&missing);
     assert!(device.load_music(&missing).is_err());
+}
+
+#[test]
+#[ignore = "requires a usable CPAL stereo output device"]
+fn chained_ogg_is_rejected_by_sound_loading_and_music_prefill() {
+    let _guard = lock_backend_tests();
+    let device = device(false);
+    for second in [
+        "chain-next-mono-16k.ogg",
+        "chain-next-stereo-8k.ogg",
+        "chain-next-stereo-16k.ogg",
+    ] {
+        let file = ogg_chain("chain-start-mono-8k.ogg", second);
+        assert!(matches!(
+            device.load_sound(file.path()),
+            Err(AudioError::UnsupportedFormat(_))
+        ));
+        let music = device
+            .load_music(file.path())
+            .expect("initial metadata is valid");
+        assert!(matches!(
+            music.play(),
+            Err(AudioError::UnsupportedFormat(_))
+        ));
+        device.update().expect("failed prefill published no stream");
+    }
+}
+
+#[test]
+#[ignore = "requires a usable CPAL stereo output device"]
+fn chained_ogg_late_refill_error_stops_the_public_music_handle() {
+    let _guard = lock_backend_tests();
+    let device = device(false);
+    for second in [
+        "chain-next-mono-16k.ogg",
+        "chain-next-stereo-8k.ogg",
+        "chain-next-stereo-16k.ogg",
+    ] {
+        let file = ogg_chain("chain-start-long-mono-8k.ogg", second);
+        let expected = device
+            .load_sound(file.path())
+            .err()
+            .expect("whole sound rejects the later transition")
+            .to_string();
+        let music = device
+            .load_music(file.path())
+            .expect("load initial metadata");
+        let handle = music
+            .play()
+            .expect("prefill precedes the format transition");
+        assert!(handle.is_playing());
+        let mut failure = None;
+        assert!(wait_until(Duration::from_secs(3), || {
+            failure = device.update().err();
+            failure.is_some()
+        }));
+        let error = failure.expect("public update returned the refill error");
+        assert!(matches!(error, AudioError::UnsupportedFormat(_)));
+        assert_eq!(error.to_string(), expected);
+        assert!(handle.cursor_frames() > 0);
+        assert!(handle.is_stopped());
+        handle.resume();
+        assert!(handle.is_stopped());
+        device.update().expect("failed stream was cleaned up");
+    }
 }

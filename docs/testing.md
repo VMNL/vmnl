@@ -28,8 +28,9 @@ across four read patterns, empty reads and repeated EOF; a separate check verifi
 metadata, serial, empty priming packet and non-silent PCM. The oracle reads packets from the
 actual chain, not the container durations or the sum of separately decoded segments.
 
-The five `chain-*.ogg` fixtures in `tests/audio/fixtures/` encode original synthetic 100 ms sine
-waves under the repository's MIT license. They were generated once with FFmpeg 8.1.3/libvorbis;
+The `chain-*.ogg` fixtures in `tests/audio/fixtures/` encode original synthetic sine waves
+under the repository's MIT license: 100 ms each, except the one-second `chain-start-long-mono-8k.ogg`.
+They were generated once with FFmpeg 8.1.3/libvorbis;
 tests read their committed bytes and never invoke an encoder or require FFmpeg in CI.
 
 | Fixture | Channels | Rate (Hz) | Tone (Hz) | OGG serial |
@@ -39,12 +40,21 @@ tests read their committed bytes and never invoke an encoder or require FFmpeg i
 | `chain-next-mono-16k.ogg` | 1 | 16,000 | 660 | 86 |
 | `chain-next-stereo-8k.ogg` | 2 | 8,000 | 660 | 87 |
 | `chain-next-stereo-16k.ogg` | 2 | 16,000 | 660 | 88 |
+| `chain-start-long-mono-8k.ogg` | 1 | 8,000 | 440 | 89 |
 
 For each row, encoding used `ffmpeg -f lavfi -i
-"sine=frequency=TONE:sample_rate=RATE:duration=0.1" -map_metadata -1 -ac CHANNELS
+"sine=frequency=TONE:sample_rate=RATE:duration=DURATION" -map_metadata -1 -ac CHANNELS
 -c:a libvorbis -q:a 3 -flags:a +bitexact -fflags +bitexact -serial_offset SERIAL FILE`.
-Substitute the table values; bitexact flags and explicit serials remove randomized stream IDs.
+Substitute the table values and duration in seconds; bitexact flags and explicit serials remove
+randomized stream IDs.
 These source-copy checks qualify neither native playback nor encoder padding/container timing.
+
+`ogg_playback` places a rate/channel transition after a successful 500 ms prefill. Manual and
+automatic cases consume the valid prefix, preserve the decoder's original error, stop and remove
+the failed stream, and check that resume/loop changes cannot restart it. Manual control can run
+another cycle; a failed automatic worker stays failed after taking its diagnostic. A same-format
+chain must finish through later refills with exact PCM and cursor accounting. These deterministic
+source-copy checks are separate from the two native public Sound/Music cases below.
 
 `playback_states` covers the sound/music state table, repeated commands after stop from another
 thread, ordered global stop/pause/resume commands, exact-buffer completion, cursor accounting,
@@ -146,9 +156,11 @@ bound a hung run. A watchdog timeout is a failure, not an excluded test or a shu
 Compiling with `cargo test -p vmnl_audio --test audio-backend --no-run --message-format=json`
 provides the executable path without opening an output device.
 
-The eight current probes cover default manual constructors, automatic music refill without
+The ten current probes cover default manual constructors, automatic music refill without
 client updates, manual refill after exhaustion, public errors after automatic worker failure,
-shared bus/handle state, and load errors. Each creates and destroys a device. They do not inject
+shared bus/handle state, and load errors. Chained OGG cases check Sound loading and Music prefill
+rejection, then public manual update errors and terminal handle state after a successful prefill.
+Each creates and destroys a device. They do not inject
 a backend disconnection or measure callback deadlines, teardown latency, output waveform, or
 listening quality. Track those qualifications separately; no failed/missing device is a pass.
 

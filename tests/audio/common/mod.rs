@@ -110,6 +110,14 @@ pub fn fixture_path(name: &str) -> PathBuf {
         .join(name)
 }
 
+pub fn ogg_chain(first: &str, second: &str) -> TempAudioFile {
+    let file = TempAudioFile::new("ogg");
+    let mut bytes = std::fs::read(fixture_path(first)).expect("read first OGG segment");
+    bytes.extend_from_slice(&std::fs::read(fixture_path(second)).expect("read second OGG segment"));
+    file.write_bytes(&bytes);
+    file
+}
+
 pub fn wait_until(timeout: Duration, mut condition: impl FnMut() -> bool) -> bool {
     let deadline = Instant::now() + timeout;
     while Instant::now() < deadline {

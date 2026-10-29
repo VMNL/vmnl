@@ -3,7 +3,7 @@
 
 //! Chained Vorbis format boundaries through real OGG files, without an output device.
 
-use crate::common::{fixture_path, TempAudioFile};
+use crate::common::{fixture_path, ogg_chain, TempAudioFile};
 use crate::internal_harness::audio::decoder::AudioDecoder;
 use crate::internal_harness::audio::error::{AudioError, AudioResult};
 use crate::internal_harness::audio::stream_decoder::StreamingDecoder;
@@ -37,7 +37,7 @@ fn reference_audio(path: &Path) -> ReferenceAudio {
         empty_packets: 0,
     };
 
-    // These 100 ms segments need only a few packets; bound a broken EOF oracle.
+    // These short segments need only a few packets; bound a broken EOF oracle.
     for _ in 0..128 {
         let packet = reader.read_dec_packet_itl().expect("decode reference OGG");
         let channels = reader.ident_hdr.audio_channels;
@@ -73,10 +73,7 @@ fn reference_audio(path: &Path) -> ReferenceAudio {
 }
 
 fn chained_file(second: &str, second_format: (u8, u32)) -> TempAudioFile {
-    let file = TempAudioFile::new("ogg");
-    let mut bytes = std::fs::read(fixture_path(START)).expect("read first segment");
-    bytes.extend_from_slice(&std::fs::read(fixture_path(second)).expect("read second segment"));
-    file.write_bytes(&bytes);
+    let file = ogg_chain(START, second);
 
     // Check the actual chain, rather than assuming concatenated files were decoded.
     let reference = reference_audio(file.path());
@@ -137,6 +134,7 @@ fn fixtures_have_distinct_serials_and_the_expected_formats() {
         (RATE_CHANGE, 1, 16_000, 86),
         (CHANNEL_CHANGE, 2, 8_000, 87),
         (BOTH_CHANGE, 2, 16_000, 88),
+        ("chain-start-long-mono-8k.ogg", 1, 8_000, 89),
     ] {
         let audio = reference_audio(&fixture_path(name));
         assert_eq!(audio.formats, [(channels, rate)], "{name}");
