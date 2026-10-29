@@ -45,6 +45,17 @@ source rate or an incomplete frame before its empty/same-rate shortcuts. Clients
 construct the private decoded resource; tests that bypass construction check internal defense,
 while malformed-file tests check the actual decoder entry paths.
 
+Chained OGG/Vorbis logical streams must keep the initial channel count and sample rate.
+When the adapter detects a change, it returns `UnsupportedFormat` before accepting PCM from
+the changed stream. Chains with unchanged metadata remain supported. An uncached `Sound`
+is decoded completely while loading, so a detected change fails that load. `load_music`
+only opens the source and checks its initial metadata; it does not validate the whole chain.
+Each `Music::play` opens a decoder and prefills a buffer: a change detected during prefill
+fails the call before the playback is registered. A change encountered later fails refill.
+In manual mode `update()` returns the original error; the instance is stopped and cleanup is
+attempted. In automatic mode the worker stops and reports a diagnostic through `take_background_error()`.
+Already mixed output is not withdrawn, and the shared diagnostic slot can be overwritten.
+
 Streaming resampling represents its source-frame position as an integer numerator
 over the target sample rate.
 For `N` decoded source frames at rate `S` and target rate `T`, it emits exactly

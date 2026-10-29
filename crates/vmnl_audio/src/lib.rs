@@ -7,6 +7,9 @@
 //! for each playback. [`AudioDevice`] owns the output stream and its resolved
 //! stereo sample rate. Resource loading and manual control may allocate and do
 //! file I/O; they must not run on the audio callback.
+//! OGG/Vorbis chains must keep the initial channel count and sample rate across
+//! their logical streams; a detected change is rejected during decoding.
+//! [`AudioDevice::load_music`] checks initial metadata, not the whole track.
 //!
 //! Control defaults to [`ControlMode::Manual`]: call [`AudioDevice::update`]
 //! to process commands, refill music, and clean up. Select

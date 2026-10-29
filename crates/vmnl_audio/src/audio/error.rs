@@ -14,7 +14,7 @@ pub enum AudioError {
     DecoderFailed(String),
     /// A requested gain, rate, or buffer shape is invalid.
     InvalidState(String),
-    /// The codec, channel count, or output sample format is unsupported.
+    /// The codec, channel count, output sample format, or a source format change is unsupported.
     UnsupportedFormat(String),
     /// The global command queue mutex was poisoned.
     CommandQueuePoisoned,

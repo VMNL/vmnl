@@ -104,6 +104,12 @@ Backend initialization, worker creation and poisoned runtime locks have the dist
 listed above. `Io` wraps an I/O error and `From::from` constructs it; codec adapters can translate
 their own opening/decoding failures to `DecoderFailed`.
 
+An OGG/Vorbis chain must retain its initial sample rate and channel count. A detected change
+returns `UnsupportedFormat` before PCM from that logical stream is accepted. Uncached sound
+loading decodes the whole source; music loading checks initial metadata only. A change detected
+during Music prefill fails `play` before registration; one encountered later fails refill.
+Already mixed samples are not withdrawn. The control-mode-specific failure behavior follows below.
+
 A failed refill stops its music instance. Manual cycles return the original failure and attempt
 cleanup; later cycles can process remaining streams. Automatic control errors/unwinding panics
 terminate the worker. Automatic update/global commands then return `InvalidState`, with no

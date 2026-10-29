@@ -379,15 +379,19 @@ impl AudioDevice {
     /// # Errors
     ///
     /// Returns file/decoder errors, [`AudioError::UnsupportedFormat`] for unsupported
-    /// sources, or [`AudioError::SoundCachePoisoned`] if the cache is poisoned.
+    /// sources or an OGG/Vorbis chain changing rate or channel count during decoding,
+    /// or [`AudioError::SoundCachePoisoned`] if the cache is poisoned. A cached sound
+    /// can be reused without reading its source again.
     pub fn load_sound<P: AsRef<Path>>(&self, path: P) -> AudioResult<Sound> {
         Sound::from_file(self, path)
     }
 
     /// Validates a music file and creates a reusable streaming resource.
     ///
-    /// Reads source metadata without loading the complete track. Playback opens
-    /// its own decoder and preallocated PCM buffer.
+    /// Reads initial source metadata without decoding the complete track. Playback
+    /// opens its own decoder and preallocated PCM buffer. An OGG/Vorbis chain that
+    /// changes sample rate or channel count later can fail during [`Music::play`]
+    /// or a subsequent refill; successful loading does not validate the whole chain.
     ///
     /// # Errors
     ///
@@ -449,6 +453,8 @@ impl AudioDevice {
     /// # Errors
     ///
     /// Propagates poisoned control-state locks and music decoding/file failures.
+    /// In manual mode, a detected OGG/Vorbis rate or channel change during refill
+    /// returns [`AudioError::UnsupportedFormat`].
     /// Returns [`AudioError::InvalidState`] if the automatic worker has stopped,
     /// including after its diagnostic has been taken. Worker or stream diagnostics
     /// are retrieved through [`Self::take_background_error`].

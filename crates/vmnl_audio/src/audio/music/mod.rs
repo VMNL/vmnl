@@ -80,7 +80,11 @@ impl Music {
     /// # Errors
     ///
     /// Returns invalid-gain, source-file/decoder, unsupported-format, or
-    /// active-stream-list synchronization errors.
+    /// active-stream-list synchronization errors. A detected OGG/Vorbis rate or
+    /// channel change during prefill returns [`crate::AudioError::UnsupportedFormat`]
+    /// before registering a playback. A later change fails during refill: manual
+    /// [`AudioDevice::update`] returns the error; the automatic worker stops and
+    /// reports a diagnostic through [`AudioDevice::take_background_error`].
     pub fn play_with_config(&self, config: MusicPlayConfig) -> AudioResult<MusicHandle> {
         let stream = Arc::new(MusicStream::new(
             self.path.clone(),
