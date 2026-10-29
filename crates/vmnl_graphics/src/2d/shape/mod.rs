@@ -331,7 +331,7 @@ impl Shape {
     ///
     /// Colors default to opaque white. The boundary is closed implicitly;
     /// do not repeat the first point. Positions use pixel-like 2D coordinates.
-    /// This stage targets strictly convex polygons with at least three points.
+    /// Supports simple convex or concave polygons with at least three points.
     /// Construction stores CPU data without validating geometry or allocating GPU buffers.
     ///
     /// # Example
@@ -358,7 +358,7 @@ impl Shape {
     ///
     /// Preserves supplied colors. The boundary is closed implicitly;
     /// do not repeat the first vertex. Positions use pixel-like 2D coordinates.
-    /// This stage targets strictly convex polygons with at least three vertices.
+    /// Supports simple convex or concave polygons with at least three vertices.
     /// Construction stores CPU data without validating geometry or allocating GPU buffers.
     #[must_use]
     pub fn polygon_from_vertices<V>(vertices: V) -> PolygonBuilder
