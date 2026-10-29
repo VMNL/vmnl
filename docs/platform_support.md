@@ -56,6 +56,12 @@ The independent `Audio` CI matrix is configured on Ubuntu, macOS, and Windows to
 audio test targets and run the device-independent suite. Native CPAL tests are compiled only;
 this configuration does not qualify an output device or human listening behavior on any platform.
 
+The [native audio record](testing.md#native-audio-qualification) qualifies the eight exercised
+CPAL probes at `ef899d8` on Fedora 44 with ALSA/PipeWire, Rust 1.95.0 and a muted speaker sink.
+It covers callback progress, control and ordinary device teardown for that environment only.
+Native Windows/macOS execution, backend disconnection, listening, container timing/padding and
+realtime deadlines remain unqualified; the existing platform tiers are unchanged.
+
 `just bootstrap` invokes `./deps`, which requires `/etc/os-release` and only contains Linux
 package-manager paths. CI invokes Cargo directly and never invokes the bootstrap recipe.
 

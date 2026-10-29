@@ -25,10 +25,15 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.87.0
           components: rustfmt, clippy
+      - name: Verify selected compiler
+        shell: bash
+        run: |
+          rustc --version
+          [[ $(rustc --version) == 'rustc 1.87.0 '* ]]
       - name: Check formatting
         run: |
           cargo fmt --all --check
@@ -73,9 +78,14 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.87.0
+      - name: Verify selected compiler
+        shell: bash
+        run: |
+          rustc --version
+          [[ $(rustc --version) == 'rustc 1.87.0 '* ]]
       - name: Restore Cargo cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -122,9 +132,14 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.87.0
+      - name: Verify selected compiler
+        shell: bash
+        run: |
+          rustc --version
+          [[ $(rustc --version) == 'rustc 1.87.0 '* ]]
       - name: Restore Cargo cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -390,13 +405,18 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.87.0
-      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: nightly-2026-03-12
-          profile: minimal
+      - name: Verify selected compilers
+        shell: bash
+        run: |
+          rustc +1.87.0 --version
+          [[ $(rustc +1.87.0 --version) == 'rustc 1.87.0 '* ]]
+          rustc +nightly-2026-03-12 --version
       - name: Restore Cargo cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -425,11 +445,11 @@ jobs:
       - name: Build Rustdoc
         env:
           RUSTDOCFLAGS: "-D warnings"
-        run: cargo +1.87.0 doc --workspace --no-deps --locked
+        run: cargo +1.87.0 doc --workspace --all-features --no-deps --locked
       - name: Run doctests
         run: cargo +1.87.0 test --workspace --all-features --doc --locked
       - name: Build public facade
-        run: cargo +1.87.0 build -p vmnl --locked
+        run: cargo +1.87.0 build -p vmnl --all-features --locked
       - name: Check API documentation
         env:
           RUSTUP_TOOLCHAIN: 1.87.0

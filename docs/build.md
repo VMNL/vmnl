@@ -158,6 +158,9 @@ format 57 while stable VMNL compilation remains on Rust 1.87.
 `just docs-api-check` does not change tracked files, but may populate `target/api-tools`.
 API extraction covers graphics, macros and audio with every facade feature enabled. The book
 snippets link that complete facade; `just docs` builds Rustdoc with all features.
+CI pins the configurable toolchain action and rejects a selected compiler other than Rust
+1.87.0; the API-extraction nightly is installed and checked separately. An action's version-specific
+revision can ignore `toolchain`, so qualify the compiler printed in its logs, not just workflow inputs.
 `python3 tools/test_facade_features.py` checks isolated clients and their normal/build graphs;
 `--clippy` checks those same fixtures with warnings denied. Both write only generated clients
 and build artifacts under `target/`; fixture lockfiles are seeded from the root lockfile.

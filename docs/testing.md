@@ -70,6 +70,12 @@ no `continue-on-error` for audio failures. It also checks isolated empty/audio-o
 without graphics prerequisites; Validation checks all five combinations. Native compilation
 is not native execution.
 
+CI checks the selected compiler's actual version before validation. The pinned toolchain action
+must accept its `toolchain` input: a version-specific action can hardcode another compiler and
+ignore that input. Documentation additionally verifies the pinned API-extraction nightly and
+builds the facade/Rustdoc with all features. A successful job on another compiler does not
+qualify Rust 1.87.
+
 The native tests are ignored by default and excluded from the device-independent target. An
 explicit native run fails if device initialization or format selection fails; missing hardware
 is not reported as a passing test. These tests can produce audible output. No recipe installs
@@ -86,6 +92,31 @@ seam; they do not replace tests against the compiled public library or qualify a
 Ordinary domain contract tests use `vmnl_audio`; isolated clients test `vmnl::audio` through
 the compiled facade. Native backend results are separate from human
 listening validation.
+
+### Native audio qualification
+
+Record the source SHA, OS, compiler, CPAL version, backend/default output route, resolved output
+rate when observed, and initial mute/volume settings. Keep host audio settings fixed during
+a run. Run `just test-audio-backend` on each available platform; preserve named results,
+errors and the process exit status. Use an external watchdog against the test executable to
+bound a hung run. A watchdog timeout is a failure, not an excluded test or a shutdown guarantee.
+Compiling with `cargo test -p vmnl_audio --test audio-backend --no-run --message-format=json`
+provides the executable path without opening an output device.
+
+The eight current probes cover default manual constructors, automatic music refill without
+client updates, manual refill after exhaustion, public errors after automatic worker failure,
+shared bus/handle state, and load errors. Each creates and destroys a device. They do not inject
+a backend disconnection or measure callback deadlines, teardown latency, output waveform, or
+listening quality. Track those qualifications separately; no failed/missing device is a pass.
+
+On 2026-10-29, source `ef899d8c098e101f64f8294169c9f3f40a4224be` passed all eight native probes
+on Fedora 44 x86_64, kernel 7.2.11-200.fc44, Rust 1.95.0 and CPAL 0.18.2. ALSA 1.2.16.1's default
+output routed through PipeWire 1.6.10 to the `sof-hda-dsp` speaker sink. The sink stayed muted at
+volume zero before and after the run. The test executable ran serially with
+`--ignored --test-threads=1 --nocapture` under a 45-second watchdog and returned in 2.071 seconds: 8 passed,
+0 failed, 0 ignored. The resolved CPAL rate was not recorded. This is native callback/control
+and ordinary teardown smoke evidence, not human listening or a worst-case shutdown bound.
+Windows/macOS native audio execution remains unqualified.
 
 ## Virtual joystick/gamepad scenarios (issue #94)
 
