@@ -1340,22 +1340,23 @@ mod tests {
     #[test]
     fn validate_corners_rejects_overlapping_radii_without_clamping() {
         let size: Vector2f = Vector2f { x: 100.0, y: 50.0 };
+        let err_mess: &str = "rectangle corner radii must not overlap";
 
         assert_invalid_state(
             RectBuilder::validate_corners(size, CornerRadii::new(60.0, 60.0, 0.0, 0.0), 8),
-            "rectangle corner radii must not overlap",
+            err_mess,
         );
         assert_invalid_state(
             RectBuilder::validate_corners(size, CornerRadii::new(0.0, 0.0, 60.0, 60.0), 8),
-            "rectangle corner radii must not overlap",
+            err_mess,
         );
         assert_invalid_state(
             RectBuilder::validate_corners(size, CornerRadii::new(30.0, 0.0, 0.0, 30.0), 8),
-            "rectangle corner radii must not overlap",
+            err_mess,
         );
         assert_invalid_state(
             RectBuilder::validate_corners(size, CornerRadii::new(0.0, 30.0, 30.0, 0.0), 8),
-            "rectangle corner radii must not overlap",
+            err_mess,
         );
         // Touching tangent points are accepted: equality is not an overlap.
         assert!(
