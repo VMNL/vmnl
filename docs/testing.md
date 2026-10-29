@@ -22,8 +22,8 @@ qualify container-timing trimming or audible playback.
 
 `ogg_chains` concatenates two versioned Vorbis segments with distinct stream serials.
 It checks rate-only, channel-only and combined transitions through streaming and full-resource
-decoding. These six rejection regressions are active and are expected to fail until the decoder
-rejects format changes with `UnsupportedFormat`. A same-format chain must retain Lewton's PCM
+decoding. These six rejection regressions require `UnsupportedFormat` when source metadata changes.
+A same-format chain must retain Lewton's PCM
 across four read patterns, empty reads and repeated EOF; a separate check verifies each fixture's
 metadata, serial, empty priming packet and non-silent PCM. The oracle reads packets from the
 actual chain, not the container durations or the sum of separately decoded segments.

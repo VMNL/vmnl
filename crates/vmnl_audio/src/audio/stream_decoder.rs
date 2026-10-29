@@ -265,7 +265,9 @@ impl StreamingDecoder {
                 Err(error) => return Err(AudioError::DecoderFailed(error.to_string())),
             },
             DecoderBackend::Ogg(reader) => {
-                if let Some(packet) = read_ogg_pcm_packet(reader)? {
+                if let Some(packet) =
+                    read_ogg_pcm_packet(reader, self.source_channels, self.source_sample_rate)?
+                {
                     self.staging.extend(
                         packet
                             .into_iter()
@@ -417,15 +419,31 @@ impl StreamingDecoder {
     }
 }
 
-fn read_ogg_pcm_packet(reader: &mut OggReader) -> AudioResult<Option<Vec<i16>>> {
-    // Vorbis priming packets can produce no PCM; only None is EOF.
-    while let Some(packet) = reader
-        .read_dec_packet_itl()
-        .map_err(|error| AudioError::DecoderFailed(error.to_string()))?
-    {
+fn read_ogg_pcm_packet(
+    reader: &mut OggReader,
+    expected_channels: usize,
+    expected_sample_rate: u32,
+) -> AudioResult<Option<Vec<i16>>> {
+    loop {
+        let packet = reader
+            .read_dec_packet_itl()
+            .map_err(|error| AudioError::DecoderFailed(error.to_string()))?;
+        // Lewton replaces ident_hdr while reading a chained stream's headers.
+        if usize::from(reader.ident_hdr.audio_channels) != expected_channels
+            || reader.ident_hdr.audio_sample_rate != expected_sample_rate
+        {
+            return Err(AudioError::UnsupportedFormat(format!(
+                "OGG changes format mid-stream: expected {expected_channels} channels at \
+                 {expected_sample_rate} Hz, got {} channels at {} Hz",
+                reader.ident_hdr.audio_channels, reader.ident_hdr.audio_sample_rate
+            )));
+        }
+        // Vorbis priming packets can produce no PCM; only None is EOF.
+        let Some(packet) = packet else {
+            return Ok(None);
+        };
         if !packet.is_empty() {
             return Ok(Some(packet));
         }
     }
-    Ok(None)
 }
