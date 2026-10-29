@@ -6,6 +6,33 @@
 use vmnl::{common::Rgba, Context, VMNLError, VMNLErrorKind, VMNLResult, Window};
 use vmnl_gpu_tests::gpu_test_guard;
 
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn default_window_joystick_state_stays_untracked_after_polling() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut window = Window::builder().size(320, 240).build(&context)?;
+
+    assert!(!window.is_joystick_tracking_enabled());
+    assert!(!window.is_joystick_event_delivery_enabled());
+    for _ in 0..3 {
+        let events = window.poll_events();
+        assert!(!events.iter().any(|event| matches!(
+            event.kind(),
+            vmnl::EventKind::JoystickConnected { .. }
+                | vmnl::EventKind::JoystickDisconnected { .. }
+        )));
+        for index in 0..vmnl::JoystickId::COUNT {
+            let id = vmnl::JoystickId::from_index(index).expect("valid public slot");
+            assert_eq!(
+                window.input().joystick(id).status(),
+                vmnl::JoystickStatus::NotTracked
+            );
+        }
+    }
+    Ok(())
+}
+
 fn assert_invalid_window_size<T>(result: VMNLResult<T>) -> VMNLResult<()> {
     match result {
         Err(error) => {

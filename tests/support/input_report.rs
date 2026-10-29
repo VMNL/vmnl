@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Headless per-check reporting for the public native-input scenario.
+//! Headless per-check reporting shared by public native-input scenarios.
 
 #![allow(clippy::panic)]
 
@@ -102,8 +102,14 @@ impl InputTestReport {
     }
 
     pub(crate) fn render(&self) -> String {
-        let mut output =
-            String::from("\nVMNL INPUT TEST — X11\nPath: XTEST → OS → VMNL client Event / Input\n");
+        self.render_for(
+            "VMNL INPUT TEST — X11",
+            "XTEST → OS → VMNL client Event / Input",
+        )
+    }
+
+    pub(crate) fn render_for(&self, title: &str, path: &str) -> String {
+        let mut output = format!("\n{title}\nPath: {path}\n");
         let mut section = "";
         let mut input = "";
         let (mut passed, mut failed, mut excluded, mut not_run) = (0, 0, 0, 0);
@@ -154,6 +160,26 @@ impl InputTestReport {
             self.checks.len(),
         );
         output
+    }
+
+    #[allow(dead_code)] // Shared with keyboard/mouse binaries that only render terminal output.
+    pub(crate) fn json(&self, scenario: &str) -> serde_json::Value {
+        serde_json::json!({
+            "schema_version": 1,
+            "scenario": scenario,
+            "evidence": "linux-uinput",
+            "qualified": self.is_complete(),
+            "checks": self.checks.iter().map(|check| {
+                let (status, reason) = match &check.status {
+                    Status::Pass => ("PASS", None),
+                    Status::Fail(reason) => ("FAIL", Some(reason.as_str())),
+                    Status::Excluded(reason) => ("EXCLUDED", Some(reason.as_str())),
+                    Status::NotRun => ("NOT RUN", None),
+                };
+                serde_json::json!({"section": check.section, "input": check.input,
+                    "check": check.name, "status": status, "reason": reason})
+            }).collect::<Vec<_>>()
+        })
     }
 }
 
@@ -238,5 +264,25 @@ mod tests {
         assert!(InputTestReport::default()
             .render()
             .contains("Result:   INCOMPLETE"));
+    }
+
+    #[test]
+    fn versioned_reports_never_qualify_missing_prerequisites_or_unexecuted_checks() {
+        let mut report = InputTestReport::default();
+        report.plan("Environment", "uinput", &["Readiness"]);
+        report.plan("Joystick", "Button A", &["Press"]);
+        assert!(report
+            .run("Environment", "uinput", "Readiness", || Err::<(), _>(
+                "permission denied"
+            ))
+            .is_err());
+        let json = report.json("runtime");
+        assert_eq!(json["schema_version"], 1);
+        assert_eq!(json["qualified"], false);
+        assert_eq!(json["checks"][0]["status"], "FAIL");
+        assert_eq!(json["checks"][1]["status"], "NOT RUN");
+        assert!(report
+            .render_for("Joystick", "uinput")
+            .starts_with("\nJoystick\nPath: uinput\n"));
     }
 }

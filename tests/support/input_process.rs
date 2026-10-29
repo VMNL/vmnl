@@ -136,6 +136,14 @@ impl ClientProcess {
         self.child.id()
     }
 
+    #[allow(dead_code)] // Wayland qualification uses the same bounded stderr capture as failures.
+    pub(crate) fn diagnostics(&self) -> Result<String, String> {
+        self.diagnostics
+            .lock()
+            .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
+            .map_err(|_| "diagnostic buffer poisoned".into())
+    }
+
     pub(crate) fn send(&mut self, command: &str) -> Result<(), String> {
         writeln!(self.stdin, "{command}")
             .and_then(|()| self.stdin.flush())
@@ -206,6 +214,7 @@ pub(crate) fn expect_record(actual: &str, expected: &str) -> Result<(), String> 
 }
 
 #[cfg(test)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -287,6 +296,10 @@ mod tests {
         client
             .finish(Duration::from_secs(5))
             .expect("client exits and both pipes drain");
+        assert_eq!(
+            client.diagnostics().expect("bounded capture").len(),
+            MAX_STDERR
+        );
     }
 
     #[test]

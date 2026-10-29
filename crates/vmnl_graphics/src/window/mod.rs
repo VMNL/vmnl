@@ -22,8 +22,10 @@ pub use builder::{PresentMode, WindowBuilder};
 pub use event::{Event, EventKind};
 pub(crate) use input::CursorImage;
 pub use input::{
-    Cursor, CursorBuilder, CursorMode, Input, Key, KeyboardState, Modifiers, MouseButton,
-    MouseState, Scancode, StandardCursor, StandardCursorBuilder,
+    Cursor, CursorBuilder, CursorMode, GamepadAxis, GamepadButton, GamepadState, Input,
+    JoystickButtonState, JoystickHatState, JoystickId, JoystickSample, JoystickState,
+    JoystickStatus, Key, KeyboardState, Modifiers, MouseButton, MouseState, Scancode,
+    StandardCursor, StandardCursorBuilder, StickAngleConvention, StickConfig, StickState,
 };
 pub use monitors::{MonitorInfo, Monitors, VideoMode};
 use vulkano::{

@@ -7,14 +7,15 @@ Import path: `vmnl::Context`. Status: experimental, operational Vulkan context.
 ## Purpose and use cases
 
 `Context` initializes and shares the Vulkan instance, logical device, queue, and allocators used to
-build windows and GPU resources. It also owns the initialized GLFW lifetime required for
-layout-dependent keyboard metadata queries.
+build windows and GPU resources. It shares GLFW ownership and initialization settings with
+[`InputRuntime`](input_runtime.md), which also owns the GLFW lifetime used by layout-dependent
+keyboard metadata queries.
 
 ## Public API
 
 | Member | Contract |
 |---|---|
-| `Context::new()` | Initialize Vulkan state and return `VMNLResult<Context>`. |
+| `Context::new()` | Initialize Vulkan state and return `VMNLResult<Context>`; adopt an active `InputRuntime` configuration or use GLFW defaults. |
 | `Context::get_key_name(Key)` | Allocate the current-layout name of a printable named key, or return `None`. |
 | `Context::get_scancode_name(Scancode)` | Allocate the current-layout name of a printable scancode, or return `None`. |
 | `Context::get_key_scancode(Key)` | Return the active platform mapping for a named key, or `None`. |
@@ -40,13 +41,14 @@ Not applicable.
 
 ## Ownership, lifecycle, and threading
 
-The context owns internal state through `Rc`; clones share that state. Consequently `Context` is single-threaded (`!Send`/`!Sync`) and resources created from it belong to the same logical Vulkan device.
+The context owns internal state through `Rc`; clones share that state. Consequently `Context` is single-threaded (`!Send`/`!Sync`) and resources created from it belong to the same logical Vulkan device. Contexts, windows, cursors, and standalone `InputRuntime` handles share one GLFW runtime until the last owner drops.
 
 ## Errors, panics, and failure conditions
 
-Initialization can fail for Vulkan instance creation, physical-device/queue selection,
-logical-device creation, unsupported requirements, or allocator setup. Errors are returned as
-`VMNLResult`; no public panic contract is specified. Keyboard queries expose GLFW's null or unknown
+Initialization can fail for GLFW initialization or runtime thread ownership, Vulkan instance
+creation, physical-device/queue selection, logical-device creation, unsupported requirements, or
+allocator setup. Errors are returned as `VMNLResult`; no public panic contract is specified.
+Keyboard queries expose GLFW's null or unknown
 sentinel as `None`; backend failures are reported through the configured GLFW error callback.
 
 ## Allocation, transfers, synchronization, and GPU cost

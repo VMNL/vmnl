@@ -15,7 +15,19 @@ mod input_keys;
 
 use input_keys::KEYS;
 
+mod joystick;
 mod scenarios;
+
+/// Runs public joystick observations in a separate test-client process.
+///
+/// The driver selects standalone runtime or window snapshots; native injection stays outside
+/// this crate. This entry point is test tooling, not a VMNL facade API.
+///
+/// # Errors
+/// Returns an error for initialization, invalid protocol, timeout or an incorrect observation.
+pub fn run_joystick() -> VMNLResult<()> {
+    joystick::run()
+}
 
 const INPUT_TIMEOUT: Duration = Duration::from_secs(5);
 const SCROLL_SETTLE_TIME: Duration = Duration::from_millis(100);
@@ -54,7 +66,7 @@ pub fn run() -> VMNLResult<()> {
     window.show();
     // A first presented buffer makes the window visible to Xwayland's compositor.
     window.render().submit()?;
-    emit(&format!("MAPPED\t3\t{title}"))?;
+    emit(&format!("MAPPED\t4\t{title}"))?;
     let start = commands
         .next()
         .ok_or_else(|| invalid_state("driver disconnected before native pointer preparation"))?
@@ -96,7 +108,7 @@ pub fn run() -> VMNLResult<()> {
     )?;
     let _ = window.poll_events();
     let (x, y) = window.get_cursor_position();
-    emit(&format!("HELLO\t3\t{title}\t{x}\t{y}"))?;
+    emit(&format!("HELLO\t4\t{title}\t{x}\t{y}"))?;
 
     // Only this main thread owns the window. Commands arrive between observations;
     // stdin EOF terminates the client if the driver exits.
