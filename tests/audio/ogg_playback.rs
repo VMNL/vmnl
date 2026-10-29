@@ -170,3 +170,49 @@ fn same_format_chained_ogg_completes_through_manual_refills() {
     assert_eq!(stream.cursor_frames(), reference.frame_count());
     assert_cleaned(&runtime, &stream);
 }
+
+#[test]
+fn same_format_resampled_chain_completes_through_manual_refills() {
+    let file = ogg_chain(LONG_START, "chain-next-mono-8k.ogg");
+    let reference = AudioDecoder::decode_file(file.path())
+        .expect("decode same-format chain")
+        .resample_to_stereo(11_025)
+        .expect("resample full resource");
+    let runtime = AudioRuntime::new();
+    let stream = Arc::new(
+        MusicStream::new(
+            file.path().to_path_buf(),
+            1.0,
+            false,
+            PlaybackState::Playing,
+            11_025,
+        )
+        .expect("open resampled music"),
+    );
+    stream.pump().expect("prefill resampled music");
+    runtime
+        .register_music_stream(stream.clone())
+        .expect("register stream");
+    for _ in 0..128 {
+        let before = stream.cursor_frames();
+        let mut output = [0.0; 512];
+        stream.mix_into(&mut output, 1.0);
+        let after = stream.cursor_frames();
+        assert!(after <= reference.frame_count());
+        for (actual, expected) in output[..(after - before) * 2]
+            .iter()
+            .zip(&reference.samples()[before * 2..after * 2])
+        {
+            assert!(
+                (actual - expected).abs() <= 1.0e-5,
+                "resampled music PCM differs"
+            );
+        }
+        runtime.tick().expect("same-format refill stays valid");
+        if stream.is_stopped() {
+            break;
+        }
+    }
+    assert_eq!(stream.cursor_frames(), reference.frame_count());
+    assert_cleaned(&runtime, &stream);
+}

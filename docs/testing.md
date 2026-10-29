@@ -27,6 +27,9 @@ A same-format chain must retain Lewton's PCM
 across four read patterns, empty reads and repeated EOF; a separate check verifies each fixture's
 metadata, serial, empty priming packet and non-silent PCM. The oracle reads packets from the
 actual chain, not the container durations or the sum of separately decoded segments.
+Same-format mono/stereo pairs and a three-segment mono chain also check downsampling, same-rate
+decoding and upsampling to 4,000, 8,000, 11,025 and 48,000 Hz. The integer frame-count oracle,
+full-resource PCM tolerance and exact streaming PCM comparisons apply across four read patterns.
 
 The `chain-*.ogg` fixtures in `tests/audio/fixtures/` encode original synthetic sine waves
 under the repository's MIT license: 100 ms each, except the one-second `chain-start-long-mono-8k.ogg`.
@@ -41,20 +44,25 @@ tests read their committed bytes and never invoke an encoder or require FFmpeg i
 | `chain-next-stereo-8k.ogg` | 2 | 8,000 | 660 | 87 |
 | `chain-next-stereo-16k.ogg` | 2 | 16,000 | 660 | 88 |
 | `chain-start-long-mono-8k.ogg` | 1 | 8,000 | 440 | 89 |
+| `chain-start-stereo-8k.ogg` | 2 | 8,000 | 440 / 660 | 90 |
 
-For each row, encoding used `ffmpeg -f lavfi -i
+For each row except `chain-start-stereo-8k.ogg`, encoding used `ffmpeg -f lavfi -i
 "sine=frequency=TONE:sample_rate=RATE:duration=DURATION" -map_metadata -1 -ac CHANNELS
 -c:a libvorbis -q:a 3 -flags:a +bitexact -fflags +bitexact -serial_offset SERIAL FILE`.
 Substitute the table values and duration in seconds; bitexact flags and explicit serials remove
 randomized stream IDs.
+For `chain-start-stereo-8k.ogg`, the lavfi input was instead
+`aevalsrc=0.25*sin(2*PI*440*t)|0.125*sin(2*PI*660*t):s=8000:d=0.1` with the same output options.
+Its channels differ, so swapping or duplicating them cannot satisfy the PCM comparison.
 These source-copy checks qualify neither native playback nor encoder padding/container timing.
 
 `ogg_playback` places a rate/channel transition after a successful 500 ms prefill. Manual and
 automatic cases consume the valid prefix, preserve the decoder's original error, stop and remove
 the failed stream, and check that resume/loop changes cannot restart it. Manual control can run
 another cycle; a failed automatic worker stays failed after taking its diagnostic. A same-format
-chain must finish through later refills with exact PCM and cursor accounting. These deterministic
-source-copy checks are separate from the two native public Sound/Music cases below.
+chain must finish through later refills with exact PCM and cursor accounting. A resampled chain
+at 11,025 Hz also checks the PCM tolerance, cursor and completion across refills. These
+deterministic source-copy checks are separate from the two native public Sound/Music cases below.
 
 `playback_states` covers the sound/music state table, repeated commands after stop from another
 thread, ordered global stop/pause/resume commands, exact-buffer completion, cursor accounting,

@@ -9,7 +9,7 @@ use crate::internal_harness::audio::error::{AudioError, AudioResult};
 use crate::internal_harness::audio::stream_decoder::StreamingDecoder;
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Write};
 use std::path::Path;
 
 const START: &str = "chain-start-mono-8k.ogg";
@@ -17,6 +17,7 @@ const SAME_FORMAT: &str = "chain-next-mono-8k.ogg";
 const RATE_CHANGE: &str = "chain-next-mono-16k.ogg";
 const CHANNEL_CHANGE: &str = "chain-next-stereo-8k.ogg";
 const BOTH_CHANGE: &str = "chain-next-stereo-16k.ogg";
+const STEREO_START: &str = "chain-start-stereo-8k.ogg";
 
 struct ReferenceAudio {
     formats: Vec<(u8, u32)>,
@@ -84,8 +85,8 @@ fn chained_file(second: &str, second_format: (u8, u32)) -> TempAudioFile {
     file
 }
 
-fn streamed_audio(path: &Path, read_sizes: &[usize]) -> AudioResult<Vec<f32>> {
-    let mut decoder = StreamingDecoder::open(path, 8_000)?;
+fn streamed_audio(path: &Path, target_rate: u32, read_sizes: &[usize]) -> AudioResult<Vec<f32>> {
+    let mut decoder = StreamingDecoder::open(path, target_rate)?;
     let mut samples = Vec::new();
     for read_index in 0..65_536 {
         assert_eq!(decoder.read_stereo(&mut [])?, 0);
@@ -108,7 +109,7 @@ fn streamed_audio(path: &Path, read_sizes: &[usize]) -> AudioResult<Vec<f32>> {
 fn assert_stream_rejected(second: &str, second_format: (u8, u32)) {
     let file = chained_file(second, second_format);
     for sizes in [&[2][..], &[1_024], &[8_192], &[2, 14, 6, 102, 18, 514]] {
-        let error = streamed_audio(file.path(), sizes).err();
+        let error = streamed_audio(file.path(), 8_000, sizes).err();
         assert!(
             matches!(error, Some(AudioError::UnsupportedFormat(_))),
             "OGG format transition to {second_format:?}, reads={sizes:?}: expected UnsupportedFormat, got {error:?}"
@@ -135,6 +136,7 @@ fn fixtures_have_distinct_serials_and_the_expected_formats() {
         (CHANNEL_CHANGE, 2, 8_000, 87),
         (BOTH_CHANGE, 2, 16_000, 88),
         ("chain-start-long-mono-8k.ogg", 1, 8_000, 89),
+        (STEREO_START, 2, 8_000, 90),
     ] {
         let audio = reference_audio(&fixture_path(name));
         assert_eq!(audio.formats, [(channels, rate)], "{name}");
@@ -154,8 +156,66 @@ fn same_format_chain_preserves_reference_pcm_across_read_sizes() {
     let resource = AudioDecoder::decode_file(file.path()).expect("decode same-format chain");
     assert_eq!(resource.samples(), reference.samples);
     for sizes in [&[2][..], &[1_024], &[8_192], &[2, 14, 6, 102, 18, 514]] {
-        let streamed = streamed_audio(file.path(), sizes).expect("decode same-format chain");
+        let streamed = streamed_audio(file.path(), 8_000, sizes).expect("decode same-format chain");
         assert_eq!(streamed, reference.samples, "reads={sizes:?}");
+    }
+}
+
+#[test]
+fn same_format_chains_resample_without_read_size_dependent_pcm() {
+    let mono = ogg_chain(START, SAME_FORMAT);
+    let stereo = ogg_chain(STEREO_START, CHANNEL_CHANGE);
+    let three_segments = ogg_chain("chain-start-long-mono-8k.ogg", SAME_FORMAT);
+    std::fs::OpenOptions::new()
+        .append(true)
+        .open(three_segments.path())
+        .expect("open temporary chain")
+        .write_all(&std::fs::read(fixture_path(START)).expect("read third segment"))
+        .expect("append third segment");
+
+    for (file, formats, serials) in [
+        (&mono, vec![(1, 8_000); 2], vec![84, 85]),
+        (&stereo, vec![(2, 8_000); 2], vec![90, 87]),
+        (&three_segments, vec![(1, 8_000); 3], vec![89, 85, 84]),
+    ] {
+        let reference = reference_audio(file.path());
+        assert_eq!(reference.formats, formats);
+        assert_eq!(reference.serials, serials);
+        if reference.formats[0].0 == 2 {
+            assert!(
+                reference
+                    .samples
+                    .chunks_exact(2)
+                    .any(|frame| (frame[0] - frame[1]).abs() > 0.01),
+                "stereo fixture must distinguish left and right channels"
+            );
+        }
+        let native = AudioDecoder::decode_file(file.path()).expect("decode chain at source rate");
+        assert_eq!(native.samples(), reference.samples);
+        for target_rate in [4_000_u32, 8_000, 11_025, 48_000] {
+            let expected_frames = usize::try_from(
+                (reference.samples.len() as u128 / 2 * u128::from(target_rate)).div_ceil(8_000),
+            )
+            .expect("fixture frame count fits usize");
+            let full = native
+                .resample_to_stereo(target_rate)
+                .expect("resample full resource");
+            assert_eq!(full.frame_count(), expected_frames);
+            let baseline = streamed_audio(file.path(), target_rate, &[8_192])
+                .expect("stream reference chunks");
+            assert_eq!(baseline.len(), expected_frames * 2);
+            for (actual, expected) in baseline.iter().zip(full.samples()) {
+                assert!(
+                    (actual - expected).abs() <= 1.0e-5,
+                    "full-resource PCM differs"
+                );
+            }
+            for sizes in [&[2][..], &[1_024], &[8_192], &[2, 14, 6, 102, 18, 514]] {
+                let streamed = streamed_audio(file.path(), target_rate, sizes)
+                    .expect("stream same-format chain");
+                assert_eq!(streamed, baseline, "target={target_rate}, reads={sizes:?}");
+            }
+        }
     }
 }
 
