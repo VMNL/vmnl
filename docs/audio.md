@@ -108,6 +108,20 @@ The data callback must perform bounded work without allocation, deallocation, bl
 I/O, decoding, or device lifecycle operations. Publishing snapshots does not by itself prove
 this requirement: final-owner destruction and snapshot acquisition/reclamation require evidence.
 
+### PCM Ring Ownership
+
+Each music instance has one producer and one consumer over a fixed-capacity PCM ring.
+Wrapping sequence counters measure produced and consumed samples; their difference bounds
+the unread data. Separate physical positions advance within the exact allocated capacity,
+so a machine-counter overflow cannot change the addressed cell or overwrite unread PCM.
+
+The producer publishes initialized samples through a release store; the consumer acquires
+that counter before reading. A release of the read counter completes those reads before the
+producer acquires and reuses the cells. Each role alone advances its physical position.
+Producer mutexes and snapshot reader admission preserve that ownership when a role moves
+between OS threads. Ring reads and writes perform no allocation or blocking synchronization;
+their work remains proportional to the number of samples transferred.
+
 ### Snapshot Ownership
 
 Each category has three vector slots: one owned by the control writer, one exchange slot, and

@@ -17,8 +17,12 @@ const STREAM_BUFFER_MS: usize = 500;
 struct SampleRing {
     data: Box<[UnsafeCell<f32>]>,
     capacity: usize,
+    // Sequence counters measure occupancy; their machine wrap must not address PCM.
     read_index: AtomicUsize,
     write_index: AtomicUsize,
+    // Each side alone advances its physical position modulo the exact capacity.
+    read_position: AtomicUsize,
+    write_position: AtomicUsize,
 }
 
 // SAFETY: The ring owns its cells and atomics; moving it transfers that storage
@@ -27,6 +31,9 @@ unsafe impl Send for SampleRing {}
 // SAFETY: pump() serializes the producer with its decoder/scratch mutexes; the
 // CPAL callback is the sole consumer. Release/acquire publication of write_index
 // protects initialized slots, and read_index prevents overwriting unread slots.
+// Single-owner physical positions stay below capacity, independently of counter
+// wrap. The producer mutexes and snapshot reader admission also order each
+// side's position accesses if that role moves to a different OS thread.
 unsafe impl Sync for SampleRing {}
 
 impl SampleRing {
@@ -42,6 +49,8 @@ impl SampleRing {
             capacity,
             read_index: AtomicUsize::new(0),
             write_index: AtomicUsize::new(0),
+            read_position: AtomicUsize::new(0),
+            write_position: AtomicUsize::new(0),
         }
     }
 
@@ -62,15 +71,21 @@ impl SampleRing {
         let available = self.capacity - write.wrapping_sub(read).min(self.capacity);
         let count = samples.len().min(available);
 
-        for (offset, sample) in samples[..count].iter().copied().enumerate() {
-            let index = write.wrapping_add(offset) % self.capacity;
+        let mut position = self.write_position.load(Ordering::Relaxed);
+        for &sample in &samples[..count] {
             // SAFETY: count excludes unread slots. Only the serialized producer
-            // writes these cells, before publishing them with a Release store.
+            // writes these cells. The bounded position advances without a
+            // machine wrap, before publishing the samples with a Release store.
             unsafe {
-                *self.data[index].get() = sample;
+                *self.data[position].get() = sample;
+            }
+            position += 1;
+            if position == self.capacity {
+                position = 0;
             }
         }
 
+        self.write_position.store(position, Ordering::Relaxed);
         self.write_index
             .store(write.wrapping_add(count), Ordering::Release);
         count
@@ -83,15 +98,21 @@ impl SampleRing {
         let available = write.wrapping_sub(read).min(self.capacity);
         let count = output.len().min(available);
 
-        for (offset, destination) in output[..count].iter_mut().enumerate() {
-            let index = read.wrapping_add(offset) % self.capacity;
+        let mut position = self.read_position.load(Ordering::Relaxed);
+        for destination in &mut output[..count] {
             // SAFETY: the Acquire load observes initialized slots. Only the
-            // consumer reads them, before releasing them through read_index.
+            // consumer reads them at its bounded physical position, before
+            // releasing the cells through read_index.
             unsafe {
-                *destination = *self.data[index].get();
+                *destination = *self.data[position].get();
+            }
+            position += 1;
+            if position == self.capacity {
+                position = 0;
             }
         }
 
+        self.read_position.store(position, Ordering::Relaxed);
         self.read_index
             .store(read.wrapping_add(count), Ordering::Release);
         count

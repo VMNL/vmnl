@@ -331,11 +331,87 @@ pub(crate) mod audio {
                 }
 
                 #[test]
+                // Generated identifiers stay below 288,000 and are exact in f32.
+                #[allow(clippy::cast_precision_loss)]
+                fn ring_preserves_pcm_across_machine_counter_wrap() {
+                    for capacity in [44_100, 48_000, 7, 2, 1] {
+                        for initial in [0, usize::MAX - 3] {
+                            let ring = SampleRing::new(capacity);
+                            // A valid empty ring; accelerate only the logical clock.
+                            ring.read_index.store(initial, Ordering::Relaxed);
+                            ring.write_index.store(initial, Ordering::Relaxed);
+                            for cycle in 0..6 {
+                                let source: Vec<f32> = (0..capacity)
+                                    .map(|index| (cycle * capacity + index) as f32)
+                                    .collect();
+                                assert_eq!(ring.available_write(), capacity);
+                                assert_eq!(ring.write(&source), capacity);
+                                assert_eq!(ring.available_read(), capacity);
+                                assert_eq!(ring.available_write(), 0);
+                                assert_eq!(ring.write(&[99.0]), 0);
+
+                                let mut output = vec![-1.0; capacity + 3];
+                                let (read, heap) =
+                                    crate::allocation_probe::measure(|| ring.read(&mut output));
+                                assert_eq!(read, capacity);
+                                assert_eq!(heap, crate::allocation_probe::Counts::default());
+                                for (index, (actual, expected)) in
+                                    output.iter().zip(&source).enumerate()
+                                {
+                                    assert_eq!(
+                                        actual, expected,
+                                        "capacity={capacity}, initial={initial}, cycle={cycle}, sample={index}"
+                                    );
+                                }
+                                assert_eq!(output[capacity..], [-1.0; 3]);
+                                assert_eq!(ring.available_read(), 0);
+                            }
+                            let final_index = initial.wrapping_add(6 * capacity);
+                            assert_eq!(ring.read_index.load(Ordering::Relaxed), final_index);
+                            assert_eq!(ring.write_index.load(Ordering::Relaxed), final_index);
+                        }
+                    }
+                }
+
+                #[test]
+                fn ring_preserves_unread_samples_when_counters_wrap_separately() {
+                    let ring = SampleRing::new(7);
+                    let initial = usize::MAX - 3;
+                    ring.read_index.store(initial, Ordering::Relaxed);
+                    ring.write_index.store(initial, Ordering::Relaxed);
+                    assert_eq!(ring.write(&[0.0, 1.0, 2.0]), 3);
+                    let mut head = [-1.0];
+                    assert_eq!(ring.read(&mut head), 1);
+                    assert_eq!(head, [0.0]);
+                    assert_eq!(ring.write(&[3.0, 4.0, 5.0, 6.0, 7.0, 8.0]), 5);
+                    assert_eq!(ring.available_write(), 0);
+
+                    let mut tail = [-1.0; 9];
+                    assert_eq!(ring.read(&mut tail), 7);
+                    assert_eq!(tail, [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, -1.0, -1.0]);
+                    assert_eq!(ring.available_read(), 0);
+                    assert_eq!(ring.write(&[8.0, 9.0]), 2);
+                    assert_eq!(ring.read(&mut tail), 2);
+                    assert_eq!(tail[..2], [8.0, 9.0]);
+                }
+
+                #[test]
+                fn ring_spsc_concurrency_preserves_every_sample_in_order() {
+                    exercise_ring_spsc(0);
+                }
+
+                #[test]
+                fn ring_spsc_concurrency_preserves_order_across_machine_counter_wrap() {
+                    exercise_ring_spsc(usize::MAX - 60_001);
+                }
+
                 // Fixture indices stay below 120,000 and are exact in f32.
                 #[allow(clippy::cast_precision_loss)]
-                fn ring_spsc_concurrency_preserves_every_sample_in_order() {
+                fn exercise_ring_spsc(initial: usize) {
                     const COUNT: usize = 120_000;
                     let ring = Arc::new(SampleRing::new(127));
+                    ring.read_index.store(initial, Ordering::Relaxed);
+                    ring.write_index.store(initial, Ordering::Relaxed);
                     let done = Arc::new(AtomicBool::new(false));
                     let timed_out = Arc::new(AtomicBool::new(false));
                     let deadline = Instant::now() + Duration::from_secs(8);
@@ -404,6 +480,11 @@ pub(crate) mod audio {
                             "sample lost, duplicated or reordered at {index}"
                         );
                     }
+                    let final_index = initial.wrapping_add(COUNT);
+                    assert_eq!(ring.read_index.load(Ordering::Relaxed), final_index);
+                    assert_eq!(ring.write_index.load(Ordering::Relaxed), final_index);
+                    assert_eq!(ring.available_read(), 0);
+                    assert_eq!(ring.available_write(), 127);
                 }
             }
 

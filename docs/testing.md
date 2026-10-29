@@ -52,6 +52,14 @@ and streaming decoder entries. `output_config` uses valid advertised CPAL ranges
 stereo filtering, format preference, nearest/clamped rates, unsupported outputs, and the backend
 default buffer policy. These tests do not require a host or qualify its actual device formats.
 
+Ring regressions seed valid empty rings near `usize::MAX` and check FIFO order, exact capacity,
+full/empty and partial transfers when the counters overflow together or separately. They cover
+capacities 1, 2, 7, 44,100 and 48,000 samples and measure no Rust heap operations during reads.
+The SPSC exercise checks 120,000 sample identifiers between two threads, both from zero and
+across machine-counter overflow. These use the production source-copy harness on the host's
+word width; they do not constitute native 32-bit execution, exhaustive memory-model checking
+or a callback-deadline measurement.
+
 Facade checks use `python3 tools/test_facade_features.py`, also run by `just test-api`.
 They generate independent client workspaces under `target/`, seed their lockfiles from the root
 lockfile, and test default, explicit graphics, audio-only, both, and empty configurations. Their
