@@ -98,7 +98,16 @@ output. Separate playback regressions check simultaneous completion at 480 outpu
 and three Music/Sound loop repetitions without an extra frame. These private source-copy
 checks do not qualify encoder padding, audible quality or callback timing.
 
-The resampler's zero-source-rate and incomplete-frame cases deliberately fabricate invalid
+Float32 WAV regressions cover finite extrema of opposite signs at equal, higher and lower
+rates, exact midpoint samples, channel order and source-chunk/read boundaries. `float_wav`
+checks Sound/Music mixing, exact silence and consumed-frame cursors for master/category
+mute, zero bus gain and zero handle volume. Its long valid prefix places extreme PCM after
+the initial music prefill; separate cases reject later NaN/infinity samples without publishing
+them. The native target also checks that extreme finite WAV Sound/Music resources load, play
+and complete through the public API with master volume zero. These checks do not qualify
+audible output or realtime timing.
+
+The resampler's zero-source-rate, non-finite-source and incomplete-frame cases deliberately fabricate invalid
 private PCM; they prove internal rejection before empty/same-rate shortcuts, not a state
 constructible by clients. Separate WAV tests corrupt real metadata/data and check both full
 and streaming decoder entries. `output_config` uses valid advertised CPAL ranges to check

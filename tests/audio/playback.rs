@@ -6,7 +6,37 @@
 use crate::backend_support::{device, lock_backend_tests};
 use crate::common::{ogg_chain, wait_until, TempAudioFile};
 use std::time::Duration;
-use vmnl_audio::{AudioError, MusicPlayConfig, SoundPlayConfig};
+use vmnl_audio::{AudioDevice, AudioError, MusicPlayConfig, SoundPlayConfig};
+
+#[test]
+#[ignore = "requires a usable CPAL stereo output device"]
+fn extreme_float_wav_sound_and_music_complete_through_the_public_api() {
+    let _guard = lock_backend_tests();
+    let device = AudioDevice::builder()
+        .master_volume(0.0)
+        .build()
+        .expect("backend test requires a usable CPAL stereo output device");
+    let file = TempAudioFile::new("wav");
+    let samples: Vec<f32> = (0..8_201)
+        .flat_map(|frame| {
+            let sample = if frame % 2 == 0 { f32::MAX } else { -f32::MAX };
+            [sample, -sample]
+        })
+        .collect();
+    file.write_float_wav(2, 8_000, &samples);
+    let sound = device.load_sound(file.path()).expect("load finite extrema");
+    let sound = sound.play().expect("play resampled extreme sound");
+    let music = device.load_music(file.path()).expect("open extreme music");
+    let music = music.play().expect("prefill extreme music");
+    assert!(wait_until(Duration::from_secs(3), || {
+        device.update().expect("refill finite extrema");
+        sound.is_stopped() && music.is_stopped()
+    }));
+    let expected = usize::try_from((8_201 * u128::from(device.sample_rate())).div_ceil(8_000))
+        .expect("small fixture frame count");
+    assert_eq!(sound.cursor_frames(), expected);
+    assert_eq!(music.cursor_frames(), expected);
+}
 
 #[test]
 #[ignore = "requires a usable CPAL stereo output device"]

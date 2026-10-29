@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::audio::error::{AudioError, AudioResult};
-use crate::audio::stream_decoder::StreamingDecoder;
+use crate::audio::stream_decoder::{interpolate_sample, StreamingDecoder};
 use std::path::Path;
 
 /// Control-side PCM. Production decoding yields finite, complete stereo frames
@@ -40,8 +40,8 @@ impl DecodedAudio {
         &self.samples
     }
 
-    /// Rejects malformed scalar metadata and frame alignment before any empty
-    /// or same-rate shortcut, including if an internal caller bypasses decoding.
+    /// Rejects malformed metadata, frame alignment and non-finite PCM before any
+    /// empty or same-rate shortcut, including if a caller bypasses decoding.
     // Linear interpolation intentionally narrows its fraction to f32; preserve
     // the existing floating phase/index policy rather than changing the DSP here.
     #[allow(
@@ -75,6 +75,11 @@ impl DecodedAudio {
         if !self.samples.len().is_multiple_of(self.channels as usize) {
             return Err(AudioError::DecoderFailed(
                 "decoded audio contains an incomplete PCM frame".to_owned(),
+            ));
+        }
+        if self.samples.iter().any(|sample| !sample.is_finite()) {
+            return Err(AudioError::DecoderFailed(
+                "decoded audio contains a non-finite sample".to_owned(),
             ));
         }
 
@@ -123,7 +128,7 @@ impl DecodedAudio {
             let left0 = sample(i0, 0);
             let left1 = sample(i1, 0);
 
-            let left = left0 + (left1 - left0) * fraction;
+            let left = interpolate_sample(left0, left1, fraction)?;
 
             let right = if self.channels == 1 {
                 left
@@ -132,7 +137,7 @@ impl DecodedAudio {
 
                 let right1 = sample(i1, 1);
 
-                right0 + (right1 - right0) * fraction
+                interpolate_sample(right0, right1, fraction)?
             };
 
             samples.push(left);

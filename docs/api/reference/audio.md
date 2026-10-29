@@ -70,6 +70,12 @@ not decibels. Cursor units are consumed PCM frames at the resolved device rate, 
 across loops, not hardware presentation time. Underrun silence does not advance music's cursor.
 `path()` returns the supplied path without canonicalization. No graphics coordinates apply.
 
+Float32 WAV samples may have any finite amplitude, including outside `[-1, 1]`. Decoding and
+resampling preserve finite PCM without clipping the source; only the final mixed output is
+clamped to `[-1, 1]`. Non-finite source samples or interpolation results return `DecoderFailed`
+before that PCM reaches a decoded resource or music ring. Music can encounter such an error
+during initial prefill or a later refill.
+
 Mute and zero gain silence output while consuming PCM and permitting EOF. Bus pause freezes
 its routes without replacing individual states; master pause freezes both routes. Handle pause
 freezes that instance. Unmute/volume changes preserve pauses and cannot restart stopped playback.

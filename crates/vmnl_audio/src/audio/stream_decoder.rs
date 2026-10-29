@@ -379,13 +379,13 @@ impl StreamingDecoder {
                 / f64::from(self.target_sample_rate)) as f32;
             let left0 = self.source_buffer[index * source_channels];
             let left1 = self.source_buffer[next_index * source_channels];
-            let left = left0 + (left1 - left0) * fraction;
+            let left = interpolate_sample(left0, left1, fraction)?;
             let right = if source_channels == 1 {
                 left
             } else {
                 let right0 = self.source_buffer[index * source_channels + 1];
                 let right1 = self.source_buffer[next_index * source_channels + 1];
-                right0 + (right1 - right0) * fraction
+                interpolate_sample(right0, right1, fraction)?
             };
 
             output[written_frames * 2] = left;
@@ -417,6 +417,26 @@ impl StreamingDecoder {
     pub(crate) fn reopen(&self) -> AudioResult<Self> {
         Self::open(&self.path, self.target_sample_rate)
     }
+}
+
+// Preserve ordinary f32 PCM exactly; opposite finite extrema can overflow the
+// subtraction even at fraction zero. f64 can hold their difference and product.
+#[allow(clippy::cast_possible_truncation)]
+pub(super) fn interpolate_sample(first: f32, second: f32, fraction: f32) -> AudioResult<f32> {
+    let sample = first + (second - first) * fraction;
+    if sample.is_finite() {
+        return Ok(sample);
+    }
+
+    let first = f64::from(first);
+    let sample = (first + (f64::from(second) - first) * f64::from(fraction)) as f32;
+    if !sample.is_finite() {
+        return Err(AudioError::DecoderFailed(
+            "interpolation produced a non-finite sample".to_owned(),
+        ));
+    }
+
+    Ok(sample)
 }
 
 fn read_ogg_pcm_packet(

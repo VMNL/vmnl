@@ -7,6 +7,9 @@
 //! for each playback. [`AudioDevice`] owns the output stream and its resolved
 //! stereo sample rate. Resource loading and manual control may allocate and do
 //! file I/O; they must not run on the audio callback.
+//! Finite float32 WAV samples outside `[-1, 1]` remain accepted. Decoding and
+//! resampling preserve finite PCM without source clipping; the mixer clamps its
+//! final output to `[-1, 1]`. Non-finite PCM is rejected with [`AudioError::DecoderFailed`].
 //! OGG/Vorbis chains must keep the initial channel count and sample rate across
 //! their logical streams; a detected change is rejected during decoding.
 //! [`AudioDevice::load_music`] checks initial metadata, not the whole track.

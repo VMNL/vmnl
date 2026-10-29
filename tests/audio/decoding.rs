@@ -63,6 +63,79 @@ fn float32_wav_decoding_preserves_finite_stereo_samples() {
     assert_eq!(decoded.samples(), &[0.25, -0.5, 0.75, -1.0]);
 }
 
+fn extreme_stereo_pcm(channels: u16, values: &[f32]) -> Vec<f32> {
+    values
+        .iter()
+        .flat_map(|sample| [*sample, if channels == 1 { *sample } else { -*sample }])
+        .collect()
+}
+
+#[test]
+fn float32_wav_extreme_samples_remain_finite_at_all_rates() {
+    for channels in [1, 2] {
+        let file = TempAudioFile::new("wav");
+        let values = [f32::MAX, -f32::MAX, f32::MAX];
+        let source = if channels == 1 {
+            values.to_vec()
+        } else {
+            extreme_stereo_pcm(channels, &values)
+        };
+        file.write_float_wav(channels, 8_000, &source);
+
+        for (rate, expected) in [
+            (8_000, values.to_vec()),
+            (
+                16_000,
+                vec![f32::MAX, 0.0, -f32::MAX, 0.0, f32::MAX, f32::MAX],
+            ),
+            (4_000, vec![f32::MAX, f32::MAX]),
+        ] {
+            let expected = extreme_stereo_pcm(channels, &expected);
+            for sizes in [&[2][..], &[8_192], &[2, 14, 6]] {
+                let actual = decode_to_vec(file.path(), rate, sizes);
+                assert!(actual.iter().all(|sample| sample.is_finite()));
+                assert_eq!(actual, expected, "{channels} channels at {rate} Hz");
+            }
+        }
+
+        let decoded = AudioDecoder::decode_file(file.path()).expect("decode finite extrema");
+        assert_eq!(decoded.samples(), extreme_stereo_pcm(channels, &values));
+    }
+}
+
+#[test]
+fn cached_pcm_resampling_preserves_extreme_finite_samples() {
+    use crate::audio::decoder::test_support::decoded_audio;
+
+    for channels in [1_u16, 2] {
+        let values = [f32::MAX, -f32::MAX, f32::MAX];
+        let source = if channels == 1 {
+            values.to_vec()
+        } else {
+            extreme_stereo_pcm(channels, &values)
+        };
+        let decoded = decoded_audio(u32::from(channels), 8_000, source);
+        for (rate, expected) in [
+            (8_000, values.to_vec()),
+            (
+                16_000,
+                vec![f32::MAX, 0.0, -f32::MAX, 0.0, f32::MAX, f32::MAX],
+            ),
+            (4_000, vec![f32::MAX, f32::MAX]),
+        ] {
+            let actual = decoded
+                .resample_to_stereo(rate)
+                .expect("resample finite extrema");
+            assert!(actual.samples().iter().all(|sample| sample.is_finite()));
+            assert_eq!(
+                actual.samples(),
+                extreme_stereo_pcm(channels, &expected),
+                "{channels} channels at {rate} Hz"
+            );
+        }
+    }
+}
+
 #[test]
 fn empty_wav_decodes_to_an_empty_signal_without_panicking() {
     let file = TempAudioFile::new("wav");
@@ -116,13 +189,71 @@ fn incomplete_stereo_wav_data_is_rejected_at_both_decoder_entries() {
 
 #[test]
 fn float32_wav_decoding_rejects_non_finite_samples() {
-    let file = TempAudioFile::new("wav");
-    file.write_float_wav(1, 44_100, &[0.0, f32::NAN, 0.25]);
+    for sample in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
+        for channels in [1, 2] {
+            let file = TempAudioFile::new("wav");
+            file.write_float_wav(channels, 44_100, &[0.0, sample, 0.25, -0.25]);
+            assert_malformed_wav_is_rejected(file.path());
+        }
+    }
+}
 
-    assert!(matches!(
-        AudioDecoder::decode_file(file.path()),
-        Err(AudioError::DecoderFailed(_))
-    ));
+#[test]
+fn cached_pcm_resampling_rejects_non_finite_samples_before_copying() {
+    use crate::audio::decoder::test_support::decoded_audio;
+
+    for sample in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
+        for channels in [1, 2] {
+            let decoded = decoded_audio(channels, 8_000, vec![0.25, sample]);
+            for rate in [4_000, 8_000, 16_000] {
+                assert!(matches!(
+                    decoded.resample_to_stereo(rate),
+                    Err(AudioError::DecoderFailed(_))
+                ));
+            }
+        }
+    }
+}
+
+#[test]
+fn float32_wav_extrema_survive_source_chunk_boundaries() {
+    for channels in [1, 2] {
+        let file = TempAudioFile::new("wav");
+        let values: Vec<f32> = (0..8_201)
+            .map(|frame| if frame % 2 == 0 { f32::MAX } else { -f32::MAX })
+            .collect();
+        let source = if channels == 1 {
+            values.clone()
+        } else {
+            extreme_stereo_pcm(channels, &values)
+        };
+        file.write_float_wav(channels, 8_000, &source);
+        let expected = extreme_stereo_pcm(
+            channels,
+            &values
+                .iter()
+                .enumerate()
+                .flat_map(|(frame, sample)| {
+                    [
+                        *sample,
+                        if frame + 1 == values.len() {
+                            *sample
+                        } else {
+                            0.0
+                        },
+                    ]
+                })
+                .collect::<Vec<_>>(),
+        );
+        for sizes in [&[2][..], &[8_192], &[2, 514, 14, 1_024]] {
+            assert_eq!(decode_to_vec(file.path(), 16_000, sizes), expected);
+        }
+        let full = AudioDecoder::decode_file(file.path())
+            .expect("decode extrema across source chunks")
+            .resample_to_stereo(16_000)
+            .expect("resample extrema across source chunks");
+        assert_eq!(full.samples(), expected);
+    }
 }
 
 #[test]

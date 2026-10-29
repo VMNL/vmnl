@@ -40,8 +40,13 @@ supported. Removing the facade or splitting repositories is deferred until after
 ## Decoding and Output Selection
 
 Source metadata must describe mono/stereo audio at a nonzero rate. Full-resource decoding
-produces finite, complete stereo PCM frames. The control-side resampler also rejects a zero
-source rate or an incomplete frame before its empty/same-rate shortcuts. Clients cannot directly
+produces finite, complete stereo PCM frames. Finite float32 WAV amplitudes outside `[-1, 1]`
+remain accepted without source clipping. Both resamplers preserve finite interpolation results,
+using wider intermediates when the usual `f32` calculation would become non-finite. A non-finite
+source sample or interpolation result returns `DecoderFailed` before that PCM is published to a
+resource or music ring. Only the mixer clamps its final output to `[-1, 1]`.
+The control-side resampler also rejects a zero source rate, an incomplete frame or non-finite
+source PCM before its empty/same-rate shortcuts. Clients cannot directly
 construct the private decoded resource; tests that bypass construction check internal defense,
 while malformed-file tests check the actual decoder entry paths.
 

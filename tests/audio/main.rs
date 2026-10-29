@@ -15,6 +15,7 @@ mod allocation_probe;
 mod common;
 mod contracts;
 mod decoding;
+mod float_wav;
 mod gain_semantics;
 mod internal_harness;
 mod ogg_chains;
