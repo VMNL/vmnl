@@ -20,6 +20,32 @@ packet. They check initial PCM against Lewton, complete PCM delivery across smal
 agreement with full-resource decoding, and repeated reads after EOF. These checks do not
 qualify container-timing trimming or audible playback.
 
+`ogg_chains` concatenates two versioned Vorbis segments with distinct stream serials.
+It checks rate-only, channel-only and combined transitions through streaming and full-resource
+decoding. These six rejection regressions are active and are expected to fail until the decoder
+rejects format changes with `UnsupportedFormat`. A same-format chain must retain Lewton's PCM
+across four read patterns, empty reads and repeated EOF; a separate check verifies each fixture's
+metadata, serial, empty priming packet and non-silent PCM. The oracle reads packets from the
+actual chain, not the container durations or the sum of separately decoded segments.
+
+The five `chain-*.ogg` fixtures in `tests/audio/fixtures/` encode original synthetic 100 ms sine
+waves under the repository's MIT license. They were generated once with FFmpeg 8.1.3/libvorbis;
+tests read their committed bytes and never invoke an encoder or require FFmpeg in CI.
+
+| Fixture | Channels | Rate (Hz) | Tone (Hz) | OGG serial |
+| --- | ---: | ---: | ---: | ---: |
+| `chain-start-mono-8k.ogg` | 1 | 8,000 | 440 | 84 |
+| `chain-next-mono-8k.ogg` | 1 | 8,000 | 660 | 85 |
+| `chain-next-mono-16k.ogg` | 1 | 16,000 | 660 | 86 |
+| `chain-next-stereo-8k.ogg` | 2 | 8,000 | 660 | 87 |
+| `chain-next-stereo-16k.ogg` | 2 | 16,000 | 660 | 88 |
+
+For each row, encoding used `ffmpeg -f lavfi -i
+"sine=frequency=TONE:sample_rate=RATE:duration=0.1" -map_metadata -1 -ac CHANNELS
+-c:a libvorbis -q:a 3 -flags:a +bitexact -fflags +bitexact -serial_offset SERIAL FILE`.
+Substitute the table values; bitexact flags and explicit serials remove randomized stream IDs.
+These source-copy checks qualify neither native playback nor encoder padding/container timing.
+
 `playback_states` covers the sound/music state table, repeated commands after stop from another
 thread, ordered global stop/pause/resume commands, exact-buffer completion, cursor accounting,
 and dynamic loop changes around decoder EOF and refill. Its cross-thread cases use barriers

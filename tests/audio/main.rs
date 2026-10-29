@@ -17,6 +17,7 @@ mod contracts;
 mod decoding;
 mod gain_semantics;
 mod internal_harness;
+mod ogg_chains;
 mod output_config;
 mod playback_states;
 mod realtime;
