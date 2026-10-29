@@ -39,7 +39,8 @@ directly; an optional high-level runner may provide a simpler path without remov
 Windowing and input belong to graphics for now. This ownership may change only when a concrete
 cross-domain requirement justifies a separate platform boundary.
 
-The target crate model keeps domains independently selectable through the `vmnl` facade:
+The crate model keeps domains independently selectable through the `vmnl` facade. Graphics
+is the default; audio is opt-in. Network and scene remain planned:
 
 ```text
 vmnl
@@ -139,9 +140,10 @@ stable compatibility baseline; their present behavior remains documented in the 
 
 ## Current Implementation Boundaries
 
-- `vmnl` re-exports the current public graphics API.
-- `vmnl_audio` is directly usable; optional exposure through `vmnl::audio` remains an acceptance
-  target defined in [Audio](audio.md).
+- `vmnl` reexports graphics through default `graphics` and audio through opt-in `audio`.
+  Disabling defaults permits audio-only or empty clients without graphics dependencies.
+- `vmnl_audio` is directly usable and exposed through `vmnl::audio`; manual control is the
+  default, with optional worker execution as defined in [Audio](audio.md).
 - `vmnl_graphics` owns rendering, windowing, input, and GPU resource behavior.
 - `InputRuntime` and `Context` share the same GLFW owner; standalone input access does not create a
   Vulkan instance or window.

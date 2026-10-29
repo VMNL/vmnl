@@ -44,7 +44,7 @@ test sequence.
 ```text
 just test                  unit + API + smoke tests
 just test-unit             unit tests
-just test-api              API tests
+just test-api              API tests and isolated facade feature clients
 just test-audio            device-independent audio tests
 just test-audio-backend    opt-in CPAL tests; requires a usable stereo output device
 just test-smoke            smoke tests
@@ -156,6 +156,11 @@ field and fails before producing an inventory. The pinned 2026-03-12 nightly emi
 format 57 while stable VMNL compilation remains on Rust 1.87.
 
 `just docs-api-check` does not change tracked files, but may populate `target/api-tools`.
+API extraction covers graphics, macros and audio with every facade feature enabled. The book
+snippets link that complete facade; `just docs` builds Rustdoc with all features.
+`python3 tools/test_facade_features.py` checks isolated clients and their normal/build graphs;
+`--clippy` checks those same fixtures with warnings denied. Both write only generated clients
+and build artifacts under `target/`; fixture lockfiles are seeded from the root lockfile.
 `just docs-api-update` rewrites only
 `public_api_snapshot.md`, `public_symbol_index.md`, `method_index.md`,
 `glfw_platform_inventory.md`, and `platform_compatibility.md`; review their diff.

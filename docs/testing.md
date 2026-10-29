@@ -52,10 +52,23 @@ and streaming decoder entries. `output_config` uses valid advertised CPAL ranges
 stereo filtering, format preference, nearest/clamped rates, unsupported outputs, and the backend
 default buffer policy. These tests do not require a host or qualify its actual device formats.
 
-The independent `Audio` CI matrix compiles both targets and runs only `audio` on Linux, macOS,
+Facade checks use `python3 tools/test_facade_features.py`, also run by `just test-api`.
+They generate independent client workspaces under `target/`, seed their lockfiles from the root
+lockfile, and test default, explicit graphics, audio-only, both, and empty configurations. Their
+normal/build dependency trees must exclude graphics/Vulkan/GLFW without `graphics`. Audio checks
+import through `vmnl::audio`, verify type identity with `vmnl_audio`, manual/default and explicit
+automatic modes, and reject invalid configuration without opening a device. Empty configuration
+is a compilation/graph check. Facade Rustdoc is also tested for each selected configuration.
+Workspace-wide feature union cannot substitute for these clients.
+`--clippy` checks the same clients with warnings denied. The runner changes only generated
+clients and normal Cargo artifacts; it does not change the root lockfile or host configuration.
+
+The independent `Audio` CI matrix compiles both targets and runs `audio` on Linux, macOS,
 and Windows with Rust 1.87. Linux jobs install the ALSA development files. This matrix has no
 dependency on the Quality job, so Clippy failures do not suppress audio diagnostics. There is
-no `continue-on-error` for audio failures; native test compilation is not native execution.
+no `continue-on-error` for audio failures. It also checks isolated empty/audio-only clients
+without graphics prerequisites; Validation checks all five combinations. Native compilation
+is not native execution.
 
 The native tests are ignored by default and excluded from the device-independent target. An
 explicit native run fails if device initialization or format selection fails; missing hardware
@@ -70,8 +83,8 @@ the implementation already satisfies the [acceptance contract](audio.md).
 The private implementation harness compiles copies of the production sources in a test-only
 module tree, without making private types public. Its results prove behavior at that private
 seam; they do not replace tests against the compiled public library or qualify a CPAL device.
-The ordinary public contract tests use `vmnl_audio`; facade tests through `vmnl::audio` remain
-required when that feature is implemented. Native backend results are separate from human
+Ordinary domain contract tests use `vmnl_audio`; isolated clients test `vmnl::audio` through
+the compiled facade. Native backend results are separate from human
 listening validation.
 
 ## Virtual joystick/gamepad scenarios (issue #94)

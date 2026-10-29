@@ -18,6 +18,19 @@ pub(crate) struct ControlWorker {
     background_error: Arc<Mutex<Option<String>>>,
 }
 
+/// Select exactly one control producer. A failed automatic worker never falls
+/// back to a caller-side tick, even after its diagnostic has been consumed.
+pub(crate) fn update_control(
+    runtime: &AudioRuntime,
+    worker: Option<&ControlWorker>,
+) -> AudioResult<()> {
+    if let Some(worker) = worker {
+        worker.ensure_running()
+    } else {
+        runtime.tick()
+    }
+}
+
 impl ControlWorker {
     pub(crate) fn spawn(
         runtime: Arc<AudioRuntime>,
@@ -167,6 +180,55 @@ mod tests {
             .expect("worker error")
             .contains("controlled failure"));
         assert!(stop.load(Ordering::Acquire));
+    }
+
+    #[test]
+    fn automatic_update_does_not_run_a_second_control_cycle() {
+        use crate::audio::{decoder::AudioDecoder, sound::SoundVoice, PlaybackState};
+        let source = tempfile::Builder::new()
+            .suffix(".wav")
+            .tempfile()
+            .expect("fixture");
+        let spec = hound::WavSpec {
+            channels: 2,
+            sample_rate: 8_000,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+        let mut writer = hound::WavWriter::create(source.path(), spec).expect("WAV writer");
+        writer.write_sample(8_192_i16).expect("left");
+        writer.write_sample(-4_096_i16).expect("right");
+        writer.finalize().expect("finish WAV");
+        let pcm = Arc::new(AudioDecoder::decode_file(source.path()).expect("decode"));
+        let voice =
+            Arc::new(SoundVoice::new(1, pcm, 1.0, false, PlaybackState::Playing).expect("voice"));
+        let runtime = super::AudioRuntime::new();
+        runtime
+            .register_sound_voice(voice.clone())
+            .expect("register");
+        runtime.force_pause_all().expect("queue pause");
+        let (release_tx, release_rx) = mpsc::channel();
+        let join = thread::spawn(move || {
+            let _ = release_rx.recv();
+        });
+        let mut worker = ControlWorker {
+            stop: Arc::new(AtomicBool::new(false)),
+            join: Some(join),
+            background_error: Arc::new(Mutex::new(None)),
+        };
+        // Ensure unwinding disconnects the gate before worker Drop joins it.
+        let release = release_tx;
+        super::update_control(&runtime, Some(&worker)).expect("automatic update");
+        assert_eq!(
+            voice.state(),
+            PlaybackState::Playing,
+            "queued pause was not applied by the caller"
+        );
+        super::update_control(&runtime, None).expect("manual update");
+        assert_eq!(voice.state(), PlaybackState::Paused);
+        release.send(()).expect("release worker");
+        worker.stop();
+        assert!(super::update_control(&runtime, Some(&worker)).is_err());
     }
 
     #[test]

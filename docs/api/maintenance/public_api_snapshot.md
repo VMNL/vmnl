@@ -2089,4 +2089,528 @@ pub mod vmnl::raw
 pub macro vmnl::raw::Pod
 pub macro vmnl::raw::Vertex
 pub macro vmnl::raw::Zeroable
+
+pub mod vmnl::audio
+pub enum vmnl::audio::AudioError
+pub vmnl::audio::AudioError::ActiveMusicStreamsPoisoned
+pub vmnl::audio::AudioError::ActiveSoundVoicesPoisoned
+pub vmnl::audio::AudioError::BackendInitFailed(alloc::string::String)
+pub vmnl::audio::AudioError::CommandQueuePoisoned
+pub vmnl::audio::AudioError::ControlThreadStartFailed(alloc::string::String)
+pub vmnl::audio::AudioError::DecoderFailed(alloc::string::String)
+pub vmnl::audio::AudioError::InvalidState(alloc::string::String)
+pub vmnl::audio::AudioError::Io(std::io::error::Error)
+pub vmnl::audio::AudioError::MusicDecoderPoisoned
+pub vmnl::audio::AudioError::SoundCachePoisoned
+pub vmnl::audio::AudioError::UnsupportedFormat(alloc::string::String)
+impl core::convert::From<std::io::error::Error> for vmnl::audio::AudioError
+pub fn vmnl::audio::AudioError::from(std::io::error::Error) -> Self
+impl core::error::Error for vmnl::audio::AudioError
+impl core::fmt::Debug for vmnl::audio::AudioError
+pub fn vmnl::audio::AudioError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for vmnl::audio::AudioError
+pub fn vmnl::audio::AudioError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::audio::AudioError
+impl core::marker::Send for vmnl::audio::AudioError
+impl core::marker::Sync for vmnl::audio::AudioError
+impl core::marker::Unpin for vmnl::audio::AudioError
+impl core::marker::UnsafeUnpin for vmnl::audio::AudioError
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::AudioError
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::audio::AudioError
+pub enum vmnl::audio::ControlMode
+pub vmnl::audio::ControlMode::Automatic
+pub vmnl::audio::ControlMode::Manual
+impl core::clone::Clone for vmnl::audio::ControlMode
+pub fn vmnl::audio::ControlMode::clone(&self) -> vmnl::audio::ControlMode
+impl core::cmp::Eq for vmnl::audio::ControlMode
+impl core::cmp::PartialEq for vmnl::audio::ControlMode
+pub fn vmnl::audio::ControlMode::eq(&self, &vmnl::audio::ControlMode) -> bool
+impl core::fmt::Debug for vmnl::audio::ControlMode
+pub fn vmnl::audio::ControlMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::audio::ControlMode
+impl core::marker::StructuralPartialEq for vmnl::audio::ControlMode
+impl core::marker::Freeze for vmnl::audio::ControlMode
+impl core::marker::Send for vmnl::audio::ControlMode
+impl core::marker::Sync for vmnl::audio::ControlMode
+impl core::marker::Unpin for vmnl::audio::ControlMode
+impl core::marker::UnsafeUnpin for vmnl::audio::ControlMode
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::ControlMode
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::ControlMode
+#[repr(u8)] pub enum vmnl::audio::PlaybackState
+pub vmnl::audio::PlaybackState::Paused = 1
+pub vmnl::audio::PlaybackState::Playing = 0
+pub vmnl::audio::PlaybackState::Stopped = 2
+impl core::clone::Clone for vmnl::audio::PlaybackState
+pub fn vmnl::audio::PlaybackState::clone(&self) -> vmnl::audio::PlaybackState
+impl core::cmp::Eq for vmnl::audio::PlaybackState
+impl core::cmp::PartialEq for vmnl::audio::PlaybackState
+pub fn vmnl::audio::PlaybackState::eq(&self, &vmnl::audio::PlaybackState) -> bool
+impl core::fmt::Debug for vmnl::audio::PlaybackState
+pub fn vmnl::audio::PlaybackState::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::audio::PlaybackState
+impl core::marker::StructuralPartialEq for vmnl::audio::PlaybackState
+impl core::marker::Freeze for vmnl::audio::PlaybackState
+impl core::marker::Send for vmnl::audio::PlaybackState
+impl core::marker::Sync for vmnl::audio::PlaybackState
+impl core::marker::Unpin for vmnl::audio::PlaybackState
+impl core::marker::UnsafeUnpin for vmnl::audio::PlaybackState
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::PlaybackState
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::PlaybackState
+pub struct vmnl::audio::AudioBus
+impl vmnl::audio::AudioBus
+pub fn vmnl::audio::AudioBus::gain(&self) -> f32
+pub fn vmnl::audio::AudioBus::is_muted(&self) -> bool
+pub fn vmnl::audio::AudioBus::is_paused(&self) -> bool
+pub fn vmnl::audio::AudioBus::mute(&self)
+pub fn vmnl::audio::AudioBus::pause(&self)
+pub fn vmnl::audio::AudioBus::resume(&self)
+pub fn vmnl::audio::AudioBus::set_volume(&self, f32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioBus::unmute(&self)
+pub fn vmnl::audio::AudioBus::volume(&self) -> f32
+impl core::clone::Clone for vmnl::audio::AudioBus
+pub fn vmnl::audio::AudioBus::clone(&self) -> vmnl::audio::AudioBus
+impl core::fmt::Debug for vmnl::audio::AudioBus
+pub fn vmnl::audio::AudioBus::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::audio::AudioBus
+impl core::marker::Send for vmnl::audio::AudioBus
+impl core::marker::Sync for vmnl::audio::AudioBus
+impl core::marker::Unpin for vmnl::audio::AudioBus
+impl core::marker::UnsafeUnpin for vmnl::audio::AudioBus
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::AudioBus
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::AudioBus
+pub struct vmnl::audio::AudioConfig
+impl vmnl::audio::AudioConfig
+pub fn vmnl::audio::AudioConfig::channels(&self) -> u32
+pub fn vmnl::audio::AudioConfig::master_volume(&self) -> f32
+pub fn vmnl::audio::AudioConfig::sample_rate(&self) -> u32
+pub fn vmnl::audio::AudioConfig::set_channels(&mut self, u32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioConfig::set_master_volume(&mut self, f32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioConfig::set_sample_rate(&mut self, u32) -> vmnl::audio::AudioResult<()>
+impl core::clone::Clone for vmnl::audio::AudioConfig
+pub fn vmnl::audio::AudioConfig::clone(&self) -> vmnl::audio::AudioConfig
+impl core::default::Default for vmnl::audio::AudioConfig
+pub fn vmnl::audio::AudioConfig::default() -> Self
+impl core::fmt::Debug for vmnl::audio::AudioConfig
+pub fn vmnl::audio::AudioConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::audio::AudioConfig
+impl core::marker::Send for vmnl::audio::AudioConfig
+impl core::marker::Sync for vmnl::audio::AudioConfig
+impl core::marker::Unpin for vmnl::audio::AudioConfig
+impl core::marker::UnsafeUnpin for vmnl::audio::AudioConfig
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::AudioConfig
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::AudioConfig
+pub struct vmnl::audio::AudioDevice
+impl vmnl::audio::AudioDevice
+pub fn vmnl::audio::AudioDevice::builder() -> vmnl::audio::AudioDeviceBuilder
+pub fn vmnl::audio::AudioDevice::channels(&self) -> u32
+pub fn vmnl::audio::AudioDevice::control_mode(&self) -> vmnl::audio::ControlMode
+pub fn vmnl::audio::AudioDevice::load_music<P: core::convert::AsRef<std::path::Path>>(&self, P) -> vmnl::audio::AudioResult<vmnl::audio::Music>
+pub fn vmnl::audio::AudioDevice::load_sound<P: core::convert::AsRef<std::path::Path>>(&self, P) -> vmnl::audio::AudioResult<vmnl::audio::Sound>
+pub fn vmnl::audio::AudioDevice::master_volume(&self) -> f32
+pub fn vmnl::audio::AudioDevice::music_bus(&self) -> vmnl::audio::AudioBus
+pub fn vmnl::audio::AudioDevice::new(vmnl::audio::AudioConfig) -> vmnl::audio::AudioResult<Self>
+pub fn vmnl::audio::AudioDevice::pause_all(&self) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioDevice::resume_all(&self) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioDevice::sample_rate(&self) -> u32
+pub fn vmnl::audio::AudioDevice::set_master_volume(&self, f32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioDevice::set_max_sound_voices(&self, usize) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioDevice::sfx_bus(&self) -> vmnl::audio::AudioBus
+pub fn vmnl::audio::AudioDevice::stop_all(&self) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioDevice::take_background_error(&self) -> core::option::Option<alloc::string::String>
+pub fn vmnl::audio::AudioDevice::update(&self) -> vmnl::audio::AudioResult<()>
+impl core::ops::drop::Drop for vmnl::audio::AudioDevice
+pub fn vmnl::audio::AudioDevice::drop(&mut self)
+impl core::marker::Freeze for vmnl::audio::AudioDevice
+impl core::marker::Send for vmnl::audio::AudioDevice
+impl core::marker::Sync for vmnl::audio::AudioDevice
+impl core::marker::Unpin for vmnl::audio::AudioDevice
+impl core::marker::UnsafeUnpin for vmnl::audio::AudioDevice
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::AudioDevice
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::audio::AudioDevice
+pub struct vmnl::audio::AudioDeviceBuilder
+impl vmnl::audio::AudioDeviceBuilder
+pub fn vmnl::audio::AudioDeviceBuilder::build(self) -> vmnl::audio::AudioResult<vmnl::audio::AudioDevice>
+pub fn vmnl::audio::AudioDeviceBuilder::channels(self, u32) -> Self
+pub fn vmnl::audio::AudioDeviceBuilder::config(self, vmnl::audio::AudioConfig) -> Self
+pub fn vmnl::audio::AudioDeviceBuilder::control_mode(&self) -> vmnl::audio::ControlMode
+pub fn vmnl::audio::AudioDeviceBuilder::master_volume(self, f32) -> Self
+pub fn vmnl::audio::AudioDeviceBuilder::sample_rate(self, u32) -> Self
+pub fn vmnl::audio::AudioDeviceBuilder::thread(self, bool) -> Self
+impl core::clone::Clone for vmnl::audio::AudioDeviceBuilder
+pub fn vmnl::audio::AudioDeviceBuilder::clone(&self) -> vmnl::audio::AudioDeviceBuilder
+impl core::default::Default for vmnl::audio::AudioDeviceBuilder
+pub fn vmnl::audio::AudioDeviceBuilder::default() -> vmnl::audio::AudioDeviceBuilder
+impl core::fmt::Debug for vmnl::audio::AudioDeviceBuilder
+pub fn vmnl::audio::AudioDeviceBuilder::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::audio::AudioDeviceBuilder
+impl core::marker::Send for vmnl::audio::AudioDeviceBuilder
+impl core::marker::Sync for vmnl::audio::AudioDeviceBuilder
+impl core::marker::Unpin for vmnl::audio::AudioDeviceBuilder
+impl core::marker::UnsafeUnpin for vmnl::audio::AudioDeviceBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::AudioDeviceBuilder
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::AudioDeviceBuilder
+pub struct vmnl::audio::Music
+impl vmnl::audio::Music
+pub fn vmnl::audio::Music::path(&self) -> &std::path::Path
+pub fn vmnl::audio::Music::play(&self) -> vmnl::audio::AudioResult<vmnl::audio::MusicHandle>
+pub fn vmnl::audio::Music::play_with_config(&self, vmnl::audio::MusicPlayConfig) -> vmnl::audio::AudioResult<vmnl::audio::MusicHandle>
+impl core::clone::Clone for vmnl::audio::Music
+pub fn vmnl::audio::Music::clone(&self) -> vmnl::audio::Music
+impl core::marker::Freeze for vmnl::audio::Music
+impl core::marker::Send for vmnl::audio::Music
+impl core::marker::Sync for vmnl::audio::Music
+impl core::marker::Unpin for vmnl::audio::Music
+impl core::marker::UnsafeUnpin for vmnl::audio::Music
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::Music
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::audio::Music
+pub struct vmnl::audio::MusicHandle
+impl vmnl::audio::MusicHandle
+pub fn vmnl::audio::MusicHandle::cursor_frames(&self) -> usize
+pub fn vmnl::audio::MusicHandle::is_paused(&self) -> bool
+pub fn vmnl::audio::MusicHandle::is_playing(&self) -> bool
+pub fn vmnl::audio::MusicHandle::is_stopped(&self) -> bool
+pub fn vmnl::audio::MusicHandle::pause(&self)
+pub fn vmnl::audio::MusicHandle::resume(&self)
+pub fn vmnl::audio::MusicHandle::set_looping(&self, bool)
+pub fn vmnl::audio::MusicHandle::set_volume(&self, f32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::MusicHandle::stop(&self)
+impl core::clone::Clone for vmnl::audio::MusicHandle
+pub fn vmnl::audio::MusicHandle::clone(&self) -> vmnl::audio::MusicHandle
+impl core::marker::Freeze for vmnl::audio::MusicHandle
+impl core::marker::Send for vmnl::audio::MusicHandle
+impl core::marker::Sync for vmnl::audio::MusicHandle
+impl core::marker::Unpin for vmnl::audio::MusicHandle
+impl core::marker::UnsafeUnpin for vmnl::audio::MusicHandle
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::MusicHandle
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::audio::MusicHandle
+pub struct vmnl::audio::MusicPlayConfig
+pub vmnl::audio::MusicPlayConfig::looping: bool
+pub vmnl::audio::MusicPlayConfig::volume: f32
+impl core::clone::Clone for vmnl::audio::MusicPlayConfig
+pub fn vmnl::audio::MusicPlayConfig::clone(&self) -> vmnl::audio::MusicPlayConfig
+impl core::default::Default for vmnl::audio::MusicPlayConfig
+pub fn vmnl::audio::MusicPlayConfig::default() -> Self
+impl core::fmt::Debug for vmnl::audio::MusicPlayConfig
+pub fn vmnl::audio::MusicPlayConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::audio::MusicPlayConfig
+impl core::marker::Freeze for vmnl::audio::MusicPlayConfig
+impl core::marker::Send for vmnl::audio::MusicPlayConfig
+impl core::marker::Sync for vmnl::audio::MusicPlayConfig
+impl core::marker::Unpin for vmnl::audio::MusicPlayConfig
+impl core::marker::UnsafeUnpin for vmnl::audio::MusicPlayConfig
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::MusicPlayConfig
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::MusicPlayConfig
+pub struct vmnl::audio::Sound
+impl vmnl::audio::Sound
+pub fn vmnl::audio::Sound::path(&self) -> &std::path::Path
+pub fn vmnl::audio::Sound::play(&self) -> vmnl::audio::AudioResult<vmnl::audio::SoundHandle>
+pub fn vmnl::audio::Sound::play_with_config(&self, vmnl::audio::SoundPlayConfig) -> vmnl::audio::AudioResult<vmnl::audio::SoundHandle>
+impl core::clone::Clone for vmnl::audio::Sound
+pub fn vmnl::audio::Sound::clone(&self) -> vmnl::audio::Sound
+impl core::marker::Freeze for vmnl::audio::Sound
+impl core::marker::Send for vmnl::audio::Sound
+impl core::marker::Sync for vmnl::audio::Sound
+impl core::marker::Unpin for vmnl::audio::Sound
+impl core::marker::UnsafeUnpin for vmnl::audio::Sound
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::Sound
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::audio::Sound
+pub struct vmnl::audio::SoundHandle
+impl vmnl::audio::SoundHandle
+pub fn vmnl::audio::SoundHandle::cursor_frames(&self) -> usize
+pub fn vmnl::audio::SoundHandle::is_paused(&self) -> bool
+pub fn vmnl::audio::SoundHandle::is_playing(&self) -> bool
+pub fn vmnl::audio::SoundHandle::is_stopped(&self) -> bool
+pub fn vmnl::audio::SoundHandle::pause(&self)
+pub fn vmnl::audio::SoundHandle::resume(&self)
+pub fn vmnl::audio::SoundHandle::set_looping(&self, bool)
+pub fn vmnl::audio::SoundHandle::set_volume(&self, f32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::SoundHandle::stop(&self)
+impl core::clone::Clone for vmnl::audio::SoundHandle
+pub fn vmnl::audio::SoundHandle::clone(&self) -> vmnl::audio::SoundHandle
+impl core::marker::Freeze for vmnl::audio::SoundHandle
+impl core::marker::Send for vmnl::audio::SoundHandle
+impl core::marker::Sync for vmnl::audio::SoundHandle
+impl core::marker::Unpin for vmnl::audio::SoundHandle
+impl core::marker::UnsafeUnpin for vmnl::audio::SoundHandle
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::SoundHandle
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::SoundHandle
+pub struct vmnl::audio::SoundPlayConfig
+pub vmnl::audio::SoundPlayConfig::looping: bool
+pub vmnl::audio::SoundPlayConfig::volume: f32
+impl core::clone::Clone for vmnl::audio::SoundPlayConfig
+pub fn vmnl::audio::SoundPlayConfig::clone(&self) -> vmnl::audio::SoundPlayConfig
+impl core::default::Default for vmnl::audio::SoundPlayConfig
+pub fn vmnl::audio::SoundPlayConfig::default() -> Self
+impl core::fmt::Debug for vmnl::audio::SoundPlayConfig
+pub fn vmnl::audio::SoundPlayConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::audio::SoundPlayConfig
+impl core::marker::Freeze for vmnl::audio::SoundPlayConfig
+impl core::marker::Send for vmnl::audio::SoundPlayConfig
+impl core::marker::Sync for vmnl::audio::SoundPlayConfig
+impl core::marker::Unpin for vmnl::audio::SoundPlayConfig
+impl core::marker::UnsafeUnpin for vmnl::audio::SoundPlayConfig
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::SoundPlayConfig
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::SoundPlayConfig
+pub type vmnl::audio::AudioResult<T> = core::result::Result<T, vmnl::audio::AudioError>
+pub enum vmnl::audio::AudioError
+pub vmnl::audio::AudioError::ActiveMusicStreamsPoisoned
+pub vmnl::audio::AudioError::ActiveSoundVoicesPoisoned
+pub vmnl::audio::AudioError::BackendInitFailed(alloc::string::String)
+pub vmnl::audio::AudioError::CommandQueuePoisoned
+pub vmnl::audio::AudioError::ControlThreadStartFailed(alloc::string::String)
+pub vmnl::audio::AudioError::DecoderFailed(alloc::string::String)
+pub vmnl::audio::AudioError::InvalidState(alloc::string::String)
+pub vmnl::audio::AudioError::Io(std::io::error::Error)
+pub vmnl::audio::AudioError::MusicDecoderPoisoned
+pub vmnl::audio::AudioError::SoundCachePoisoned
+pub vmnl::audio::AudioError::UnsupportedFormat(alloc::string::String)
+impl core::convert::From<std::io::error::Error> for vmnl::audio::AudioError
+pub fn vmnl::audio::AudioError::from(std::io::error::Error) -> Self
+impl core::error::Error for vmnl::audio::AudioError
+impl core::fmt::Debug for vmnl::audio::AudioError
+pub fn vmnl::audio::AudioError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for vmnl::audio::AudioError
+pub fn vmnl::audio::AudioError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::audio::AudioError
+impl core::marker::Send for vmnl::audio::AudioError
+impl core::marker::Sync for vmnl::audio::AudioError
+impl core::marker::Unpin for vmnl::audio::AudioError
+impl core::marker::UnsafeUnpin for vmnl::audio::AudioError
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::AudioError
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::audio::AudioError
+pub enum vmnl::audio::ControlMode
+pub vmnl::audio::ControlMode::Automatic
+pub vmnl::audio::ControlMode::Manual
+impl core::clone::Clone for vmnl::audio::ControlMode
+pub fn vmnl::audio::ControlMode::clone(&self) -> vmnl::audio::ControlMode
+impl core::cmp::Eq for vmnl::audio::ControlMode
+impl core::cmp::PartialEq for vmnl::audio::ControlMode
+pub fn vmnl::audio::ControlMode::eq(&self, &vmnl::audio::ControlMode) -> bool
+impl core::fmt::Debug for vmnl::audio::ControlMode
+pub fn vmnl::audio::ControlMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::audio::ControlMode
+impl core::marker::StructuralPartialEq for vmnl::audio::ControlMode
+impl core::marker::Freeze for vmnl::audio::ControlMode
+impl core::marker::Send for vmnl::audio::ControlMode
+impl core::marker::Sync for vmnl::audio::ControlMode
+impl core::marker::Unpin for vmnl::audio::ControlMode
+impl core::marker::UnsafeUnpin for vmnl::audio::ControlMode
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::ControlMode
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::ControlMode
+#[repr(u8)] pub enum vmnl::audio::PlaybackState
+pub vmnl::audio::PlaybackState::Paused = 1
+pub vmnl::audio::PlaybackState::Playing = 0
+pub vmnl::audio::PlaybackState::Stopped = 2
+impl core::clone::Clone for vmnl::audio::PlaybackState
+pub fn vmnl::audio::PlaybackState::clone(&self) -> vmnl::audio::PlaybackState
+impl core::cmp::Eq for vmnl::audio::PlaybackState
+impl core::cmp::PartialEq for vmnl::audio::PlaybackState
+pub fn vmnl::audio::PlaybackState::eq(&self, &vmnl::audio::PlaybackState) -> bool
+impl core::fmt::Debug for vmnl::audio::PlaybackState
+pub fn vmnl::audio::PlaybackState::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::audio::PlaybackState
+impl core::marker::StructuralPartialEq for vmnl::audio::PlaybackState
+impl core::marker::Freeze for vmnl::audio::PlaybackState
+impl core::marker::Send for vmnl::audio::PlaybackState
+impl core::marker::Sync for vmnl::audio::PlaybackState
+impl core::marker::Unpin for vmnl::audio::PlaybackState
+impl core::marker::UnsafeUnpin for vmnl::audio::PlaybackState
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::PlaybackState
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::PlaybackState
+pub struct vmnl::audio::AudioBus
+impl vmnl::audio::AudioBus
+pub fn vmnl::audio::AudioBus::gain(&self) -> f32
+pub fn vmnl::audio::AudioBus::is_muted(&self) -> bool
+pub fn vmnl::audio::AudioBus::is_paused(&self) -> bool
+pub fn vmnl::audio::AudioBus::mute(&self)
+pub fn vmnl::audio::AudioBus::pause(&self)
+pub fn vmnl::audio::AudioBus::resume(&self)
+pub fn vmnl::audio::AudioBus::set_volume(&self, f32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioBus::unmute(&self)
+pub fn vmnl::audio::AudioBus::volume(&self) -> f32
+impl core::clone::Clone for vmnl::audio::AudioBus
+pub fn vmnl::audio::AudioBus::clone(&self) -> vmnl::audio::AudioBus
+impl core::fmt::Debug for vmnl::audio::AudioBus
+pub fn vmnl::audio::AudioBus::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::audio::AudioBus
+impl core::marker::Send for vmnl::audio::AudioBus
+impl core::marker::Sync for vmnl::audio::AudioBus
+impl core::marker::Unpin for vmnl::audio::AudioBus
+impl core::marker::UnsafeUnpin for vmnl::audio::AudioBus
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::AudioBus
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::AudioBus
+pub struct vmnl::audio::AudioConfig
+impl vmnl::audio::AudioConfig
+pub fn vmnl::audio::AudioConfig::channels(&self) -> u32
+pub fn vmnl::audio::AudioConfig::master_volume(&self) -> f32
+pub fn vmnl::audio::AudioConfig::sample_rate(&self) -> u32
+pub fn vmnl::audio::AudioConfig::set_channels(&mut self, u32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioConfig::set_master_volume(&mut self, f32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioConfig::set_sample_rate(&mut self, u32) -> vmnl::audio::AudioResult<()>
+impl core::clone::Clone for vmnl::audio::AudioConfig
+pub fn vmnl::audio::AudioConfig::clone(&self) -> vmnl::audio::AudioConfig
+impl core::default::Default for vmnl::audio::AudioConfig
+pub fn vmnl::audio::AudioConfig::default() -> Self
+impl core::fmt::Debug for vmnl::audio::AudioConfig
+pub fn vmnl::audio::AudioConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::audio::AudioConfig
+impl core::marker::Send for vmnl::audio::AudioConfig
+impl core::marker::Sync for vmnl::audio::AudioConfig
+impl core::marker::Unpin for vmnl::audio::AudioConfig
+impl core::marker::UnsafeUnpin for vmnl::audio::AudioConfig
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::AudioConfig
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::AudioConfig
+pub struct vmnl::audio::AudioDevice
+impl vmnl::audio::AudioDevice
+pub fn vmnl::audio::AudioDevice::builder() -> vmnl::audio::AudioDeviceBuilder
+pub fn vmnl::audio::AudioDevice::channels(&self) -> u32
+pub fn vmnl::audio::AudioDevice::control_mode(&self) -> vmnl::audio::ControlMode
+pub fn vmnl::audio::AudioDevice::load_music<P: core::convert::AsRef<std::path::Path>>(&self, P) -> vmnl::audio::AudioResult<vmnl::audio::Music>
+pub fn vmnl::audio::AudioDevice::load_sound<P: core::convert::AsRef<std::path::Path>>(&self, P) -> vmnl::audio::AudioResult<vmnl::audio::Sound>
+pub fn vmnl::audio::AudioDevice::master_volume(&self) -> f32
+pub fn vmnl::audio::AudioDevice::music_bus(&self) -> vmnl::audio::AudioBus
+pub fn vmnl::audio::AudioDevice::new(vmnl::audio::AudioConfig) -> vmnl::audio::AudioResult<Self>
+pub fn vmnl::audio::AudioDevice::pause_all(&self) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioDevice::resume_all(&self) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioDevice::sample_rate(&self) -> u32
+pub fn vmnl::audio::AudioDevice::set_master_volume(&self, f32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioDevice::set_max_sound_voices(&self, usize) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioDevice::sfx_bus(&self) -> vmnl::audio::AudioBus
+pub fn vmnl::audio::AudioDevice::stop_all(&self) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::AudioDevice::take_background_error(&self) -> core::option::Option<alloc::string::String>
+pub fn vmnl::audio::AudioDevice::update(&self) -> vmnl::audio::AudioResult<()>
+impl core::ops::drop::Drop for vmnl::audio::AudioDevice
+pub fn vmnl::audio::AudioDevice::drop(&mut self)
+impl core::marker::Freeze for vmnl::audio::AudioDevice
+impl core::marker::Send for vmnl::audio::AudioDevice
+impl core::marker::Sync for vmnl::audio::AudioDevice
+impl core::marker::Unpin for vmnl::audio::AudioDevice
+impl core::marker::UnsafeUnpin for vmnl::audio::AudioDevice
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::AudioDevice
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::audio::AudioDevice
+pub struct vmnl::audio::AudioDeviceBuilder
+impl vmnl::audio::AudioDeviceBuilder
+pub fn vmnl::audio::AudioDeviceBuilder::build(self) -> vmnl::audio::AudioResult<vmnl::audio::AudioDevice>
+pub fn vmnl::audio::AudioDeviceBuilder::channels(self, u32) -> Self
+pub fn vmnl::audio::AudioDeviceBuilder::config(self, vmnl::audio::AudioConfig) -> Self
+pub fn vmnl::audio::AudioDeviceBuilder::control_mode(&self) -> vmnl::audio::ControlMode
+pub fn vmnl::audio::AudioDeviceBuilder::master_volume(self, f32) -> Self
+pub fn vmnl::audio::AudioDeviceBuilder::sample_rate(self, u32) -> Self
+pub fn vmnl::audio::AudioDeviceBuilder::thread(self, bool) -> Self
+impl core::clone::Clone for vmnl::audio::AudioDeviceBuilder
+pub fn vmnl::audio::AudioDeviceBuilder::clone(&self) -> vmnl::audio::AudioDeviceBuilder
+impl core::default::Default for vmnl::audio::AudioDeviceBuilder
+pub fn vmnl::audio::AudioDeviceBuilder::default() -> vmnl::audio::AudioDeviceBuilder
+impl core::fmt::Debug for vmnl::audio::AudioDeviceBuilder
+pub fn vmnl::audio::AudioDeviceBuilder::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::audio::AudioDeviceBuilder
+impl core::marker::Send for vmnl::audio::AudioDeviceBuilder
+impl core::marker::Sync for vmnl::audio::AudioDeviceBuilder
+impl core::marker::Unpin for vmnl::audio::AudioDeviceBuilder
+impl core::marker::UnsafeUnpin for vmnl::audio::AudioDeviceBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::AudioDeviceBuilder
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::AudioDeviceBuilder
+pub struct vmnl::audio::Music
+impl vmnl::audio::Music
+pub fn vmnl::audio::Music::path(&self) -> &std::path::Path
+pub fn vmnl::audio::Music::play(&self) -> vmnl::audio::AudioResult<vmnl::audio::MusicHandle>
+pub fn vmnl::audio::Music::play_with_config(&self, vmnl::audio::MusicPlayConfig) -> vmnl::audio::AudioResult<vmnl::audio::MusicHandle>
+impl core::clone::Clone for vmnl::audio::Music
+pub fn vmnl::audio::Music::clone(&self) -> vmnl::audio::Music
+impl core::marker::Freeze for vmnl::audio::Music
+impl core::marker::Send for vmnl::audio::Music
+impl core::marker::Sync for vmnl::audio::Music
+impl core::marker::Unpin for vmnl::audio::Music
+impl core::marker::UnsafeUnpin for vmnl::audio::Music
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::Music
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::audio::Music
+pub struct vmnl::audio::MusicHandle
+impl vmnl::audio::MusicHandle
+pub fn vmnl::audio::MusicHandle::cursor_frames(&self) -> usize
+pub fn vmnl::audio::MusicHandle::is_paused(&self) -> bool
+pub fn vmnl::audio::MusicHandle::is_playing(&self) -> bool
+pub fn vmnl::audio::MusicHandle::is_stopped(&self) -> bool
+pub fn vmnl::audio::MusicHandle::pause(&self)
+pub fn vmnl::audio::MusicHandle::resume(&self)
+pub fn vmnl::audio::MusicHandle::set_looping(&self, bool)
+pub fn vmnl::audio::MusicHandle::set_volume(&self, f32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::MusicHandle::stop(&self)
+impl core::clone::Clone for vmnl::audio::MusicHandle
+pub fn vmnl::audio::MusicHandle::clone(&self) -> vmnl::audio::MusicHandle
+impl core::marker::Freeze for vmnl::audio::MusicHandle
+impl core::marker::Send for vmnl::audio::MusicHandle
+impl core::marker::Sync for vmnl::audio::MusicHandle
+impl core::marker::Unpin for vmnl::audio::MusicHandle
+impl core::marker::UnsafeUnpin for vmnl::audio::MusicHandle
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::MusicHandle
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::audio::MusicHandle
+pub struct vmnl::audio::MusicPlayConfig
+pub vmnl::audio::MusicPlayConfig::looping: bool
+pub vmnl::audio::MusicPlayConfig::volume: f32
+impl core::clone::Clone for vmnl::audio::MusicPlayConfig
+pub fn vmnl::audio::MusicPlayConfig::clone(&self) -> vmnl::audio::MusicPlayConfig
+impl core::default::Default for vmnl::audio::MusicPlayConfig
+pub fn vmnl::audio::MusicPlayConfig::default() -> Self
+impl core::fmt::Debug for vmnl::audio::MusicPlayConfig
+pub fn vmnl::audio::MusicPlayConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::audio::MusicPlayConfig
+impl core::marker::Freeze for vmnl::audio::MusicPlayConfig
+impl core::marker::Send for vmnl::audio::MusicPlayConfig
+impl core::marker::Sync for vmnl::audio::MusicPlayConfig
+impl core::marker::Unpin for vmnl::audio::MusicPlayConfig
+impl core::marker::UnsafeUnpin for vmnl::audio::MusicPlayConfig
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::MusicPlayConfig
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::MusicPlayConfig
+pub struct vmnl::audio::Sound
+impl vmnl::audio::Sound
+pub fn vmnl::audio::Sound::path(&self) -> &std::path::Path
+pub fn vmnl::audio::Sound::play(&self) -> vmnl::audio::AudioResult<vmnl::audio::SoundHandle>
+pub fn vmnl::audio::Sound::play_with_config(&self, vmnl::audio::SoundPlayConfig) -> vmnl::audio::AudioResult<vmnl::audio::SoundHandle>
+impl core::clone::Clone for vmnl::audio::Sound
+pub fn vmnl::audio::Sound::clone(&self) -> vmnl::audio::Sound
+impl core::marker::Freeze for vmnl::audio::Sound
+impl core::marker::Send for vmnl::audio::Sound
+impl core::marker::Sync for vmnl::audio::Sound
+impl core::marker::Unpin for vmnl::audio::Sound
+impl core::marker::UnsafeUnpin for vmnl::audio::Sound
+impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::Sound
+impl !core::panic::unwind_safe::UnwindSafe for vmnl::audio::Sound
+pub struct vmnl::audio::SoundHandle
+impl vmnl::audio::SoundHandle
+pub fn vmnl::audio::SoundHandle::cursor_frames(&self) -> usize
+pub fn vmnl::audio::SoundHandle::is_paused(&self) -> bool
+pub fn vmnl::audio::SoundHandle::is_playing(&self) -> bool
+pub fn vmnl::audio::SoundHandle::is_stopped(&self) -> bool
+pub fn vmnl::audio::SoundHandle::pause(&self)
+pub fn vmnl::audio::SoundHandle::resume(&self)
+pub fn vmnl::audio::SoundHandle::set_looping(&self, bool)
+pub fn vmnl::audio::SoundHandle::set_volume(&self, f32) -> vmnl::audio::AudioResult<()>
+pub fn vmnl::audio::SoundHandle::stop(&self)
+impl core::clone::Clone for vmnl::audio::SoundHandle
+pub fn vmnl::audio::SoundHandle::clone(&self) -> vmnl::audio::SoundHandle
+impl core::marker::Freeze for vmnl::audio::SoundHandle
+impl core::marker::Send for vmnl::audio::SoundHandle
+impl core::marker::Sync for vmnl::audio::SoundHandle
+impl core::marker::Unpin for vmnl::audio::SoundHandle
+impl core::marker::UnsafeUnpin for vmnl::audio::SoundHandle
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::SoundHandle
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::SoundHandle
+pub struct vmnl::audio::SoundPlayConfig
+pub vmnl::audio::SoundPlayConfig::looping: bool
+pub vmnl::audio::SoundPlayConfig::volume: f32
+impl core::clone::Clone for vmnl::audio::SoundPlayConfig
+pub fn vmnl::audio::SoundPlayConfig::clone(&self) -> vmnl::audio::SoundPlayConfig
+impl core::default::Default for vmnl::audio::SoundPlayConfig
+pub fn vmnl::audio::SoundPlayConfig::default() -> Self
+impl core::fmt::Debug for vmnl::audio::SoundPlayConfig
+pub fn vmnl::audio::SoundPlayConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::audio::SoundPlayConfig
+impl core::marker::Freeze for vmnl::audio::SoundPlayConfig
+impl core::marker::Send for vmnl::audio::SoundPlayConfig
+impl core::marker::Sync for vmnl::audio::SoundPlayConfig
+impl core::marker::Unpin for vmnl::audio::SoundPlayConfig
+impl core::marker::UnsafeUnpin for vmnl::audio::SoundPlayConfig
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::audio::SoundPlayConfig
+impl core::panic::unwind_safe::UnwindSafe for vmnl::audio::SoundPlayConfig
+pub type vmnl::audio::AudioResult<T> = core::result::Result<T, vmnl::audio::AudioError>
 ```

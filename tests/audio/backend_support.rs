@@ -4,7 +4,7 @@
 //! Native audio setup; an explicitly requested backend test must fail on setup errors.
 
 use std::sync::{Mutex, MutexGuard};
-use vmnl_audio::AudioDevice;
+use vmnl_audio::{AudioDevice, ControlMode};
 
 static BACKEND_TEST_LOCK: Mutex<()> = Mutex::new(());
 
@@ -15,8 +15,17 @@ pub fn lock_backend_tests() -> MutexGuard<'static, ()> {
 }
 
 pub fn device(threaded: bool) -> AudioDevice {
-    AudioDevice::builder()
+    let device = AudioDevice::builder()
         .thread(threaded)
         .build()
-        .expect("backend test requires a usable CPAL stereo output device")
+        .expect("backend test requires a usable CPAL stereo output device");
+    assert_eq!(
+        device.control_mode(),
+        if threaded {
+            ControlMode::Automatic
+        } else {
+            ControlMode::Manual
+        }
+    );
+    device
 }

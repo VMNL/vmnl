@@ -8,9 +8,10 @@
 //! stereo sample rate. Resource loading and manual control may allocate and do
 //! file I/O; they must not run on the audio callback.
 //!
-//! The current builder enables a control worker by default. Select
-//! [`AudioDeviceBuilder::thread`] with `false` and call [`AudioDevice::update`]
-//! to drive control work manually. The backend still executes its audio callback.
+//! Control defaults to [`ControlMode::Manual`]: call [`AudioDevice::update`]
+//! to process commands, refill music, and clean up. Select
+//! [`AudioDeviceBuilder::thread`] with `true` to opt into automatic control.
+//! The backend executes its audio callback in either mode.
 //! Dropping the device stops output and joins its worker; resources and cloned
 //! handles can retain shared runtime data but do not keep that output stream alive.
 //!
@@ -20,7 +21,8 @@
 //! regression coverage; native shutdown and realtime timing remain unqualified.
 //! The required target is recorded in the
 //! [audio acceptance contract](https://github.com/VMNL/vmnl/blob/main/docs/audio.md).
-//! The planned facade feature and opt-in worker default are not implemented yet.
+//! The optional `vmnl::audio` facade exposes these same types without graphics
+//! when the facade's default features are disabled.
 //!
 //! # Configure without opening a device
 //!
@@ -58,6 +60,6 @@
 pub mod audio;
 
 pub use audio::{
-    AudioBus, AudioConfig, AudioDevice, AudioDeviceBuilder, AudioError, AudioResult, Music,
-    MusicHandle, MusicPlayConfig, PlaybackState, Sound, SoundHandle, SoundPlayConfig,
+    AudioBus, AudioConfig, AudioDevice, AudioDeviceBuilder, AudioError, AudioResult, ControlMode,
+    Music, MusicHandle, MusicPlayConfig, PlaybackState, Sound, SoundHandle, SoundPlayConfig,
 };

@@ -8,9 +8,9 @@ It is not a claim that the current implementation already satisfies every requir
 Rustdoc describes item-level behavior and current limitations; this document defines the target
 against which the remaining implementation work is evaluated.
 
-`vmnl_audio` currently uses CPAL. The facade still depends unconditionally on graphics and has no
-audio feature; its optional audio integration remains to be implemented. The control worker
-currently defaults to enabled. Terminal states, consumed-frame cursors, live looping,
+`vmnl_audio` uses CPAL. The facade defaults to graphics and exposes audio through opt-in
+`audio`; disable default features for audio without graphics. The VMNL control worker
+is disabled by default. Terminal states, consumed-frame cursors, live looping,
 mute/pause semantics, and snapshot heap behaviour have device-independent regression coverage.
 Native shutdown and realtime timing remain unqualified. The audio test files are registered as
 separate [device-independent and native Cargo targets](testing.md#audio-tests); their scope does
@@ -33,8 +33,8 @@ audio as an opt-in domain:
 | `audio`, with default features disabled | Audio through `vmnl::audio`; no graphics, Vulkan, GLFW, or graphics initialization. |
 | `graphics` and `audio` | Both domains, with independent device/runtime ownership. |
 
-The graphics dependency must therefore become optional, and its exports must be conditional on
-`graphics`. Using audio does not require a graphics `Context`. Direct use of `vmnl_audio` remains
+The graphics dependency and its exports are conditional on `graphics`. With no features, the
+facade compiles without any domain. Using audio does not require a graphics `Context`. Direct use of `vmnl_audio` remains
 supported. Removing the facade or splitting repositories is deferred until after #84.
 
 ## Decoding and Output Selection
@@ -52,8 +52,12 @@ platform; inspect the device's resolved rate rather than assuming the requested 
 
 ## Execution and Ownership
 
-The VMNL control worker is opt-in: `.thread(false)` is the required default; `.thread(true)`
-explicitly selects automatic control. The resolved mode must be inspectable. In manual mode,
+The VMNL control worker is opt-in: `.thread(false)` is the default for builder and
+`AudioDevice::new`; `.thread(true)` explicitly selects automatic control. Builder/device
+`control_mode()` expose `ControlMode::Manual` or `ControlMode::Automatic`, independently of
+backend threads and worker health. A failed automatic worker retains its configured mode. Clients
+that relied on the earlier experimental automatic default must select `thread(true)` or drive
+`update()` themselves. In manual mode,
 the application calls `update()` to process control commands, refill music buffers, and clean up
 finished playbacks. Its cadence must keep the music buffer supplied; no fixed interval is
 guaranteed to work for every stream or device. Loading and control work may allocate, decode,

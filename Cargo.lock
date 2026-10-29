@@ -1235,6 +1235,7 @@ name = "vmnl"
 version = "0.1.0"
 dependencies = [
  "vmnl-graphics",
+ "vmnl_audio",
 ]
 
 [[package]]
@@ -1310,13 +1311,11 @@ version = "0.1.0"
 dependencies = [
  "claxon",
  "cpal",
- "crossbeam-queue",
  "hound",
  "lewton",
  "minimp3",
  "parking_lot",
  "tempfile",
- "thiserror 1.0.69",
 ]
 
 [[package]]

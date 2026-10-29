@@ -7,7 +7,18 @@ use std::time::Duration;
 
 use crate::backend_support::{device, lock_backend_tests};
 use crate::common::{wait_until, TempAudioFile};
-use vmnl_audio::{AudioError, MusicPlayConfig};
+use vmnl_audio::{AudioConfig, AudioDevice, AudioError, ControlMode, MusicPlayConfig};
+
+#[test]
+#[ignore = "requires a usable CPAL stereo output device"]
+fn default_device_constructors_resolve_to_manual_control() {
+    let _guard = lock_backend_tests();
+    let built = AudioDevice::builder().build().expect("default builder");
+    assert_eq!(built.control_mode(), ControlMode::Manual);
+    drop(built);
+    let direct = AudioDevice::new(AudioConfig::default()).expect("default constructor");
+    assert_eq!(direct.control_mode(), ControlMode::Manual);
+}
 
 #[test]
 #[ignore = "requires a usable CPAL stereo output device"]

@@ -17,7 +17,7 @@ mod stream_decoder;
 mod worker;
 
 pub use bus::AudioBus;
-pub use device::{AudioConfig, AudioDevice, AudioDeviceBuilder};
+pub use device::{AudioConfig, AudioDevice, AudioDeviceBuilder, ControlMode};
 pub use error::{AudioError, AudioResult};
 pub use music::{Music, MusicHandle, MusicPlayConfig};
 pub use sound::{PlaybackState, Sound, SoundHandle, SoundPlayConfig};

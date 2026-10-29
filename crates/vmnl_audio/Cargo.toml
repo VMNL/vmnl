@@ -8,8 +8,8 @@ repository.workspace = true
 homepage.workspace = true
 documentation.workspace = true
 readme = "../../README.md"
-description = "VMNL audio wrapper"
-keywords = ["miniaudio", "sound", "music"]
+description = "Independent VMNL audio playback with a private CPAL backend"
+keywords = ["audio", "sound", "music"]
 categories = ["audio"]
 
 [[test]]
@@ -21,15 +21,12 @@ name = "audio-backend"
 path = "../../tests/audio/backend.rs"
 
 [dependencies]
-thiserror = "1.0"
-
 hound = "3.5"
 lewton = "0.10"
 minimp3 = "0.5"
 claxon = "0.4"
 
 parking_lot = "0.12"
-crossbeam-queue = "0.3"
 
 cpal = "0.18.2"
 

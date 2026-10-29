@@ -28,6 +28,7 @@ test-unit:
 [no-exit-message]
 test-api:
     @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report api
+    python3 tools/test_facade_features.py
 
 # Run smoke tests.
 [no-exit-message]
@@ -446,10 +447,12 @@ check: check-fmt check-clippy
 # Check formatting.
 check-fmt:
     cargo fmt --all --check
+    rustfmt --edition 2021 --check tests/api/facade_features.rs
 
 # Run Clippy with warnings denied.
 check-clippy:
     cargo clippy --workspace --all-targets --all-features -- -D warnings
+    python3 tools/test_facade_features.py --clippy
 
 # Install the repository-owned Git hooks for this clone.
 hooks-install:
@@ -464,7 +467,7 @@ lint:
 
 # Build Rustdoc with warnings denied.
 docs:
-    RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+    RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
 
 # Check the complete API book without changing tracked files.
 [no-exit-message]
@@ -489,7 +492,7 @@ _docs-api-check:
     [[ $(cargo public-api --version) == *'0.52.0'* ]]
     [[ $(lychee --version) == *'0.24.2'* ]]
     rustc +nightly-2026-03-12 --version >/dev/null
-    cargo build -p vmnl
+    cargo build -p vmnl --all-features
     python3 -m unittest discover -s tools/tests
     api_lib_dir="$PWD/target/api-book-libs"
     api_deps_dir="$PWD/target/debug/deps"

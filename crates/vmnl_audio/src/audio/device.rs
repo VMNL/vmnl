@@ -99,20 +99,22 @@ impl Default for AudioConfig {
     }
 }
 
-/// Builder for the audio backend and its optional control thread.
-#[derive(Debug, Clone)]
+/// Who drives command processing, streaming refill, and playback cleanup.
+///
+/// This selects VMNL control work only. CPAL still drives output independently.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ControlMode {
+    /// The caller drives control through [`AudioDevice::update`]; the default.
+    Manual,
+    /// An explicitly enabled VMNL worker owns the control cycle.
+    Automatic,
+}
+
+/// Builder for the audio backend; control defaults to [`ControlMode::Manual`].
+#[derive(Debug, Clone, Default)]
 pub struct AudioDeviceBuilder {
     config: AudioConfig,
     threaded: bool,
-}
-
-impl Default for AudioDeviceBuilder {
-    fn default() -> Self {
-        Self {
-            config: AudioConfig::default(),
-            threaded: true,
-        }
-    }
 }
 
 impl AudioDeviceBuilder {
@@ -123,13 +125,22 @@ impl AudioDeviceBuilder {
         self
     }
 
-    /// Enables the control worker. Defaults to `true`.
-    /// Disabling this worker leaves backend-managed output execution active.
-    /// The current default is scheduled to become opt-in before acceptance.
+    /// Enables the VMNL control worker. Defaults to `false` (manual control).
+    /// Backend-managed output execution remains active in either mode.
     #[must_use]
     pub fn thread(mut self, enabled: bool) -> Self {
         self.threaded = enabled;
         self
+    }
+
+    /// Returns the selected control policy without opening a device or starting a thread.
+    #[must_use]
+    pub fn control_mode(&self) -> ControlMode {
+        if self.threaded {
+            ControlMode::Automatic
+        } else {
+            ControlMode::Manual
+        }
     }
 
     /// Requests a sample rate in Hz; zero is rejected when building.
@@ -193,13 +204,16 @@ pub struct AudioDevice {
 }
 
 impl AudioDevice {
-    /// Returns a builder with the current default configuration and worker enabled.
+    /// Returns a builder with the default configuration and manual control.
     #[must_use]
     pub fn builder() -> AudioDeviceBuilder {
         AudioDeviceBuilder::default()
     }
 
-    /// Creates and starts a device with the automatic control thread enabled.
+    /// Creates and starts a device in manual control mode.
+    ///
+    /// Call [`Self::update`] to refill music and process control work. Backend
+    /// output still runs independently. Use the builder's `thread(true)` for a worker.
     ///
     /// # Errors
     ///
@@ -344,6 +358,19 @@ impl AudioDevice {
         self.channels
     }
 
+    /// Returns the resolved VMNL control policy, independently of backend threads.
+    ///
+    /// This reports the configured mode, not worker health. An automatic worker
+    /// that fails stays in this mode; [`Self::update`] then reports its failure.
+    #[must_use]
+    pub fn control_mode(&self) -> ControlMode {
+        if self.worker.is_some() {
+            ControlMode::Automatic
+        } else {
+            ControlMode::Manual
+        }
+    }
+
     /// Loads and caches a complete sound, then converts it to stereo at the device rate.
     ///
     /// This performs file I/O and allocates in proportion to the decoded sound;
@@ -430,11 +457,7 @@ impl AudioDevice {
     }
 
     fn process_if_manual(&self) -> AudioResult<()> {
-        self.check_control_worker()?;
-        if self.worker.is_none() {
-            self.runtime.tick()?;
-        }
-        Ok(())
+        crate::audio::worker::update_control(&self.runtime, self.worker.as_ref())
     }
 
     fn check_control_worker(&self) -> AudioResult<()> {

@@ -15,6 +15,7 @@
   - [Maturity, compatibility, and deprecation](concepts/maturity_compatibility_and_deprecation.md)
 - [Reference](reference/README.md)
   - [Facade](reference/facade.md)
+  - [Audio](reference/audio.md)
   - [Context](reference/context.md)
   - [InputRuntime](reference/input_runtime.md)
   - [Joystick and gamepad samples](reference/joystick_gamepad.md)

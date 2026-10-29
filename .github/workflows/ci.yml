@@ -30,7 +30,9 @@ jobs:
           toolchain: 1.87.0
           components: rustfmt, clippy
       - name: Check formatting
-        run: cargo fmt --all --check
+        run: |
+          cargo fmt --all --check
+          rustfmt --edition 2021 --check tests/api/facade_features.rs
       - name: Restore Cargo cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -48,7 +50,9 @@ jobs:
             libvulkan-dev vulkan-tools wayland-protocols \
             libwayland-dev libxkbcommon-dev xorg-dev
       - name: Run Clippy
-        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+        run: |
+          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+          python3 tools/test_facade_features.py --clippy
 
   audio:
     name: "Audio: ${{ matrix.name }}"
@@ -90,6 +94,8 @@ jobs:
         run: cargo test -p vmnl_audio --tests --no-run --locked
       - name: Run device-independent audio tests
         run: cargo test -p vmnl_audio --test audio --locked
+      - name: Check isolated audio-only and empty facade clients
+        run: python3 tools/test_facade_features.py --case empty --case audio
 
   validation:
     name: "Validation: ${{ matrix.name }}"
@@ -145,6 +151,8 @@ jobs:
           --exclude vmnl-platform-tests --exclude vmnl-smoke-tests --locked
       - name: Run API Tests
         run: cargo test -p vmnl-api-tests --locked
+      - name: Test isolated facade feature combinations
+        run: python3 tools/test_facade_features.py
       - name: Run Smoke Tests
         run: cargo run -p vmnl-smoke-tests --locked
       - name: Run portable platform tests

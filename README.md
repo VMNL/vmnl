@@ -49,15 +49,14 @@ explicit low-level control.
 ## Overview
 
 **VMNL** is a modular Rust library for building a game engine, a real-time application, or a game
-without first implementing a complete engine. Its graphics domain uses Vulkan; audio and networking
-are planned as independent domains with their own backends.
+without first implementing a complete engine. Its graphics domain uses Vulkan; audio is available as an opt-in independent domain, and networking remains planned.
 
 It is designed to compose three domains behind one facade:
 
 | Domain        | Purpose                                  |
 | ------------- | ---------------------------------------- |
 | **Graphics**  | Explicit Vulkan rendering pipeline       |
-| **Audio**     | Real-time audio (planned)                |
+| **Audio**     | Independent audio playback (experimental) |
 | **Network**   | Transport, framing, and reliable/unreliable channels (planned) |
 
 The guiding constraint is progressive control: start with documented defaults, replace only the
@@ -89,7 +88,7 @@ VMNL applies these principles to every stable public contract:
 flowchart TD
     APP["Your application"] --> VMNL["vmnl (facade)"]
     VMNL --> G["graphics"]
-    VMNL -. planned .-> A["audio"]
+    VMNL -->|"opt-in feature"| A["audio"]
     VMNL -. planned .-> N["network"]
     G --> D2["d2 - 2D primitives · available"]
     G --> D3["d3 - mesh / camera · scaffolding"]
@@ -145,7 +144,7 @@ current capabilities. The canonical direction and boundaries are documented in
 | Graphics - 2D       | Available        |
 | Graphics - 3D       | Scaffolding only |
 | Windowing / Input   | Available        |
-| Audio               | Planned          |
+| Audio               | Experimental     |
 | Networking          | Planned          |
 
 ---

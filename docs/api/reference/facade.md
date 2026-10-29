@@ -6,11 +6,12 @@ Import path: `vmnl`. Status: experimental facade; all client-visible items docum
 
 ## Purpose and use cases
 
-The facade is the supported dependency boundary for VMNL clients. It hides the internal crate/module organization while grouping rendering primitives into `common`, `d2`, `d3`, and `raw`.
+The facade is a dependency boundary for VMNL clients; independent domain crates remain supported.
+Graphics keeps `common`, `d2`, `d3`, and `raw`; optional audio is grouped under `audio`.
 
 ## Public API
 
-Root re-exports: `Context`, `Window`, `WindowBuilder`, `FrameRenderer`, `RenderMode`, `PresentMode`,
+`graphics` root re-exports: `Context`, `Window`, `WindowBuilder`, `FrameRenderer`, `RenderMode`, `PresentMode`,
 `Event`, `EventKind`, `Cursor`, `CursorBuilder`, `CursorMode`, `StandardCursor`,
 `StandardCursorBuilder`, `Input`, `Key`, `KeyboardState`, `Modifiers`, `MouseButton`, `MouseState`,
 `InputRuntime`, `InputRuntimeBuilder`, `InputRuntimeConfig`, `Monitors`, `MonitorInfo`, `VideoMode`,
@@ -21,7 +22,17 @@ and `VMNLResult`. Modules:
 
 ## Construction, defaults, and validation
 
-The facade has no value to construct. Defaults and validation belong to the re-exported items.
+The facade has no value to construct.
+
+| Cargo features | Surface |
+|---|---|
+| Default | `graphics`, retaining the existing root exports |
+| No defaults, `graphics` | Graphics only |
+| No defaults, `audio` | `vmnl::audio`, without graphics/Vulkan/GLFW dependencies |
+| `graphics,audio` | Both independent domains |
+| No features | No domain |
+
+Default audio control is manual; see [Audio](audio.md). Feature selection creates no runtime.
 
 ## Units, coordinates, and valid ranges
 
@@ -33,7 +44,7 @@ The facade adds no ownership or threading behavior. See [lifecycle, ownership, a
 
 ## Errors, panics, and failure conditions
 
-The facade itself is infallible. Re-exported operations use `VMNLResult` where failure is represented.
+The facade itself is infallible. Graphics operations use `VMNLResult`; audio operations use `audio::AudioResult`.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
@@ -41,7 +52,8 @@ Re-exporting symbols performs no operation at runtime. Costs of the re-exported 
 
 ## Platform, Vulkan, and display constraints
 
-Compiling the facade is not proof that a Vulkan device, GLFW window, or display is available at runtime.
+Audio-only clients need no graphics dependencies or display. Playback still needs a usable
+audio device. Compilation does not qualify a Vulkan device, GLFW window, or output device.
 
 ## Example and related types
 

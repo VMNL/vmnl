@@ -5,8 +5,29 @@
 
 use std::io;
 use vmnl_audio::{
-    AudioConfig, AudioDevice, AudioError, MusicPlayConfig, PlaybackState, SoundPlayConfig,
+    AudioConfig, AudioDevice, AudioDeviceBuilder, AudioError, ControlMode, MusicPlayConfig,
+    PlaybackState, SoundPlayConfig,
 };
+
+#[test]
+fn control_is_manual_by_default_and_automatic_only_when_requested() {
+    assert_eq!(
+        AudioDeviceBuilder::default().control_mode(),
+        ControlMode::Manual
+    );
+    assert_eq!(AudioDevice::builder().control_mode(), ControlMode::Manual);
+    assert_eq!(
+        AudioDevice::builder().thread(true).control_mode(),
+        ControlMode::Automatic
+    );
+    assert_eq!(
+        AudioDevice::builder()
+            .thread(true)
+            .thread(false)
+            .control_mode(),
+        ControlMode::Manual
+    );
+}
 
 #[test]
 fn audio_config_defaults_to_stereo_at_44100_hz_and_unity_gain() {
