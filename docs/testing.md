@@ -45,6 +45,15 @@ check an unexpected join panic, and gate an in-flight cycle during stop. Repeate
 covered. The native target additionally checks public control errors after worker failure;
 compiling that ignored case does not qualify a real device or native shutdown latency.
 
+Resampling regressions compare full-resource and streaming PCM for mono/stereo WAVs at five
+rate pairs, including 44.1/48 kHz and 22.05/48 kHz in both directions. Seven source lengths
+cover empty input, short exact-rate boundaries and longer refills. Four read patterns must
+produce the exact rational frame count and identical streaming PCM; full-resource PCM is
+compared with the existing interpolation tolerance. Empty reads and repeated EOF preserve
+output. Separate playback regressions check simultaneous completion at 480 output frames
+and three Music/Sound loop repetitions without an extra frame. These private source-copy
+checks do not qualify encoder padding, audible quality or callback timing.
+
 The resampler's zero-source-rate and incomplete-frame cases deliberately fabricate invalid
 private PCM; they prove internal rejection before empty/same-rate shortcuts, not a state
 constructible by clients. Separate WAV tests corrupt real metadata/data and check both full

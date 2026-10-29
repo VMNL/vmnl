@@ -17,6 +17,7 @@ fn decode_to_vec(path: &std::path::Path, sample_rate: u32, chunk_sizes: &[usize]
     let mut output = Vec::new();
     let mut chunk_index = 0;
     loop {
+        assert_eq!(decoder.read_stereo(&mut []).expect("empty read"), 0);
         let size = chunk_sizes[chunk_index % chunk_sizes.len()];
         let mut chunk = vec![99.0_f32; size];
         let read = decoder
@@ -28,6 +29,11 @@ fn decode_to_vec(path: &std::path::Path, sample_rate: u32, chunk_sizes: &[usize]
         if read == 0 {
             break;
         }
+    }
+    for _ in 0..3 {
+        let mut tail = [99.0; 4];
+        assert_eq!(decoder.read_stereo(&mut tail).expect("stable EOF"), 0);
+        assert_eq!(tail, [99.0; 4]);
     }
     output
 }
@@ -294,6 +300,49 @@ fn varied_read_sizes_match_continuous_reads_across_codec_chunk_boundaries() {
             &partial,
             &format!("decoded samples changed across chunks for {fixture}"),
         );
+    }
+}
+
+#[test]
+fn resampling_frame_count_and_pcm_are_independent_of_read_sizes() {
+    for (source_rate, target_rate) in [
+        (44_100, 48_000),
+        (22_050, 48_000),
+        (48_000, 44_100),
+        (48_000, 22_050),
+        (44_100, 44_100),
+    ] {
+        for channels in [1_u16, 2] {
+            for frames in [0_usize, 1, 2, 147, 441, 4_410, 44_100] {
+                let file = TempAudioFile::new("wav");
+                let samples: Vec<i16> = (0..frames * usize::from(channels))
+                    .map(|index| (i16::try_from(index % 97).expect("bounded pattern") - 48) * 500)
+                    .collect();
+                file.write_pcm16_samples(channels, source_rate, &samples);
+                let expected_frames = usize::try_from(
+                    (frames as u128 * u128::from(target_rate)).div_ceil(u128::from(source_rate)),
+                )
+                .expect("small fixture");
+                let full = AudioDecoder::decode_file(file.path())
+                    .expect("decode WAV")
+                    .resample_to_stereo(target_rate)
+                    .expect("resample sound");
+                assert_eq!(full.frame_count(), expected_frames);
+                let reference = decode_to_vec(file.path(), target_rate, &[8_192]);
+                for sizes in [&[2][..], &[1_024], &[8_192], &[2, 14, 6, 102, 18, 514]] {
+                    let streamed = decode_to_vec(file.path(), target_rate, sizes);
+                    let context = format!(
+                        "{frames} frames, {channels} channels, {source_rate}->{target_rate}, reads={sizes:?}"
+                    );
+                    assert_eq!(streamed.len() / 2, expected_frames, "{context}");
+                    assert!(
+                        streamed.iter().eq(&reference),
+                        "chunk-dependent PCM: {context}"
+                    );
+                    assert_same_audio(full.samples(), &streamed, &context);
+                }
+            }
+        }
     }
 }
 

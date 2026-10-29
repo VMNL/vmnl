@@ -44,7 +44,8 @@ pub(crate) struct StreamingDecoder {
     source_sample_rate: u32,
     target_sample_rate: u32,
     source_buffer: Vec<f32>,
-    source_position: f64,
+    // Exact source-frame position in units of 1 / target_sample_rate.
+    source_position: u64,
     staging: Vec<f32>,
     eof: bool,
 }
@@ -182,7 +183,7 @@ impl StreamingDecoder {
             source_sample_rate: sample_rate,
             target_sample_rate,
             source_buffer: first_samples,
-            source_position: 0.0,
+            source_position: 0,
             staging: Vec::with_capacity(SOURCE_CHUNK_SAMPLES),
             eof: false,
         };
@@ -339,15 +340,17 @@ impl StreamingDecoder {
         Ok(())
     }
 
+    fn source_frame_index(&self) -> AudioResult<usize> {
+        usize::try_from(self.source_position / u64::from(self.target_sample_rate)).map_err(|_| {
+            AudioError::DecoderFailed("resampling source position is too large".to_owned())
+        })
+    }
+
     /// Fills an interleaved stereo output buffer and returns the number of
     /// samples written (not frames). The returned count is always even.
-    // Preserve the existing nonnegative f64 phase and integer-index conversion;
-    // interpolation intentionally narrows the fractional weight to f32.
-    #[allow(
-        clippy::cast_possible_truncation,
-        clippy::cast_sign_loss,
-        clippy::cast_precision_loss
-    )]
+    // Integer phase makes EOF independent of read boundaries. Only the fraction
+    // narrows to f32; its numerator is below the u32 target rate (exact in f64).
+    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     pub(crate) fn read_stereo(&mut self, output: &mut [f32]) -> AudioResult<usize> {
         if !output.len().is_multiple_of(2) {
             return Err(AudioError::InvalidState(
@@ -355,13 +358,13 @@ impl StreamingDecoder {
             ));
         }
 
-        let step = f64::from(self.source_sample_rate) / f64::from(self.target_sample_rate);
+        let target_rate = u64::from(self.target_sample_rate);
         let requested_frames = output.len() / 2;
         let source_channels = self.source_channels;
         let mut written_frames = 0usize;
 
         while written_frames < requested_frames {
-            let index = self.source_position.floor() as usize;
+            let index = self.source_frame_index()?;
             self.ensure_source_frame(index.saturating_add(1))?;
 
             let source_frames = self.source_buffer.len() / source_channels;
@@ -370,7 +373,8 @@ impl StreamingDecoder {
             }
 
             let next_index = (index + 1).min(source_frames - 1);
-            let fraction = (self.source_position - index as f64) as f32;
+            let fraction = ((self.source_position % target_rate) as f64
+                / f64::from(self.target_sample_rate)) as f32;
             let left0 = self.source_buffer[index * source_channels];
             let left1 = self.source_buffer[next_index * source_channels];
             let left = left0 + (left1 - left0) * fraction;
@@ -385,17 +389,24 @@ impl StreamingDecoder {
             output[written_frames * 2] = left;
             output[written_frames * 2 + 1] = right;
             written_frames += 1;
-            self.source_position += step;
+            self.source_position = self
+                .source_position
+                .checked_add(u64::from(self.source_sample_rate))
+                .ok_or_else(|| {
+                    AudioError::DecoderFailed("resampling source position is too large".to_owned())
+                })?;
         }
 
         // Keep one source frame for interpolation across chunk boundaries.
         let source_frames = self.source_buffer.len() / source_channels;
-        let discard_frames = (self.source_position.floor() as usize)
+        let discard_frames = self
+            .source_frame_index()?
             .saturating_sub(1)
             .min(source_frames);
         if discard_frames > 0 {
             self.source_buffer.drain(..discard_frames * source_channels);
-            self.source_position -= discard_frames as f64;
+            // discard_frames <= source_position / target_rate, so this product fits.
+            self.source_position -= discard_frames as u64 * target_rate;
         }
 
         Ok(written_frames * 2)

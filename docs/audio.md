@@ -45,6 +45,15 @@ source rate or an incomplete frame before its empty/same-rate shortcuts. Clients
 construct the private decoded resource; tests that bypass construction check internal defense,
 while malformed-file tests check the actual decoder entry paths.
 
+Streaming resampling represents its source-frame position as an integer numerator
+over the target sample rate.
+For `N` decoded source frames at rate `S` and target rate `T`, it emits exactly
+`ceil(N * T / S)` stereo frames, independently of read sizes. Linear interpolation
+retains the final source sample at the end, matching full-resource conversion.
+Discarding consumed source frames preserves the fractional phase exactly;
+reopening a loop starts that source's phase at zero. This concerns decoded PCM,
+not container timing or encoder-delay/padding trimming.
+
 Device creation selects supported stereo ranges using the format priority documented on
 `AudioDevice`, then the nearest supported rate within that priority. The stream keeps the
 backend's default buffer policy. Availability, resolved rate, and buffer timing can differ by

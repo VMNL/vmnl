@@ -3,7 +3,7 @@
 
 //! State-transition regressions without a CPAL device.
 
-use crate::audio::decoder::test_support::decoded_audio;
+use crate::audio::decoder::{test_support::decoded_audio, AudioDecoder};
 use crate::audio::music::MusicStream;
 use crate::audio::runtime::AudioRuntime;
 use crate::audio::sound::SoundVoice;
@@ -34,6 +34,73 @@ const TRANSITIONS: [(PlaybackState, [PlaybackState; 3]); 3] = [
 fn sound(state: PlaybackState) -> SoundVoice {
     let pcm = Arc::new(decoded_audio(2, 8_000, vec![0.5, -0.25, 0.25, -0.125]));
     SoundVoice::new(1, pcm, 1.0, false, state).expect("valid test voice")
+}
+
+fn resampled_playbacks(looping: bool) -> (TempAudioFile, SoundVoice, MusicStream) {
+    let file = TempAudioFile::new("wav");
+    let samples: Vec<i16> = (0..441)
+        .map(|index| (i16::try_from(index % 97).expect("bounded pattern") - 48) * 500)
+        .collect();
+    file.write_pcm16_samples(1, 44_100, &samples);
+    let pcm = AudioDecoder::decode_file(file.path())
+        .expect("decode fixture")
+        .resample_to_stereo(48_000)
+        .expect("resample fixture");
+    let voice = SoundVoice::new(1, Arc::new(pcm), 1.0, looping, PlaybackState::Playing)
+        .expect("valid voice");
+    let stream = MusicStream::new(
+        file.path().to_path_buf(),
+        1.0,
+        looping,
+        PlaybackState::Playing,
+        48_000,
+    )
+    .expect("valid stream");
+    stream.pump().expect("prefill");
+    (file, voice, stream)
+}
+
+#[test]
+fn resampled_music_and_sound_finish_at_the_same_exact_buffer_boundary() {
+    let (_file, voice, stream) = resampled_playbacks(false);
+    let mut sound_output = [0.0; 960];
+    let mut music_output = [0.0; 960];
+    voice.mix_into(&mut sound_output, 1.0);
+    stream.mix_into(&mut music_output, 1.0);
+    assert_eq!(voice.cursor_frames(), 480);
+    assert_eq!(stream.cursor_frames(), 480);
+    assert!(voice.is_stopped());
+    assert!(stream.is_stopped());
+    assert!(sound_output
+        .iter()
+        .zip(music_output)
+        .all(|(sound, music)| (sound - music).abs() <= 1.0e-5));
+    let mut tail = [0.0; 4];
+    stream.mix_into(&mut tail, 1.0);
+    assert_eq!(tail, [0.0; 4]);
+    assert_eq!(stream.cursor_frames(), 480);
+}
+
+#[test]
+fn resampled_music_loops_match_sound_without_an_extra_frame() {
+    let (_file, voice, stream) = resampled_playbacks(true);
+    for cycle in 1..=3 {
+        let mut sound_output = [0.0; 960];
+        let mut music_output = [0.0; 960];
+        voice.mix_into(&mut sound_output, 1.0);
+        stream.mix_into(&mut music_output, 1.0);
+        assert!(
+            sound_output
+                .iter()
+                .zip(music_output)
+                .all(|(sound, music)| (sound - music).abs() <= 1.0e-5),
+            "PCM diverged on loop {cycle}"
+        );
+        assert_eq!(voice.cursor_frames(), cycle * 480);
+        assert_eq!(stream.cursor_frames(), cycle * 480);
+        assert_eq!(voice.state(), PlaybackState::Playing);
+        assert_eq!(stream.state(), PlaybackState::Playing);
+    }
 }
 
 fn music(looping: bool) -> (TempAudioFile, MusicStream) {
