@@ -21,7 +21,6 @@
 | Rectangle | position `(0,0)`, white, rotation `0°`, top-left origin, device memory preference |
 | Circle | center `(0,0)`, white, 32-triangle tessellation, device memory preference |
 | Polygon | ordered simple convex or concave boundary; white from points, supplied colors from vertices; device memory preference; implicit closure; convex triangle fan or deterministic concave ear clipping |
-| Ellipse | center `(0,0)`, white, 32-triangle tessellation, device memory preference |
 | Triangle | white per vertex unless created from colored vertices; device memory preference |
 | Line | width `1.0`, butt cap, white, device memory preference |
 | Indexed shape / mesh / raw geometry / uniform | device memory preference |
