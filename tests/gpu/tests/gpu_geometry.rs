@@ -5,7 +5,7 @@
 
 use vmnl::{
     common::{BufferMemoryPreference, Rgba},
-    d2::{LineCap, LineJoin, Shape, Vector2f, Vertex2D},
+    d2::{Anchor, CornerRadii, LineCap, LineJoin, Shape, Vector2f, Vertex2D},
     d3::{Mesh, Vector3f, Vertex3D},
     raw, Context, PresentMode, RenderMode, VMNLError, VMNLErrorKind, VMNLResult, Window,
 };
@@ -175,6 +175,43 @@ fn polylines_submit_opaque_and_translucent_shapes_in_both_render_modes() -> VMNL
 
 #[test]
 #[ignore = "Requires Vulkan + GLFW display."]
+fn rounded_rectangles_submit_opaque_and_translucent_shapes_in_both_render_modes() -> VMNLResult<()>
+{
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut window = Window::builder()
+        .title("VMNL GPU rounded rectangle geometry")
+        .size(640, 480)
+        .present_mode(PresentMode::Auto)
+        .build(&context)?;
+    let opaque = Shape::rect(220.0, 120.0)
+        .position(60.0, 80.0)
+        .corner_radius(24.0)
+        .corner_segments(12)
+        .color(Rgba::CYAN)
+        .buffer_memory_preference(BufferMemoryPreference::Host)
+        .build(&context)?;
+    let translucent = Shape::rect(220.0, 120.0)
+        .position(320.0, 260.0)
+        .corner_radii(CornerRadii::new(30.0, 10.0, 30.0, 0.0))
+        .corner_segments(8)
+        .anchor(Anchor::Center)
+        .rotation(15.0)
+        .color(Rgba::rgba(255, 90, 90, 180))
+        .build(&context)?;
+
+    for mode in [RenderMode::PerObject, RenderMode::Batched] {
+        window
+            .render()
+            .mode(mode)
+            .draw2d([&opaque, &translucent])
+            .submit()?;
+    }
+    Ok(())
+}
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
 fn d2_then_raw_passes_submit() -> VMNLResult<()> {
     let _guard = gpu_test_guard();
     let context = Context::new()?;
@@ -241,6 +278,12 @@ fn gpu_resource_builders_report_expected_invalid_states() -> VMNLResult<()> {
     assert_invalid_state(
         Shape::line(v2(0.0, 0.0), v2(0.0, 0.0)).build(&context),
         "line endpoints must be distinct",
+    )?;
+    assert_invalid_state(
+        Shape::rect(100.0, 50.0)
+            .corner_radii(CornerRadii::all(60.0))
+            .build(&context),
+        "rectangle corner radii must not overlap",
     )?;
     assert_invalid_state(
         Mesh::indexed(

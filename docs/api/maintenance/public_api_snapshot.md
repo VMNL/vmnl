@@ -332,6 +332,31 @@ impl core::marker::Unpin for vmnl::d2::LineJoin
 impl core::marker::UnsafeUnpin for vmnl::d2::LineJoin
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::LineJoin
 impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::LineJoin
+pub struct vmnl::d2::CornerRadii
+pub vmnl::d2::CornerRadii::bottom_left: f32
+pub vmnl::d2::CornerRadii::bottom_right: f32
+pub vmnl::d2::CornerRadii::top_left: f32
+pub vmnl::d2::CornerRadii::top_right: f32
+impl vmnl::d2::CornerRadii
+pub const fn vmnl::d2::CornerRadii::all(f32) -> Self
+pub const fn vmnl::d2::CornerRadii::new(f32, f32, f32, f32) -> Self
+impl core::clone::Clone for vmnl::d2::CornerRadii
+pub fn vmnl::d2::CornerRadii::clone(&self) -> vmnl::d2::CornerRadii
+impl core::cmp::PartialEq for vmnl::d2::CornerRadii
+pub fn vmnl::d2::CornerRadii::eq(&self, &vmnl::d2::CornerRadii) -> bool
+impl core::default::Default for vmnl::d2::CornerRadii
+pub fn vmnl::d2::CornerRadii::default() -> vmnl::d2::CornerRadii
+impl core::fmt::Debug for vmnl::d2::CornerRadii
+pub fn vmnl::d2::CornerRadii::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::d2::CornerRadii
+impl core::marker::StructuralPartialEq for vmnl::d2::CornerRadii
+impl core::marker::Freeze for vmnl::d2::CornerRadii
+impl core::marker::Send for vmnl::d2::CornerRadii
+impl core::marker::Sync for vmnl::d2::CornerRadii
+impl core::marker::Unpin for vmnl::d2::CornerRadii
+impl core::marker::UnsafeUnpin for vmnl::d2::CornerRadii
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::d2::CornerRadii
+impl core::panic::unwind_safe::UnwindSafe for vmnl::d2::CornerRadii
 pub struct vmnl::d2::IndexedShapeBuilder
 impl vmnl::d2::IndexedShapeBuilder
 pub fn vmnl::d2::IndexedShapeBuilder::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
@@ -395,6 +420,9 @@ pub fn vmnl::d2::RectBuilder::anchor(self, vmnl::d2::Anchor) -> Self
 pub fn vmnl::d2::RectBuilder::buffer_memory_preference(self, vmnl::common::BufferMemoryPreference) -> Self
 pub fn vmnl::d2::RectBuilder::build(self, &vmnl::Context) -> vmnl::VMNLResult<vmnl::d2::Shape>
 pub fn vmnl::d2::RectBuilder::color<C>(self, C) -> Self where C: core::convert::Into<vmnl::common::Rgba>
+pub fn vmnl::d2::RectBuilder::corner_radii(self, vmnl::d2::CornerRadii) -> Self
+pub fn vmnl::d2::RectBuilder::corner_radius(self, f32) -> Self
+pub fn vmnl::d2::RectBuilder::corner_segments(self, u16) -> Self
 pub fn vmnl::d2::RectBuilder::origin(self, f32, f32) -> Self
 pub fn vmnl::d2::RectBuilder::position(self, f32, f32) -> Self
 pub fn vmnl::d2::RectBuilder::rotation(self, f32) -> Self

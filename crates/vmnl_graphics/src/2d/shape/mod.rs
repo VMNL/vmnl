@@ -22,7 +22,7 @@ pub use indexed::IndexedShapeBuilder;
 pub use line::{LineBuilder, LineCap};
 pub use polygon::PolygonBuilder;
 pub use polyline::{LineJoin, PolylineBuilder};
-pub use rect::{Anchor, RectBuilder};
+pub use rect::{Anchor, CornerRadii, RectBuilder};
 pub use triangle::TriangleBuilder;
 
 /// Types of shape data that can be rendered in VMNL.
@@ -43,6 +43,43 @@ pub(crate) enum ShapeKind {
     Polygon,
     /// Connected thick stroke built from an ordered point path.
     Polyline,
+}
+
+/// One sample along an elliptical arc in the built-in X-right/Y-down coordinate system.
+struct ArcSample {
+    /// Absolute position of the sampled arc point.
+    position: Vector2f,
+    /// Sine of the sampled angle.
+    sin: f32,
+    /// Cosine of the sampled angle.
+    cos: f32,
+}
+
+/// Sample `segment` of `segments` along an elliptical arc centered on `center`.
+///
+/// `segment` ranges from `0` to `segments`, inclusive, so a full sweep includes both arc
+/// endpoints. The sampled angle is `start_radians + sweep_radians * segment / segments`.
+/// Shared by every built-in circular arc boundary; do not duplicate the trigonometric loop.
+fn arc_sample(
+    center: Vector2f,
+    radii: Vector2f,
+    start_radians: f32,
+    sweep_radians: f32,
+    segment: u16,
+    segments: u16,
+) -> ArcSample {
+    let t = f32::from(segment) / f32::from(segments);
+    let angle = start_radians + sweep_radians * t;
+    let (sin, cos) = angle.sin_cos();
+
+    ArcSample {
+        position: Vector2f {
+            x: center.x + radii.x * cos,
+            y: center.y + radii.y * sin,
+        },
+        sin,
+        cos,
+    }
 }
 
 /// Shape resource container holding vertex/index buffers and counts.
@@ -137,6 +174,8 @@ impl Shape {
     /// Create a rectangle builder with a required size.
     ///
     /// `position` defaults to `(0, 0)` and `color` defaults to white.
+    /// Corners are sharp by default; use [`RectBuilder::corner_radius`] or
+    /// [`RectBuilder::corner_radii`] to round them.
     ///
     /// # Arguments
     /// - `w`: Rectangle width in pixels.

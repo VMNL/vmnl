@@ -73,6 +73,7 @@
       - [PolygonBuilder](reference/d2/shapes/polygon_builder.md)
       - [TriangleBuilder](reference/d2/shapes/triangle_builder.md)
       - [RectBuilder](reference/d2/shapes/rect_builder.md)
+      - [CornerRadii](reference/d2/shapes/corner_radii.md)
       - [Anchor](reference/d2/shapes/anchor.md)
       - [LineBuilder](reference/d2/shapes/line_builder.md)
       - [LineCap](reference/d2/shapes/line_cap.md)
