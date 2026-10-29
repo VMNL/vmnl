@@ -8,6 +8,7 @@
 - C and C++ toolchains.
 - CMake, Git, Python 3.
 - `pkg-config`.
+- Ripgrep (`rg`) for the API documentation link inventory.
 - Vulkan loader and headers.
 - X11 and Wayland development headers used to build the bundled GLFW C sources.
 - shaderc.
@@ -161,6 +162,8 @@ snippets link that complete facade; `just docs` builds Rustdoc with all features
 CI pins the configurable toolchain action and rejects a selected compiler other than Rust
 1.87.0; the API-extraction nightly is installed and checked separately. An action's version-specific
 revision can ignore `toolchain`, so qualify the compiler printed in its logs, not just workflow inputs.
+Documentation checks require `rg` and reject failed or empty Markdown discovery before invoking
+lychee. CI installs ripgrep explicitly; a link check over only the root files is incomplete.
 `python3 tools/test_facade_features.py` checks isolated clients and their normal/build graphs;
 `--clippy` checks those same fixtures with warnings denied. Both write only generated clients
 and build artifacts under `target/`; fixture lockfiles are seeded from the root lockfile.

@@ -485,6 +485,7 @@ docs-api-tools:
 _docs-api-check:
     #!/usr/bin/env bash
     set -euo pipefail
+    command -v rg >/dev/null
     just docs-api-tools
     export PATH="$PWD/target/api-tools/bin:$PATH"
     [[ $(just --version) == 'just 1.57.0' ]]
@@ -509,7 +510,10 @@ _docs-api-check:
     mdbook build docs/api
     python3 tools/api_docs.py check
     python3 tools/glfw_portability.py check
-    mapfile -t markdown_files < <(rg --files docs -g '*.md')
+    # Assignment propagates discovery errors; process substitution hides them.
+    markdown_list=$(rg --files docs -g '*.md')
+    [[ -n $markdown_list ]]
+    mapfile -t markdown_files <<< "$markdown_list"
     lychee --offline --include-fragments=full "${markdown_files[@]}" CONTRIBUTING.md CHANGELOG.md README.md
 
 # Regenerate the reviewed public API snapshot and indexes.
