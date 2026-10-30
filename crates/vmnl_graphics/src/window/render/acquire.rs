@@ -19,7 +19,7 @@ impl VMNLWindow {
     ///
     /// # Arguments
     /// - `previous_frame_end`: Mutable reference to an optional future representing the completion of the previous frame's operations.
-    pub(super) fn begin_frame(previous_frame_end: &mut Option<Box<dyn GpuFuture>>) {
+    pub(super) fn begin_frame(previous_frame_end: &mut Option<Box<dyn GpuFuture + Send + Sync>>) {
         if let Some(previous_frame_end) = previous_frame_end.as_mut() {
             previous_frame_end.cleanup_finished();
         }

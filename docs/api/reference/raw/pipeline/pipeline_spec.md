@@ -6,27 +6,33 @@ Import path: `vmnl::raw::PipelineSpec<TVertex>`. Status: experimental, operation
 
 ## Purpose and use cases
 
-Configures shaders, topology, blending, and vertex type before Vulkan pipeline construction.
+Configures shaders, topology, blending, triangle culling, front-face winding, polygon mode, line width, viewport/scissor and depth policies, and vertex type before Vulkan pipeline construction.
 
 ## Public API
 
-`vertex_shader`, `fragment_shader`, `topology`, `blend_mode`, `topology_value`, `blend_mode_value`, and `build(&Window)`. Implements `Default`; derives `Clone` and `Debug`.
+`vertex_shader`, `fragment_shader`, `topology`, `blend_mode`, `cull_mode`, `front_face`, `topology_value`, `blend_mode_value`, `cull_mode_value`, `front_face_value`, `polygon_mode`, `line_width`, `polygon_mode_value`, `line_width_value`, `viewport`, `scissor`, `viewport_value`, `scissor_value`, `depth(DepthState)`, `depth_value() -> DepthState`, and `build(&Window)`. Implements `Default`; derives `Clone` and `Debug`.
 
 ## Construction, defaults, and validation
 
-Defaults: no shaders, `TriangleList`, `Opaque`. Both shaders are required. Build requires `TVertex: BufferContents + Vertex + 'static`; entry point `main`; compatible vertex inputs; only single uniform-buffer descriptors; no descriptor arrays/push constants.
+Defaults: no shaders, `TriangleList`, `Opaque`, `CullMode::None`, `FrontFace::CounterClockwise`, `PolygonMode::Fill`, line width `1.0`. Both shaders are required. Build requires `TVertex: BufferContents + Vertex + 'static`; entry point `main`; compatible vertex inputs; only single uniform-buffer descriptors; no descriptor arrays/push constants. All culling/winding combinations are valid and require no optional device feature. Setters/getters do not allocate or submit GPU work. `build` first validates rasterization against the window's logical device, before reading or compiling shaders. Non-solid modes require enabled `FillModeNonSolid`; any width other than `1.0` requires enabled `WideLines`, even for a topology that does not use that state. Support alone is insufficient. No feature is activated or GPU reselected.
+
+Viewport and scissor both default to `FullFramebuffer`. Build validates their numbers and viewport device limits before shader I/O. Each raw draw resolves both policies against the actual acquired image extent, after any swapchain recreation. One viewport and one scissor are supported.
 
 ## Units, coordinates, and valid ranges
 
-Shader-defined. Descriptor set/binding indices are reflected from GLSL.
+Shader-defined. Descriptor set/binding indices are reflected from GLSL. Front-face winding is evaluated in framebuffer coordinates after shader/viewport transformations; culling applies to triangle primitives. Polygon mode changes triangle rasterization without changing topology; culling still applies before edges/vertices are rasterized. Line width is finite, strictly positive and within the inclusive range reported by `Context::line_width_limits()`. VMNL rejects out-of-range widths rather than clamping. In-range values may be rounded by the driver; exact pixel thickness is not promised. `gl_PointSize` remains shader-defined. These selections are fixed at pipeline construction; changing them requires another pipeline.
+
+[`Viewport`](viewport.md) transforms and [`Scissor`](scissor.md) rectangles use framebuffer pixels, independently of logical window size/DPI. Fixed values persist without scaling/clamping; full policies follow resize. Scissor is independent of viewport; an empty scissor clips everything. Viewport depth endpoints affect the transform only, without adding a depth attachment/test.
 
 ## Ownership, lifecycle, and threading
 
-Owns shader sources and copied options; setters consume/return it; build consumes it and binds the result to the borrowed window's device/render pass.
+Owns shader sources and copied options; setters consume/return it; build consumes it and binds the result to the borrowed window's exact device/render-pass object. The built pipeline exposes its resolved `RenderTargetInfo` and `validate_target(&Window)`. Equal attachment properties do not permit sharing pipelines between windows. Resize retains the same render pass and target description.
 
 ## Errors, panics, and failure conditions
 
-Returns `InvalidState` for missing shaders/unsupported raw layouts, shader read/compile errors, vertex validation errors, and Vulkan layout/pipeline creation failures.
+Returns `InvalidLineWidth { value, min, max }` for non-finite, non-positive or out-of-range widths; `DeviceFeatureNotEnabled { feature }` for disabled required features. Numeric validation precedes feature checks. `PolygonMode::Point` on portability-subset devices without enabled `pointPolygons` returns actionable `InvalidState` before shader compilation; VMNL cannot currently request that capability. Missing shaders/unsupported raw layouts also return `InvalidState`; shader read/compile, vertex validation and Vulkan layout/pipeline failures remain distinct.
+
+Invalid viewport values, exceeded device viewport limits, or overflowing signed scissor sums return `InvalidState`. See the policies' `resolve` contracts for headless validation; successful resolution alone does not prove device compatibility.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
@@ -35,6 +41,8 @@ Setters are CPU-only; source strings/paths may allocate. Build reads paths, runs
 ## Platform, Vulkan, and display constraints
 
 Requires an operational window and driver support for the generated pipeline.
+
+Depth defaults to [`DepthState::Disabled`](depth_state.md). `DepthState::Test { compare_op, write_enable }` requires a window built with a depth attachment; otherwise build returns `InvalidState` before shader I/O, including `Always` with writes disabled. All eight [`CompareOp`](compare_op.md) values and both write choices are supported without optional device features. State is immutable and inspectable on both spec and built pipeline. No attachment, format fallback or feature is added implicitly. The pipeline remains tied to its window's device/render pass, including attachments. High-level 2D always disables depth testing/writes; high-level 3D remains scaffolded.
 
 ## Example and related types
 
@@ -59,4 +67,4 @@ fn main() -> vmnl::VMNLResult<()> {
 }
 ```
 
-Related: [`Pipeline`](pipeline.md), [`PrimitiveTopology`](primitive_topology.md), and [`BlendMode`](blend_mode.md).
+Related: [`Pipeline`](pipeline.md), [`PrimitiveTopology`](primitive_topology.md), [`BlendMode`](blend_mode.md), [`CullMode`](cull_mode.md), [`FrontFace`](front_face.md), [`PolygonMode`](polygon_mode.md), [`LineWidthLimits`](../../line_width_limits.md), [`ViewportPolicy`](viewport_policy.md), and [`ScissorPolicy`](scissor_policy.md).

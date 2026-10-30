@@ -185,6 +185,12 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
     }
 
     /// Add a raw render pass to the pending frame.
+    ///
+    /// Each draw resolves and applies the pipeline's viewport/scissor policies in
+    /// framebuffer pixels against the acquired image after any recreation. Fixed
+    /// rectangles keep their values across resize; full policies follow the image.
+    /// Subsequent raw draws apply their own states, and 2D passes restore their
+    /// full viewport and unclipped pipeline state.
     #[must_use]
     pub fn draw_raw_2d<TVertex, const N: usize>(
         mut self,
@@ -201,6 +207,8 @@ impl<'w, 'g> FrameRenderer<'w, 'g> {
     }
 
     /// Add a raw render pass with descriptor resources to the pending frame.
+    ///
+    /// Viewport/scissor resolution and isolation follow [`Self::draw_raw_2d`].
     #[must_use]
     pub fn draw_raw_2d_with<TVertex, const N: usize>(
         mut self,

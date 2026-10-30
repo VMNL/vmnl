@@ -697,6 +697,114 @@ impl core::marker::Unpin for vmnl::raw::BlendMode
 impl core::marker::UnsafeUnpin for vmnl::raw::BlendMode
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::BlendMode
 impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::BlendMode
+pub enum vmnl::raw::CompareOp
+pub vmnl::raw::CompareOp::Always
+pub vmnl::raw::CompareOp::Equal
+pub vmnl::raw::CompareOp::Greater
+pub vmnl::raw::CompareOp::GreaterOrEqual
+pub vmnl::raw::CompareOp::Less
+pub vmnl::raw::CompareOp::LessOrEqual
+pub vmnl::raw::CompareOp::Never
+pub vmnl::raw::CompareOp::NotEqual
+impl core::clone::Clone for vmnl::raw::CompareOp
+pub fn vmnl::raw::CompareOp::clone(&self) -> vmnl::raw::CompareOp
+impl core::cmp::Eq for vmnl::raw::CompareOp
+impl core::cmp::PartialEq for vmnl::raw::CompareOp
+pub fn vmnl::raw::CompareOp::eq(&self, &vmnl::raw::CompareOp) -> bool
+impl core::fmt::Debug for vmnl::raw::CompareOp
+pub fn vmnl::raw::CompareOp::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::CompareOp
+impl core::marker::StructuralPartialEq for vmnl::raw::CompareOp
+impl core::marker::Freeze for vmnl::raw::CompareOp
+impl core::marker::Send for vmnl::raw::CompareOp
+impl core::marker::Sync for vmnl::raw::CompareOp
+impl core::marker::Unpin for vmnl::raw::CompareOp
+impl core::marker::UnsafeUnpin for vmnl::raw::CompareOp
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::CompareOp
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::CompareOp
+pub enum vmnl::raw::CullMode
+pub vmnl::raw::CullMode::Back
+pub vmnl::raw::CullMode::Front
+pub vmnl::raw::CullMode::FrontAndBack
+pub vmnl::raw::CullMode::None
+impl core::clone::Clone for vmnl::raw::CullMode
+pub fn vmnl::raw::CullMode::clone(&self) -> vmnl::raw::CullMode
+impl core::cmp::Eq for vmnl::raw::CullMode
+impl core::cmp::PartialEq for vmnl::raw::CullMode
+pub fn vmnl::raw::CullMode::eq(&self, &vmnl::raw::CullMode) -> bool
+impl core::fmt::Debug for vmnl::raw::CullMode
+pub fn vmnl::raw::CullMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::CullMode
+impl core::marker::StructuralPartialEq for vmnl::raw::CullMode
+impl core::marker::Freeze for vmnl::raw::CullMode
+impl core::marker::Send for vmnl::raw::CullMode
+impl core::marker::Sync for vmnl::raw::CullMode
+impl core::marker::Unpin for vmnl::raw::CullMode
+impl core::marker::UnsafeUnpin for vmnl::raw::CullMode
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::CullMode
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::CullMode
+pub enum vmnl::raw::DepthState
+pub vmnl::raw::DepthState::Disabled
+pub vmnl::raw::DepthState::Test
+pub vmnl::raw::DepthState::Test::compare_op: vmnl::raw::CompareOp
+pub vmnl::raw::DepthState::Test::write_enable: bool
+impl core::clone::Clone for vmnl::raw::DepthState
+pub fn vmnl::raw::DepthState::clone(&self) -> vmnl::raw::DepthState
+impl core::cmp::Eq for vmnl::raw::DepthState
+impl core::cmp::PartialEq for vmnl::raw::DepthState
+pub fn vmnl::raw::DepthState::eq(&self, &vmnl::raw::DepthState) -> bool
+impl core::default::Default for vmnl::raw::DepthState
+pub fn vmnl::raw::DepthState::default() -> vmnl::raw::DepthState
+impl core::fmt::Debug for vmnl::raw::DepthState
+pub fn vmnl::raw::DepthState::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::DepthState
+impl core::marker::StructuralPartialEq for vmnl::raw::DepthState
+impl core::marker::Freeze for vmnl::raw::DepthState
+impl core::marker::Send for vmnl::raw::DepthState
+impl core::marker::Sync for vmnl::raw::DepthState
+impl core::marker::Unpin for vmnl::raw::DepthState
+impl core::marker::UnsafeUnpin for vmnl::raw::DepthState
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::DepthState
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::DepthState
+pub enum vmnl::raw::FrontFace
+pub vmnl::raw::FrontFace::Clockwise
+pub vmnl::raw::FrontFace::CounterClockwise
+impl core::clone::Clone for vmnl::raw::FrontFace
+pub fn vmnl::raw::FrontFace::clone(&self) -> vmnl::raw::FrontFace
+impl core::cmp::Eq for vmnl::raw::FrontFace
+impl core::cmp::PartialEq for vmnl::raw::FrontFace
+pub fn vmnl::raw::FrontFace::eq(&self, &vmnl::raw::FrontFace) -> bool
+impl core::fmt::Debug for vmnl::raw::FrontFace
+pub fn vmnl::raw::FrontFace::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::FrontFace
+impl core::marker::StructuralPartialEq for vmnl::raw::FrontFace
+impl core::marker::Freeze for vmnl::raw::FrontFace
+impl core::marker::Send for vmnl::raw::FrontFace
+impl core::marker::Sync for vmnl::raw::FrontFace
+impl core::marker::Unpin for vmnl::raw::FrontFace
+impl core::marker::UnsafeUnpin for vmnl::raw::FrontFace
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::FrontFace
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::FrontFace
+pub enum vmnl::raw::PolygonMode
+pub vmnl::raw::PolygonMode::Fill
+pub vmnl::raw::PolygonMode::Line
+pub vmnl::raw::PolygonMode::Point
+impl core::clone::Clone for vmnl::raw::PolygonMode
+pub fn vmnl::raw::PolygonMode::clone(&self) -> vmnl::raw::PolygonMode
+impl core::cmp::Eq for vmnl::raw::PolygonMode
+impl core::cmp::PartialEq for vmnl::raw::PolygonMode
+pub fn vmnl::raw::PolygonMode::eq(&self, &vmnl::raw::PolygonMode) -> bool
+impl core::fmt::Debug for vmnl::raw::PolygonMode
+pub fn vmnl::raw::PolygonMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::PolygonMode
+impl core::marker::StructuralPartialEq for vmnl::raw::PolygonMode
+impl core::marker::Freeze for vmnl::raw::PolygonMode
+impl core::marker::Send for vmnl::raw::PolygonMode
+impl core::marker::Sync for vmnl::raw::PolygonMode
+impl core::marker::Unpin for vmnl::raw::PolygonMode
+impl core::marker::UnsafeUnpin for vmnl::raw::PolygonMode
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::PolygonMode
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::PolygonMode
 pub enum vmnl::raw::PrimitiveTopology
 pub vmnl::raw::PrimitiveTopology::LineList
 pub vmnl::raw::PrimitiveTopology::LineStrip
@@ -721,6 +829,29 @@ impl core::marker::Unpin for vmnl::raw::PrimitiveTopology
 impl core::marker::UnsafeUnpin for vmnl::raw::PrimitiveTopology
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::PrimitiveTopology
 impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::PrimitiveTopology
+pub enum vmnl::raw::ScissorPolicy
+pub vmnl::raw::ScissorPolicy::Fixed(vmnl::raw::Scissor)
+pub vmnl::raw::ScissorPolicy::FullFramebuffer
+impl vmnl::raw::ScissorPolicy
+pub fn vmnl::raw::ScissorPolicy::resolve(self, [u32; 2]) -> vmnl::VMNLResult<vmnl::raw::Scissor>
+impl core::clone::Clone for vmnl::raw::ScissorPolicy
+pub fn vmnl::raw::ScissorPolicy::clone(&self) -> vmnl::raw::ScissorPolicy
+impl core::cmp::Eq for vmnl::raw::ScissorPolicy
+impl core::cmp::PartialEq for vmnl::raw::ScissorPolicy
+pub fn vmnl::raw::ScissorPolicy::eq(&self, &vmnl::raw::ScissorPolicy) -> bool
+impl core::default::Default for vmnl::raw::ScissorPolicy
+pub fn vmnl::raw::ScissorPolicy::default() -> vmnl::raw::ScissorPolicy
+impl core::fmt::Debug for vmnl::raw::ScissorPolicy
+pub fn vmnl::raw::ScissorPolicy::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::ScissorPolicy
+impl core::marker::StructuralPartialEq for vmnl::raw::ScissorPolicy
+impl core::marker::Freeze for vmnl::raw::ScissorPolicy
+impl core::marker::Send for vmnl::raw::ScissorPolicy
+impl core::marker::Sync for vmnl::raw::ScissorPolicy
+impl core::marker::Unpin for vmnl::raw::ScissorPolicy
+impl core::marker::UnsafeUnpin for vmnl::raw::ScissorPolicy
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::ScissorPolicy
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::ScissorPolicy
 pub enum vmnl::raw::ShaderSource
 pub vmnl::raw::ShaderSource::Path(std::path::PathBuf)
 pub vmnl::raw::ShaderSource::Src(alloc::string::String)
@@ -745,6 +876,28 @@ impl core::marker::Unpin for vmnl::ShaderSource
 impl core::marker::UnsafeUnpin for vmnl::ShaderSource
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::ShaderSource
 impl core::panic::unwind_safe::UnwindSafe for vmnl::ShaderSource
+pub enum vmnl::raw::ViewportPolicy
+pub vmnl::raw::ViewportPolicy::Fixed(vmnl::raw::Viewport)
+pub vmnl::raw::ViewportPolicy::FullFramebuffer
+impl vmnl::raw::ViewportPolicy
+pub fn vmnl::raw::ViewportPolicy::resolve(self, [u32; 2]) -> vmnl::VMNLResult<vmnl::raw::Viewport>
+impl core::clone::Clone for vmnl::raw::ViewportPolicy
+pub fn vmnl::raw::ViewportPolicy::clone(&self) -> vmnl::raw::ViewportPolicy
+impl core::cmp::PartialEq for vmnl::raw::ViewportPolicy
+pub fn vmnl::raw::ViewportPolicy::eq(&self, &vmnl::raw::ViewportPolicy) -> bool
+impl core::default::Default for vmnl::raw::ViewportPolicy
+pub fn vmnl::raw::ViewportPolicy::default() -> vmnl::raw::ViewportPolicy
+impl core::fmt::Debug for vmnl::raw::ViewportPolicy
+pub fn vmnl::raw::ViewportPolicy::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::ViewportPolicy
+impl core::marker::StructuralPartialEq for vmnl::raw::ViewportPolicy
+impl core::marker::Freeze for vmnl::raw::ViewportPolicy
+impl core::marker::Send for vmnl::raw::ViewportPolicy
+impl core::marker::Sync for vmnl::raw::ViewportPolicy
+impl core::marker::Unpin for vmnl::raw::ViewportPolicy
+impl core::marker::UnsafeUnpin for vmnl::raw::ViewportPolicy
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::ViewportPolicy
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::ViewportPolicy
 pub struct vmnl::raw::FrameUniform<TData>
 impl<TData> vmnl::raw::FrameUniform<TData>
 pub fn vmnl::raw::FrameUniform<TData>::builder(TData) -> vmnl::raw::FrameUniformBuilder<TData>
@@ -791,6 +944,13 @@ impl<TVertex> core::panic::unwind_safe::UnwindSafe for vmnl::raw::GeometryBuilde
 pub struct vmnl::raw::Pipeline<TVertex>
 impl<TVertex> vmnl::raw::Pipeline<TVertex>
 pub fn vmnl::raw::Pipeline<TVertex>::builder() -> vmnl::raw::PipelineSpec<TVertex>
+pub const fn vmnl::raw::Pipeline<TVertex>::depth_value(&self) -> vmnl::raw::DepthState
+pub const fn vmnl::raw::Pipeline<TVertex>::line_width_value(&self) -> f32
+pub const fn vmnl::raw::Pipeline<TVertex>::polygon_mode_value(&self) -> vmnl::raw::PolygonMode
+pub const fn vmnl::raw::Pipeline<TVertex>::render_target_info(&self) -> vmnl::RenderTargetInfo
+pub const fn vmnl::raw::Pipeline<TVertex>::scissor_value(&self) -> vmnl::raw::ScissorPolicy
+pub fn vmnl::raw::Pipeline<TVertex>::validate_target(&self, &vmnl::Window) -> vmnl::VMNLResult<()>
+pub const fn vmnl::raw::Pipeline<TVertex>::viewport_value(&self) -> vmnl::raw::ViewportPolicy
 impl<TVertex> core::marker::Freeze for vmnl::raw::Pipeline<TVertex>
 impl<TVertex> core::marker::Send for vmnl::raw::Pipeline<TVertex> where TVertex: core::marker::Send
 impl<TVertex> core::marker::Sync for vmnl::raw::Pipeline<TVertex> where TVertex: core::marker::Sync
@@ -803,10 +963,24 @@ impl<TVertex> vmnl::raw::PipelineSpec<TVertex>
 pub fn vmnl::raw::PipelineSpec<TVertex>::blend_mode(self, vmnl::raw::BlendMode) -> Self
 pub const fn vmnl::raw::PipelineSpec<TVertex>::blend_mode_value(&self) -> vmnl::raw::BlendMode
 pub fn vmnl::raw::PipelineSpec<TVertex>::build(self, &vmnl::Window) -> vmnl::VMNLResult<vmnl::raw::Pipeline<TVertex>> where TVertex: vmnl::raw::BufferContents + vmnl::raw::Vertex + 'static
+pub fn vmnl::raw::PipelineSpec<TVertex>::cull_mode(self, vmnl::raw::CullMode) -> Self
+pub const fn vmnl::raw::PipelineSpec<TVertex>::cull_mode_value(&self) -> vmnl::raw::CullMode
+pub fn vmnl::raw::PipelineSpec<TVertex>::depth(self, vmnl::raw::DepthState) -> Self
+pub const fn vmnl::raw::PipelineSpec<TVertex>::depth_value(&self) -> vmnl::raw::DepthState
 pub fn vmnl::raw::PipelineSpec<TVertex>::fragment_shader(self, vmnl::ShaderSource) -> Self
+pub fn vmnl::raw::PipelineSpec<TVertex>::front_face(self, vmnl::raw::FrontFace) -> Self
+pub const fn vmnl::raw::PipelineSpec<TVertex>::front_face_value(&self) -> vmnl::raw::FrontFace
+pub fn vmnl::raw::PipelineSpec<TVertex>::line_width(self, f32) -> Self
+pub const fn vmnl::raw::PipelineSpec<TVertex>::line_width_value(&self) -> f32
+pub fn vmnl::raw::PipelineSpec<TVertex>::polygon_mode(self, vmnl::raw::PolygonMode) -> Self
+pub const fn vmnl::raw::PipelineSpec<TVertex>::polygon_mode_value(&self) -> vmnl::raw::PolygonMode
+pub fn vmnl::raw::PipelineSpec<TVertex>::scissor(self, vmnl::raw::ScissorPolicy) -> Self
+pub const fn vmnl::raw::PipelineSpec<TVertex>::scissor_value(&self) -> vmnl::raw::ScissorPolicy
 pub fn vmnl::raw::PipelineSpec<TVertex>::topology(self, vmnl::raw::PrimitiveTopology) -> Self
 pub const fn vmnl::raw::PipelineSpec<TVertex>::topology_value(&self) -> vmnl::raw::PrimitiveTopology
 pub fn vmnl::raw::PipelineSpec<TVertex>::vertex_shader(self, vmnl::ShaderSource) -> Self
+pub fn vmnl::raw::PipelineSpec<TVertex>::viewport(self, vmnl::raw::ViewportPolicy) -> Self
+pub const fn vmnl::raw::PipelineSpec<TVertex>::viewport_value(&self) -> vmnl::raw::ViewportPolicy
 impl<TVertex: core::clone::Clone> core::clone::Clone for vmnl::raw::PipelineSpec<TVertex>
 pub fn vmnl::raw::PipelineSpec<TVertex>::clone(&self) -> vmnl::raw::PipelineSpec<TVertex>
 impl<TVertex: core::fmt::Debug> core::fmt::Debug for vmnl::raw::PipelineSpec<TVertex>
@@ -842,6 +1016,25 @@ impl core::marker::Unpin for vmnl::raw::ResourcesBuilder
 impl core::marker::UnsafeUnpin for vmnl::raw::ResourcesBuilder
 impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::ResourcesBuilder
 impl !core::panic::unwind_safe::UnwindSafe for vmnl::raw::ResourcesBuilder
+pub struct vmnl::raw::Scissor
+pub vmnl::raw::Scissor::extent: [u32; 2]
+pub vmnl::raw::Scissor::offset: [u32; 2]
+impl core::clone::Clone for vmnl::raw::Scissor
+pub fn vmnl::raw::Scissor::clone(&self) -> vmnl::raw::Scissor
+impl core::cmp::Eq for vmnl::raw::Scissor
+impl core::cmp::PartialEq for vmnl::raw::Scissor
+pub fn vmnl::raw::Scissor::eq(&self, &vmnl::raw::Scissor) -> bool
+impl core::fmt::Debug for vmnl::raw::Scissor
+pub fn vmnl::raw::Scissor::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::Scissor
+impl core::marker::StructuralPartialEq for vmnl::raw::Scissor
+impl core::marker::Freeze for vmnl::raw::Scissor
+impl core::marker::Send for vmnl::raw::Scissor
+impl core::marker::Sync for vmnl::raw::Scissor
+impl core::marker::Unpin for vmnl::raw::Scissor
+impl core::marker::UnsafeUnpin for vmnl::raw::Scissor
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::Scissor
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::Scissor
 pub struct vmnl::raw::Uniform<TData>
 impl<TData> vmnl::raw::Uniform<TData>
 pub fn vmnl::raw::Uniform<TData>::builder(TData) -> vmnl::raw::UniformBuilder<TData>
@@ -864,6 +1057,25 @@ impl<TData> core::marker::Unpin for vmnl::raw::UniformBuilder<TData> where TData
 impl<TData> core::marker::UnsafeUnpin for vmnl::raw::UniformBuilder<TData> where TData: core::marker::UnsafeUnpin
 impl<TData> core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::UniformBuilder<TData> where TData: core::panic::unwind_safe::RefUnwindSafe
 impl<TData> core::panic::unwind_safe::UnwindSafe for vmnl::raw::UniformBuilder<TData> where TData: core::panic::unwind_safe::UnwindSafe
+pub struct vmnl::raw::Viewport
+pub vmnl::raw::Viewport::depth_range: [f32; 2]
+pub vmnl::raw::Viewport::extent: [f32; 2]
+pub vmnl::raw::Viewport::offset: [f32; 2]
+impl core::clone::Clone for vmnl::raw::Viewport
+pub fn vmnl::raw::Viewport::clone(&self) -> vmnl::raw::Viewport
+impl core::cmp::PartialEq for vmnl::raw::Viewport
+pub fn vmnl::raw::Viewport::eq(&self, &vmnl::raw::Viewport) -> bool
+impl core::fmt::Debug for vmnl::raw::Viewport
+pub fn vmnl::raw::Viewport::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::raw::Viewport
+impl core::marker::StructuralPartialEq for vmnl::raw::Viewport
+impl core::marker::Freeze for vmnl::raw::Viewport
+impl core::marker::Send for vmnl::raw::Viewport
+impl core::marker::Sync for vmnl::raw::Viewport
+impl core::marker::Unpin for vmnl::raw::Viewport
+impl core::marker::UnsafeUnpin for vmnl::raw::Viewport
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::raw::Viewport
+impl core::panic::unwind_safe::UnwindSafe for vmnl::raw::Viewport
 pub trait vmnl::raw::BufferContents: vulkano::buffer::subbuffer::BufferContents
 impl<T> vmnl::raw::BufferContents for T where T: vulkano::buffer::subbuffer::BufferContents
 pub trait vmnl::raw::Pod: bytemuck::pod::Pod
@@ -897,6 +1109,45 @@ impl core::marker::Unpin for vmnl::CursorMode
 impl core::marker::UnsafeUnpin for vmnl::CursorMode
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::CursorMode
 impl core::panic::unwind_safe::UnwindSafe for vmnl::CursorMode
+pub enum vmnl::DepthFormat
+pub vmnl::DepthFormat::D16Unorm
+pub vmnl::DepthFormat::D32Sfloat
+impl core::clone::Clone for vmnl::DepthFormat
+pub fn vmnl::DepthFormat::clone(&self) -> vmnl::DepthFormat
+impl core::cmp::Eq for vmnl::DepthFormat
+impl core::cmp::PartialEq for vmnl::DepthFormat
+pub fn vmnl::DepthFormat::eq(&self, &vmnl::DepthFormat) -> bool
+impl core::fmt::Debug for vmnl::DepthFormat
+pub fn vmnl::DepthFormat::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::DepthFormat
+impl core::marker::StructuralPartialEq for vmnl::DepthFormat
+impl core::marker::Freeze for vmnl::DepthFormat
+impl core::marker::Send for vmnl::DepthFormat
+impl core::marker::Sync for vmnl::DepthFormat
+impl core::marker::Unpin for vmnl::DepthFormat
+impl core::marker::UnsafeUnpin for vmnl::DepthFormat
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::DepthFormat
+impl core::panic::unwind_safe::UnwindSafe for vmnl::DepthFormat
+#[non_exhaustive] pub enum vmnl::DeviceFeature
+pub vmnl::DeviceFeature::FillModeNonSolid
+pub vmnl::DeviceFeature::LargePoints
+pub vmnl::DeviceFeature::WideLines
+impl core::clone::Clone for vmnl::DeviceFeature
+pub fn vmnl::DeviceFeature::clone(&self) -> vmnl::DeviceFeature
+impl core::cmp::Eq for vmnl::DeviceFeature
+impl core::cmp::PartialEq for vmnl::DeviceFeature
+pub fn vmnl::DeviceFeature::eq(&self, &vmnl::DeviceFeature) -> bool
+impl core::fmt::Debug for vmnl::DeviceFeature
+pub fn vmnl::DeviceFeature::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::DeviceFeature
+impl core::marker::StructuralPartialEq for vmnl::DeviceFeature
+impl core::marker::Freeze for vmnl::DeviceFeature
+impl core::marker::Send for vmnl::DeviceFeature
+impl core::marker::Sync for vmnl::DeviceFeature
+impl core::marker::Unpin for vmnl::DeviceFeature
+impl core::marker::UnsafeUnpin for vmnl::DeviceFeature
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::DeviceFeature
+impl core::panic::unwind_safe::UnwindSafe for vmnl::DeviceFeature
 pub enum vmnl::EventKind
 pub vmnl::EventKind::Closed
 pub vmnl::EventKind::FocusGained
@@ -1393,6 +1644,10 @@ impl core::marker::UnsafeUnpin for vmnl::StickAngleConvention
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::StickAngleConvention
 impl core::panic::unwind_safe::UnwindSafe for vmnl::StickAngleConvention
 #[non_exhaustive] pub enum vmnl::VMNLErrorKind
+pub vmnl::VMNLErrorKind::DeviceFeatureNotEnabled
+pub vmnl::VMNLErrorKind::DeviceFeatureNotEnabled::feature: vmnl::DeviceFeature
+pub vmnl::VMNLErrorKind::DeviceRequirementsNotMet
+pub vmnl::VMNLErrorKind::DeviceRequirementsNotMet::required_features: alloc::vec::Vec<vmnl::DeviceFeature>
 pub vmnl::VMNLErrorKind::GlfwContextCreationFailed
 pub vmnl::VMNLErrorKind::GlfwInitFailed
 pub vmnl::VMNLErrorKind::GlfwInitializationConfigConflict
@@ -1407,6 +1662,10 @@ pub vmnl::VMNLErrorKind::GlfwUnsupportedPlatform
 pub vmnl::VMNLErrorKind::GlfwVersionMismatch
 pub vmnl::VMNLErrorKind::GlfwWindowCreationFailed
 pub vmnl::VMNLErrorKind::InvalidGamepadMapping(alloc::string::String)
+pub vmnl::VMNLErrorKind::InvalidLineWidth
+pub vmnl::VMNLErrorKind::InvalidLineWidth::max: f32
+pub vmnl::VMNLErrorKind::InvalidLineWidth::min: f32
+pub vmnl::VMNLErrorKind::InvalidLineWidth::value: f32
 pub vmnl::VMNLErrorKind::InvalidState(alloc::string::String)
 pub vmnl::VMNLErrorKind::InvalidWindowSize
 pub vmnl::VMNLErrorKind::VulkanCommandBufferCreationFailed
@@ -1453,12 +1712,41 @@ impl core::marker::Unpin for vmnl::VMNLErrorKind
 impl core::marker::UnsafeUnpin for vmnl::VMNLErrorKind
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::VMNLErrorKind
 impl core::panic::unwind_safe::UnwindSafe for vmnl::VMNLErrorKind
+pub struct vmnl::ColorFormat(_)
+impl vmnl::ColorFormat
+pub const vmnl::ColorFormat::B8G8R8A8_SRGB: Self
+pub const vmnl::ColorFormat::B8G8R8A8_UNORM: Self
+pub const vmnl::ColorFormat::R8G8B8A8_SRGB: Self
+pub const vmnl::ColorFormat::R8G8B8A8_UNORM: Self
+impl core::clone::Clone for vmnl::ColorFormat
+pub fn vmnl::ColorFormat::clone(&self) -> vmnl::ColorFormat
+impl core::cmp::Eq for vmnl::ColorFormat
+impl core::cmp::PartialEq for vmnl::ColorFormat
+pub fn vmnl::ColorFormat::eq(&self, &vmnl::ColorFormat) -> bool
+impl core::fmt::Debug for vmnl::ColorFormat
+pub fn vmnl::ColorFormat::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for vmnl::ColorFormat
+pub fn vmnl::ColorFormat::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::ColorFormat
+impl core::marker::StructuralPartialEq for vmnl::ColorFormat
+impl core::marker::Freeze for vmnl::ColorFormat
+impl core::marker::Send for vmnl::ColorFormat
+impl core::marker::Sync for vmnl::ColorFormat
+impl core::marker::Unpin for vmnl::ColorFormat
+impl core::marker::UnsafeUnpin for vmnl::ColorFormat
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::ColorFormat
+impl core::panic::unwind_safe::UnwindSafe for vmnl::ColorFormat
 pub struct vmnl::Context
 impl vmnl::Context
+pub fn vmnl::Context::builder() -> vmnl::ContextBuilder
+pub fn vmnl::Context::device_name(&self) -> &str
 pub fn vmnl::Context::get_key_name(&self, vmnl::Key) -> core::option::Option<alloc::string::String>
 pub fn vmnl::Context::get_key_scancode(&self, vmnl::Key) -> core::option::Option<vmnl::Scancode>
 pub fn vmnl::Context::get_scancode_name(&self, vmnl::Scancode) -> core::option::Option<alloc::string::String>
+pub fn vmnl::Context::is_device_feature_enabled(&self, vmnl::DeviceFeature) -> bool
+pub fn vmnl::Context::is_device_feature_supported(&self, vmnl::DeviceFeature) -> bool
 pub fn vmnl::Context::is_raw_mouse_motion_supported(&self) -> bool
+pub fn vmnl::Context::line_width_limits(&self) -> vmnl::LineWidthLimits
 pub fn vmnl::Context::new() -> vmnl::VMNLResult<Self>
 impl core::clone::Clone for vmnl::Context
 pub fn vmnl::Context::clone(&self) -> vmnl::Context
@@ -1469,6 +1757,24 @@ impl core::marker::Unpin for vmnl::Context
 impl core::marker::UnsafeUnpin for vmnl::Context
 impl !core::panic::unwind_safe::RefUnwindSafe for vmnl::Context
 impl !core::panic::unwind_safe::UnwindSafe for vmnl::Context
+pub struct vmnl::ContextBuilder
+impl vmnl::ContextBuilder
+pub fn vmnl::ContextBuilder::build(self) -> vmnl::VMNLResult<vmnl::Context>
+pub fn vmnl::ContextBuilder::device(self, vmnl::DeviceConfig) -> Self
+pub const fn vmnl::ContextBuilder::device_config(&self) -> &vmnl::DeviceConfig
+impl core::clone::Clone for vmnl::ContextBuilder
+pub fn vmnl::ContextBuilder::clone(&self) -> vmnl::ContextBuilder
+impl core::default::Default for vmnl::ContextBuilder
+pub fn vmnl::ContextBuilder::default() -> vmnl::ContextBuilder
+impl core::fmt::Debug for vmnl::ContextBuilder
+pub fn vmnl::ContextBuilder::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::ContextBuilder
+impl core::marker::Send for vmnl::ContextBuilder
+impl core::marker::Sync for vmnl::ContextBuilder
+impl core::marker::Unpin for vmnl::ContextBuilder
+impl core::marker::UnsafeUnpin for vmnl::ContextBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::ContextBuilder
+impl core::panic::unwind_safe::UnwindSafe for vmnl::ContextBuilder
 pub struct vmnl::Cursor
 impl vmnl::Cursor
 pub const fn vmnl::Cursor::rgba8(u32, u32, &[u8]) -> vmnl::CursorBuilder<'_>
@@ -1499,6 +1805,24 @@ impl<'pixels> core::marker::Unpin for vmnl::CursorBuilder<'pixels>
 impl<'pixels> core::marker::UnsafeUnpin for vmnl::CursorBuilder<'pixels>
 impl<'pixels> core::panic::unwind_safe::RefUnwindSafe for vmnl::CursorBuilder<'pixels>
 impl<'pixels> core::panic::unwind_safe::UnwindSafe for vmnl::CursorBuilder<'pixels>
+pub struct vmnl::DeviceConfig
+impl vmnl::DeviceConfig
+pub fn vmnl::DeviceConfig::require_feature(self, vmnl::DeviceFeature) -> Self
+pub fn vmnl::DeviceConfig::require_features(self, impl core::iter::traits::collect::IntoIterator<Item = vmnl::DeviceFeature>) -> Self
+pub fn vmnl::DeviceConfig::required_features(&self) -> &[vmnl::DeviceFeature]
+impl core::clone::Clone for vmnl::DeviceConfig
+pub fn vmnl::DeviceConfig::clone(&self) -> vmnl::DeviceConfig
+impl core::default::Default for vmnl::DeviceConfig
+pub fn vmnl::DeviceConfig::default() -> vmnl::DeviceConfig
+impl core::fmt::Debug for vmnl::DeviceConfig
+pub fn vmnl::DeviceConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for vmnl::DeviceConfig
+impl core::marker::Send for vmnl::DeviceConfig
+impl core::marker::Sync for vmnl::DeviceConfig
+impl core::marker::Unpin for vmnl::DeviceConfig
+impl core::marker::UnsafeUnpin for vmnl::DeviceConfig
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::DeviceConfig
+impl core::panic::unwind_safe::UnwindSafe for vmnl::DeviceConfig
 pub struct vmnl::Event
 impl vmnl::Event
 pub fn vmnl::Event::into_kind(self) -> vmnl::EventKind
@@ -1733,6 +2057,25 @@ impl core::marker::Unpin for vmnl::KeyboardState
 impl core::marker::UnsafeUnpin for vmnl::KeyboardState
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::KeyboardState
 impl core::panic::unwind_safe::UnwindSafe for vmnl::KeyboardState
+pub struct vmnl::LineWidthLimits
+pub vmnl::LineWidthLimits::granularity: f32
+pub vmnl::LineWidthLimits::max: f32
+pub vmnl::LineWidthLimits::min: f32
+impl core::clone::Clone for vmnl::LineWidthLimits
+pub fn vmnl::LineWidthLimits::clone(&self) -> vmnl::LineWidthLimits
+impl core::cmp::PartialEq for vmnl::LineWidthLimits
+pub fn vmnl::LineWidthLimits::eq(&self, &vmnl::LineWidthLimits) -> bool
+impl core::fmt::Debug for vmnl::LineWidthLimits
+pub fn vmnl::LineWidthLimits::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::LineWidthLimits
+impl core::marker::StructuralPartialEq for vmnl::LineWidthLimits
+impl core::marker::Freeze for vmnl::LineWidthLimits
+impl core::marker::Send for vmnl::LineWidthLimits
+impl core::marker::Sync for vmnl::LineWidthLimits
+impl core::marker::Unpin for vmnl::LineWidthLimits
+impl core::marker::UnsafeUnpin for vmnl::LineWidthLimits
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::LineWidthLimits
+impl core::panic::unwind_safe::UnwindSafe for vmnl::LineWidthLimits
 #[repr(transparent)] pub struct vmnl::Modifiers(_)
 impl vmnl::Modifiers
 pub const vmnl::Modifiers::ALT: Self
@@ -1834,6 +2177,52 @@ impl core::marker::Unpin for vmnl::MouseState
 impl core::marker::UnsafeUnpin for vmnl::MouseState
 impl core::panic::unwind_safe::RefUnwindSafe for vmnl::MouseState
 impl core::panic::unwind_safe::UnwindSafe for vmnl::MouseState
+pub struct vmnl::RenderTargetConfig
+impl vmnl::RenderTargetConfig
+pub const fn vmnl::RenderTargetConfig::clear_depth(self, f32) -> Self
+pub const fn vmnl::RenderTargetConfig::clear_depth_value(self) -> f32
+pub const fn vmnl::RenderTargetConfig::depth(self, vmnl::DepthFormat) -> Self
+pub const fn vmnl::RenderTargetConfig::depth_value(self) -> core::option::Option<vmnl::DepthFormat>
+pub fn vmnl::RenderTargetConfig::validate(self) -> vmnl::VMNLResult<()>
+pub const fn vmnl::RenderTargetConfig::without_depth(self) -> Self
+impl core::clone::Clone for vmnl::RenderTargetConfig
+pub fn vmnl::RenderTargetConfig::clone(&self) -> vmnl::RenderTargetConfig
+impl core::cmp::PartialEq for vmnl::RenderTargetConfig
+pub fn vmnl::RenderTargetConfig::eq(&self, &vmnl::RenderTargetConfig) -> bool
+impl core::default::Default for vmnl::RenderTargetConfig
+pub fn vmnl::RenderTargetConfig::default() -> Self
+impl core::fmt::Debug for vmnl::RenderTargetConfig
+pub fn vmnl::RenderTargetConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::RenderTargetConfig
+impl core::marker::StructuralPartialEq for vmnl::RenderTargetConfig
+impl core::marker::Freeze for vmnl::RenderTargetConfig
+impl core::marker::Send for vmnl::RenderTargetConfig
+impl core::marker::Sync for vmnl::RenderTargetConfig
+impl core::marker::Unpin for vmnl::RenderTargetConfig
+impl core::marker::UnsafeUnpin for vmnl::RenderTargetConfig
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::RenderTargetConfig
+impl core::panic::unwind_safe::UnwindSafe for vmnl::RenderTargetConfig
+pub struct vmnl::RenderTargetInfo
+impl vmnl::RenderTargetInfo
+pub const fn vmnl::RenderTargetInfo::color_format(self) -> vmnl::ColorFormat
+pub const fn vmnl::RenderTargetInfo::depth_format(self) -> core::option::Option<vmnl::DepthFormat>
+pub const fn vmnl::RenderTargetInfo::sample_count(self) -> u32
+impl core::clone::Clone for vmnl::RenderTargetInfo
+pub fn vmnl::RenderTargetInfo::clone(&self) -> vmnl::RenderTargetInfo
+impl core::cmp::Eq for vmnl::RenderTargetInfo
+impl core::cmp::PartialEq for vmnl::RenderTargetInfo
+pub fn vmnl::RenderTargetInfo::eq(&self, &vmnl::RenderTargetInfo) -> bool
+impl core::fmt::Debug for vmnl::RenderTargetInfo
+pub fn vmnl::RenderTargetInfo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for vmnl::RenderTargetInfo
+impl core::marker::StructuralPartialEq for vmnl::RenderTargetInfo
+impl core::marker::Freeze for vmnl::RenderTargetInfo
+impl core::marker::Send for vmnl::RenderTargetInfo
+impl core::marker::Sync for vmnl::RenderTargetInfo
+impl core::marker::Unpin for vmnl::RenderTargetInfo
+impl core::marker::UnsafeUnpin for vmnl::RenderTargetInfo
+impl core::panic::unwind_safe::RefUnwindSafe for vmnl::RenderTargetInfo
+impl core::panic::unwind_safe::UnwindSafe for vmnl::RenderTargetInfo
 #[repr(transparent)] pub struct vmnl::Scancode(_)
 impl vmnl::Scancode
 pub const fn vmnl::Scancode::as_raw(self) -> i32
@@ -1977,6 +2366,8 @@ pub struct vmnl::Window
 impl vmnl::Window
 pub fn vmnl::Window::builder() -> vmnl::WindowBuilder
 pub fn vmnl::Window::new(&vmnl::Context) -> vmnl::VMNLResult<Self>
+pub const fn vmnl::Window::render_target_config(&self) -> vmnl::RenderTargetConfig
+pub const fn vmnl::Window::render_target_info(&self) -> vmnl::RenderTargetInfo
 impl vmnl::Window
 pub const fn vmnl::Window::clear_input_transitions(&mut self)
 pub fn vmnl::Window::get_time(&mut self) -> f64
@@ -2095,6 +2486,8 @@ pub const fn vmnl::WindowBuilder::joystick_tracking(self, bool) -> Self
 pub const fn vmnl::WindowBuilder::left_stick_config(self, vmnl::StickConfig) -> Self
 pub const fn vmnl::WindowBuilder::preferred_present_mode(self, vmnl::PresentMode) -> Self
 pub const fn vmnl::WindowBuilder::present_mode(self, vmnl::PresentMode) -> Self
+pub const fn vmnl::WindowBuilder::render_target(self, vmnl::RenderTargetConfig) -> Self
+pub const fn vmnl::WindowBuilder::render_target_value(&self) -> vmnl::RenderTargetConfig
 pub const fn vmnl::WindowBuilder::right_stick_config(self, vmnl::StickConfig) -> Self
 pub fn vmnl::WindowBuilder::set_clear_color<C>(self, C) -> Self where C: core::convert::Into<vmnl::common::Rgba>
 pub const fn vmnl::WindowBuilder::size(self, u32, u32) -> Self

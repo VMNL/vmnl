@@ -8,6 +8,8 @@ mod inner;
 mod input;
 mod monitors;
 mod render;
+mod render_target;
+mod render_target_info;
 mod runtime;
 mod shaders;
 use std::sync::Arc;
@@ -28,6 +30,8 @@ pub use input::{
     StandardCursor, StandardCursorBuilder, StickAngleConvention, StickConfig, StickState,
 };
 pub use monitors::{MonitorInfo, Monitors, VideoMode};
+pub use render_target::{DepthFormat, RenderTargetConfig};
+pub use render_target_info::{ColorFormat, RenderTargetInfo};
 use vulkano::{
     device::Device, memory::allocator::StandardMemoryAllocator, render_pass::RenderPass,
 };
@@ -95,6 +99,7 @@ impl Window {
 
     /// Internal method to create a `Window` instance from the provided `WindowOptions`.
     pub(crate) fn from_options(context: &Context, options: &WindowOptions) -> VMNLResult<Self> {
+        options.render_target.validate()?;
         validate_window_size(options.width, options.height)?;
         validate_size_limits(
             options.min_width,
@@ -119,6 +124,28 @@ impl Window {
         })
     }
 
+    /// Returns the immutable attachment configuration validated at window construction.
+    ///
+    /// The returned copy performs no allocation, synchronization or GPU query. Depth
+    /// format and clear value persist across resize; image extent follows the swapchain.
+    /// This does not expose backend image handles or imply that depth testing is enabled.
+    #[must_use]
+    pub const fn render_target_config(&self) -> RenderTargetConfig {
+        self.inner.config.render_target
+    }
+
+    /// Returns resolved attachment properties, copied from the created render pass.
+    ///
+    /// Color format includes the surface fallback selected at build; samples and
+    /// depth format describe actual attachments. Resize preserves this description.
+    /// This allocates nothing and performs no GPU query or synchronization. Equal
+    /// descriptions do not make pipelines shareable across windows; use
+    /// [`crate::raw::Pipeline::validate_target`] for that check.
+    #[must_use]
+    pub const fn render_target_info(&self) -> RenderTargetInfo {
+        self.inner.config.render_target_info
+    }
+
     pub(crate) fn device(&self) -> Arc<Device> {
         self.inner.handle.vmnl_instance.device.clone()
     }
@@ -133,5 +160,9 @@ impl Window {
 
     pub(crate) fn swapchain_image_count(&self) -> usize {
         self.inner.handle.framebuffers.len()
+    }
+
+    pub(crate) fn render_extent(&self) -> [u32; 2] {
+        self.inner.handle.swapchain.image_extent()
     }
 }

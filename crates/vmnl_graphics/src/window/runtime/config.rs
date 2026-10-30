@@ -22,6 +22,10 @@ pub(crate) struct WindowConfig {
     pub(crate) height: u32,
     /// The monitor information associated with the window instance.
     pub(crate) monitor: Monitors,
+    /// Validated immutable attachment configuration.
+    pub(crate) render_target: crate::RenderTargetConfig,
+    /// Resolved properties of the created render-pass attachments.
+    pub(crate) render_target_info: crate::RenderTargetInfo,
 }
 
 impl VMNLWindow {

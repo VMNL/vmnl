@@ -20,6 +20,10 @@ responsibility: [configuration](configuration.md), [cursor controls](cursor.md),
 
 `new` is equivalent to `Window::builder().build(context)`. See [`WindowBuilder`](window_builder.md) for defaults and validation.
 
+`render_target_config() -> RenderTargetConfig` returns the immutable validated attachment configuration, without allocation or GPU access. Defaults to color only; optional depth format/clear value persist across resize. Attachment extent follows the actual swapchain image. See [`RenderTargetConfig`](render_target_config.md).
+
+`render_target_info() -> RenderTargetInfo` copies the actual render-pass color format, sample count and optional depth format. It performs no allocation, GPU query or synchronization. Resize preserves these properties. Equal descriptions do not imply pipeline compatibility across windows; use `Pipeline::validate_target`. See [`RenderTargetInfo`](render_target_info.md).
+
 ## Units, coordinates, and valid ranges
 
 Logical window and framebuffer sizes are pixels but may differ under content scaling. Window
