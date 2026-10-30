@@ -137,3 +137,38 @@ fn polygons_submit_per_object_and_batched() -> VMNLResult<()> {
 
     Ok(())
 }
+
+#[test]
+#[ignore = "Requires Vulkan + GLFW display."]
+fn concave_polygons_submit_both_windings_alpha_modes_and_render_modes() -> VMNLResult<()> {
+    let _guard = gpu_test_guard();
+    let context = Context::new()?;
+    let mut window = Window::builder().size(800, 600).build(&context)?;
+    let mut points = [
+        vector(100.0, 100.0),
+        vector(320.0, 100.0),
+        vector(220.0, 180.0),
+        vector(320.0, 300.0),
+        vector(100.0, 300.0),
+    ];
+    for _ in 0..2 {
+        let opaque = Shape::polygon(points)
+            .vertex_colors([Rgba::RED, Rgba::GREEN, Rgba::BLUE, Rgba::CYAN, Rgba::WHITE])
+            .build(&context)?;
+        let translucent = Shape::polygon_from_vertices(points.map(|point| Vertex2D {
+            position: vector(point.x + 300.0, point.y),
+            color: Rgba::rgba(255, 0, 255, 128),
+        }))
+        .buffer_memory_preference(BufferMemoryPreference::Host)
+        .build(&context)?;
+        for mode in [RenderMode::PerObject, RenderMode::Batched] {
+            window
+                .render()
+                .mode(mode)
+                .draw2d([&opaque, &translucent])
+                .submit()?;
+        }
+        points.reverse();
+    }
+    Ok(())
+}

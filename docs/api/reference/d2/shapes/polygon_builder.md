@@ -8,11 +8,11 @@ Status: experimental, operational.
 
 ## Purpose and use cases
 
-Builds a filled strictly convex polygon without client-supplied indices. Concave
-contours, holes, multiple contours, and self-intersections are unsupported. Use
+Builds a filled simple convex or concave polygon without client-supplied indices.
+Holes, multiple contours, self-intersections, and self-touching contours are unsupported. Use
 [`Shape::indexed`](indexed_shape_builder.md) when supplying triangulation explicitly.
-There is no public polygon-kind or triangulation-algorithm selector; the polygon
-entry points can support additional contour classes later.
+There is no public polygon-kind or triangulation-algorithm selector; concavity is
+an input property detected by the builder.
 
 ## Public API
 
@@ -36,8 +36,8 @@ earlier mismatched color list when a subsequent `color` call replaces it. Color-
 validation is deferred to `build`.
 
 Build rejects non-finite coordinates, duplicate positions, collinear consecutive
-triples (including closing corners), zero or non-finite signed area, inconsistent
-turns, and self-intersections before GPU allocation. Checked counts must fit the
+triples (including closing corners), zero or non-finite signed area, and intersecting
+or touching non-adjacent edges before GPU allocation. Checked counts must fit the
 existing `u32` vertex/index draw representation and CPU index-storage size limits.
 
 ## Units, coordinates, and valid ranges
@@ -59,18 +59,35 @@ this feature introduces no worker threads or synchronization policy.
 ## Errors, panics, and failure conditions
 
 Invalid geometry, color counts, unsupported counts, and failed generated-index
-reservation return structured `InvalidState` errors. GPU allocation/upload errors
+or temporary triangulation-storage reservation return structured `InvalidState`
+errors. Invalid contours and internal triangulation failures have distinct diagnostics.
+If a complete candidate scan finds no ear, construction returns an error; ear removal
+is bounded by the input vertex count, and partial geometry is never uploaded.
+GPU allocation/upload errors
 propagate from the existing indexed-shape path. There is no arbitrary public vertex
 maximum: representable counts are not a promise that sufficient CPU/GPU memory is
 available. Constructors and color collection use ordinary owned-vector allocation;
-only generated-index storage uses explicit fallible reservation.
+generated-index and temporary triangulation storage use explicit fallible reservation.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
 Validation runs on the CPU. Duplicate and non-neighboring edge checks use quadratic
-pair comparisons. A deterministic fan generates `[0, 1, 2]`, `[0, 2, 3]`, through
+pair comparisons. Convex input retains the deterministic fan `[0, 1, 2]`, `[0, 2, 3]`, through
 `[0, N - 2, N - 1]`: `N` vertices, `N - 2` triangles, and `3 * (N - 2)` indices.
 Generated indices use checked arithmetic and `try_reserve_exact` before filling.
+Concave input uses private deterministic ear clipping. Each iteration scans the
+remaining boundary from the first surviving input index and clips the first locally
+convex, non-degenerate triangle containing no other active vertex inside or on its
+boundary. The final three active indices form the last triangle. Both paths preserve
+input winding and reference the original vertices without merging, removing, or
+recoloring them; both produce `N - 2` triangles and `3 * (N - 2)` indices.
+
+Ear clipping has O(N²) CPU construction cost and O(N) working memory. These are
+structural bounds, not measured performance guarantees. Geometric predicates use
+`f64` intermediates with public `f32` coordinates and no scale-dependent epsilon.
+Colors interpolate within the generated triangles, so concave gradients depend on
+the selected triangulation; existing convex gradients retain their original fan.
+
 The existing indexed-shape path creates/uploads vertex and index buffers using the
 configured memory preference. No new shader, pipeline, render command, hidden wait,
 or per-frame polygon triangulation is introduced.
@@ -102,8 +119,9 @@ fn main() -> vmnl::VMNLResult<()> {
 ```
 
 The [advanced geometry example](../../../../../examples/d2/advanced_geometry/src/main.rs)
-uses a multicolored boundary-only pentagon. Its gradient differs from the previous
-explicit triangulation with an extra white center vertex.
+shows a multicolored convex pentagon alongside a concave polygon with an inward
+notch. Both use boundary vertices without a center vertex and are submitted in
+alternating `PerObject` and `Batched` modes.
 
 Related: [`Shape`](shape.md), [`Vertex2D`](../vertex_2d.md),
 [`Rgba`](../../common/rgba.md), and [draw 2D](../../../workflows/draw_2d.md).

@@ -431,6 +431,12 @@
 | `vmnl::d2::Anchor` | `eq` | [Anchor](../reference/d2/shapes/anchor.md) | [`eq`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.eq) |
 | `vmnl::d2::Anchor` | `fmt` | [Anchor](../reference/d2/shapes/anchor.md) | [`fmt`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.fmt) |
 | `vmnl::d2::Anchor` | `hash` | [Anchor](../reference/d2/shapes/anchor.md) | [`hash`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.hash) |
+| `vmnl::d2::CornerRadii` | `all` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`all`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.all) |
+| `vmnl::d2::CornerRadii` | `clone` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`clone`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.clone) |
+| `vmnl::d2::CornerRadii` | `default` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`default`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.default) |
+| `vmnl::d2::CornerRadii` | `eq` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`eq`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.eq) |
+| `vmnl::d2::CornerRadii` | `fmt` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`fmt`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.fmt) |
+| `vmnl::d2::CornerRadii` | `new` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`new`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.new) |
 | `vmnl::d2::Drawable2D` | `render_item_2d` | [Drawable2D](../reference/d2/drawable_2d.md) | [`render_item_2d`](../../../target/doc/vmnl/d2/trait.Drawable2D.html#tymethod.render_item_2d) |
 | `vmnl::d2::IndexedShapeBuilder` | `buffer_memory_preference` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html#method.buffer_memory_preference) |
 | `vmnl::d2::IndexedShapeBuilder` | `build` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html#method.build) |
@@ -467,6 +473,9 @@
 | `vmnl::d2::RectBuilder` | `buffer_memory_preference` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.buffer_memory_preference) |
 | `vmnl::d2::RectBuilder` | `build` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.build) |
 | `vmnl::d2::RectBuilder` | `color` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`color`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.color) |
+| `vmnl::d2::RectBuilder` | `corner_radii` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`corner_radii`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.corner_radii) |
+| `vmnl::d2::RectBuilder` | `corner_radius` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`corner_radius`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.corner_radius) |
+| `vmnl::d2::RectBuilder` | `corner_segments` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`corner_segments`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.corner_segments) |
 | `vmnl::d2::RectBuilder` | `origin` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`origin`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.origin) |
 | `vmnl::d2::RectBuilder` | `position` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`position`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.position) |
 | `vmnl::d2::RectBuilder` | `rotation` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`rotation`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.rotation) |
