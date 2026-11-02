@@ -3,11 +3,14 @@
 | Surface | Default |
 |---|---|
 | `BufferMemoryPreference` | `Device` |
+| `ContextBuilder` / `DeviceConfig` | automatic compatible GPU/graphics queue selection; no optional feature request |
 | `Rgba` | `(0, 0, 0, 0)`; named colors are opaque |
 | `Vector2f`, `Vector3f`, `Vertex2D`, `Vertex3D` | Component/field zero defaults |
 | `Camera` | position `(0,0,1)`, target `(0,0,0)`, up `(0,1,0)`; 3D remains scaffolded |
 | `WindowBuilder` | title `VMNL Window`, `800x600`, common event delivery enabled, joystick event delivery/tracking disabled, zero-dead-zone `Math2D` left/right sticks, built-in 2D shaders, opaque black clear, no size limits, automatic present mode |
 | `PresentMode` | `Auto`: `Mailbox` → `Immediate` → `FifoRelaxed` → `Fifo` among supported modes |
+| Resolved window attachments | one color attachment, automatic `B8G8R8A8_SRGB` + sRGB nonlinear preference then first surface format fallback; one sample per pixel; no MSAA selection |
+| `RenderTargetConfig` / `WindowBuilder::render_target` | color only; no depth image; clear depth `1.0` |
 | `RenderMode` | `PerObject`; `Batched` currently falls back to it |
 | `Input`, `KeyboardState`, `MouseState` | Keyboard and mouse states inactive; each joystick slot is `NotTracked` |
 | Window sticky keys / sticky mouse buttons / lock-key modifier reporting | Disabled |
@@ -24,5 +27,6 @@
 | Triangle | white per vertex unless created from colored vertices; device memory preference |
 | Line | width `1.0`, butt cap, white, device memory preference |
 | Indexed shape / mesh / raw geometry / uniform | device memory preference |
-| `PipelineSpec` | shaders missing, `TriangleList`, `Opaque` |
+| `PipelineSpec` | shaders missing, `TriangleList`, `Opaque`, `CullMode::None`, `FrontFace::CounterClockwise`, `PolygonMode::Fill`, line width `1.0`, viewport/scissor `FullFramebuffer`, depth `Disabled` |
+| `ViewportPolicy` / `ScissorPolicy` | `FullFramebuffer`, resolved against the acquired image extent on each raw draw |
 | `GeometryBuilder` | no indices |

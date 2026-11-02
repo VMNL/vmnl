@@ -7,6 +7,7 @@
 //! into the current swapchain framebuffer.
 
 use crate::common::{BlendMode, MaterialKey, PipelineKey};
+use crate::raw::{pipeline_targets_window, resolve_viewport_scissor};
 use crate::window::render::RenderPassCommand;
 use crate::window::PushConstants;
 use crate::{window::inner::VMNLWindow, VMNLError, VMNLErrorKind, VMNLResult};
@@ -72,11 +73,23 @@ impl VMNLWindow {
 
         // SAFETY: all resources belong to this window's Vulkan context, remain owned while the
         // command buffer exists, and Vulkano validates each command before recording it.
+        // Raw viewport/device bounds and signed scissor sums are checked for this image;
+        // both dynamic states are set after each raw pipeline bind, before any draw.
+        // Optional depth images are owned by their framebuffer and match its extent;
+        // the clear list follows the render pass's color/depth attachment order.
         unsafe {
             builder
                 .begin_render_pass(
                     RenderPassBeginInfo {
-                        clear_values: vec![Some(self.state.clear_color.into())],
+                        clear_values: {
+                            let mut values = vec![Some(self.state.clear_color.into())];
+                            if self.config.render_target.depth_value().is_some() {
+                                values.push(Some(
+                                    self.config.render_target.clear_depth_value().into(),
+                                ));
+                            }
+                            values
+                        },
                         ..RenderPassBeginInfo::framebuffer(framebuffer)
                     },
                     SubpassBeginInfo {
@@ -98,6 +111,16 @@ impl VMNLWindow {
             for command in commands {
                 match command {
                     RenderPassCommand::D2 { items } => {
+                        builder
+                            .set_viewport(
+                                0,
+                                smallvec![Viewport {
+                                    offset: [0.0, 0.0],
+                                    extent: extent_f32,
+                                    depth_range: 0.0..=1.0,
+                                }],
+                            )
+                            .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
                         for render_item in items {
                             debug_assert_eq!(render_item.pipeline_key, PipelineKey::Color2D);
                             debug_assert_eq!(render_item.material_key, MaterialKey::VertexColor);
@@ -147,15 +170,14 @@ impl VMNLWindow {
                     RenderPassCommand::Raw { items } => {
                         current_blend_mode = None;
                         for render_item in items {
-                            if !Arc::ptr_eq(
+                            if !pipeline_targets_window(
                                 &render_item.pipeline_device,
+                                &render_item.pipeline_render_pass,
                                 &self.handle.vmnl_instance.device,
+                                &self.handle.render_pass,
                             ) || !Arc::ptr_eq(
                                 &render_item.geometry_device,
                                 &self.handle.vmnl_instance.device,
-                            ) || !Arc::ptr_eq(
-                                &render_item.pipeline_render_pass,
-                                &self.handle.render_pass,
                             ) {
                                 return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                                     "raw pipeline and geometry must belong to this window context"
@@ -202,10 +224,22 @@ impl VMNLWindow {
                                 )));
                             }
 
+                            let (viewport, scissor) = resolve_viewport_scissor(
+                                render_item.viewport,
+                                render_item.scissor,
+                                extent,
+                                &self.handle.vmnl_instance.device,
+                            )?;
                             builder
                                 .bind_pipeline_graphics(render_item.pipeline.clone())
                                 .map_err(|_| {
                                     VMNLError::new(VMNLErrorKind::VulkanPipelineCreationFailed)
+                                })?
+                                .set_viewport(0, smallvec![viewport])
+                                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?
+                                .set_scissor(0, smallvec![scissor])
+                                .map_err(|_| {
+                                    VMNLError::new(VMNLErrorKind::VulkanValidationFailed)
                                 })?;
                             if !descriptor_sets.is_empty() {
                                 builder
