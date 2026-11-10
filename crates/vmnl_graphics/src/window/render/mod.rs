@@ -63,6 +63,18 @@ impl VMNLWindow {
         }
         let framebuffer_index: usize = usize::try_from(image_index)
             .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+        if let Some(completion) = self
+            .handle
+            .depth_frame_completions
+            .get_mut(framebuffer_index)
+            .and_then(Option::take)
+        {
+            // Swapchain acquisition tracks only the color image. Unlock this image's
+            // previous depth use before recording/submitting another exclusive use.
+            completion
+                .wait(None)
+                .map_err(|_| VMNLError::new(VMNLErrorKind::VulkanValidationFailed))?;
+        }
         let current_image_count = self.handle.framebuffers.len();
         for write in frame_uniform_writes {
             write.write(framebuffer_index, current_image_count)?;
@@ -78,6 +90,15 @@ impl VMNLWindow {
             self.handle.vmnl_instance.graphics_queue.clone(),
             self.handle.swapchain.clone(),
         )?;
+        if let sync::FrameSyncResult::Submitted(completion) = &frame_sync {
+            if let Some(slot) = self
+                .handle
+                .depth_frame_completions
+                .get_mut(framebuffer_index)
+            {
+                *slot = Some(completion.clone());
+            }
+        }
         let (previous_frame_end, swapchain_recreation_requested) =
             Self::update_previous_frame_end(frame_sync, self.handle.vmnl_instance.device.clone());
         self.handle.previous_frame_end = Some(previous_frame_end);

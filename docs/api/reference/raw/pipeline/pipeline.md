@@ -10,7 +10,7 @@ Owns a typed Vulkan graphics pipeline created for one window's device and render
 
 ## Public API
 
-`Pipeline::<TVertex>::builder() -> PipelineSpec<TVertex>`. Fields are private; no `Clone`/`Default`.
+`Pipeline::<TVertex>::builder() -> PipelineSpec<TVertex>`, `polygon_mode_value() -> PolygonMode`, `line_width_value() -> f32`, `viewport_value() -> ViewportPolicy`, `scissor_value() -> ScissorPolicy`, `depth_value() -> DepthState`, `render_target_info() -> RenderTargetInfo`, `validate_target(&Window) -> VMNLResult<()>`. Fields are private; no `Clone`/`Default`.
 
 ## Construction, defaults, and validation
 
@@ -18,19 +18,27 @@ Use the spec to provide both shaders and build against a `Window`. `TVertex` mus
 
 ## Units, coordinates, and valid ranges
 
-Defined by the shader and vertex layout.
+Coordinates are defined by the shader and vertex layout. The rasterization getters return the immutable mode and validated width passed at creation. Width is in framebuffer units; the getter reports configuration, not measured pixel coverage or driver rounding. It performs no allocation or GPU operation.
+
+The depth getter returns the immutable [`DepthState`](depth_state.md) passed at construction, without GPU access; `Disabled` is the default even on a depth-enabled target.
+
+The viewport/scissor getters return immutable policies. Call `resolve(framebuffer_extent)` to inspect values for a supplied pixel extent; it does not inspect the last submitted image or device limits. Full policies follow the acquired image on each draw; fixed values persist across resize without scaling/clamping. See [`ViewportPolicy`](viewport_policy.md) and [`ScissorPolicy`](scissor_policy.md).
 
 ## Ownership, lifecycle, and threading
 
-Owns shared Vulkan pipeline/device/render-pass handles. It is logically tied to the window render pass/device used at build and borrowed by raw frame passes.
+Owns shared Vulkan pipeline/device/render-pass handles and a copied resolved target description. It is tied to the exact window render pass/device used at build and borrowed by raw frame passes. `render_target_info` reports color format, samples and depth without allocation or GPU access. Matching descriptions do not authorize cross-window use, even on the same context.
+
+`validate_target(&window)` checks the same identity predicate as submission before recording a frame. Resize preserves the originating window's render pass and preflight success. The check does not validate geometry, resources, viewport/scissor limits or framebuffer readiness; it does not create or submit work.
 
 ## Errors, panics, and failure conditions
 
-Errors occur in `PipelineSpec::build`; combining it with incompatible window/geometry/resources fails during build/submission.
+`validate_target` returns `InvalidState` for another device or render-pass object, including another window with equal attachment properties. Build a separate pipeline for that window. Errors also occur in `PipelineSpec::build`; combining a pipeline with incompatible geometry/resources or a different target remains rejected at submission, even if preflight was omitted.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
 Pipeline build compiles shaders and allocates Vulkan shader modules/layout/pipeline. Reuse the pipeline; exact compilation/cache cost is unspecified.
+
+Target inspection and successful preflight allocate nothing and perform no GPU query, shader work or synchronization. An error message may allocate. Preflight does not rebuild or retarget a pipeline.
 
 ## Platform, Vulkan, and display constraints
 

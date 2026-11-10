@@ -76,10 +76,14 @@ fn vertex3(x: f32, y: f32, z: f32, color: Rgba) -> Vertex3D {
 fn assert_invalid_state<T>(result: VMNLResult<T>, expected: &str) -> VMNLResult<()> {
     match result {
         Err(error) => {
-            assert!(matches!(
-                error.kind(),
-                VMNLErrorKind::InvalidState(message) if message == expected
-            ));
+            assert!(
+                matches!(
+                    error.kind(),
+                    VMNLErrorKind::InvalidState(message) if message == expected
+                ),
+                "expected InvalidState({expected:?}), got {:?}",
+                error.kind()
+            );
             Ok(())
         }
         Ok(_) => Err(VMNLError::new(VMNLErrorKind::InvalidState(format!(
@@ -107,6 +111,15 @@ fn d2_d3_and_raw_builders_create_valid_gpu_resources() -> VMNLResult<()> {
             vertex2(0.0, 0.0, Rgba::RED),
             vertex2(1.0, 0.0, Rgba::GREEN),
             vertex2(0.0, 1.0, Rgba::BLUE),
+        ],
+        [0, 1, 2],
+    )
+    .build(&context)?;
+    let _degenerate_indexed = Shape::indexed(
+        [
+            vertex2(0.0, 0.0, Rgba::RED),
+            vertex2(1.0, 1.0, Rgba::GREEN),
+            vertex2(2.0, 2.0, Rgba::BLUE),
         ],
         [0, 1, 2],
     )
@@ -276,6 +289,34 @@ fn gpu_resource_builders_report_expected_invalid_states() -> VMNLResult<()> {
         "indexed shape requires a non-empty triangle index list",
     )?;
     assert_invalid_state(
+        Shape::indexed(
+            [
+                vertex2(f32::NAN, 0.0, Rgba::WHITE),
+                vertex2(1.0, 0.0, Rgba::WHITE),
+                vertex2(0.0, 1.0, Rgba::WHITE),
+            ],
+            [0, 1, 2],
+        )
+        .build(&context),
+        "indexed shape vertex positions must not be NaN",
+    )?;
+    assert_invalid_state(
+        Shape::indexed(
+            [
+                vertex2(0.0, f32::INFINITY, Rgba::WHITE),
+                vertex2(1.0, 0.0, Rgba::WHITE),
+                vertex2(0.0, 1.0, Rgba::WHITE),
+            ],
+            [0, 1, 2],
+        )
+        .build(&context),
+        "indexed shape vertex positions must be finite",
+    )?;
+    assert_invalid_state(
+        Shape::triangle(v2(0.0, 0.0), v2(1.0, 1.0), v2(2.0, 2.0)).build(&context),
+        "triangle vertices must define finite, non-zero area",
+    )?;
+    assert_invalid_state(
         Shape::line(v2(0.0, 0.0), v2(0.0, 0.0)).build(&context),
         "line endpoints must be distinct",
     )?;
@@ -284,6 +325,21 @@ fn gpu_resource_builders_report_expected_invalid_states() -> VMNLResult<()> {
             .corner_radii(CornerRadii::all(60.0))
             .build(&context),
         "rectangle corner radii must not overlap",
+    )?;
+    assert_invalid_state(
+        Shape::rect(3.0e38, 3.0e38)
+            .position(0.0, 0.0)
+            .anchor(Anchor::TopLeft)
+            .rotation(45.0)
+            .build(&context),
+        "rectangle vertex positions must be finite",
+    )?;
+    assert_invalid_state(
+        Shape::circle(f32::MAX)
+            .ellipse(1.0)
+            .position(f32::MAX, 0.0)
+            .build(&context),
+        "circle vertex positions must not be NaN",
     )?;
     assert_invalid_state(
         Mesh::indexed(

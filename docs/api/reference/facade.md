@@ -11,7 +11,7 @@ Graphics keeps `common`, `d2`, `d3`, and `raw`; optional audio is grouped under 
 
 ## Public API
 
-`graphics` root re-exports: `Context`, `Window`, `WindowBuilder`, `FrameRenderer`, `RenderMode`, `PresentMode`,
+Root re-exports: `Context`, `ContextBuilder`, `DeviceConfig`, `DeviceFeature`, `LineWidthLimits`, `Window`, `WindowBuilder`, `FrameRenderer`, `RenderMode`, `PresentMode`,
 `Event`, `EventKind`, `Cursor`, `CursorBuilder`, `CursorMode`, `StandardCursor`,
 `StandardCursorBuilder`, `Input`, `Key`, `KeyboardState`, `Modifiers`, `MouseButton`, `MouseState`,
 `InputRuntime`, `InputRuntimeBuilder`, `InputRuntimeConfig`, `Monitors`, `MonitorInfo`, `VideoMode`,

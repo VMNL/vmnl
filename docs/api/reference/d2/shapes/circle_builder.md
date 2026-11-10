@@ -55,7 +55,7 @@ Validation occurs on `build`, before GPU allocation:
 | Center | Finite X and Y |
 | Both radii | Finite and strictly positive |
 | Inner and outer offsets, when unfilled | Both finite and strictly positive |
-| Offsets, when filled | Not validated; the outer offset still affects the boundary |
+| Offsets, when filled | Not parameter-validated; the outer offset still affects the boundary |
 | Segment count | `1..=65535`; no minimum-three or nondegeneracy check |
 | Sector start | Finite, in `0..=360` |
 | Sector sweep | Finite, `0 < abs(sweep) <= 360`; fractional degrees are accepted |
@@ -89,14 +89,15 @@ is created; dropping the shape releases its ownership shares.
 
 ## Errors, panics, and failure conditions
 
-Invalid parameters and invalid triangle topology/counts return `VMNLErrorKind::InvalidState`.
-GPU buffer creation/upload errors propagate from `build`.
+Invalid parameters, invalid triangle topology/counts, or non-finite final generated positions
+return `VMNLErrorKind::InvalidState`. GPU buffer creation/upload errors propagate from `build`.
+All generated vertex positions are checked before buffer allocation, including output that
+overflows during tessellation or becomes non-finite from the outer offset in filled mode.
 
-Current limitation: generated vertex positions are not checked again for finiteness, degeneracy,
-or self-intersections. Finite inputs can overflow during geometry generation; filled geometry
-also uses its unvalidated outer offset. Parameter acceptance does not guarantee usable geometry
-for extreme values or oversized inward offsets. Allocation exhaustion is not covered by a
-recoverable-error guarantee.
+Finite degenerate, overlapping, or self-intersecting geometry is not rejected. Filled mode
+does not parameter-validate its stored widths, and parameter acceptance does not guarantee
+usable geometry for oversized inward offsets or extreme finite values. Allocation exhaustion
+is not covered by a recoverable-error guarantee.
 
 ## Allocation, transfers, synchronization, and GPU cost
 

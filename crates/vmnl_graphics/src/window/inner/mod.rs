@@ -13,22 +13,19 @@ mod render_target;
 mod surface;
 mod swapchain;
 
-use super::{PresentModeSelection, WindowOptions};
-use crate::common::BlendMode;
+use super::WindowOptions;
 use crate::exception::{VMNLError, VMNLErrorKind};
 use crate::vmnl_instance::VMNLInstance;
 use crate::window::event::EventQueue;
 use crate::window::input::Input;
 use crate::window::monitors::Monitors;
 use crate::window::runtime::{WindowConfig, WindowHandle, WindowState};
-use crate::window::shaders::WindowShaders;
 use crate::Context;
 use crate::VMNLResult;
 use std::rc::Rc;
 use std::sync::Arc;
 use vulkano::{
     image::{view::ImageView, Image},
-    pipeline::GraphicsPipeline,
     render_pass::{Framebuffer, RenderPass},
     swapchain::{Surface, Swapchain},
     sync::{self, GpuFuture},
@@ -50,15 +47,7 @@ pub(crate) struct VMNLWindow {
 impl VMNLWindow {
     /// Internal constructor used by `Window::from_options`.
     pub(crate) fn create(context: &Context, options: &WindowOptions) -> VMNLResult<Self> {
-        let mut window = Self::new(
-            context,
-            options.width,
-            options.height,
-            &options.title,
-            &options.shaders,
-            options.clear_color,
-            options.present_mode,
-        )?;
+        let mut window = Self::new(context, options)?;
         window.set_joystick_event_delivery(options.joystick_event_delivery);
         window
             .handle
@@ -69,16 +58,13 @@ impl VMNLWindow {
     }
 
     /// Internal implementation backing `Window::new`.
-    pub(crate) fn new(
-        vmnl_context: &Context,
-        width: u32,
-        height: u32,
-        title: &str,
-        shaders: &WindowShaders,
-        clear_color: [f32; 4],
-        present_mode: PresentModeSelection,
-    ) -> VMNLResult<Self> {
+    // Keep dependency-ordered resource creation and ownership transfer together.
+    #[allow(clippy::too_many_lines)]
+    pub(crate) fn new(vmnl_context: &Context, options: &WindowOptions) -> VMNLResult<Self> {
+        let (width, height) = (options.width, options.height);
+        let title = options.title.as_str();
         let vmnl_instance: Rc<VMNLInstance> = vmnl_context.inner.clone();
+        Self::validate_depth_attachment(&vmnl_instance.device, options.render_target, None)?;
         let mut glfw: ::glfw::Glfw = vmnl_instance.glfw.glfw().clone();
         glfw.window_hint(::glfw::WindowHint::ClientApi(::glfw::ClientApiHint::NoApi));
         glfw.window_hint(::glfw::WindowHint::TransparentFramebuffer(true));
@@ -113,27 +99,22 @@ impl VMNLWindow {
             &vmnl_instance.device,
             &surface,
             framebuffer_extent,
-            present_mode,
+            options.present_mode,
         )?;
         let image_views: Vec<Arc<ImageView>> = Self::create_image_views(&images)?;
         let render_pass: Arc<RenderPass> =
-            Self::create_render_pass(&vmnl_instance.device, &swapchain)?;
-        let framebuffers: Vec<Arc<Framebuffer>> =
-            Self::create_framebuffers(&image_views, &render_pass)?;
-        let pipeline_2d_opaque: Arc<GraphicsPipeline> = Self::create_graphics_pipeline(
-            &vmnl_instance.device,
+            Self::create_render_pass(&vmnl_instance.device, &swapchain, options.render_target)?;
+        let render_target_info = crate::RenderTargetInfo::from_render_pass(&render_pass)?;
+        let framebuffers: Vec<Arc<Framebuffer>> = Self::create_framebuffers(
+            &image_views,
             &render_pass,
-            shaders,
-            BlendMode::Opaque,
+            &vmnl_instance.memory_allocator,
+            options.render_target,
         )?;
-        let pipeline_2d_alpha: Arc<GraphicsPipeline> = Self::create_graphics_pipeline(
-            &vmnl_instance.device,
-            &render_pass,
-            shaders,
-            BlendMode::Alpha,
-        )?;
-        let previous_frame_end: Option<Box<dyn GpuFuture>> =
-            Some(sync::now(vmnl_instance.device.clone()).boxed());
+        let (pipeline_2d_opaque, pipeline_2d_alpha) =
+            Self::create_2d_pipelines(&vmnl_instance.device, &render_pass, &options.shaders)?;
+        let previous_frame_end: Option<Box<dyn GpuFuture + Send + Sync>> =
+            Some(sync::now(vmnl_instance.device.clone()).boxed_send_sync());
         let input: Input = Input::new();
         let monitor: Monitors = Monitors::new(&mut glfw.clone());
         let window: Self = Self {
@@ -146,6 +127,11 @@ impl VMNLWindow {
                 cursor_mode: crate::CursorMode::Normal,
                 events,
                 framebuffers,
+                depth_frame_completions: if options.render_target.depth_value().is_some() {
+                    vec![None; images.len()]
+                } else {
+                    Vec::new()
+                },
                 render_pass,
                 pipeline_2d_opaque,
                 pipeline_2d_alpha,
@@ -160,7 +146,7 @@ impl VMNLWindow {
             state: WindowState {
                 is_ready: true,
                 is_open: false,
-                clear_color,
+                clear_color: options.clear_color,
                 swapchain_recreation_requested: false,
             },
             config: WindowConfig {
@@ -168,6 +154,8 @@ impl VMNLWindow {
                 width,
                 height,
                 monitor,
+                render_target: options.render_target,
+                render_target_info,
             },
         };
 

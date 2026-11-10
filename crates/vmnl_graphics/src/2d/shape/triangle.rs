@@ -3,7 +3,9 @@
 
 //! Triangle shape builder for creating triangle shapes from vertices or positions.
 
-use super::{Shape, ShapeKind::RawVertices, Vector2f, Vertex2D};
+use super::{
+    validation::validate_finite_positions, Shape, ShapeKind::RawVertices, Vector2f, Vertex2D,
+};
 use crate::{
     common::{BufferMemoryPreference, GpuGeometry, GraphicsResourceFactory, Rgba},
     d2::GpuVertex2D,
@@ -167,7 +169,12 @@ impl TriangleBuilder {
     /// A `Shape` instance representing the triangle, ready for rendering.
     ///
     /// # Errors
-    /// Returns an error if the vertices are invalid or GPU buffer creation fails.
+    /// Returns [`VMNLErrorKind::InvalidState`] for duplicate positions, non-finite
+    /// coordinates, or a zero/non-finite signed double area. Duplicate-position errors
+    /// take precedence; otherwise NaN positions are reported before infinities. Area is
+    /// computed in `f64` before subtraction and multiplication, and either winding is valid.
+    /// Validation completes before the three-vertex GPU buffer is allocated. GPU buffer
+    /// creation/upload failures are propagated.
     ///
     /// # Example
     /// ```rust,no_run
@@ -199,6 +206,22 @@ impl TriangleBuilder {
         {
             return Err(VMNLError::new(VMNLErrorKind::InvalidState(
                 "triangle vertices must have unique positions".to_string(),
+            )));
+        }
+
+        validate_finite_positions(vertices, "triangle")?;
+
+        let origin_x: f64 = f64::from(vertex1.position.x);
+        let origin_y: f64 = f64::from(vertex1.position.y);
+        let x_delta_to_b: f64 = f64::from(vertex2.position.x) - origin_x;
+        let y_delta_to_b: f64 = f64::from(vertex2.position.y) - origin_y;
+        let x_delta_to_c: f64 = f64::from(vertex3.position.x) - origin_x;
+        let y_delta_to_c: f64 = f64::from(vertex3.position.y) - origin_y;
+        let signed_double_area: f64 = x_delta_to_b * y_delta_to_c - y_delta_to_b * x_delta_to_c;
+
+        if signed_double_area == 0.0 || !signed_double_area.is_finite() {
+            return Err(VMNLError::new(VMNLErrorKind::InvalidState(
+                "triangle vertices must define finite, non-zero area".to_string(),
             )));
         }
 
@@ -274,6 +297,17 @@ mod tests {
         }
     }
 
+    fn assert_invalid_state(result: VMNLResult<()>, expected: &str) {
+        assert!(matches!(
+            result,
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    VMNLErrorKind::InvalidState(message) if message == expected
+                )
+        ));
+    }
+
     #[test]
     fn validate_vertices_accepts_unique_positions() {
         assert!(TriangleBuilder::validate_vertices(&[
@@ -292,10 +326,96 @@ mod tests {
             vertex(0.0, 1.0),
         ]);
 
-        assert!(matches!(
-            result,
-            Err(err) if matches!(err.kind(), VMNLErrorKind::InvalidState(message) if message == "triangle vertices must have unique positions")
-        ));
+        assert_invalid_state(result, "triangle vertices must have unique positions");
+    }
+
+    #[test]
+    fn validate_vertices_preserves_duplicate_error_precedence_over_non_finite_positions() {
+        assert_invalid_state(
+            TriangleBuilder::validate_vertices(&[
+                vertex(0.0, 0.0),
+                vertex(0.0, 0.0),
+                vertex(f32::NAN, 1.0),
+            ]),
+            "triangle vertices must have unique positions",
+        );
+    }
+
+    #[test]
+    fn validate_vertices_rejects_nan_and_infinite_positions() {
+        for (x, y, expected) in [
+            (f32::NAN, 0.0, "triangle vertex positions must not be NaN"),
+            (0.0, f32::NAN, "triangle vertex positions must not be NaN"),
+            (
+                f32::INFINITY,
+                0.0,
+                "triangle vertex positions must be finite",
+            ),
+            (
+                0.0,
+                f32::INFINITY,
+                "triangle vertex positions must be finite",
+            ),
+            (
+                f32::NEG_INFINITY,
+                0.0,
+                "triangle vertex positions must be finite",
+            ),
+            (
+                0.0,
+                f32::NEG_INFINITY,
+                "triangle vertex positions must be finite",
+            ),
+        ] {
+            assert_invalid_state(
+                TriangleBuilder::validate_vertices(&[
+                    vertex(x, y),
+                    vertex(1.0, 0.0),
+                    vertex(0.0, 1.0),
+                ]),
+                expected,
+            );
+        }
+    }
+
+    #[test]
+    fn validate_vertices_rejects_distinct_collinear_positions() {
+        assert_invalid_state(
+            TriangleBuilder::validate_vertices(&[
+                vertex(0.0, 0.0),
+                vertex(1.0, 1.0),
+                vertex(2.0, 2.0),
+            ]),
+            "triangle vertices must define finite, non-zero area",
+        );
+    }
+
+    #[test]
+    fn validate_vertices_accepts_both_windings() {
+        for vertices in [
+            [vertex(0.0, 0.0), vertex(1.0, 0.0), vertex(0.0, 1.0)],
+            [vertex(0.0, 0.0), vertex(0.0, 1.0), vertex(1.0, 0.0)],
+        ] {
+            assert!(TriangleBuilder::validate_vertices(&vertices).is_ok());
+        }
+    }
+
+    #[test]
+    fn validate_vertices_uses_f64_for_extreme_and_subnormal_scale_areas() {
+        for vertices in [
+            [
+                vertex(-f32::MAX, 0.0),
+                vertex(f32::MAX, 0.0),
+                vertex(0.0, f32::MAX),
+            ],
+            [
+                vertex(0.0, 0.0),
+                vertex(f32::MIN_POSITIVE, 0.0),
+                vertex(0.0, f32::MIN_POSITIVE),
+            ],
+        ] {
+            assert!(TriangleBuilder::validate_vertices(&vertices).is_ok());
+        }
     }
 
     #[test]

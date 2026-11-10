@@ -12,5 +12,5 @@ mod handle;
 mod state;
 
 pub(crate) use config::WindowConfig;
-pub(crate) use handle::WindowHandle;
+pub(crate) use handle::{FrameCompletion, WindowHandle};
 pub(crate) use state::WindowState;

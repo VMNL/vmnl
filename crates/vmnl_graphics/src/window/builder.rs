@@ -6,7 +6,7 @@
 use crate::common::{Rgba, ShaderSource};
 use crate::window::input::StickConfig;
 use crate::window::shaders::WindowShaders;
-use crate::window::Window;
+use crate::window::{RenderTargetConfig, Window};
 use crate::{Context, VMNLError, VMNLErrorKind, VMNLResult};
 use vulkano::swapchain::PresentMode as VkPresentMode;
 
@@ -136,6 +136,8 @@ pub(crate) struct WindowOptions {
     pub(crate) clear_color: [f32; 4],
     /// Swapchain presentation mode.
     pub(crate) present_mode: PresentModeSelection,
+    /// Immutable render attachment configuration.
+    pub(crate) render_target: RenderTargetConfig,
 }
 
 impl Default for WindowOptions {
@@ -160,6 +162,7 @@ impl Default for WindowOptions {
             },
             clear_color: [0.0, 0.0, 0.0, 1.0],
             present_mode: PresentModeSelection::default(),
+            render_target: RenderTargetConfig::default(),
         }
     }
 }
@@ -478,6 +481,22 @@ impl WindowBuilder {
             present_mode => PresentModeSelection::Preferred(present_mode),
         };
         self
+    }
+
+    /// Replaces the render attachment configuration. Defaults to color only.
+    ///
+    /// This setter is CPU-only. Build validates numeric configuration before native
+    /// window creation and rejects unsupported depth formats without fallback.
+    #[must_use]
+    pub const fn render_target(mut self, config: RenderTargetConfig) -> Self {
+        self.options.render_target = config;
+        self
+    }
+
+    /// Returns the requested render attachment configuration without GPU work.
+    #[must_use]
+    pub const fn render_target_value(&self) -> RenderTargetConfig {
+        self.options.render_target
     }
 
     /// Build a `Window` from the configured options and an existing [`Context`].

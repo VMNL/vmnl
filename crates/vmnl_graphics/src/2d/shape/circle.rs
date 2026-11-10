@@ -7,9 +7,7 @@ use std::f32;
 
 use super::{
     validation::{validate_finite, validate_positive_finite},
-    IndexedShapeBuilder, Shape,
-    ShapeKind::Circle,
-    Vector2f, Vertex2D,
+    IndexedShapeBuilder, Shape, ShapeKind, Vector2f, Vertex2D,
 };
 use crate::{
     common::{BufferMemoryPreference, Rgba},
@@ -273,10 +271,11 @@ impl CircleBuilder {
     /// or invalid generated topology/counts. Unfilled shapes also reject non-positive or
     /// non-finite inner/outer offsets. Buffer creation/upload failures are propagated.
     ///
-    /// Generated vertex coordinates are not rechecked for finiteness, degeneracy, or
-    /// self-intersection. Finite parameters can still overflow during geometry generation;
-    /// filled shapes skip width validation although their boundary uses the outer width.
-    /// No rendering guarantee is made for those configurations.
+    /// Every final generated vertex position is checked for finiteness before buffer
+    /// allocation, including geometry that overflows or uses a non-finite outer offset in
+    /// filled mode. Filled mode skips parameter validation for stored widths, but the outer
+    /// offset still affects its boundary. Finite degenerate, overlapping, or self-intersecting
+    /// geometry is not rejected; no rendering guarantee is made for those configurations.
     ///
     /// Building requires a Vulkan context; drawing additionally requires a compatible
     /// window/render backend. Exact timing and synchronization costs are unspecified.
@@ -297,15 +296,16 @@ impl CircleBuilder {
     pub fn build(self, context: &Context) -> VMNLResult<Shape> {
         Self::validate_parameters(&self.options)?;
         let (vertices, indices) = Self::geometry(&self.options);
-        let mut shape = IndexedShapeBuilder::indexed_shape(
+        let shape = IndexedShapeBuilder::indexed_shape_with_kind(
             context,
             &vertices,
             &indices,
             self.options.buffer_memory_preference,
+            ShapeKind::Circle,
+            "circle",
         )?;
 
         let s = self.options.sector.unwrap_or_default();
-        shape.kind = Circle;
         log::trace!(
             "creating circle: center=({}, {}), radii=({}, {}), inner_radius={}, outer_radius={}, start = {}, sweep = {}, segments={}, color=({}, {}, {}, {})",
             self.options.position.x,
@@ -674,6 +674,10 @@ mod tests {
     fn assert_valid_mesh(vertices: &[Vertex2D], indices: &[u32]) {
         assert!(!vertices.is_empty(), "mesh should contain vertices");
         assert!(!indices.is_empty(), "mesh should contain indices");
+        assert!(
+            super::super::indexed::preflight_indexed_geometry(vertices, indices, "circle").is_ok(),
+            "mesh should pass the shared indexed-geometry preflight"
+        );
         assert_eq!(
             indices.len() % 3,
             0,
@@ -698,6 +702,26 @@ mod tests {
                 vertices.len()
             );
         }
+    }
+
+    fn assert_non_finite_generated_geometry_is_rejected(
+        options: &CircleOptions,
+        expected_error: &str,
+    ) {
+        assert!(CircleBuilder::validate_parameters(options).is_ok());
+
+        let (vertices, indices) = CircleBuilder::geometry(options);
+        assert!(vertices
+            .iter()
+            .any(|vertex| { !vertex.position.x.is_finite() || !vertex.position.y.is_finite() }));
+        assert!(matches!(
+            super::super::indexed::preflight_indexed_geometry(&vertices, &indices, "circle"),
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    crate::VMNLErrorKind::InvalidState(message) if message == expected_error
+                )
+        ));
     }
 
     // ---------------------------------------------------------
@@ -906,6 +930,35 @@ mod tests {
         assert_eq!(indices.len(), 240);
 
         assert_valid_mesh(&vertices, &indices);
+    }
+
+    #[test]
+    fn finite_center_and_radii_that_overflow_generated_positions_are_rejected() {
+        let mut options = options(f32::MAX);
+        options.position = Vector2f {
+            x: f32::MAX,
+            y: 0.0,
+        };
+        options.radii.y = 1.0;
+        options.segment_count = 7;
+
+        assert_non_finite_generated_geometry_is_rejected(
+            &options,
+            "circle vertex positions must be finite",
+        );
+    }
+
+    #[test]
+    fn filled_circle_rejects_non_finite_outer_offset_output() {
+        let options = CircleBuilder::new(10.0)
+            .outer(f32::INFINITY)
+            .filled(true)
+            .options;
+
+        assert_non_finite_generated_geometry_is_rejected(
+            &options,
+            "circle vertex positions must not be NaN",
+        );
     }
 
     // ---------------------------------------------------------
