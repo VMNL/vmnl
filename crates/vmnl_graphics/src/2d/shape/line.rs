@@ -8,7 +8,7 @@ use super::{
     polyline::LineJoin,
     stroke::{tessellate_stroke, StrokeColors},
     validation::{validate_finite, validate_positive_finite},
-    Shape, Vector2f,
+    Shape, ShapeKind, Vector2f,
 };
 use crate::{
     common::{BufferMemoryPreference, Rgba},
@@ -279,7 +279,14 @@ impl LineBuilder {
         Self::validate_parameters(from, to, width)?;
         let (vertices, indices): (Vec<Vertex2D>, Vec<u32>) =
             Self::geometry(from, to, width, cap, color)?;
-        IndexedShapeBuilder::indexed_shape(context, &vertices, &indices, buffer_memory_preference)
+        IndexedShapeBuilder::indexed_shape_with_kind(
+            context,
+            &vertices,
+            &indices,
+            buffer_memory_preference,
+            ShapeKind::Line,
+            "line",
+        )
     }
 }
 

@@ -47,6 +47,15 @@ fn advanced_d2_geometry_submits_per_object_and_batched() -> VMNLResult<()> {
     )
     .buffer_memory_preference(BufferMemoryPreference::Host)
     .build(&context)?;
+    let degenerate_indexed = Shape::indexed(
+        [
+            vertex(100.0, 220.0, Rgba::RED),
+            vertex(190.0, 220.0, Rgba::GREEN),
+            vertex(280.0, 220.0, Rgba::BLUE),
+        ],
+        [0, 1, 2],
+    )
+    .build(&context)?;
     let anchored = Shape::rect(180.0, 120.0)
         .position(500.0, 180.0)
         .anchor(Anchor::Center)
@@ -79,6 +88,7 @@ fn advanced_d2_geometry_submits_per_object_and_batched() -> VMNLResult<()> {
         .mode(RenderMode::PerObject)
         .draw2d([
             &indexed,
+            &degenerate_indexed,
             &anchored,
             &custom_origin,
             &circle,
@@ -91,6 +101,7 @@ fn advanced_d2_geometry_submits_per_object_and_batched() -> VMNLResult<()> {
         .mode(RenderMode::Batched)
         .draw2d([
             &indexed,
+            &degenerate_indexed,
             &anchored,
             &custom_origin,
             &circle,

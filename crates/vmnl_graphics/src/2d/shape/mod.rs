@@ -37,7 +37,6 @@ pub(crate) enum ShapeKind {
     /// Axis-aligned rectangle shape.
     Rectangle,
     /// Line shape defined by two vertices.
-    #[allow(dead_code)]
     Line,
     /// Filled polygon shape.
     Polygon,
@@ -139,10 +138,12 @@ impl Shape {
     /// a cap without a sector is rejected. Round caps use 32 fixed subdivisions per end.
     ///
     /// `build` rejects non-finite centers, non-positive/non-finite radii, zero segments,
-    /// starts outside `0..=360`, zero or over-360-degree absolute sweeps, and unmatched
-    /// sector/cap pairs with `InvalidState`. Unfilled shapes additionally require finite,
-    /// strictly positive inner and outer offsets. Generated coordinates are not rechecked
-    /// for overflow or degeneracy. GPU allocation/upload errors are propagated.
+    /// starts outside `0..=360`, zero or over-360-degree absolute sweeps, unmatched
+    /// sector/cap pairs, and non-finite generated vertex positions with `InvalidState`.
+    /// Unfilled shapes additionally require finite, strictly positive inner and outer offsets.
+    /// Final positions are checked before GPU allocation, including for filled shapes whose
+    /// stored outer offset is not parameter-validated. Finite degenerate or self-intersecting
+    /// geometry is not rejected. GPU allocation/upload errors are propagated.
     ///
     /// # Arguments
     /// - `radius`: Finite, strictly positive reference radius in pixel-like 2D coordinates.
@@ -202,7 +203,11 @@ impl Shape {
 
     /// Create an indexed shape builder from required vertex and index data.
     ///
-    /// `build` validates that indices describe triangles and stay within bounds.
+    /// `build` requires triangle-list indices, in-bounds references, representable counts,
+    /// and finite positions for every supplied vertex. Structural/count/index errors take
+    /// precedence over position errors; NaN positions take precedence over infinities.
+    /// Repeated indices, unused vertices, duplicate positions, either winding, and degenerate
+    /// triangles remain accepted so callers retain explicit triangle-list control.
     ///
     /// # Arguments
     /// - `vertices`: Vertex list containing 2D positions and colors.
@@ -227,6 +232,7 @@ impl Shape {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn indexed<V, I>(vertices: V, indices: I) -> IndexedShapeBuilder
     where
         V: Into<Vec<Vertex2D>>,

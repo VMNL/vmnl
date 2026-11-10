@@ -89,17 +89,28 @@ targeting `main` enforces commit metadata independently of local hooks.
 Use this validation sequence before any GPU allocation or upload:
 
 1. Validate public parameters in a shape-local `validate_parameters` method.
-2. Generate vertices and indices deterministically.
-3. Send indexed triangle geometry through `IndexedShapeBuilder::indexed_shape`.
+2. Generate final vertices and indices deterministically.
+3. Send indexed triangle geometry through `IndexedShapeBuilder::indexed_shape_with_kind`;
+   explicit `Shape::indexed` input uses the `indexed_shape` wrapper and its `IndexedGeometry`
+   kind/label.
+4. Let the shared `preflight_indexed_geometry` check triangle structure, bounds, and draw
+   counts first, then all final vertex positions, before either GPU buffer is allocated.
+5. Only after preflight, derive blending, convert directly to GPU vertices, and create buffers.
 
 Reuse validators by invariant, not by parameter name:
 
 - `shape::validation::validate_finite` rejects `NaN` before infinity.
 - `shape::validation::validate_positive_finite` adds the strictly-positive invariant.
+- `shape::validation::validate_finite_positions` scans every supplied vertex, including unused
+  vertices; all NaN coordinates are rejected before any infinity coordinate.
 - Keep shape-specific relations, such as distinct line endpoints, in `validate_parameters`.
 - `common::validate_indexed_triangle_geometry` validates shared triangle topology, index bounds,
   and draw-count conversion.
-- `TriangleBuilder::validate_vertices` owns the triangle-specific distinct-vertex rule.
+- `TriangleBuilder::validate_vertices` checks duplicate positions first, then finite positions,
+  then non-zero signed double area in `f64`. Its area rule applies only to primitive triangles;
+  explicit indexed triangles continue to allow degeneracy.
+- `IndexedShapeBuilder::indexed_shape_with_kind` owns shared indexed preflight, blending, direct
+  vertex conversion, GPU buffer construction, and the caller-supplied `ShapeKind`.
 - `raw::validate_geometry_inputs` remains the separate, topology-independent raw rendering
   boundary.
 
