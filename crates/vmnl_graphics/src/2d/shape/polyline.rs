@@ -215,6 +215,7 @@ impl PolylineBuilder {
             &indices,
             self.options.buffer_memory_preference,
             ShapeKind::Polyline,
+            "polyline",
         )
     }
 }

@@ -14,7 +14,13 @@ Builds one non-indexed colored triangle.
 
 ## Construction, defaults, and validation
 
-Position constructor defaults all colors to opaque white. The vertex constructor preserves supplied colors. Memory preference defaults to `Device`. Build requires pairwise-distinct positions; it does not reject all collinear/NaN/infinite coordinates explicitly.
+Position constructor defaults all colors to opaque white. The vertex constructor preserves
+supplied colors. Memory preference defaults to `Device`. Build requires pairwise-distinct
+positions, finite coordinates, and a non-zero signed double area. It converts coordinates to
+`f64` before subtraction and multiplication, so finite non-zero triangles at very large or
+small `f32` scales remain valid. Either winding is accepted. Duplicate-position errors take
+precedence; otherwise NaN positions are reported before infinities. Validation completes
+before vertex-buffer allocation.
 
 ## Units, coordinates, and valid ranges
 
@@ -26,7 +32,10 @@ Owns three positions/colors and is consumed by build; resulting GPU resource bel
 
 ## Errors, panics, and failure conditions
 
-Duplicate positions return `InvalidState`; GPU vertex-buffer allocation/upload may fail. Other geometric degeneracy is not specified as invalid.
+Duplicate positions, non-finite coordinates, or a zero/non-finite signed double area return
+`VMNLErrorKind::InvalidState`; GPU vertex-buffer allocation/upload errors propagate. The
+distinct-position check runs first. This area rule applies only to `TriangleBuilder`; explicit
+`Shape::indexed` geometry continues to permit degenerate triangles.
 
 ## Allocation, transfers, synchronization, and GPU cost
 

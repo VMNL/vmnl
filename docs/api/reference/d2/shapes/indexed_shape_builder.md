@@ -10,11 +10,23 @@ Builds arbitrary 2D triangle-list geometry from public colored vertices and `u32
 
 ## Public API
 
-`buffer_memory_preference(preference)` and `build(&Context) -> VMNLResult<Shape>`.
+`Shape::indexed(vertices, indices)` returns this builder and is annotated `#[must_use]`;
+discarding the result triggers `unused_must_use`. Use `let _ = Shape::indexed(...)` for an
+intentional discard. Builder methods are `buffer_memory_preference(preference)` and
+`build(&Context) -> VMNLResult<Shape>`.
 
 ## Construction, defaults, and validation
 
-Vertices/indices are required at `Shape::indexed`. Memory preference defaults to `Device`. Build requires at least three vertices, a non-empty index count divisible by three, in-bounds indices, and counts representable as `u32`.
+Vertices and indices are required at `Shape::indexed`, which accepts inputs convertible to
+owned vectors. Memory preference defaults to `Device`. Build requires at least three vertices,
+a non-empty index count divisible by three, in-bounds indices, counts representable as `u32`,
+and finite X/Y positions for every supplied vertex, including unused vertices. Structural,
+count, and index errors take precedence over position errors; NaN positions take precedence
+over infinities.
+
+This explicit triangle-list API permits repeated indices, duplicate positions, unused finite
+vertices, either winding, and zero-area/degenerate triangles. Its validation does not impose
+the stricter primitive-triangle area rule.
 
 ## Units, coordinates, and valid ranges
 
@@ -26,11 +38,15 @@ Builder owns CPU vectors and is consumed by `build`; the resulting shape owns co
 
 ## Errors, panics, and failure conditions
 
-Returns `InvalidState` for geometry/count failures and Vulkan vertex/index-buffer errors for allocation/upload failures.
+Returns `VMNLErrorKind::InvalidState` for triangle-list structure, count, index-bound, or
+non-finite-position failures. Structural/count/index failures are reported before position
+failures. Vulkan vertex/index-buffer allocation and upload errors propagate from `build`.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-Construction may allocate vectors through `Into<Vec<_>>`; build allocates/uploads vertex and index buffers. Placement is a preference and performance is unspecified.
+Converting array or other inputs into the builder's owned vectors may allocate. `build` checks
+triangle structure and every position before allocating/uploading the vertex and index buffers.
+Placement is a preference; exact timing and performance are unspecified.
 
 ## Platform, Vulkan, and display constraints
 

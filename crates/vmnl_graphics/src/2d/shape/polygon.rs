@@ -498,16 +498,14 @@ impl PolygonBuilder {
         self.apply_vertex_colors()?;
         let indices = self.triangulate()?;
 
-        let mut shape = IndexedShapeBuilder::indexed_shape(
+        IndexedShapeBuilder::indexed_shape_with_kind(
             context,
             &self.vertices,
             &indices,
             self.buffer_memory_preference,
-        )?;
-
-        shape.kind = ShapeKind::Polygon;
-
-        Ok(shape)
+            ShapeKind::Polygon,
+            "polygon",
+        )
     }
 }
 

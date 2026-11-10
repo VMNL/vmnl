@@ -4,7 +4,7 @@
 //! Implementation of indexed shapes for the VMNL graphics module,
 //! allowing for efficient rendering of complex geometries using vertex and index buffers.
 
-use super::{Shape, ShapeKind::IndexedGeometry, Vertex2D};
+use super::{validation::validate_finite_positions, Shape, ShapeKind::IndexedGeometry, Vertex2D};
 use crate::{
     common::{
         validate_indexed_triangle_geometry, BufferMemoryPreference, GpuGeometry,
@@ -13,6 +13,18 @@ use crate::{
     d2::GpuVertex2D,
     Context, VMNLResult,
 };
+
+pub(super) fn preflight_indexed_geometry(
+    vertices: &[Vertex2D],
+    indices: &[u32],
+    validation_label: &str,
+) -> VMNLResult<(u32, u32)> {
+    let draw_counts =
+        validate_indexed_triangle_geometry(vertices.len(), indices, validation_label)?;
+    validate_finite_positions(vertices, validation_label)?;
+
+    Ok(draw_counts)
+}
 
 /// Options for configuring an indexed shape, including vertex and index data.
 struct IndexedShapeOptions {
@@ -79,8 +91,15 @@ impl IndexedShapeBuilder {
     /// - `vmnl_context`: Graphics context used to allocate GPU buffers.
     ///
     /// # Errors
-    /// Returns an error when the geometry is empty, not triangle-aligned, or references
-    /// a vertex outside the provided vertex list.
+    /// Returns [`crate::VMNLErrorKind::InvalidState`] when the geometry has fewer than three
+    /// vertices, has no indices or a non-triangle-aligned index count, contains an
+    /// out-of-bounds index, has counts that do not fit the draw-count type, or contains a
+    /// NaN/infinite vertex position. Structural/count/index errors are reported before
+    /// position errors; NaN positions are reported before infinities, including in unused
+    /// vertices. All validation completes before either GPU buffer is allocated.
+    ///
+    /// Repeated indices, unused finite vertices, duplicate positions, either winding, and
+    /// zero-area/degenerate triangles are valid for this explicit indexed triangle-list API.
     ///
     /// # Example
     /// ```rust,no_run
@@ -131,6 +150,7 @@ impl IndexedShapeBuilder {
             indices,
             buffer_memory_preference,
             IndexedGeometry,
+            "indexed shape",
         )
     }
 
@@ -140,14 +160,26 @@ impl IndexedShapeBuilder {
         indices: &[u32],
         buffer_memory_preference: BufferMemoryPreference,
         kind: super::ShapeKind,
+        validation_label: &str,
     ) -> VMNLResult<Shape> {
         let (vertex_count, index_count) =
-            validate_indexed_triangle_geometry(vertices.len(), indices, "indexed shape")?;
+            preflight_indexed_geometry(vertices, indices, validation_label)?;
         log::trace!(
             "creating indexed shape: vertices={}, indices={}",
             vertices.len(),
             indices.len()
         );
+
+        let vertex_buffer = Shape::create_vertex_buffer(
+            vertices.iter().copied().map(GpuVertex2D::from),
+            buffer_memory_preference,
+            &vmnl_context.inner.memory_allocator,
+        )?;
+        let index_buffer = Shape::create_index_buffer(
+            indices,
+            buffer_memory_preference,
+            &vmnl_context.inner.memory_allocator,
+        )?;
 
         Ok(Shape {
             kind,
@@ -155,16 +187,8 @@ impl IndexedShapeBuilder {
             geometry: GpuGeometry {
                 vertex_count,
                 index_count,
-                vertex_buffer: Shape::create_vertex_buffer(
-                    vertices.iter().copied().map(GpuVertex2D::from),
-                    buffer_memory_preference,
-                    &vmnl_context.inner.memory_allocator,
-                )?,
-                index_buffer: Some(Shape::create_index_buffer(
-                    indices,
-                    buffer_memory_preference,
-                    &vmnl_context.inner.memory_allocator,
-                )?),
+                vertex_buffer,
+                index_buffer: Some(index_buffer),
             },
         })
     }
@@ -184,6 +208,62 @@ mod tests {
 
     fn vertices() -> [Vertex2D; 3] {
         [vertex(0.0, 0.0), vertex(1.0, 0.0), vertex(0.0, 1.0)]
+    }
+
+    fn assert_invalid_state<T>(result: VMNLResult<T>, expected: &str) {
+        assert!(matches!(
+            result,
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    crate::VMNLErrorKind::InvalidState(message) if message == expected
+                )
+        ));
+    }
+
+    #[test]
+    fn preflight_indexed_geometry_accepts_degenerate_triangles_and_unused_vertices() {
+        let vertices = [
+            vertex(0.0, 0.0),
+            vertex(0.0, 0.0),
+            vertex(2.0, 0.0),
+            vertex(9.0, 9.0),
+        ];
+
+        assert_eq!(
+            preflight_indexed_geometry(&vertices, &[0, 0, 2], "indexed shape").map_err(|_| ()),
+            Ok((4, 3))
+        );
+    }
+
+    #[test]
+    fn preflight_indexed_geometry_rejects_a_non_finite_unused_vertex() {
+        let vertices = [
+            vertex(0.0, 0.0),
+            vertex(1.0, 0.0),
+            vertex(0.0, 1.0),
+            vertex(f32::NAN, 9.0),
+        ];
+
+        assert_invalid_state(
+            preflight_indexed_geometry(&vertices, &[0, 1, 2], "indexed shape"),
+            "indexed shape vertex positions must not be NaN",
+        );
+    }
+
+    #[test]
+    fn preflight_indexed_geometry_preserves_index_errors_before_position_errors() {
+        let vertices = [
+            vertex(0.0, 0.0),
+            vertex(1.0, 0.0),
+            vertex(0.0, 1.0),
+            vertex(2.0, f32::INFINITY),
+        ];
+
+        assert_invalid_state(
+            preflight_indexed_geometry(&vertices, &[0, 1, 4], "indexed shape"),
+            "indexed shape index 4 is out of bounds for 4 vertices",
+        );
     }
 
     #[test]
