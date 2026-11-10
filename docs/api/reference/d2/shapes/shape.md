@@ -21,6 +21,13 @@ have been removed; the replacement builder currently has no public import path.
 
 Each entry point captures required CPU data; its builder validates and allocates on `build(&Context)`. Alpha values select opaque versus alpha blending internally.
 
+`Shape::indexed` preserves explicit triangle-list control, including degenerate triangles,
+repeated indices, duplicate positions, unused vertices, and either winding; it rejects every
+non-finite supplied position after checking indexed structure and bounds. `Shape::triangle`
+is a non-indexed primitive builder and additionally requires distinct positions and non-zero
+finite signed area. See the [indexed](indexed_shape_builder.md) and
+[triangle](triangle_builder.md) builder contracts.
+
 Circle-family width setters disable filling. A later `.filled(true)` preserves widths, and the
 outer offset still affects the filled boundary. See the [circle builder contract](circle_builder.md)
 for defaults, setter order, sector/cap validation, and numeric limitations.

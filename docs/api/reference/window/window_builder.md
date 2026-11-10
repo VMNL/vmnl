@@ -23,13 +23,15 @@ Configures a native window, default 2D shaders, clear color, event polling, size
 | `set_clear_color(color)` | Set normalized framebuffer clear color from `Into<Rgba>`. |
 | `present_mode(mode)` | Require an explicit supported mode, or automatic selection. |
 | `preferred_present_mode(mode)` | Prefer a mode and fall back to automatic selection. |
+| `render_target(config)` | Replace optional depth-attachment configuration; defaults to color only. |
+| `render_target_value()` | Inspect the requested configuration without GPU work. |
 | `build(&Context)` | Validate and allocate a `Window`. |
 
 The type implements `Default`.
 
 ## Construction, defaults, and validation
 
-Defaults: title `VMNL Window`, size `800x600`, common public event delivery enabled, joystick event delivery and joystick state tracking disabled, default left/right `StickConfig`, no size limits, built-in 2D shaders, opaque black clear color, and `PresentMode::Auto`. Both initial dimensions must be at least 64. Minimum limits cannot exceed corresponding maximum limits. Joystick event delivery and state tracking are independent. Stick configs affect processed `JoystickState` views; mapped `GamepadState` axes remain raw.
+Defaults: title `VMNL Window`, size `800x600`, common public event delivery enabled, joystick event delivery and joystick state tracking disabled, default left/right `StickConfig`, no size limits, built-in 2D shaders, opaque black clear color, `PresentMode::Auto`, and color-only `RenderTargetConfig` with clear depth `1.0`. Both initial dimensions must be at least 64. Minimum limits cannot exceed corresponding maximum limits. Joystick event delivery and state tracking are independent. Stick configs affect processed `JoystickState` views; mapped `GamepadState` axes remain raw.
 
 ## Units, coordinates, and valid ranges
 
@@ -42,6 +44,8 @@ Setters consume/return the builder. Owned strings and shader sources move into w
 ## Errors, panics, and failure conditions
 
 `size_limit` returns `InvalidWindowSize` for inverted limits. `build` can return invalid-size, GLFW initialization/input, shader, surface, swapchain, render-pass, allocation, or unsupported-presentation errors. With joystick tracking enabled, the initial joystick query can return `GlfwInputOperationFailed`.
+
+Render-target numeric validation precedes native creation. Unsupported depth format/sample requests return `VulkanFormatNotSupported` before native creation; extent limits are checked before attachment allocation. No format fallback or GPU reselection occurs. See [`RenderTargetConfig`](render_target_config.md) for ranges and cost.
 
 ## Allocation, transfers, synchronization, and GPU cost
 

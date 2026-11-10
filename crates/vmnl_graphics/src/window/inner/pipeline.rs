@@ -13,6 +13,7 @@ use vulkano::{
     device::Device,
     pipeline::{
         graphics::color_blend::{AttachmentBlend, ColorBlendAttachmentState, ColorBlendState},
+        graphics::depth_stencil::DepthStencilState,
         graphics::input_assembly::InputAssemblyState,
         graphics::multisample::MultisampleState,
         graphics::rasterization::RasterizationState,
@@ -27,6 +28,18 @@ use vulkano::{
 };
 
 impl VMNLWindow {
+    /// Builds both 2D blend variants against the same attachment-compatible render pass.
+    pub(super) fn create_2d_pipelines(
+        device: &Arc<Device>,
+        render_pass: &Arc<RenderPass>,
+        shaders: &WindowShaders,
+    ) -> VMNLResult<(Arc<GraphicsPipeline>, Arc<GraphicsPipeline>)> {
+        Ok((
+            Self::create_graphics_pipeline(device, render_pass, shaders, BlendMode::Opaque)?,
+            Self::create_graphics_pipeline(device, render_pass, shaders, BlendMode::Alpha)?,
+        ))
+    }
+
     /// Load a shader from GLSL source code, compile it, and create a Vulkan shader module.
     ///
     /// # Arguments
@@ -190,6 +203,11 @@ impl VMNLWindow {
                 dynamic_state: [DynamicState::Viewport].into_iter().collect(),
                 rasterization_state: Some(RasterizationState::default()),
                 multisample_state: Some(MultisampleState::default()),
+                depth_stencil_state: subpass
+                    .subpass_desc()
+                    .depth_stencil_attachment
+                    .as_ref()
+                    .map(|_| DepthStencilState::default()),
                 color_blend_state: Some(ColorBlendState::with_attachment_states(
                     subpass.num_color_attachments(),
                     color_blend_attachment_state,

@@ -7,9 +7,7 @@
 use super::{
     arc_sample,
     validation::{validate_finite, validate_positive_finite},
-    Shape,
-    ShapeKind::Rectangle,
-    Vector2f, Vertex2D,
+    IndexedShapeBuilder, Shape, ShapeKind, Vector2f, Vertex2D,
 };
 use crate::{
     common::{BufferMemoryPreference, Rgba},
@@ -490,8 +488,10 @@ impl RectBuilder {
     ///
     /// Overlapping, negative, non-finite, or otherwise unrepresentable corner
     /// configurations return [`VMNLErrorKind::InvalidState`] instead of being clamped
-    /// or rescaled. Computed arc centers, contour vertices, transformed vertices, and
-    /// generated counts must remain finite and representable.
+    /// or rescaled. Final vertex positions from both sharp and rounded paths, including
+    /// after rotation, are checked for finiteness before buffer allocation. Rounded arc
+    /// centers, contour vertices, transformed vertices, and generated counts must also
+    /// remain finite and representable.
     ///
     /// Building performs CPU tessellation followed by one vertex-buffer and one
     /// index-buffer allocation/upload; rounded geometry uses checked count arithmetic
@@ -523,21 +523,44 @@ impl RectBuilder {
         )?;
         Self::validate_corners(options.size, options.corner_radii, options.corner_segments)?;
 
-        let (vertices, indices) = Self::geometry(
-            options.position,
-            options.size,
-            options.color,
-            options.rotation,
-            options.origin,
-            options.corner_radii,
-            options.corner_segments,
-        )?;
+        let graphics: Shape = if options.corner_radii.is_sharp() {
+            let vertices: [Vertex2D; 4] = Self::vertices(
+                options.position,
+                options.size,
+                options.color,
+                options.rotation,
+                options.origin,
+            );
+            let indices: [u32; 6] = [0, 1, 2, 2, 3, 0];
 
-        let mut graphics: Shape = Shape::indexed(vertices, indices)
-            .buffer_memory_preference(options.buffer_memory_preference)
-            .build(vmnl_context)?;
+            IndexedShapeBuilder::indexed_shape_with_kind(
+                vmnl_context,
+                &vertices,
+                &indices,
+                options.buffer_memory_preference,
+                ShapeKind::Rectangle,
+                "rectangle",
+            )?
+        } else {
+            let (vertices, indices) = Self::rounded_geometry(
+                options.position,
+                options.size,
+                options.color,
+                options.rotation,
+                options.origin,
+                options.corner_radii,
+                options.corner_segments,
+            )?;
 
-        graphics.kind = Rectangle;
+            IndexedShapeBuilder::indexed_shape_with_kind(
+                vmnl_context,
+                &vertices,
+                &indices,
+                options.buffer_memory_preference,
+                ShapeKind::Rectangle,
+                "rectangle",
+            )?
+        };
         if options.corner_radii.is_sharp() {
             log::trace!(
                 "creating rectangle: position=({}, {}), size=({}, {}), color=({}, {}, {}, {})",
@@ -617,27 +640,6 @@ impl RectBuilder {
         }
 
         Ok(())
-    }
-
-    /// Generate the CPU geometry for the final builder state.
-    ///
-    /// All-zero radii keep the existing four-vertex sharp-rectangle fast path.
-    fn geometry(
-        position: Vector2f,
-        size: Vector2f,
-        color: Rgba,
-        rotation: f32,
-        origin: RectOrigin,
-        radii: CornerRadii,
-        segments: u16,
-    ) -> VMNLResult<(Vec<Vertex2D>, Vec<u32>)> {
-        if radii.is_sharp() {
-            let vertices: [Vertex2D; 4] = Self::vertices(position, size, color, rotation, origin);
-            let indices: [u32; 6] = [0, 1, 2, 2, 3, 0];
-            return Ok((vertices.to_vec(), indices.to_vec()));
-        }
-
-        Self::rounded_geometry(position, size, color, rotation, origin, radii, segments)
     }
 
     /// Number of boundary vertices contributed by one corner.
@@ -1273,28 +1275,58 @@ mod tests {
     #[test]
     fn zero_corner_radii_keep_the_sharp_fast_path() {
         let color: Rgba = Rgba::new(1, 2, 3, 4);
-        let (vertices, indices): (Vec<Vertex2D>, Vec<u32>) =
-            expect_geometry(RectBuilder::geometry(
-                Vector2f { x: 10.0, y: 20.0 },
-                Vector2f { x: 30.0, y: 40.0 },
-                color,
-                0.0,
-                RectOrigin::Anchor(Anchor::TopLeft),
-                CornerRadii::all(0.0),
-                DEFAULT_CORNER_SEGMENTS,
-            ));
-
-        let sharp_path: [Vertex2D; 4] = RectBuilder::vertices(
+        let vertices: [Vertex2D; 4] = RectBuilder::vertices(
             Vector2f { x: 10.0, y: 20.0 },
             Vector2f { x: 30.0, y: 40.0 },
             color,
             0.0,
             RectOrigin::Anchor(Anchor::TopLeft),
         );
+        let indices: [u32; 6] = [0, 1, 2, 2, 3, 0];
 
-        assert_eq!(vertices.len(), 4);
-        assert_eq!(indices, vec![0, 1, 2, 2, 3, 0]);
-        assert_eq!(vertices, sharp_path.to_vec());
+        assert_eq!(indices, [0, 1, 2, 2, 3, 0]);
+        assert_eq!(vertices[0].position, Vector2f { x: 10.0, y: 20.0 });
+        assert_eq!(vertices[1].position, Vector2f { x: 40.0, y: 20.0 });
+        assert_eq!(vertices[2].position, Vector2f { x: 40.0, y: 60.0 });
+        assert_eq!(vertices[3].position, Vector2f { x: 10.0, y: 60.0 });
+        assert!(vertices.iter().all(|vertex| vertex.color == color));
+        assert!(super::super::indexed::preflight_indexed_geometry(
+            &vertices,
+            &indices,
+            "rectangle"
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn sharp_geometry_rejects_unrepresentable_rotated_vertices_in_preflight() {
+        let position = Vector2f { x: 0.0, y: 0.0 };
+        let size = Vector2f {
+            x: 3.0e38,
+            y: 3.0e38,
+        };
+        let rotation = 45.0;
+        let origin = RectOrigin::Anchor(Anchor::TopLeft);
+
+        assert!(RectBuilder::validate_parameters(position, size, rotation, origin).is_ok());
+        assert!(RectBuilder::validate_corners(
+            size,
+            CornerRadii::default(),
+            DEFAULT_CORNER_SEGMENTS
+        )
+        .is_ok());
+
+        let vertices = RectBuilder::vertices(position, size, Rgba::WHITE, rotation, origin);
+        let indices = [0, 1, 2, 2, 3, 0];
+        assert!(vertices
+            .iter()
+            .any(|vertex| { !vertex.position.x.is_finite() || !vertex.position.y.is_finite() }));
+
+        assert_invalid_state(
+            super::super::indexed::preflight_indexed_geometry(&vertices, &indices, "rectangle")
+                .map(|_| ()),
+            "rectangle vertex positions must be finite",
+        );
     }
 
     // ---------------------------------------------------------
@@ -1387,7 +1419,7 @@ mod tests {
         radii: CornerRadii,
         segments: u16,
     ) -> (Vec<Vertex2D>, Vec<u32>) {
-        let result: VMNLResult<(Vec<Vertex2D>, Vec<u32>)> = RectBuilder::geometry(
+        let result: VMNLResult<(Vec<Vertex2D>, Vec<u32>)> = RectBuilder::rounded_geometry(
             Vector2f { x: 0.0, y: 0.0 },
             size,
             Rgba::WHITE,
@@ -1400,6 +1432,11 @@ mod tests {
     }
 
     fn assert_valid_mesh(vertices: &[Vertex2D], indices: &[u32]) {
+        assert!(
+            super::super::indexed::preflight_indexed_geometry(vertices, indices, "rectangle")
+                .is_ok(),
+            "rounded rectangle should pass the shared indexed-geometry preflight"
+        );
         assert_eq!(indices.len() % 3, 0);
         for &index in indices {
             assert!((index as usize) < vertices.len());
@@ -1505,7 +1542,7 @@ mod tests {
 
     #[test]
     fn rounded_geometry_applies_rotation_around_anchor_center() {
-        let (vertices, _) = expect_geometry(RectBuilder::geometry(
+        let (vertices, _) = expect_geometry(RectBuilder::rounded_geometry(
             Vector2f { x: 0.0, y: 0.0 },
             Vector2f { x: 10.0, y: 20.0 },
             Rgba::WHITE,
@@ -1523,7 +1560,7 @@ mod tests {
 
     #[test]
     fn rounded_geometry_applies_rotation_around_custom_origin() {
-        let (vertices, _) = expect_geometry(RectBuilder::geometry(
+        let (vertices, _) = expect_geometry(RectBuilder::rounded_geometry(
             Vector2f { x: 10.0, y: 20.0 },
             Vector2f { x: 4.0, y: 4.0 },
             Rgba::WHITE,
@@ -1539,7 +1576,7 @@ mod tests {
 
     #[test]
     fn rounded_geometry_rejects_unrepresentable_transformed_vertices() {
-        let result: VMNLResult<(Vec<Vertex2D>, Vec<u32>)> = RectBuilder::geometry(
+        let result: VMNLResult<(Vec<Vertex2D>, Vec<u32>)> = RectBuilder::rounded_geometry(
             Vector2f { x: 0.0, y: 0.0 },
             Vector2f {
                 x: 3.0e38,

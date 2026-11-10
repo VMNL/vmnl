@@ -17,8 +17,10 @@ use vulkano::{
     pipeline::GraphicsPipeline,
     render_pass::{Framebuffer, RenderPass},
     swapchain::Swapchain,
-    sync::GpuFuture,
+    sync::{future::FenceSignalFuture, GpuFuture},
 };
+
+pub(crate) type FrameCompletion = Arc<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync>>>;
 
 /// Encapsulates low-level resources required to manage a window and its associated rendering state.
 ///
@@ -40,7 +42,9 @@ pub(crate) struct WindowHandle {
     /// Preconfigured alpha-blended 2D Vulkan graphics pipeline used to render into the framebuffer.
     pub(crate) pipeline_2d_alpha: Arc<GraphicsPipeline>,
     /// Synchronization primitive representing the completion of the previous frame.
-    pub(crate) previous_frame_end: Option<Box<dyn GpuFuture>>,
+    pub(crate) previous_frame_end: Option<Box<dyn GpuFuture + Send + Sync>>,
+    /// Last depth-attachment use per swapchain image; empty for color-only targets.
+    pub(crate) depth_frame_completions: Vec<Option<FrameCompletion>>,
     /// Vulkan surface representing the OS window for presentation.
     pub(crate) swapchain: Arc<Swapchain>,
     /// GLFW context responsible for managing windowing and event polling.

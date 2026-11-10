@@ -28,7 +28,8 @@ origin, and computed bounds must be finite/not NaN. Each corner radius must be f
 `top_left + bottom_left <= height`, and `top_right + bottom_right <= height`. Overlapping
 or otherwise invalid corner configurations are rejected before GPU allocation, never clamped
 or rescaled. Computed arc centers, contour vertices, transformed vertices, and generated
-counts must remain finite and representable.
+counts must remain finite and representable. Final vertex positions from both sharp and
+rounded paths, including rotation, are checked before GPU allocation.
 
 ## Units, coordinates, and valid ranges
 
@@ -43,14 +44,15 @@ shape is immutable after build; rebuild to change geometry.
 
 ## Errors, panics, and failure conditions
 
-Invalid numeric geometry, invalid or overlapping corner radii, zero segments, and
-unrepresentable generated geometry return `InvalidState`; GPU buffer creation can return
-Vulkan errors. Building never panics on invalid input.
+Invalid numeric geometry, invalid or overlapping corner radii, zero segments, non-finite final
+vertex positions, and unrepresentable generated geometry return `VMNLErrorKind::InvalidState`;
+GPU buffer creation can return Vulkan errors. Building never panics on invalid input.
 
 ## Allocation, transfers, synchronization, and GPU cost
 
-With all four radii zero, build keeps the existing four-vertex/six-index sharp-rectangle
-geometry and allocates/uploads one vertex and one index buffer. With any non-zero radius,
+With all four radii zero, build keeps four vertices and six indices in fixed arrays through
+shared preflight and allocates/uploads one vertex and one index buffer; it does not convert
+those arrays into temporary CPU vectors. With any non-zero radius,
 build performs CPU tessellation: one clockwise boundary of straight edges between tangent
 points, one quarter arc per non-zero corner, and one sharp point per zero-radius corner,
 triangulated as one triangle fan around the rectangle center. For four non-zero corners and
