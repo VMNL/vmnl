@@ -71,7 +71,7 @@ jobs:
           - name: Linux
             runner: ubuntu-24.04
           - name: macOS
-            runner: macos-14
+            runner: macos-15
           - name: Windows
             runner: windows-2022
     steps:
@@ -123,7 +123,7 @@ jobs:
             runner: ubuntu-24.04
             backend: ""
           - name: macOS
-            runner: macos-14
+            runner: macos-15
             backend: cocoa
           - name: Windows
             runner: windows-2022
