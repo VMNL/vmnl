@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::CompareOp`. Status: experimental.
+Import path: `vmnl_graphics::raw::CompareOp`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Configuration is headless. Rendering requires an operational Vulkan window with 
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{CompareOp, DepthState};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{CompareOp, DepthState};
 let state = DepthState::Test { compare_op: CompareOp::Less, write_enable: true };
 assert_ne!(state, DepthState::Disabled);
 ```

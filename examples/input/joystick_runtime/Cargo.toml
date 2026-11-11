@@ -6,4 +6,4 @@ license.workspace = true
 publish = false
 
 [dependencies]
-vmnl = { path = "../../../crates/vmnl" }
+vmnl-graphics = { path = "../../../crates/vmnl_graphics" }

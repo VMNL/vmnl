@@ -5,10 +5,10 @@
 
 use std::path::PathBuf;
 
-use vmnl::{
+use vmnl_gpu_tests::gpu_test_guard;
+use vmnl_graphics::{
     common::Rgba, d2::Shape, Context, ShaderSource, VMNLError, VMNLErrorKind, VMNLResult, Window,
 };
-use vmnl_gpu_tests::gpu_test_guard;
 
 const INLINE_VERT: &str = include_str!("../fixtures/color2d.vert");
 const INLINE_FRAG: &str = include_str!("../fixtures/color2d.frag");

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::WindowBuilder`; normally created by `Window::builder()`. Status: experimental.
+Import path: `vmnl_graphics::WindowBuilder`; normally created by `Window::builder()`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -58,10 +58,10 @@ Supported present modes, surface formats, sizes, and shaders depend on the selec
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, PresentMode, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, PresentMode, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let window = Window::builder()
         .title("VMNL")

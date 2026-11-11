@@ -3,7 +3,7 @@
 
 //! One-shot joystick/gamepad sampling without a context, Vulkan instance, or window.
 
-use vmnl::{GamepadAxis, InputRuntime, JoystickId, VMNLResult};
+use vmnl_graphics::{GamepadAxis, InputRuntime, JoystickId, VMNLResult};
 
 fn main() -> VMNLResult<()> {
     let runtime = InputRuntime::acquire()?;

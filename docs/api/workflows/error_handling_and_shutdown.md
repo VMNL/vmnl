@@ -8,8 +8,8 @@
 - Log `error.report()` when source location is useful; do not parse its display text as a stable protocol.
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{VMNLErrorKind, VMNLResult, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{VMNLErrorKind, VMNLResult, Window};
 
 fn submit(window: &mut Window) -> VMNLResult<()> {
     match window.render().submit() {

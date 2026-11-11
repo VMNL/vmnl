@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::RenderTargetConfig`. Status: experimental.
+Import path: `vmnl_graphics::RenderTargetConfig`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,9 +39,9 @@ Headless configuration needs no Vulkan/display; building needs an operational gr
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, DepthFormat, RenderTargetConfig, Window};
-fn main() -> vmnl::VMNLResult<()> {
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, DepthFormat, RenderTargetConfig, Window};
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let target = RenderTargetConfig::default()
         .depth(DepthFormat::D32Sfloat).clear_depth(1.0);

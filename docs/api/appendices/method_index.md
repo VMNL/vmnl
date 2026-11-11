@@ -3,624 +3,624 @@
 
 | Owner | Method | Canonical page | Rustdoc method |
 |---|---|---|---|
-| `vmnl::ColorFormat` | `clone` | [ColorFormat](../reference/window/color_format.md) | [`clone`](../../../target/doc/vmnl/struct.ColorFormat.html#method.clone) |
-| `vmnl::ColorFormat` | `eq` | [ColorFormat](../reference/window/color_format.md) | [`eq`](../../../target/doc/vmnl/struct.ColorFormat.html#method.eq) |
-| `vmnl::ColorFormat` | `fmt` | [ColorFormat](../reference/window/color_format.md) | [`fmt`](../../../target/doc/vmnl/struct.ColorFormat.html#method.fmt) |
-| `vmnl::Context` | `builder` | [Context](../reference/context.md) | [`builder`](../../../target/doc/vmnl/struct.Context.html#method.builder) |
-| `vmnl::Context` | `clone` | [Context](../reference/context.md) | [`clone`](../../../target/doc/vmnl/struct.Context.html#method.clone) |
-| `vmnl::Context` | `device_name` | [Context](../reference/context.md) | [`device_name`](../../../target/doc/vmnl/struct.Context.html#method.device_name) |
-| `vmnl::Context` | `get_key_name` | [Context](../reference/context.md) | [`get_key_name`](../../../target/doc/vmnl/struct.Context.html#method.get_key_name) |
-| `vmnl::Context` | `get_key_scancode` | [Context](../reference/context.md) | [`get_key_scancode`](../../../target/doc/vmnl/struct.Context.html#method.get_key_scancode) |
-| `vmnl::Context` | `get_scancode_name` | [Context](../reference/context.md) | [`get_scancode_name`](../../../target/doc/vmnl/struct.Context.html#method.get_scancode_name) |
-| `vmnl::Context` | `is_device_feature_enabled` | [Context](../reference/context.md) | [`is_device_feature_enabled`](../../../target/doc/vmnl/struct.Context.html#method.is_device_feature_enabled) |
-| `vmnl::Context` | `is_device_feature_supported` | [Context](../reference/context.md) | [`is_device_feature_supported`](../../../target/doc/vmnl/struct.Context.html#method.is_device_feature_supported) |
-| `vmnl::Context` | `is_raw_mouse_motion_supported` | [Context](../reference/context.md) | [`is_raw_mouse_motion_supported`](../../../target/doc/vmnl/struct.Context.html#method.is_raw_mouse_motion_supported) |
-| `vmnl::Context` | `line_width_limits` | [Context](../reference/context.md) | [`line_width_limits`](../../../target/doc/vmnl/struct.Context.html#method.line_width_limits) |
-| `vmnl::Context` | `new` | [Context](../reference/context.md) | [`new`](../../../target/doc/vmnl/struct.Context.html#method.new) |
-| `vmnl::ContextBuilder` | `build` | [ContextBuilder](../reference/context_builder.md) | [`build`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.build) |
-| `vmnl::ContextBuilder` | `clone` | [ContextBuilder](../reference/context_builder.md) | [`clone`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.clone) |
-| `vmnl::ContextBuilder` | `default` | [ContextBuilder](../reference/context_builder.md) | [`default`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.default) |
-| `vmnl::ContextBuilder` | `device` | [ContextBuilder](../reference/context_builder.md) | [`device`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.device) |
-| `vmnl::ContextBuilder` | `device_config` | [ContextBuilder](../reference/context_builder.md) | [`device_config`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.device_config) |
-| `vmnl::ContextBuilder` | `fmt` | [ContextBuilder](../reference/context_builder.md) | [`fmt`](../../../target/doc/vmnl/struct.ContextBuilder.html#method.fmt) |
-| `vmnl::Cursor` | `clone` | [Cursor](../reference/window/input/cursor.md) | [`clone`](../../../target/doc/vmnl/struct.Cursor.html#method.clone) |
-| `vmnl::Cursor` | `eq` | [Cursor](../reference/window/input/cursor.md) | [`eq`](../../../target/doc/vmnl/struct.Cursor.html#method.eq) |
-| `vmnl::Cursor` | `fmt` | [Cursor](../reference/window/input/cursor.md) | [`fmt`](../../../target/doc/vmnl/struct.Cursor.html#method.fmt) |
-| `vmnl::Cursor` | `rgba8` | [Cursor](../reference/window/input/cursor.md) | [`rgba8`](../../../target/doc/vmnl/struct.Cursor.html#method.rgba8) |
-| `vmnl::Cursor` | `standard` | [Cursor](../reference/window/input/cursor.md) | [`standard`](../../../target/doc/vmnl/struct.Cursor.html#method.standard) |
-| `vmnl::CursorBuilder` | `build` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [`build`](../../../target/doc/vmnl/struct.CursorBuilder.html#method.build) |
-| `vmnl::CursorBuilder` | `hotspot` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [`hotspot`](../../../target/doc/vmnl/struct.CursorBuilder.html#method.hotspot) |
-| `vmnl::CursorBuilder` | `hotspot_marker` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [`hotspot_marker`](../../../target/doc/vmnl/struct.CursorBuilder.html#method.hotspot_marker) |
-| `vmnl::CursorMode` | `clone` | [CursorMode](../reference/window/input/cursor_mode.md) | [`clone`](../../../target/doc/vmnl/enum.CursorMode.html#method.clone) |
-| `vmnl::CursorMode` | `default` | [CursorMode](../reference/window/input/cursor_mode.md) | [`default`](../../../target/doc/vmnl/enum.CursorMode.html#method.default) |
-| `vmnl::CursorMode` | `eq` | [CursorMode](../reference/window/input/cursor_mode.md) | [`eq`](../../../target/doc/vmnl/enum.CursorMode.html#method.eq) |
-| `vmnl::CursorMode` | `fmt` | [CursorMode](../reference/window/input/cursor_mode.md) | [`fmt`](../../../target/doc/vmnl/enum.CursorMode.html#method.fmt) |
-| `vmnl::CursorMode` | `hash` | [CursorMode](../reference/window/input/cursor_mode.md) | [`hash`](../../../target/doc/vmnl/enum.CursorMode.html#method.hash) |
-| `vmnl::DepthFormat` | `clone` | [DepthFormat](../reference/window/depth_format.md) | [`clone`](../../../target/doc/vmnl/enum.DepthFormat.html#method.clone) |
-| `vmnl::DepthFormat` | `eq` | [DepthFormat](../reference/window/depth_format.md) | [`eq`](../../../target/doc/vmnl/enum.DepthFormat.html#method.eq) |
-| `vmnl::DepthFormat` | `fmt` | [DepthFormat](../reference/window/depth_format.md) | [`fmt`](../../../target/doc/vmnl/enum.DepthFormat.html#method.fmt) |
-| `vmnl::DeviceConfig` | `clone` | [DeviceConfig](../reference/device_config.md) | [`clone`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.clone) |
-| `vmnl::DeviceConfig` | `default` | [DeviceConfig](../reference/device_config.md) | [`default`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.default) |
-| `vmnl::DeviceConfig` | `fmt` | [DeviceConfig](../reference/device_config.md) | [`fmt`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.fmt) |
-| `vmnl::DeviceConfig` | `require_feature` | [DeviceConfig](../reference/device_config.md) | [`require_feature`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.require_feature) |
-| `vmnl::DeviceConfig` | `require_features` | [DeviceConfig](../reference/device_config.md) | [`require_features`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.require_features) |
-| `vmnl::DeviceConfig` | `required_features` | [DeviceConfig](../reference/device_config.md) | [`required_features`](../../../target/doc/vmnl/struct.DeviceConfig.html#method.required_features) |
-| `vmnl::DeviceFeature` | `clone` | [DeviceFeature](../reference/device_feature.md) | [`clone`](../../../target/doc/vmnl/enum.DeviceFeature.html#method.clone) |
-| `vmnl::DeviceFeature` | `eq` | [DeviceFeature](../reference/device_feature.md) | [`eq`](../../../target/doc/vmnl/enum.DeviceFeature.html#method.eq) |
-| `vmnl::DeviceFeature` | `fmt` | [DeviceFeature](../reference/device_feature.md) | [`fmt`](../../../target/doc/vmnl/enum.DeviceFeature.html#method.fmt) |
-| `vmnl::Event` | `clone` | [Event](../reference/window/events/event.md) | [`clone`](../../../target/doc/vmnl/struct.Event.html#method.clone) |
-| `vmnl::Event` | `eq` | [Event](../reference/window/events/event.md) | [`eq`](../../../target/doc/vmnl/struct.Event.html#method.eq) |
-| `vmnl::Event` | `fmt` | [Event](../reference/window/events/event.md) | [`fmt`](../../../target/doc/vmnl/struct.Event.html#method.fmt) |
-| `vmnl::Event` | `into_kind` | [Event](../reference/window/events/event.md) | [`into_kind`](../../../target/doc/vmnl/struct.Event.html#method.into_kind) |
-| `vmnl::Event` | `kind` | [Event](../reference/window/events/event.md) | [`kind`](../../../target/doc/vmnl/struct.Event.html#method.kind) |
-| `vmnl::Event` | `timestamp_seconds` | [Event](../reference/window/events/event.md) | [`timestamp_seconds`](../../../target/doc/vmnl/struct.Event.html#method.timestamp_seconds) |
-| `vmnl::EventKind` | `clone` | [EventKind](../reference/window/events/event_kind.md) | [`clone`](../../../target/doc/vmnl/enum.EventKind.html#method.clone) |
-| `vmnl::EventKind` | `eq` | [EventKind](../reference/window/events/event_kind.md) | [`eq`](../../../target/doc/vmnl/enum.EventKind.html#method.eq) |
-| `vmnl::EventKind` | `fmt` | [EventKind](../reference/window/events/event_kind.md) | [`fmt`](../../../target/doc/vmnl/enum.EventKind.html#method.fmt) |
-| `vmnl::FrameRenderer` | `draw2d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw2d`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw2d) |
-| `vmnl::FrameRenderer` | `draw3d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw3d`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw3d) |
-| `vmnl::FrameRenderer` | `draw_raw_2d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw_2d`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw_raw_2d) |
-| `vmnl::FrameRenderer` | `draw_raw_2d_with` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw_2d_with`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.draw_raw_2d_with) |
-| `vmnl::FrameRenderer` | `mode` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`mode`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.mode) |
-| `vmnl::FrameRenderer` | `submit` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`submit`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.submit) |
-| `vmnl::FrameRenderer` | `write_frame_uniform` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`write_frame_uniform`](../../../target/doc/vmnl/struct.FrameRenderer.html#method.write_frame_uniform) |
-| `vmnl::GamepadAxis` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl/enum.GamepadAxis.html#method.clone) |
-| `vmnl::GamepadAxis` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl/enum.GamepadAxis.html#method.eq) |
-| `vmnl::GamepadAxis` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/enum.GamepadAxis.html#method.fmt) |
-| `vmnl::GamepadAxis` | `hash` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hash`](../../../target/doc/vmnl/enum.GamepadAxis.html#method.hash) |
-| `vmnl::GamepadButton` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl/enum.GamepadButton.html#method.clone) |
-| `vmnl::GamepadButton` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl/enum.GamepadButton.html#method.eq) |
-| `vmnl::GamepadButton` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/enum.GamepadButton.html#method.fmt) |
-| `vmnl::GamepadButton` | `hash` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hash`](../../../target/doc/vmnl/enum.GamepadButton.html#method.hash) |
-| `vmnl::GamepadState` | `axes` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`axes`](../../../target/doc/vmnl/struct.GamepadState.html#method.axes) |
-| `vmnl::GamepadState` | `axis` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`axis`](../../../target/doc/vmnl/struct.GamepadState.html#method.axis) |
-| `vmnl::GamepadState` | `button` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`button`](../../../target/doc/vmnl/struct.GamepadState.html#method.button) |
-| `vmnl::GamepadState` | `buttons` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`buttons`](../../../target/doc/vmnl/struct.GamepadState.html#method.buttons) |
-| `vmnl::GamepadState` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl/struct.GamepadState.html#method.clone) |
-| `vmnl::GamepadState` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl/struct.GamepadState.html#method.eq) |
-| `vmnl::GamepadState` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/struct.GamepadState.html#method.fmt) |
-| `vmnl::GamepadState` | `name` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`name`](../../../target/doc/vmnl/struct.GamepadState.html#method.name) |
-| `vmnl::Input` | `default` | [Input](../reference/window/input/input.md) | [`default`](../../../target/doc/vmnl/struct.Input.html#method.default) |
-| `vmnl::Input` | `joystick` | [Input](../reference/window/input/input.md) | [`joystick`](../../../target/doc/vmnl/struct.Input.html#method.joystick) |
-| `vmnl::Input` | `keyboard` | [Input](../reference/window/input/input.md) | [`keyboard`](../../../target/doc/vmnl/struct.Input.html#method.keyboard) |
-| `vmnl::Input` | `mouse` | [Input](../reference/window/input/input.md) | [`mouse`](../../../target/doc/vmnl/struct.Input.html#method.mouse) |
-| `vmnl::Input` | `new` | [Input](../reference/window/input/input.md) | [`new`](../../../target/doc/vmnl/struct.Input.html#method.new) |
-| `vmnl::InputRuntime` | `acquire` | [InputRuntime](../reference/input_runtime.md) | [`acquire`](../../../target/doc/vmnl/struct.InputRuntime.html#method.acquire) |
-| `vmnl::InputRuntime` | `builder` | [InputRuntime](../reference/input_runtime.md) | [`builder`](../../../target/doc/vmnl/struct.InputRuntime.html#method.builder) |
-| `vmnl::InputRuntime` | `configuration` | [InputRuntime](../reference/input_runtime.md) | [`configuration`](../../../target/doc/vmnl/struct.InputRuntime.html#method.configuration) |
-| `vmnl::InputRuntime` | `joystick_user_pointer` | [InputRuntime](../reference/input_runtime.md) | [`joystick_user_pointer`](../../../target/doc/vmnl/struct.InputRuntime.html#method.joystick_user_pointer) |
-| `vmnl::InputRuntime` | `poll_events` | [InputRuntime](../reference/input_runtime.md) | [`poll_events`](../../../target/doc/vmnl/struct.InputRuntime.html#method.poll_events) |
-| `vmnl::InputRuntime` | `sample_joystick` | [InputRuntime](../reference/input_runtime.md) | [`sample_joystick`](../../../target/doc/vmnl/struct.InputRuntime.html#method.sample_joystick) |
-| `vmnl::InputRuntime` | `set_joystick_callback` | [InputRuntime](../reference/input_runtime.md) | [`set_joystick_callback`](../../../target/doc/vmnl/struct.InputRuntime.html#method.set_joystick_callback) |
-| `vmnl::InputRuntime` | `set_joystick_user_pointer` | [InputRuntime](../reference/input_runtime.md) | [`set_joystick_user_pointer`](../../../target/doc/vmnl/struct.InputRuntime.html#method.set_joystick_user_pointer) |
-| `vmnl::InputRuntime` | `unset_joystick_callback` | [InputRuntime](../reference/input_runtime.md) | [`unset_joystick_callback`](../../../target/doc/vmnl/struct.InputRuntime.html#method.unset_joystick_callback) |
-| `vmnl::InputRuntime` | `update_gamepad_mappings` | [InputRuntime](../reference/input_runtime.md) | [`update_gamepad_mappings`](../../../target/doc/vmnl/struct.InputRuntime.html#method.update_gamepad_mappings) |
-| `vmnl::InputRuntimeBuilder` | `build` | [InputRuntime](../reference/input_runtime.md) | [`build`](../../../target/doc/vmnl/struct.InputRuntimeBuilder.html#method.build) |
-| `vmnl::InputRuntimeBuilder` | `clone` | [InputRuntime](../reference/input_runtime.md) | [`clone`](../../../target/doc/vmnl/struct.InputRuntimeBuilder.html#method.clone) |
-| `vmnl::InputRuntimeBuilder` | `default` | [InputRuntime](../reference/input_runtime.md) | [`default`](../../../target/doc/vmnl/struct.InputRuntimeBuilder.html#method.default) |
-| `vmnl::InputRuntimeBuilder` | `fmt` | [InputRuntime](../reference/input_runtime.md) | [`fmt`](../../../target/doc/vmnl/struct.InputRuntimeBuilder.html#method.fmt) |
-| `vmnl::InputRuntimeBuilder` | `hat_buttons` | [InputRuntime](../reference/input_runtime.md) | [`hat_buttons`](../../../target/doc/vmnl/struct.InputRuntimeBuilder.html#method.hat_buttons) |
-| `vmnl::InputRuntimeConfig` | `clone` | [InputRuntime](../reference/input_runtime.md) | [`clone`](../../../target/doc/vmnl/struct.InputRuntimeConfig.html#method.clone) |
-| `vmnl::InputRuntimeConfig` | `default` | [InputRuntime](../reference/input_runtime.md) | [`default`](../../../target/doc/vmnl/struct.InputRuntimeConfig.html#method.default) |
-| `vmnl::InputRuntimeConfig` | `eq` | [InputRuntime](../reference/input_runtime.md) | [`eq`](../../../target/doc/vmnl/struct.InputRuntimeConfig.html#method.eq) |
-| `vmnl::InputRuntimeConfig` | `fmt` | [InputRuntime](../reference/input_runtime.md) | [`fmt`](../../../target/doc/vmnl/struct.InputRuntimeConfig.html#method.fmt) |
-| `vmnl::InputRuntimeConfig` | `hat_buttons` | [InputRuntime](../reference/input_runtime.md) | [`hat_buttons`](../../../target/doc/vmnl/struct.InputRuntimeConfig.html#method.hat_buttons) |
-| `vmnl::JoystickButtonState` | `as_raw` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`as_raw`](../../../target/doc/vmnl/enum.JoystickButtonState.html#method.as_raw) |
-| `vmnl::JoystickButtonState` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl/enum.JoystickButtonState.html#method.clone) |
-| `vmnl::JoystickButtonState` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl/enum.JoystickButtonState.html#method.eq) |
-| `vmnl::JoystickButtonState` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/enum.JoystickButtonState.html#method.fmt) |
-| `vmnl::JoystickButtonState` | `hash` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hash`](../../../target/doc/vmnl/enum.JoystickButtonState.html#method.hash) |
-| `vmnl::JoystickButtonState` | `is_pressed` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_pressed`](../../../target/doc/vmnl/enum.JoystickButtonState.html#method.is_pressed) |
-| `vmnl::JoystickHatState` | `as_raw` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`as_raw`](../../../target/doc/vmnl/struct.JoystickHatState.html#method.as_raw) |
-| `vmnl::JoystickHatState` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl/struct.JoystickHatState.html#method.clone) |
-| `vmnl::JoystickHatState` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl/struct.JoystickHatState.html#method.eq) |
-| `vmnl::JoystickHatState` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/struct.JoystickHatState.html#method.fmt) |
-| `vmnl::JoystickHatState` | `from_raw` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`from_raw`](../../../target/doc/vmnl/struct.JoystickHatState.html#method.from_raw) |
-| `vmnl::JoystickHatState` | `hash` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hash`](../../../target/doc/vmnl/struct.JoystickHatState.html#method.hash) |
-| `vmnl::JoystickHatState` | `is_down` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_down`](../../../target/doc/vmnl/struct.JoystickHatState.html#method.is_down) |
-| `vmnl::JoystickHatState` | `is_left` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_left`](../../../target/doc/vmnl/struct.JoystickHatState.html#method.is_left) |
-| `vmnl::JoystickHatState` | `is_right` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_right`](../../../target/doc/vmnl/struct.JoystickHatState.html#method.is_right) |
-| `vmnl::JoystickHatState` | `is_up` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_up`](../../../target/doc/vmnl/struct.JoystickHatState.html#method.is_up) |
-| `vmnl::JoystickId` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl/enum.JoystickId.html#method.clone) |
-| `vmnl::JoystickId` | `cmp` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`cmp`](../../../target/doc/vmnl/enum.JoystickId.html#method.cmp) |
-| `vmnl::JoystickId` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl/enum.JoystickId.html#method.eq) |
-| `vmnl::JoystickId` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/enum.JoystickId.html#method.fmt) |
-| `vmnl::JoystickId` | `from_index` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`from_index`](../../../target/doc/vmnl/enum.JoystickId.html#method.from_index) |
-| `vmnl::JoystickId` | `hash` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hash`](../../../target/doc/vmnl/enum.JoystickId.html#method.hash) |
-| `vmnl::JoystickId` | `index` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`index`](../../../target/doc/vmnl/enum.JoystickId.html#method.index) |
-| `vmnl::JoystickId` | `partial_cmp` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`partial_cmp`](../../../target/doc/vmnl/enum.JoystickId.html#method.partial_cmp) |
-| `vmnl::JoystickSample` | `axes` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`axes`](../../../target/doc/vmnl/struct.JoystickSample.html#method.axes) |
-| `vmnl::JoystickSample` | `buttons` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`buttons`](../../../target/doc/vmnl/struct.JoystickSample.html#method.buttons) |
-| `vmnl::JoystickSample` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl/struct.JoystickSample.html#method.clone) |
-| `vmnl::JoystickSample` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl/struct.JoystickSample.html#method.eq) |
-| `vmnl::JoystickSample` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/struct.JoystickSample.html#method.fmt) |
-| `vmnl::JoystickSample` | `gamepad` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`gamepad`](../../../target/doc/vmnl/struct.JoystickSample.html#method.gamepad) |
-| `vmnl::JoystickSample` | `guid` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`guid`](../../../target/doc/vmnl/struct.JoystickSample.html#method.guid) |
-| `vmnl::JoystickSample` | `hats` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hats`](../../../target/doc/vmnl/struct.JoystickSample.html#method.hats) |
-| `vmnl::JoystickSample` | `id` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`id`](../../../target/doc/vmnl/struct.JoystickSample.html#method.id) |
-| `vmnl::JoystickSample` | `name` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`name`](../../../target/doc/vmnl/struct.JoystickSample.html#method.name) |
-| `vmnl::JoystickState` | `default` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`default`](../../../target/doc/vmnl/struct.JoystickState.html#method.default) |
-| `vmnl::JoystickState` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/struct.JoystickState.html#method.fmt) |
-| `vmnl::JoystickState` | `gamepad` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`gamepad`](../../../target/doc/vmnl/struct.JoystickState.html#method.gamepad) |
-| `vmnl::JoystickState` | `is_any_down` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_any_down`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_any_down) |
-| `vmnl::JoystickState` | `is_any_pressed` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_any_pressed`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_any_pressed) |
-| `vmnl::JoystickState` | `is_any_released` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_any_released`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_any_released) |
-| `vmnl::JoystickState` | `is_down` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_down`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_down) |
-| `vmnl::JoystickState` | `is_pressed` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_pressed`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_pressed) |
-| `vmnl::JoystickState` | `is_released` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_released`](../../../target/doc/vmnl/struct.JoystickState.html#method.is_released) |
-| `vmnl::JoystickState` | `left_stick` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`left_stick`](../../../target/doc/vmnl/struct.JoystickState.html#method.left_stick) |
-| `vmnl::JoystickState` | `right_stick` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`right_stick`](../../../target/doc/vmnl/struct.JoystickState.html#method.right_stick) |
-| `vmnl::JoystickState` | `sample` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`sample`](../../../target/doc/vmnl/struct.JoystickState.html#method.sample) |
-| `vmnl::JoystickState` | `status` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`status`](../../../target/doc/vmnl/struct.JoystickState.html#method.status) |
-| `vmnl::JoystickStatus` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl/enum.JoystickStatus.html#method.clone) |
-| `vmnl::JoystickStatus` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl/enum.JoystickStatus.html#method.eq) |
-| `vmnl::JoystickStatus` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/enum.JoystickStatus.html#method.fmt) |
-| `vmnl::Key` | `clone` | [Key](../reference/window/input/key.md) | [`clone`](../../../target/doc/vmnl/enum.Key.html#method.clone) |
-| `vmnl::Key` | `eq` | [Key](../reference/window/input/key.md) | [`eq`](../../../target/doc/vmnl/enum.Key.html#method.eq) |
-| `vmnl::Key` | `fmt` | [Key](../reference/window/input/key.md) | [`fmt`](../../../target/doc/vmnl/enum.Key.html#method.fmt) |
-| `vmnl::Key` | `hash` | [Key](../reference/window/input/key.md) | [`hash`](../../../target/doc/vmnl/enum.Key.html#method.hash) |
-| `vmnl::KeyboardState` | `default` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`default`](../../../target/doc/vmnl/struct.KeyboardState.html#method.default) |
-| `vmnl::KeyboardState` | `is_any_down` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_any_down`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_any_down) |
-| `vmnl::KeyboardState` | `is_any_pressed` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_any_pressed`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_any_pressed) |
-| `vmnl::KeyboardState` | `is_any_released` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_any_released`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_any_released) |
-| `vmnl::KeyboardState` | `is_any_used` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_any_used`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_any_used) |
-| `vmnl::KeyboardState` | `is_down` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_down`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_down) |
-| `vmnl::KeyboardState` | `is_one_down` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_one_down`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_one_down) |
-| `vmnl::KeyboardState` | `is_one_pressed` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_one_pressed`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_one_pressed) |
-| `vmnl::KeyboardState` | `is_one_released` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_one_released`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_one_released) |
-| `vmnl::KeyboardState` | `is_one_used` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_one_used`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_one_used) |
-| `vmnl::KeyboardState` | `is_pressed` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_pressed`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_pressed) |
-| `vmnl::KeyboardState` | `is_released` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_released`](../../../target/doc/vmnl/struct.KeyboardState.html#method.is_released) |
-| `vmnl::KeyboardState` | `new` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`new`](../../../target/doc/vmnl/struct.KeyboardState.html#method.new) |
-| `vmnl::LineWidthLimits` | `clone` | [LineWidthLimits](../reference/line_width_limits.md) | [`clone`](../../../target/doc/vmnl/struct.LineWidthLimits.html#method.clone) |
-| `vmnl::LineWidthLimits` | `eq` | [LineWidthLimits](../reference/line_width_limits.md) | [`eq`](../../../target/doc/vmnl/struct.LineWidthLimits.html#method.eq) |
-| `vmnl::LineWidthLimits` | `fmt` | [LineWidthLimits](../reference/line_width_limits.md) | [`fmt`](../../../target/doc/vmnl/struct.LineWidthLimits.html#method.fmt) |
-| `vmnl::Modifiers` | `bitand` | [Modifiers](../reference/window/input/modifiers.md) | [`bitand`](../../../target/doc/vmnl/struct.Modifiers.html#method.bitand) |
-| `vmnl::Modifiers` | `bitand_assign` | [Modifiers](../reference/window/input/modifiers.md) | [`bitand_assign`](../../../target/doc/vmnl/struct.Modifiers.html#method.bitand_assign) |
-| `vmnl::Modifiers` | `bitor` | [Modifiers](../reference/window/input/modifiers.md) | [`bitor`](../../../target/doc/vmnl/struct.Modifiers.html#method.bitor) |
-| `vmnl::Modifiers` | `bitor_assign` | [Modifiers](../reference/window/input/modifiers.md) | [`bitor_assign`](../../../target/doc/vmnl/struct.Modifiers.html#method.bitor_assign) |
-| `vmnl::Modifiers` | `bits` | [Modifiers](../reference/window/input/modifiers.md) | [`bits`](../../../target/doc/vmnl/struct.Modifiers.html#method.bits) |
-| `vmnl::Modifiers` | `clone` | [Modifiers](../reference/window/input/modifiers.md) | [`clone`](../../../target/doc/vmnl/struct.Modifiers.html#method.clone) |
-| `vmnl::Modifiers` | `contains` | [Modifiers](../reference/window/input/modifiers.md) | [`contains`](../../../target/doc/vmnl/struct.Modifiers.html#method.contains) |
-| `vmnl::Modifiers` | `default` | [Modifiers](../reference/window/input/modifiers.md) | [`default`](../../../target/doc/vmnl/struct.Modifiers.html#method.default) |
-| `vmnl::Modifiers` | `eq` | [Modifiers](../reference/window/input/modifiers.md) | [`eq`](../../../target/doc/vmnl/struct.Modifiers.html#method.eq) |
-| `vmnl::Modifiers` | `fmt` | [Modifiers](../reference/window/input/modifiers.md) | [`fmt`](../../../target/doc/vmnl/struct.Modifiers.html#method.fmt) |
-| `vmnl::Modifiers` | `hash` | [Modifiers](../reference/window/input/modifiers.md) | [`hash`](../../../target/doc/vmnl/struct.Modifiers.html#method.hash) |
-| `vmnl::Modifiers` | `is_empty` | [Modifiers](../reference/window/input/modifiers.md) | [`is_empty`](../../../target/doc/vmnl/struct.Modifiers.html#method.is_empty) |
-| `vmnl::MonitorInfo` | `clone` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [`clone`](../../../target/doc/vmnl/struct.MonitorInfo.html#method.clone) |
-| `vmnl::MonitorInfo` | `fmt` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [`fmt`](../../../target/doc/vmnl/struct.MonitorInfo.html#method.fmt) |
-| `vmnl::Monitors` | `clone` | [Monitors](../reference/window/monitors/monitors.md) | [`clone`](../../../target/doc/vmnl/struct.Monitors.html#method.clone) |
-| `vmnl::Monitors` | `fmt` | [Monitors](../reference/window/monitors/monitors.md) | [`fmt`](../../../target/doc/vmnl/struct.Monitors.html#method.fmt) |
-| `vmnl::Monitors` | `infos` | [Monitors](../reference/window/monitors/monitors.md) | [`infos`](../../../target/doc/vmnl/struct.Monitors.html#method.infos) |
-| `vmnl::Monitors` | `names` | [Monitors](../reference/window/monitors/monitors.md) | [`names`](../../../target/doc/vmnl/struct.Monitors.html#method.names) |
-| `vmnl::Monitors` | `primary` | [Monitors](../reference/window/monitors/monitors.md) | [`primary`](../../../target/doc/vmnl/struct.Monitors.html#method.primary) |
-| `vmnl::MouseButton` | `clone` | [MouseButton](../reference/window/input/mouse_button.md) | [`clone`](../../../target/doc/vmnl/enum.MouseButton.html#method.clone) |
-| `vmnl::MouseButton` | `eq` | [MouseButton](../reference/window/input/mouse_button.md) | [`eq`](../../../target/doc/vmnl/enum.MouseButton.html#method.eq) |
-| `vmnl::MouseButton` | `fmt` | [MouseButton](../reference/window/input/mouse_button.md) | [`fmt`](../../../target/doc/vmnl/enum.MouseButton.html#method.fmt) |
-| `vmnl::MouseButton` | `hash` | [MouseButton](../reference/window/input/mouse_button.md) | [`hash`](../../../target/doc/vmnl/enum.MouseButton.html#method.hash) |
-| `vmnl::MouseState` | `default` | [MouseState](../reference/window/input/mouse_state.md) | [`default`](../../../target/doc/vmnl/struct.MouseState.html#method.default) |
-| `vmnl::MouseState` | `is_any_down` | [MouseState](../reference/window/input/mouse_state.md) | [`is_any_down`](../../../target/doc/vmnl/struct.MouseState.html#method.is_any_down) |
-| `vmnl::MouseState` | `is_any_pressed` | [MouseState](../reference/window/input/mouse_state.md) | [`is_any_pressed`](../../../target/doc/vmnl/struct.MouseState.html#method.is_any_pressed) |
-| `vmnl::MouseState` | `is_any_released` | [MouseState](../reference/window/input/mouse_state.md) | [`is_any_released`](../../../target/doc/vmnl/struct.MouseState.html#method.is_any_released) |
-| `vmnl::MouseState` | `is_any_used` | [MouseState](../reference/window/input/mouse_state.md) | [`is_any_used`](../../../target/doc/vmnl/struct.MouseState.html#method.is_any_used) |
-| `vmnl::MouseState` | `is_down` | [MouseState](../reference/window/input/mouse_state.md) | [`is_down`](../../../target/doc/vmnl/struct.MouseState.html#method.is_down) |
-| `vmnl::MouseState` | `is_one_down` | [MouseState](../reference/window/input/mouse_state.md) | [`is_one_down`](../../../target/doc/vmnl/struct.MouseState.html#method.is_one_down) |
-| `vmnl::MouseState` | `is_one_pressed` | [MouseState](../reference/window/input/mouse_state.md) | [`is_one_pressed`](../../../target/doc/vmnl/struct.MouseState.html#method.is_one_pressed) |
-| `vmnl::MouseState` | `is_one_released` | [MouseState](../reference/window/input/mouse_state.md) | [`is_one_released`](../../../target/doc/vmnl/struct.MouseState.html#method.is_one_released) |
-| `vmnl::MouseState` | `is_one_used` | [MouseState](../reference/window/input/mouse_state.md) | [`is_one_used`](../../../target/doc/vmnl/struct.MouseState.html#method.is_one_used) |
-| `vmnl::MouseState` | `is_pressed` | [MouseState](../reference/window/input/mouse_state.md) | [`is_pressed`](../../../target/doc/vmnl/struct.MouseState.html#method.is_pressed) |
-| `vmnl::MouseState` | `is_released` | [MouseState](../reference/window/input/mouse_state.md) | [`is_released`](../../../target/doc/vmnl/struct.MouseState.html#method.is_released) |
-| `vmnl::MouseState` | `new` | [MouseState](../reference/window/input/mouse_state.md) | [`new`](../../../target/doc/vmnl/struct.MouseState.html#method.new) |
-| `vmnl::PresentMode` | `clone` | [PresentMode](../reference/window/present_mode.md) | [`clone`](../../../target/doc/vmnl/enum.PresentMode.html#method.clone) |
-| `vmnl::PresentMode` | `default` | [PresentMode](../reference/window/present_mode.md) | [`default`](../../../target/doc/vmnl/enum.PresentMode.html#method.default) |
-| `vmnl::PresentMode` | `eq` | [PresentMode](../reference/window/present_mode.md) | [`eq`](../../../target/doc/vmnl/enum.PresentMode.html#method.eq) |
-| `vmnl::PresentMode` | `fmt` | [PresentMode](../reference/window/present_mode.md) | [`fmt`](../../../target/doc/vmnl/enum.PresentMode.html#method.fmt) |
-| `vmnl::PresentMode` | `hash` | [PresentMode](../reference/window/present_mode.md) | [`hash`](../../../target/doc/vmnl/enum.PresentMode.html#method.hash) |
-| `vmnl::RenderMode` | `clone` | [RenderMode](../reference/window/rendering/render_mode.md) | [`clone`](../../../target/doc/vmnl/enum.RenderMode.html#method.clone) |
-| `vmnl::RenderMode` | `default` | [RenderMode](../reference/window/rendering/render_mode.md) | [`default`](../../../target/doc/vmnl/enum.RenderMode.html#method.default) |
-| `vmnl::RenderMode` | `eq` | [RenderMode](../reference/window/rendering/render_mode.md) | [`eq`](../../../target/doc/vmnl/enum.RenderMode.html#method.eq) |
-| `vmnl::RenderMode` | `fmt` | [RenderMode](../reference/window/rendering/render_mode.md) | [`fmt`](../../../target/doc/vmnl/enum.RenderMode.html#method.fmt) |
-| `vmnl::RenderMode` | `hash` | [RenderMode](../reference/window/rendering/render_mode.md) | [`hash`](../../../target/doc/vmnl/enum.RenderMode.html#method.hash) |
-| `vmnl::RenderTargetConfig` | `clear_depth` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`clear_depth`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.clear_depth) |
-| `vmnl::RenderTargetConfig` | `clear_depth_value` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`clear_depth_value`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.clear_depth_value) |
-| `vmnl::RenderTargetConfig` | `clone` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`clone`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.clone) |
-| `vmnl::RenderTargetConfig` | `default` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`default`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.default) |
-| `vmnl::RenderTargetConfig` | `depth` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`depth`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.depth) |
-| `vmnl::RenderTargetConfig` | `depth_value` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`depth_value`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.depth_value) |
-| `vmnl::RenderTargetConfig` | `eq` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`eq`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.eq) |
-| `vmnl::RenderTargetConfig` | `fmt` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`fmt`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.fmt) |
-| `vmnl::RenderTargetConfig` | `validate` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`validate`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.validate) |
-| `vmnl::RenderTargetConfig` | `without_depth` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`without_depth`](../../../target/doc/vmnl/struct.RenderTargetConfig.html#method.without_depth) |
-| `vmnl::RenderTargetInfo` | `clone` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`clone`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.clone) |
-| `vmnl::RenderTargetInfo` | `color_format` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`color_format`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.color_format) |
-| `vmnl::RenderTargetInfo` | `depth_format` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`depth_format`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.depth_format) |
-| `vmnl::RenderTargetInfo` | `eq` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`eq`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.eq) |
-| `vmnl::RenderTargetInfo` | `fmt` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`fmt`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.fmt) |
-| `vmnl::RenderTargetInfo` | `sample_count` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`sample_count`](../../../target/doc/vmnl/struct.RenderTargetInfo.html#method.sample_count) |
-| `vmnl::Scancode` | `as_raw` | [Scancode](../reference/window/input/scancode.md) | [`as_raw`](../../../target/doc/vmnl/struct.Scancode.html#method.as_raw) |
-| `vmnl::Scancode` | `clone` | [Scancode](../reference/window/input/scancode.md) | [`clone`](../../../target/doc/vmnl/struct.Scancode.html#method.clone) |
-| `vmnl::Scancode` | `eq` | [Scancode](../reference/window/input/scancode.md) | [`eq`](../../../target/doc/vmnl/struct.Scancode.html#method.eq) |
-| `vmnl::Scancode` | `fmt` | [Scancode](../reference/window/input/scancode.md) | [`fmt`](../../../target/doc/vmnl/struct.Scancode.html#method.fmt) |
-| `vmnl::Scancode` | `from_raw` | [Scancode](../reference/window/input/scancode.md) | [`from_raw`](../../../target/doc/vmnl/struct.Scancode.html#method.from_raw) |
-| `vmnl::Scancode` | `hash` | [Scancode](../reference/window/input/scancode.md) | [`hash`](../../../target/doc/vmnl/struct.Scancode.html#method.hash) |
-| `vmnl::StandardCursor` | `clone` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`clone`](../../../target/doc/vmnl/enum.StandardCursor.html#method.clone) |
-| `vmnl::StandardCursor` | `eq` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`eq`](../../../target/doc/vmnl/enum.StandardCursor.html#method.eq) |
-| `vmnl::StandardCursor` | `fmt` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`fmt`](../../../target/doc/vmnl/enum.StandardCursor.html#method.fmt) |
-| `vmnl::StandardCursor` | `hash` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`hash`](../../../target/doc/vmnl/enum.StandardCursor.html#method.hash) |
-| `vmnl::StandardCursorBuilder` | `build` | [StandardCursorBuilder](../reference/window/input/standard_cursor_builder.md) | [`build`](../../../target/doc/vmnl/struct.StandardCursorBuilder.html#method.build) |
-| `vmnl::StickAngleConvention` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl/enum.StickAngleConvention.html#method.clone) |
-| `vmnl::StickAngleConvention` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl/enum.StickAngleConvention.html#method.eq) |
-| `vmnl::StickAngleConvention` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/enum.StickAngleConvention.html#method.fmt) |
-| `vmnl::StickConfig` | `angle_convention` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`angle_convention`](../../../target/doc/vmnl/struct.StickConfig.html#method.angle_convention) |
-| `vmnl::StickConfig` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl/struct.StickConfig.html#method.clone) |
-| `vmnl::StickConfig` | `default` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`default`](../../../target/doc/vmnl/struct.StickConfig.html#method.default) |
-| `vmnl::StickConfig` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl/struct.StickConfig.html#method.eq) |
-| `vmnl::StickConfig` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/struct.StickConfig.html#method.fmt) |
-| `vmnl::StickConfig` | `new` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`new`](../../../target/doc/vmnl/struct.StickConfig.html#method.new) |
-| `vmnl::StickConfig` | `process` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`process`](../../../target/doc/vmnl/struct.StickConfig.html#method.process) |
-| `vmnl::StickConfig` | `radial_dead_zone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`radial_dead_zone`](../../../target/doc/vmnl/struct.StickConfig.html#method.radial_dead_zone) |
-| `vmnl::StickConfig` | `with_angle_convention` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`with_angle_convention`](../../../target/doc/vmnl/struct.StickConfig.html#method.with_angle_convention) |
-| `vmnl::StickConfig` | `with_radial_dead_zone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`with_radial_dead_zone`](../../../target/doc/vmnl/struct.StickConfig.html#method.with_radial_dead_zone) |
-| `vmnl::StickState` | `angle` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`angle`](../../../target/doc/vmnl/struct.StickState.html#method.angle) |
-| `vmnl::StickState` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl/struct.StickState.html#method.clone) |
-| `vmnl::StickState` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl/struct.StickState.html#method.eq) |
-| `vmnl::StickState` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl/struct.StickState.html#method.fmt) |
-| `vmnl::StickState` | `magnitude` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`magnitude`](../../../target/doc/vmnl/struct.StickState.html#method.magnitude) |
-| `vmnl::StickState` | `x` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`x`](../../../target/doc/vmnl/struct.StickState.html#method.x) |
-| `vmnl::StickState` | `y` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`y`](../../../target/doc/vmnl/struct.StickState.html#method.y) |
-| `vmnl::VMNLError` | `fmt` | [VMNLError](../reference/errors/vmnl_error.md) | [`fmt`](../../../target/doc/vmnl/struct.VMNLError.html#method.fmt) |
-| `vmnl::VMNLError` | `kind` | [VMNLError](../reference/errors/vmnl_error.md) | [`kind`](../../../target/doc/vmnl/struct.VMNLError.html#method.kind) |
-| `vmnl::VMNLError` | `location` | [VMNLError](../reference/errors/vmnl_error.md) | [`location`](../../../target/doc/vmnl/struct.VMNLError.html#method.location) |
-| `vmnl::VMNLError` | `new` | [VMNLError](../reference/errors/vmnl_error.md) | [`new`](../../../target/doc/vmnl/struct.VMNLError.html#method.new) |
-| `vmnl::VMNLError` | `report` | [VMNLError](../reference/errors/vmnl_error.md) | [`report`](../../../target/doc/vmnl/struct.VMNLError.html#method.report) |
-| `vmnl::VMNLErrorKind` | `fmt` | [VMNLErrorKind](../reference/errors/vmnl_error_kind.md) | [`fmt`](../../../target/doc/vmnl/enum.VMNLErrorKind.html#method.fmt) |
-| `vmnl::VMNLErrorLocation` | `clone` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [`clone`](../../../target/doc/vmnl/struct.VMNLErrorLocation.html#method.clone) |
-| `vmnl::VMNLErrorLocation` | `column` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [`column`](../../../target/doc/vmnl/struct.VMNLErrorLocation.html#method.column) |
-| `vmnl::VMNLErrorLocation` | `file` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [`file`](../../../target/doc/vmnl/struct.VMNLErrorLocation.html#method.file) |
-| `vmnl::VMNLErrorLocation` | `fmt` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [`fmt`](../../../target/doc/vmnl/struct.VMNLErrorLocation.html#method.fmt) |
-| `vmnl::VMNLErrorLocation` | `line` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [`line`](../../../target/doc/vmnl/struct.VMNLErrorLocation.html#method.line) |
-| `vmnl::VideoMode` | `clone` | [VideoMode](../reference/window/monitors/video_mode.md) | [`clone`](../../../target/doc/vmnl/struct.VideoMode.html#method.clone) |
-| `vmnl::VideoMode` | `eq` | [VideoMode](../reference/window/monitors/video_mode.md) | [`eq`](../../../target/doc/vmnl/struct.VideoMode.html#method.eq) |
-| `vmnl::VideoMode` | `fmt` | [VideoMode](../reference/window/monitors/video_mode.md) | [`fmt`](../../../target/doc/vmnl/struct.VideoMode.html#method.fmt) |
-| `vmnl::VideoMode` | `from` | [VideoMode](../reference/window/monitors/video_mode.md) | [`from`](../../../target/doc/vmnl/struct.VideoMode.html#method.from) |
-| `vmnl::VideoMode` | `hash` | [VideoMode](../reference/window/monitors/video_mode.md) | [`hash`](../../../target/doc/vmnl/struct.VideoMode.html#method.hash) |
-| `vmnl::Window` | `builder` | [Window](../reference/window/window.md) | [`builder`](../../../target/doc/vmnl/struct.Window.html#method.builder) |
-| `vmnl::Window` | `clear_input_transitions` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`clear_input_transitions`](../../../target/doc/vmnl/struct.Window.html#method.clear_input_transitions) |
-| `vmnl::Window` | `close` | [Window lifecycle](../reference/window/lifecycle.md) | [`close`](../../../target/doc/vmnl/struct.Window.html#method.close) |
-| `vmnl::Window` | `configure_window_polling` | [Window polling](../reference/window/polling.md) | [`configure_window_polling`](../../../target/doc/vmnl/struct.Window.html#method.configure_window_polling) |
-| `vmnl::Window` | `cursor` | [Cursor controls](../reference/window/cursor.md) | [`cursor`](../../../target/doc/vmnl/struct.Window.html#method.cursor) |
-| `vmnl::Window` | `disable_keyboard_polling` | [Window polling](../reference/window/polling.md) | [`disable_keyboard_polling`](../../../target/doc/vmnl/struct.Window.html#method.disable_keyboard_polling) |
-| `vmnl::Window` | `disable_mouse_polling` | [Window polling](../reference/window/polling.md) | [`disable_mouse_polling`](../../../target/doc/vmnl/struct.Window.html#method.disable_mouse_polling) |
-| `vmnl::Window` | `disable_window_state_polling` | [Window polling](../reference/window/polling.md) | [`disable_window_state_polling`](../../../target/doc/vmnl/struct.Window.html#method.disable_window_state_polling) |
-| `vmnl::Window` | `enable_all_polling` | [Window polling](../reference/window/polling.md) | [`enable_all_polling`](../../../target/doc/vmnl/struct.Window.html#method.enable_all_polling) |
-| `vmnl::Window` | `enable_keyboard_polling` | [Window polling](../reference/window/polling.md) | [`enable_keyboard_polling`](../../../target/doc/vmnl/struct.Window.html#method.enable_keyboard_polling) |
-| `vmnl::Window` | `enable_mouse_polling` | [Window polling](../reference/window/polling.md) | [`enable_mouse_polling`](../../../target/doc/vmnl/struct.Window.html#method.enable_mouse_polling) |
-| `vmnl::Window` | `enable_window_state_polling` | [Window polling](../reference/window/polling.md) | [`enable_window_state_polling`](../../../target/doc/vmnl/struct.Window.html#method.enable_window_state_polling) |
-| `vmnl::Window` | `focus` | [Window lifecycle](../reference/window/lifecycle.md) | [`focus`](../../../target/doc/vmnl/struct.Window.html#method.focus) |
-| `vmnl::Window` | `get_content_scale` | [Window configuration](../reference/window/configuration.md) | [`get_content_scale`](../../../target/doc/vmnl/struct.Window.html#method.get_content_scale) |
-| `vmnl::Window` | `get_cursor_mode` | [Cursor controls](../reference/window/cursor.md) | [`get_cursor_mode`](../../../target/doc/vmnl/struct.Window.html#method.get_cursor_mode) |
-| `vmnl::Window` | `get_cursor_position` | [Cursor controls](../reference/window/cursor.md) | [`get_cursor_position`](../../../target/doc/vmnl/struct.Window.html#method.get_cursor_position) |
-| `vmnl::Window` | `get_framebuffer_size` | [Window configuration](../reference/window/configuration.md) | [`get_framebuffer_size`](../../../target/doc/vmnl/struct.Window.html#method.get_framebuffer_size) |
-| `vmnl::Window` | `get_opacity` | [Window configuration](../reference/window/configuration.md) | [`get_opacity`](../../../target/doc/vmnl/struct.Window.html#method.get_opacity) |
-| `vmnl::Window` | `get_position` | [Window configuration](../reference/window/configuration.md) | [`get_position`](../../../target/doc/vmnl/struct.Window.html#method.get_position) |
-| `vmnl::Window` | `get_size` | [Window configuration](../reference/window/configuration.md) | [`get_size`](../../../target/doc/vmnl/struct.Window.html#method.get_size) |
-| `vmnl::Window` | `get_time` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`get_time`](../../../target/doc/vmnl/struct.Window.html#method.get_time) |
-| `vmnl::Window` | `get_timer_frequency` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`get_timer_frequency`](../../../target/doc/vmnl/struct.Window.html#method.get_timer_frequency) |
-| `vmnl::Window` | `get_timer_value` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`get_timer_value`](../../../target/doc/vmnl/struct.Window.html#method.get_timer_value) |
-| `vmnl::Window` | `get_title` | [Window configuration](../reference/window/configuration.md) | [`get_title`](../../../target/doc/vmnl/struct.Window.html#method.get_title) |
-| `vmnl::Window` | `height` | [Window configuration](../reference/window/configuration.md) | [`height`](../../../target/doc/vmnl/struct.Window.html#method.height) |
-| `vmnl::Window` | `hide` | [Window lifecycle](../reference/window/lifecycle.md) | [`hide`](../../../target/doc/vmnl/struct.Window.html#method.hide) |
-| `vmnl::Window` | `iconify` | [Window lifecycle](../reference/window/lifecycle.md) | [`iconify`](../../../target/doc/vmnl/struct.Window.html#method.iconify) |
-| `vmnl::Window` | `input` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`input`](../../../target/doc/vmnl/struct.Window.html#method.input) |
-| `vmnl::Window` | `is_char_mods_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_char_mods_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_char_mods_polling_enabled) |
-| `vmnl::Window` | `is_char_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_char_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_char_polling_enabled) |
-| `vmnl::Window` | `is_cursor_enter_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_cursor_enter_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_cursor_enter_polling_enabled) |
-| `vmnl::Window` | `is_cursor_hovered` | [Cursor controls](../reference/window/cursor.md) | [`is_cursor_hovered`](../../../target/doc/vmnl/struct.Window.html#method.is_cursor_hovered) |
-| `vmnl::Window` | `is_cursor_pos_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_cursor_pos_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_cursor_pos_polling_enabled) |
-| `vmnl::Window` | `is_focused` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_focused`](../../../target/doc/vmnl/struct.Window.html#method.is_focused) |
-| `vmnl::Window` | `is_iconified` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_iconified`](../../../target/doc/vmnl/struct.Window.html#method.is_iconified) |
-| `vmnl::Window` | `is_joystick_event_delivery_enabled` | [Window](../reference/window/window.md) | [`is_joystick_event_delivery_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_joystick_event_delivery_enabled) |
-| `vmnl::Window` | `is_joystick_tracking_enabled` | [Window](../reference/window/window.md) | [`is_joystick_tracking_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_joystick_tracking_enabled) |
-| `vmnl::Window` | `is_key_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_key_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_key_polling_enabled) |
-| `vmnl::Window` | `is_lock_key_modifier_reporting_enabled` | [Input modes](../reference/window/input/modes.md) | [`is_lock_key_modifier_reporting_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_lock_key_modifier_reporting_enabled) |
-| `vmnl::Window` | `is_maximized` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_maximized`](../../../target/doc/vmnl/struct.Window.html#method.is_maximized) |
-| `vmnl::Window` | `is_mouse_button_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_mouse_button_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_mouse_button_polling_enabled) |
-| `vmnl::Window` | `is_open` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_open`](../../../target/doc/vmnl/struct.Window.html#method.is_open) |
-| `vmnl::Window` | `is_raw_mouse_motion_enabled` | [Cursor controls](../reference/window/cursor.md) | [`is_raw_mouse_motion_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_raw_mouse_motion_enabled) |
-| `vmnl::Window` | `is_ready` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_ready`](../../../target/doc/vmnl/struct.Window.html#method.is_ready) |
-| `vmnl::Window` | `is_scroll_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_scroll_polling_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_scroll_polling_enabled) |
-| `vmnl::Window` | `is_sticky_keys_enabled` | [Input modes](../reference/window/input/modes.md) | [`is_sticky_keys_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_sticky_keys_enabled) |
-| `vmnl::Window` | `is_sticky_mouse_buttons_enabled` | [Input modes](../reference/window/input/modes.md) | [`is_sticky_mouse_buttons_enabled`](../../../target/doc/vmnl/struct.Window.html#method.is_sticky_mouse_buttons_enabled) |
-| `vmnl::Window` | `is_visible` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_visible`](../../../target/doc/vmnl/struct.Window.html#method.is_visible) |
-| `vmnl::Window` | `maximize` | [Window lifecycle](../reference/window/lifecycle.md) | [`maximize`](../../../target/doc/vmnl/struct.Window.html#method.maximize) |
-| `vmnl::Window` | `monitor` | [Window configuration](../reference/window/configuration.md) | [`monitor`](../../../target/doc/vmnl/struct.Window.html#method.monitor) |
-| `vmnl::Window` | `new` | [Window](../reference/window/window.md) | [`new`](../../../target/doc/vmnl/struct.Window.html#method.new) |
-| `vmnl::Window` | `opacity` | [Window configuration](../reference/window/configuration.md) | [`opacity`](../../../target/doc/vmnl/struct.Window.html#method.opacity) |
-| `vmnl::Window` | `poll_events` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`poll_events`](../../../target/doc/vmnl/struct.Window.html#method.poll_events) |
-| `vmnl::Window` | `post_empty_event` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`post_empty_event`](../../../target/doc/vmnl/struct.Window.html#method.post_empty_event) |
-| `vmnl::Window` | `render` | [Window rendering](../reference/window/rendering/README.md) | [`render`](../../../target/doc/vmnl/struct.Window.html#method.render) |
-| `vmnl::Window` | `render_target_config` | [Window](../reference/window/window.md) | [`render_target_config`](../../../target/doc/vmnl/struct.Window.html#method.render_target_config) |
-| `vmnl::Window` | `render_target_info` | [Window](../reference/window/window.md) | [`render_target_info`](../../../target/doc/vmnl/struct.Window.html#method.render_target_info) |
-| `vmnl::Window` | `restore` | [Window lifecycle](../reference/window/lifecycle.md) | [`restore`](../../../target/doc/vmnl/struct.Window.html#method.restore) |
-| `vmnl::Window` | `set_aspect_ratio` | [Window configuration](../reference/window/configuration.md) | [`set_aspect_ratio`](../../../target/doc/vmnl/struct.Window.html#method.set_aspect_ratio) |
-| `vmnl::Window` | `set_char_mods_polling` | [Window polling](../reference/window/polling.md) | [`set_char_mods_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_char_mods_polling) |
-| `vmnl::Window` | `set_char_polling` | [Window polling](../reference/window/polling.md) | [`set_char_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_char_polling) |
-| `vmnl::Window` | `set_clear_color` | [Window configuration](../reference/window/configuration.md) | [`set_clear_color`](../../../target/doc/vmnl/struct.Window.html#method.set_clear_color) |
-| `vmnl::Window` | `set_close_polling` | [Window polling](../reference/window/polling.md) | [`set_close_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_close_polling) |
-| `vmnl::Window` | `set_content_scale_polling` | [Window polling](../reference/window/polling.md) | [`set_content_scale_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_content_scale_polling) |
-| `vmnl::Window` | `set_cursor` | [Cursor controls](../reference/window/cursor.md) | [`set_cursor`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor) |
-| `vmnl::Window` | `set_cursor_enter_polling` | [Window polling](../reference/window/polling.md) | [`set_cursor_enter_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor_enter_polling) |
-| `vmnl::Window` | `set_cursor_mode` | [Cursor controls](../reference/window/cursor.md) | [`set_cursor_mode`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor_mode) |
-| `vmnl::Window` | `set_cursor_pos_polling` | [Window polling](../reference/window/polling.md) | [`set_cursor_pos_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor_pos_polling) |
-| `vmnl::Window` | `set_cursor_position` | [Cursor controls](../reference/window/cursor.md) | [`set_cursor_position`](../../../target/doc/vmnl/struct.Window.html#method.set_cursor_position) |
-| `vmnl::Window` | `set_drag_and_drop_polling` | [Window polling](../reference/window/polling.md) | [`set_drag_and_drop_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_drag_and_drop_polling) |
-| `vmnl::Window` | `set_error_callback` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`set_error_callback`](../../../target/doc/vmnl/struct.Window.html#method.set_error_callback) |
-| `vmnl::Window` | `set_focus_polling` | [Window polling](../reference/window/polling.md) | [`set_focus_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_focus_polling) |
-| `vmnl::Window` | `set_framebuffer_size_polling` | [Window polling](../reference/window/polling.md) | [`set_framebuffer_size_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_framebuffer_size_polling) |
-| `vmnl::Window` | `set_iconify_polling` | [Window polling](../reference/window/polling.md) | [`set_iconify_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_iconify_polling) |
-| `vmnl::Window` | `set_joystick_event_delivery` | [Window](../reference/window/window.md) | [`set_joystick_event_delivery`](../../../target/doc/vmnl/struct.Window.html#method.set_joystick_event_delivery) |
-| `vmnl::Window` | `set_joystick_tracking` | [Window](../reference/window/window.md) | [`set_joystick_tracking`](../../../target/doc/vmnl/struct.Window.html#method.set_joystick_tracking) |
-| `vmnl::Window` | `set_key_polling` | [Window polling](../reference/window/polling.md) | [`set_key_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_key_polling) |
-| `vmnl::Window` | `set_left_stick_config` | [Window](../reference/window/window.md) | [`set_left_stick_config`](../../../target/doc/vmnl/struct.Window.html#method.set_left_stick_config) |
-| `vmnl::Window` | `set_lock_key_modifier_reporting` | [Input modes](../reference/window/input/modes.md) | [`set_lock_key_modifier_reporting`](../../../target/doc/vmnl/struct.Window.html#method.set_lock_key_modifier_reporting) |
-| `vmnl::Window` | `set_maximize_polling` | [Window polling](../reference/window/polling.md) | [`set_maximize_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_maximize_polling) |
-| `vmnl::Window` | `set_mouse_button_polling` | [Window polling](../reference/window/polling.md) | [`set_mouse_button_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_mouse_button_polling) |
-| `vmnl::Window` | `set_position` | [Window configuration](../reference/window/configuration.md) | [`set_position`](../../../target/doc/vmnl/struct.Window.html#method.set_position) |
-| `vmnl::Window` | `set_raw_mouse_motion` | [Cursor controls](../reference/window/cursor.md) | [`set_raw_mouse_motion`](../../../target/doc/vmnl/struct.Window.html#method.set_raw_mouse_motion) |
-| `vmnl::Window` | `set_refresh_polling` | [Window polling](../reference/window/polling.md) | [`set_refresh_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_refresh_polling) |
-| `vmnl::Window` | `set_right_stick_config` | [Window](../reference/window/window.md) | [`set_right_stick_config`](../../../target/doc/vmnl/struct.Window.html#method.set_right_stick_config) |
-| `vmnl::Window` | `set_scroll_polling` | [Window polling](../reference/window/polling.md) | [`set_scroll_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_scroll_polling) |
-| `vmnl::Window` | `set_size` | [Window configuration](../reference/window/configuration.md) | [`set_size`](../../../target/doc/vmnl/struct.Window.html#method.set_size) |
-| `vmnl::Window` | `set_size_limits` | [Window configuration](../reference/window/configuration.md) | [`set_size_limits`](../../../target/doc/vmnl/struct.Window.html#method.set_size_limits) |
-| `vmnl::Window` | `set_size_polling` | [Window polling](../reference/window/polling.md) | [`set_size_polling`](../../../target/doc/vmnl/struct.Window.html#method.set_size_polling) |
-| `vmnl::Window` | `set_stick_configs` | [Window](../reference/window/window.md) | [`set_stick_configs`](../../../target/doc/vmnl/struct.Window.html#method.set_stick_configs) |
-| `vmnl::Window` | `set_sticky_keys` | [Input modes](../reference/window/input/modes.md) | [`set_sticky_keys`](../../../target/doc/vmnl/struct.Window.html#method.set_sticky_keys) |
-| `vmnl::Window` | `set_sticky_mouse_buttons` | [Input modes](../reference/window/input/modes.md) | [`set_sticky_mouse_buttons`](../../../target/doc/vmnl/struct.Window.html#method.set_sticky_mouse_buttons) |
-| `vmnl::Window` | `set_time` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`set_time`](../../../target/doc/vmnl/struct.Window.html#method.set_time) |
-| `vmnl::Window` | `set_title` | [Window configuration](../reference/window/configuration.md) | [`set_title`](../../../target/doc/vmnl/struct.Window.html#method.set_title) |
-| `vmnl::Window` | `show` | [Window lifecycle](../reference/window/lifecycle.md) | [`show`](../../../target/doc/vmnl/struct.Window.html#method.show) |
-| `vmnl::Window` | `unconfigure_window_polling` | [Window polling](../reference/window/polling.md) | [`unconfigure_window_polling`](../../../target/doc/vmnl/struct.Window.html#method.unconfigure_window_polling) |
-| `vmnl::Window` | `unset_error_callback` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`unset_error_callback`](../../../target/doc/vmnl/struct.Window.html#method.unset_error_callback) |
-| `vmnl::Window` | `wait_events` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`wait_events`](../../../target/doc/vmnl/struct.Window.html#method.wait_events) |
-| `vmnl::Window` | `wait_events_timeout` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`wait_events_timeout`](../../../target/doc/vmnl/struct.Window.html#method.wait_events_timeout) |
-| `vmnl::Window` | `width` | [Window configuration](../reference/window/configuration.md) | [`width`](../../../target/doc/vmnl/struct.Window.html#method.width) |
-| `vmnl::WindowBuilder` | `build` | [WindowBuilder](../reference/window/window_builder.md) | [`build`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.build) |
-| `vmnl::WindowBuilder` | `default` | [WindowBuilder](../reference/window/window_builder.md) | [`default`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.default) |
-| `vmnl::WindowBuilder` | `fragment_shader` | [WindowBuilder](../reference/window/window_builder.md) | [`fragment_shader`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.fragment_shader) |
-| `vmnl::WindowBuilder` | `joystick_event_delivery` | [WindowBuilder](../reference/window/window_builder.md) | [`joystick_event_delivery`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.joystick_event_delivery) |
-| `vmnl::WindowBuilder` | `joystick_tracking` | [WindowBuilder](../reference/window/window_builder.md) | [`joystick_tracking`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.joystick_tracking) |
-| `vmnl::WindowBuilder` | `left_stick_config` | [WindowBuilder](../reference/window/window_builder.md) | [`left_stick_config`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.left_stick_config) |
-| `vmnl::WindowBuilder` | `preferred_present_mode` | [WindowBuilder](../reference/window/window_builder.md) | [`preferred_present_mode`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.preferred_present_mode) |
-| `vmnl::WindowBuilder` | `present_mode` | [WindowBuilder](../reference/window/window_builder.md) | [`present_mode`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.present_mode) |
-| `vmnl::WindowBuilder` | `render_target` | [WindowBuilder](../reference/window/window_builder.md) | [`render_target`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.render_target) |
-| `vmnl::WindowBuilder` | `render_target_value` | [WindowBuilder](../reference/window/window_builder.md) | [`render_target_value`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.render_target_value) |
-| `vmnl::WindowBuilder` | `right_stick_config` | [WindowBuilder](../reference/window/window_builder.md) | [`right_stick_config`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.right_stick_config) |
-| `vmnl::WindowBuilder` | `set_clear_color` | [WindowBuilder](../reference/window/window_builder.md) | [`set_clear_color`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.set_clear_color) |
-| `vmnl::WindowBuilder` | `size` | [WindowBuilder](../reference/window/window_builder.md) | [`size`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.size) |
-| `vmnl::WindowBuilder` | `size_limit` | [WindowBuilder](../reference/window/window_builder.md) | [`size_limit`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.size_limit) |
-| `vmnl::WindowBuilder` | `title` | [WindowBuilder](../reference/window/window_builder.md) | [`title`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.title) |
-| `vmnl::WindowBuilder` | `unset_configure_window_polling` | [WindowBuilder](../reference/window/window_builder.md) | [`unset_configure_window_polling`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.unset_configure_window_polling) |
-| `vmnl::WindowBuilder` | `vertex_shader` | [WindowBuilder](../reference/window/window_builder.md) | [`vertex_shader`](../../../target/doc/vmnl/struct.WindowBuilder.html#method.vertex_shader) |
-| `vmnl::common::BufferMemoryPreference` | `clone` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [`clone`](../../../target/doc/vmnl/common/enum.BufferMemoryPreference.html#method.clone) |
-| `vmnl::common::BufferMemoryPreference` | `default` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [`default`](../../../target/doc/vmnl/common/enum.BufferMemoryPreference.html#method.default) |
-| `vmnl::common::BufferMemoryPreference` | `eq` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [`eq`](../../../target/doc/vmnl/common/enum.BufferMemoryPreference.html#method.eq) |
-| `vmnl::common::BufferMemoryPreference` | `fmt` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [`fmt`](../../../target/doc/vmnl/common/enum.BufferMemoryPreference.html#method.fmt) |
-| `vmnl::common::BufferMemoryPreference` | `hash` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [`hash`](../../../target/doc/vmnl/common/enum.BufferMemoryPreference.html#method.hash) |
-| `vmnl::common::Rgba` | `add_assign` | [Rgba](../reference/common/rgba.md) | [`add_assign`](../../../target/doc/vmnl/common/struct.Rgba.html#method.add_assign) |
-| `vmnl::common::Rgba` | `clone` | [Rgba](../reference/common/rgba.md) | [`clone`](../../../target/doc/vmnl/common/struct.Rgba.html#method.clone) |
-| `vmnl::common::Rgba` | `cmp` | [Rgba](../reference/common/rgba.md) | [`cmp`](../../../target/doc/vmnl/common/struct.Rgba.html#method.cmp) |
-| `vmnl::common::Rgba` | `default` | [Rgba](../reference/common/rgba.md) | [`default`](../../../target/doc/vmnl/common/struct.Rgba.html#method.default) |
-| `vmnl::common::Rgba` | `eq` | [Rgba](../reference/common/rgba.md) | [`eq`](../../../target/doc/vmnl/common/struct.Rgba.html#method.eq) |
-| `vmnl::common::Rgba` | `fmt` | [Rgba](../reference/common/rgba.md) | [`fmt`](../../../target/doc/vmnl/common/struct.Rgba.html#method.fmt) |
-| `vmnl::common::Rgba` | `from` | [Rgba](../reference/common/rgba.md) | [`from`](../../../target/doc/vmnl/common/struct.Rgba.html#method.from) |
-| `vmnl::common::Rgba` | `mul` | [Rgba](../reference/common/rgba.md) | [`mul`](../../../target/doc/vmnl/common/struct.Rgba.html#method.mul) |
-| `vmnl::common::Rgba` | `new` | [Rgba](../reference/common/rgba.md) | [`new`](../../../target/doc/vmnl/common/struct.Rgba.html#method.new) |
-| `vmnl::common::Rgba` | `partial_cmp` | [Rgba](../reference/common/rgba.md) | [`partial_cmp`](../../../target/doc/vmnl/common/struct.Rgba.html#method.partial_cmp) |
-| `vmnl::common::Rgba` | `rgb` | [Rgba](../reference/common/rgba.md) | [`rgb`](../../../target/doc/vmnl/common/struct.Rgba.html#method.rgb) |
-| `vmnl::common::Rgba` | `rgba` | [Rgba](../reference/common/rgba.md) | [`rgba`](../../../target/doc/vmnl/common/struct.Rgba.html#method.rgba) |
-| `vmnl::common::Rgba` | `sub` | [Rgba](../reference/common/rgba.md) | [`sub`](../../../target/doc/vmnl/common/struct.Rgba.html#method.sub) |
-| `vmnl::common::Rgba` | `sub_assign` | [Rgba](../reference/common/rgba.md) | [`sub_assign`](../../../target/doc/vmnl/common/struct.Rgba.html#method.sub_assign) |
-| `vmnl::common::ShaderSource` | `clone` | [ShaderSource](../reference/common/shader_source.md) | [`clone`](../../../target/doc/vmnl/common/enum.ShaderSource.html#method.clone) |
-| `vmnl::common::ShaderSource` | `cmp` | [ShaderSource](../reference/common/shader_source.md) | [`cmp`](../../../target/doc/vmnl/common/enum.ShaderSource.html#method.cmp) |
-| `vmnl::common::ShaderSource` | `eq` | [ShaderSource](../reference/common/shader_source.md) | [`eq`](../../../target/doc/vmnl/common/enum.ShaderSource.html#method.eq) |
-| `vmnl::common::ShaderSource` | `fmt` | [ShaderSource](../reference/common/shader_source.md) | [`fmt`](../../../target/doc/vmnl/common/enum.ShaderSource.html#method.fmt) |
-| `vmnl::common::ShaderSource` | `hash` | [ShaderSource](../reference/common/shader_source.md) | [`hash`](../../../target/doc/vmnl/common/enum.ShaderSource.html#method.hash) |
-| `vmnl::common::ShaderSource` | `partial_cmp` | [ShaderSource](../reference/common/shader_source.md) | [`partial_cmp`](../../../target/doc/vmnl/common/enum.ShaderSource.html#method.partial_cmp) |
-| `vmnl::d2::Anchor` | `clone` | [Anchor](../reference/d2/shapes/anchor.md) | [`clone`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.clone) |
-| `vmnl::d2::Anchor` | `default` | [Anchor](../reference/d2/shapes/anchor.md) | [`default`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.default) |
-| `vmnl::d2::Anchor` | `eq` | [Anchor](../reference/d2/shapes/anchor.md) | [`eq`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.eq) |
-| `vmnl::d2::Anchor` | `fmt` | [Anchor](../reference/d2/shapes/anchor.md) | [`fmt`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.fmt) |
-| `vmnl::d2::Anchor` | `hash` | [Anchor](../reference/d2/shapes/anchor.md) | [`hash`](../../../target/doc/vmnl/d2/enum.Anchor.html#method.hash) |
-| `vmnl::d2::CornerRadii` | `all` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`all`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.all) |
-| `vmnl::d2::CornerRadii` | `clone` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`clone`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.clone) |
-| `vmnl::d2::CornerRadii` | `default` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`default`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.default) |
-| `vmnl::d2::CornerRadii` | `eq` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`eq`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.eq) |
-| `vmnl::d2::CornerRadii` | `fmt` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`fmt`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.fmt) |
-| `vmnl::d2::CornerRadii` | `new` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`new`](../../../target/doc/vmnl/d2/struct.CornerRadii.html#method.new) |
-| `vmnl::d2::Drawable2D` | `render_item_2d` | [Drawable2D](../reference/d2/drawable_2d.md) | [`render_item_2d`](../../../target/doc/vmnl/d2/trait.Drawable2D.html#tymethod.render_item_2d) |
-| `vmnl::d2::IndexedShapeBuilder` | `buffer_memory_preference` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html#method.buffer_memory_preference) |
-| `vmnl::d2::IndexedShapeBuilder` | `build` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html#method.build) |
-| `vmnl::d2::LineBuilder` | `buffer_memory_preference` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.LineBuilder.html#method.buffer_memory_preference) |
-| `vmnl::d2::LineBuilder` | `build` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.LineBuilder.html#method.build) |
-| `vmnl::d2::LineBuilder` | `cap` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [`cap`](../../../target/doc/vmnl/d2/struct.LineBuilder.html#method.cap) |
-| `vmnl::d2::LineBuilder` | `color` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [`color`](../../../target/doc/vmnl/d2/struct.LineBuilder.html#method.color) |
-| `vmnl::d2::LineBuilder` | `width` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [`width`](../../../target/doc/vmnl/d2/struct.LineBuilder.html#method.width) |
-| `vmnl::d2::LineCap` | `clone` | [LineCap](../reference/d2/shapes/line_cap.md) | [`clone`](../../../target/doc/vmnl/d2/enum.LineCap.html#method.clone) |
-| `vmnl::d2::LineCap` | `default` | [LineCap](../reference/d2/shapes/line_cap.md) | [`default`](../../../target/doc/vmnl/d2/enum.LineCap.html#method.default) |
-| `vmnl::d2::LineCap` | `eq` | [LineCap](../reference/d2/shapes/line_cap.md) | [`eq`](../../../target/doc/vmnl/d2/enum.LineCap.html#method.eq) |
-| `vmnl::d2::LineCap` | `fmt` | [LineCap](../reference/d2/shapes/line_cap.md) | [`fmt`](../../../target/doc/vmnl/d2/enum.LineCap.html#method.fmt) |
-| `vmnl::d2::LineCap` | `hash` | [LineCap](../reference/d2/shapes/line_cap.md) | [`hash`](../../../target/doc/vmnl/d2/enum.LineCap.html#method.hash) |
-| `vmnl::d2::LineJoin` | `clone` | [LineJoin](../reference/d2/shapes/line_join.md) | [`clone`](../../../target/doc/vmnl/d2/enum.LineJoin.html#method.clone) |
-| `vmnl::d2::LineJoin` | `default` | [LineJoin](../reference/d2/shapes/line_join.md) | [`default`](../../../target/doc/vmnl/d2/enum.LineJoin.html#method.default) |
-| `vmnl::d2::LineJoin` | `eq` | [LineJoin](../reference/d2/shapes/line_join.md) | [`eq`](../../../target/doc/vmnl/d2/enum.LineJoin.html#method.eq) |
-| `vmnl::d2::LineJoin` | `fmt` | [LineJoin](../reference/d2/shapes/line_join.md) | [`fmt`](../../../target/doc/vmnl/d2/enum.LineJoin.html#method.fmt) |
-| `vmnl::d2::LineJoin` | `hash` | [LineJoin](../reference/d2/shapes/line_join.md) | [`hash`](../../../target/doc/vmnl/d2/enum.LineJoin.html#method.hash) |
-| `vmnl::d2::PolygonBuilder` | `buffer_memory_preference` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.PolygonBuilder.html#method.buffer_memory_preference) |
-| `vmnl::d2::PolygonBuilder` | `build` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.PolygonBuilder.html#method.build) |
-| `vmnl::d2::PolygonBuilder` | `color` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`color`](../../../target/doc/vmnl/d2/struct.PolygonBuilder.html#method.color) |
-| `vmnl::d2::PolygonBuilder` | `vertex_colors` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`vertex_colors`](../../../target/doc/vmnl/d2/struct.PolygonBuilder.html#method.vertex_colors) |
-| `vmnl::d2::PolylineBuilder` | `buffer_memory_preference` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.buffer_memory_preference) |
-| `vmnl::d2::PolylineBuilder` | `build` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.build) |
-| `vmnl::d2::PolylineBuilder` | `cap` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`cap`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.cap) |
-| `vmnl::d2::PolylineBuilder` | `closed` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`closed`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.closed) |
-| `vmnl::d2::PolylineBuilder` | `color` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`color`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.color) |
-| `vmnl::d2::PolylineBuilder` | `join` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`join`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.join) |
-| `vmnl::d2::PolylineBuilder` | `miter_limit` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`miter_limit`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.miter_limit) |
-| `vmnl::d2::PolylineBuilder` | `point_colors` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`point_colors`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.point_colors) |
-| `vmnl::d2::PolylineBuilder` | `segment_colors` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`segment_colors`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.segment_colors) |
-| `vmnl::d2::PolylineBuilder` | `width` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`width`](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html#method.width) |
-| `vmnl::d2::RectBuilder` | `anchor` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`anchor`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.anchor) |
-| `vmnl::d2::RectBuilder` | `buffer_memory_preference` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.buffer_memory_preference) |
-| `vmnl::d2::RectBuilder` | `build` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.build) |
-| `vmnl::d2::RectBuilder` | `color` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`color`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.color) |
-| `vmnl::d2::RectBuilder` | `corner_radii` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`corner_radii`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.corner_radii) |
-| `vmnl::d2::RectBuilder` | `corner_radius` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`corner_radius`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.corner_radius) |
-| `vmnl::d2::RectBuilder` | `corner_segments` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`corner_segments`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.corner_segments) |
-| `vmnl::d2::RectBuilder` | `origin` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`origin`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.origin) |
-| `vmnl::d2::RectBuilder` | `position` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`position`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.position) |
-| `vmnl::d2::RectBuilder` | `rotation` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`rotation`](../../../target/doc/vmnl/d2/struct.RectBuilder.html#method.rotation) |
-| `vmnl::d2::RenderItem2D` | `clone` | [RenderItem2D](../reference/d2/render_item_2d.md) | [`clone`](../../../target/doc/vmnl/d2/struct.RenderItem2D.html#method.clone) |
-| `vmnl::d2::Shape` | `as_ref` | [Shape](../reference/d2/shapes/shape.md) | [`as_ref`](../../../target/doc/vmnl/d2/struct.Shape.html#method.as_ref) |
-| `vmnl::d2::Shape` | `circle` | [Shape](../reference/d2/shapes/shape.md) | [`circle`](../../../target/doc/vmnl/d2/struct.Shape.html#method.circle) |
-| `vmnl::d2::Shape` | `drop` | [Shape](../reference/d2/shapes/shape.md) | [`drop`](../../../target/doc/vmnl/d2/struct.Shape.html#method.drop) |
-| `vmnl::d2::Shape` | `indexed` | [Shape](../reference/d2/shapes/shape.md) | [`indexed`](../../../target/doc/vmnl/d2/struct.Shape.html#method.indexed) |
-| `vmnl::d2::Shape` | `line` | [Shape](../reference/d2/shapes/shape.md) | [`line`](../../../target/doc/vmnl/d2/struct.Shape.html#method.line) |
-| `vmnl::d2::Shape` | `polygon` | [Shape](../reference/d2/shapes/shape.md) | [`polygon`](../../../target/doc/vmnl/d2/struct.Shape.html#method.polygon) |
-| `vmnl::d2::Shape` | `polygon_from_vertices` | [Shape](../reference/d2/shapes/shape.md) | [`polygon_from_vertices`](../../../target/doc/vmnl/d2/struct.Shape.html#method.polygon_from_vertices) |
-| `vmnl::d2::Shape` | `polyline` | [Shape](../reference/d2/shapes/shape.md) | [`polyline`](../../../target/doc/vmnl/d2/struct.Shape.html#method.polyline) |
-| `vmnl::d2::Shape` | `rect` | [Shape](../reference/d2/shapes/shape.md) | [`rect`](../../../target/doc/vmnl/d2/struct.Shape.html#method.rect) |
-| `vmnl::d2::Shape` | `render_item_2d` | [Shape](../reference/d2/shapes/shape.md) | [`render_item_2d`](../../../target/doc/vmnl/d2/struct.Shape.html#method.render_item_2d) |
-| `vmnl::d2::Shape` | `triangle` | [Shape](../reference/d2/shapes/shape.md) | [`triangle`](../../../target/doc/vmnl/d2/struct.Shape.html#method.triangle) |
-| `vmnl::d2::Shape` | `triangle_from_vertices` | [Shape](../reference/d2/shapes/shape.md) | [`triangle_from_vertices`](../../../target/doc/vmnl/d2/struct.Shape.html#method.triangle_from_vertices) |
-| `vmnl::d2::TriangleBuilder` | `buffer_memory_preference` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d2/struct.TriangleBuilder.html#method.buffer_memory_preference) |
-| `vmnl::d2::TriangleBuilder` | `build` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [`build`](../../../target/doc/vmnl/d2/struct.TriangleBuilder.html#method.build) |
-| `vmnl::d2::TriangleBuilder` | `color` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [`color`](../../../target/doc/vmnl/d2/struct.TriangleBuilder.html#method.color) |
-| `vmnl::d2::TriangleBuilder` | `vertex_colors` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [`vertex_colors`](../../../target/doc/vmnl/d2/struct.TriangleBuilder.html#method.vertex_colors) |
-| `vmnl::d2::Vector2f` | `add` | [Vector2f](../reference/d2/vector_2f.md) | [`add`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.add) |
-| `vmnl::d2::Vector2f` | `add_assign` | [Vector2f](../reference/d2/vector_2f.md) | [`add_assign`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.add_assign) |
-| `vmnl::d2::Vector2f` | `clone` | [Vector2f](../reference/d2/vector_2f.md) | [`clone`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.clone) |
-| `vmnl::d2::Vector2f` | `cmp` | [Vector2f](../reference/d2/vector_2f.md) | [`cmp`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.cmp) |
-| `vmnl::d2::Vector2f` | `default` | [Vector2f](../reference/d2/vector_2f.md) | [`default`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.default) |
-| `vmnl::d2::Vector2f` | `eq` | [Vector2f](../reference/d2/vector_2f.md) | [`eq`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.eq) |
-| `vmnl::d2::Vector2f` | `fmt` | [Vector2f](../reference/d2/vector_2f.md) | [`fmt`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.fmt) |
-| `vmnl::d2::Vector2f` | `mul` | [Vector2f](../reference/d2/vector_2f.md) | [`mul`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.mul) |
-| `vmnl::d2::Vector2f` | `partial_cmp` | [Vector2f](../reference/d2/vector_2f.md) | [`partial_cmp`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.partial_cmp) |
-| `vmnl::d2::Vector2f` | `sub` | [Vector2f](../reference/d2/vector_2f.md) | [`sub`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.sub) |
-| `vmnl::d2::Vector2f` | `sub_assign` | [Vector2f](../reference/d2/vector_2f.md) | [`sub_assign`](../../../target/doc/vmnl/d2/struct.Vector2f.html#method.sub_assign) |
-| `vmnl::d2::Vertex2D` | `add_assign` | [Vertex2D](../reference/d2/vertex_2d.md) | [`add_assign`](../../../target/doc/vmnl/d2/struct.Vertex2D.html#method.add_assign) |
-| `vmnl::d2::Vertex2D` | `clone` | [Vertex2D](../reference/d2/vertex_2d.md) | [`clone`](../../../target/doc/vmnl/d2/struct.Vertex2D.html#method.clone) |
-| `vmnl::d2::Vertex2D` | `default` | [Vertex2D](../reference/d2/vertex_2d.md) | [`default`](../../../target/doc/vmnl/d2/struct.Vertex2D.html#method.default) |
-| `vmnl::d2::Vertex2D` | `eq` | [Vertex2D](../reference/d2/vertex_2d.md) | [`eq`](../../../target/doc/vmnl/d2/struct.Vertex2D.html#method.eq) |
-| `vmnl::d2::Vertex2D` | `fmt` | [Vertex2D](../reference/d2/vertex_2d.md) | [`fmt`](../../../target/doc/vmnl/d2/struct.Vertex2D.html#method.fmt) |
-| `vmnl::d2::Vertex2D` | `mul` | [Vertex2D](../reference/d2/vertex_2d.md) | [`mul`](../../../target/doc/vmnl/d2/struct.Vertex2D.html#method.mul) |
-| `vmnl::d2::Vertex2D` | `sub` | [Vertex2D](../reference/d2/vertex_2d.md) | [`sub`](../../../target/doc/vmnl/d2/struct.Vertex2D.html#method.sub) |
-| `vmnl::d2::Vertex2D` | `sub_assign` | [Vertex2D](../reference/d2/vertex_2d.md) | [`sub_assign`](../../../target/doc/vmnl/d2/struct.Vertex2D.html#method.sub_assign) |
-| `vmnl::d3::Camera` | `clone` | [Camera](../reference/d3/camera.md) | [`clone`](../../../target/doc/vmnl/d3/struct.Camera.html#method.clone) |
-| `vmnl::d3::Camera` | `default` | [Camera](../reference/d3/camera.md) | [`default`](../../../target/doc/vmnl/d3/struct.Camera.html#method.default) |
-| `vmnl::d3::Camera` | `eq` | [Camera](../reference/d3/camera.md) | [`eq`](../../../target/doc/vmnl/d3/struct.Camera.html#method.eq) |
-| `vmnl::d3::Camera` | `fmt` | [Camera](../reference/d3/camera.md) | [`fmt`](../../../target/doc/vmnl/d3/struct.Camera.html#method.fmt) |
-| `vmnl::d3::Camera` | `new` | [Camera](../reference/d3/camera.md) | [`new`](../../../target/doc/vmnl/d3/struct.Camera.html#method.new) |
-| `vmnl::d3::Drawable3D` | `render_item_3d` | [Drawable3D](../reference/d3/drawable_3d.md) | [`render_item_3d`](../../../target/doc/vmnl/d3/trait.Drawable3D.html#tymethod.render_item_3d) |
-| `vmnl::d3::Mesh` | `as_ref` | [Mesh](../reference/d3/mesh/mesh.md) | [`as_ref`](../../../target/doc/vmnl/d3/struct.Mesh.html#method.as_ref) |
-| `vmnl::d3::Mesh` | `indexed` | [Mesh](../reference/d3/mesh/mesh.md) | [`indexed`](../../../target/doc/vmnl/d3/struct.Mesh.html#method.indexed) |
-| `vmnl::d3::Mesh` | `render_item_3d` | [Mesh](../reference/d3/mesh/mesh.md) | [`render_item_3d`](../../../target/doc/vmnl/d3/struct.Mesh.html#method.render_item_3d) |
-| `vmnl::d3::MeshBuilder` | `buffer_memory_preference` | [MeshBuilder](../reference/d3/mesh/mesh_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/d3/struct.MeshBuilder.html#method.buffer_memory_preference) |
-| `vmnl::d3::MeshBuilder` | `build` | [MeshBuilder](../reference/d3/mesh/mesh_builder.md) | [`build`](../../../target/doc/vmnl/d3/struct.MeshBuilder.html#method.build) |
-| `vmnl::d3::RenderItem3D` | `clone` | [RenderItem3D](../reference/d3/render_item_3d.md) | [`clone`](../../../target/doc/vmnl/d3/struct.RenderItem3D.html#method.clone) |
-| `vmnl::d3::Vector3f` | `add_assign` | [Vector3f](../reference/d3/vector_3f.md) | [`add_assign`](../../../target/doc/vmnl/d3/struct.Vector3f.html#method.add_assign) |
-| `vmnl::d3::Vector3f` | `clone` | [Vector3f](../reference/d3/vector_3f.md) | [`clone`](../../../target/doc/vmnl/d3/struct.Vector3f.html#method.clone) |
-| `vmnl::d3::Vector3f` | `default` | [Vector3f](../reference/d3/vector_3f.md) | [`default`](../../../target/doc/vmnl/d3/struct.Vector3f.html#method.default) |
-| `vmnl::d3::Vector3f` | `eq` | [Vector3f](../reference/d3/vector_3f.md) | [`eq`](../../../target/doc/vmnl/d3/struct.Vector3f.html#method.eq) |
-| `vmnl::d3::Vector3f` | `fmt` | [Vector3f](../reference/d3/vector_3f.md) | [`fmt`](../../../target/doc/vmnl/d3/struct.Vector3f.html#method.fmt) |
-| `vmnl::d3::Vector3f` | `mul` | [Vector3f](../reference/d3/vector_3f.md) | [`mul`](../../../target/doc/vmnl/d3/struct.Vector3f.html#method.mul) |
-| `vmnl::d3::Vector3f` | `sub` | [Vector3f](../reference/d3/vector_3f.md) | [`sub`](../../../target/doc/vmnl/d3/struct.Vector3f.html#method.sub) |
-| `vmnl::d3::Vector3f` | `sub_assign` | [Vector3f](../reference/d3/vector_3f.md) | [`sub_assign`](../../../target/doc/vmnl/d3/struct.Vector3f.html#method.sub_assign) |
-| `vmnl::d3::Vertex3D` | `clone` | [Vertex3D](../reference/d3/vertex_3d.md) | [`clone`](../../../target/doc/vmnl/d3/struct.Vertex3D.html#method.clone) |
-| `vmnl::d3::Vertex3D` | `default` | [Vertex3D](../reference/d3/vertex_3d.md) | [`default`](../../../target/doc/vmnl/d3/struct.Vertex3D.html#method.default) |
-| `vmnl::d3::Vertex3D` | `eq` | [Vertex3D](../reference/d3/vertex_3d.md) | [`eq`](../../../target/doc/vmnl/d3/struct.Vertex3D.html#method.eq) |
-| `vmnl::d3::Vertex3D` | `fmt` | [Vertex3D](../reference/d3/vertex_3d.md) | [`fmt`](../../../target/doc/vmnl/d3/struct.Vertex3D.html#method.fmt) |
-| `vmnl::raw::BlendMode` | `clone` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [`clone`](../../../target/doc/vmnl/raw/enum.BlendMode.html#method.clone) |
-| `vmnl::raw::BlendMode` | `eq` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [`eq`](../../../target/doc/vmnl/raw/enum.BlendMode.html#method.eq) |
-| `vmnl::raw::BlendMode` | `fmt` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.BlendMode.html#method.fmt) |
-| `vmnl::raw::CompareOp` | `clone` | [CompareOp](../reference/raw/pipeline/compare_op.md) | [`clone`](../../../target/doc/vmnl/raw/enum.CompareOp.html#method.clone) |
-| `vmnl::raw::CompareOp` | `eq` | [CompareOp](../reference/raw/pipeline/compare_op.md) | [`eq`](../../../target/doc/vmnl/raw/enum.CompareOp.html#method.eq) |
-| `vmnl::raw::CompareOp` | `fmt` | [CompareOp](../reference/raw/pipeline/compare_op.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.CompareOp.html#method.fmt) |
-| `vmnl::raw::CullMode` | `clone` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [`clone`](../../../target/doc/vmnl/raw/enum.CullMode.html#method.clone) |
-| `vmnl::raw::CullMode` | `eq` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [`eq`](../../../target/doc/vmnl/raw/enum.CullMode.html#method.eq) |
-| `vmnl::raw::CullMode` | `fmt` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.CullMode.html#method.fmt) |
-| `vmnl::raw::DepthState` | `clone` | [DepthState](../reference/raw/pipeline/depth_state.md) | [`clone`](../../../target/doc/vmnl/raw/enum.DepthState.html#method.clone) |
-| `vmnl::raw::DepthState` | `default` | [DepthState](../reference/raw/pipeline/depth_state.md) | [`default`](../../../target/doc/vmnl/raw/enum.DepthState.html#method.default) |
-| `vmnl::raw::DepthState` | `eq` | [DepthState](../reference/raw/pipeline/depth_state.md) | [`eq`](../../../target/doc/vmnl/raw/enum.DepthState.html#method.eq) |
-| `vmnl::raw::DepthState` | `fmt` | [DepthState](../reference/raw/pipeline/depth_state.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.DepthState.html#method.fmt) |
-| `vmnl::raw::FrameUniform` | `builder` | [FrameUniform](../reference/raw/uniforms/frame_uniform.md) | [`builder`](../../../target/doc/vmnl/raw/struct.FrameUniform.html#method.builder) |
-| `vmnl::raw::FrameUniformBuilder` | `buffer_memory_preference` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/raw/struct.FrameUniformBuilder.html#method.buffer_memory_preference) |
-| `vmnl::raw::FrameUniformBuilder` | `build` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [`build`](../../../target/doc/vmnl/raw/struct.FrameUniformBuilder.html#method.build) |
-| `vmnl::raw::FrontFace` | `clone` | [FrontFace](../reference/raw/pipeline/front_face.md) | [`clone`](../../../target/doc/vmnl/raw/enum.FrontFace.html#method.clone) |
-| `vmnl::raw::FrontFace` | `eq` | [FrontFace](../reference/raw/pipeline/front_face.md) | [`eq`](../../../target/doc/vmnl/raw/enum.FrontFace.html#method.eq) |
-| `vmnl::raw::FrontFace` | `fmt` | [FrontFace](../reference/raw/pipeline/front_face.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.FrontFace.html#method.fmt) |
-| `vmnl::raw::Geometry` | `builder` | [Geometry](../reference/raw/geometry/geometry.md) | [`builder`](../../../target/doc/vmnl/raw/struct.Geometry.html#method.builder) |
-| `vmnl::raw::GeometryBuilder` | `buffer_memory_preference` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/raw/struct.GeometryBuilder.html#method.buffer_memory_preference) |
-| `vmnl::raw::GeometryBuilder` | `build` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [`build`](../../../target/doc/vmnl/raw/struct.GeometryBuilder.html#method.build) |
-| `vmnl::raw::GeometryBuilder` | `indices` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [`indices`](../../../target/doc/vmnl/raw/struct.GeometryBuilder.html#method.indices) |
-| `vmnl::raw::Pipeline` | `builder` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`builder`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.builder) |
-| `vmnl::raw::Pipeline` | `depth_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`depth_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.depth_value) |
-| `vmnl::raw::Pipeline` | `line_width_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`line_width_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.line_width_value) |
-| `vmnl::raw::Pipeline` | `polygon_mode_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`polygon_mode_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.polygon_mode_value) |
-| `vmnl::raw::Pipeline` | `render_target_info` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`render_target_info`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.render_target_info) |
-| `vmnl::raw::Pipeline` | `scissor_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`scissor_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.scissor_value) |
-| `vmnl::raw::Pipeline` | `validate_target` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`validate_target`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.validate_target) |
-| `vmnl::raw::Pipeline` | `viewport_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`viewport_value`](../../../target/doc/vmnl/raw/struct.Pipeline.html#method.viewport_value) |
-| `vmnl::raw::PipelineSpec` | `blend_mode` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`blend_mode`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.blend_mode) |
-| `vmnl::raw::PipelineSpec` | `blend_mode_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`blend_mode_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.blend_mode_value) |
-| `vmnl::raw::PipelineSpec` | `build` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`build`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.build) |
-| `vmnl::raw::PipelineSpec` | `clone` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`clone`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.clone) |
-| `vmnl::raw::PipelineSpec` | `cull_mode` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`cull_mode`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.cull_mode) |
-| `vmnl::raw::PipelineSpec` | `cull_mode_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`cull_mode_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.cull_mode_value) |
-| `vmnl::raw::PipelineSpec` | `default` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`default`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.default) |
-| `vmnl::raw::PipelineSpec` | `depth` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`depth`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.depth) |
-| `vmnl::raw::PipelineSpec` | `depth_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`depth_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.depth_value) |
-| `vmnl::raw::PipelineSpec` | `fmt` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`fmt`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.fmt) |
-| `vmnl::raw::PipelineSpec` | `fragment_shader` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`fragment_shader`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.fragment_shader) |
-| `vmnl::raw::PipelineSpec` | `front_face` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`front_face`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.front_face) |
-| `vmnl::raw::PipelineSpec` | `front_face_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`front_face_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.front_face_value) |
-| `vmnl::raw::PipelineSpec` | `line_width` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`line_width`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.line_width) |
-| `vmnl::raw::PipelineSpec` | `line_width_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`line_width_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.line_width_value) |
-| `vmnl::raw::PipelineSpec` | `polygon_mode` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`polygon_mode`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.polygon_mode) |
-| `vmnl::raw::PipelineSpec` | `polygon_mode_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`polygon_mode_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.polygon_mode_value) |
-| `vmnl::raw::PipelineSpec` | `scissor` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`scissor`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.scissor) |
-| `vmnl::raw::PipelineSpec` | `scissor_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`scissor_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.scissor_value) |
-| `vmnl::raw::PipelineSpec` | `topology` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`topology`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.topology) |
-| `vmnl::raw::PipelineSpec` | `topology_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`topology_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.topology_value) |
-| `vmnl::raw::PipelineSpec` | `vertex_shader` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`vertex_shader`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.vertex_shader) |
-| `vmnl::raw::PipelineSpec` | `viewport` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`viewport`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.viewport) |
-| `vmnl::raw::PipelineSpec` | `viewport_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`viewport_value`](../../../target/doc/vmnl/raw/struct.PipelineSpec.html#method.viewport_value) |
-| `vmnl::raw::PolygonMode` | `clone` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [`clone`](../../../target/doc/vmnl/raw/enum.PolygonMode.html#method.clone) |
-| `vmnl::raw::PolygonMode` | `eq` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [`eq`](../../../target/doc/vmnl/raw/enum.PolygonMode.html#method.eq) |
-| `vmnl::raw::PolygonMode` | `fmt` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.PolygonMode.html#method.fmt) |
-| `vmnl::raw::PrimitiveTopology` | `clone` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [`clone`](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html#method.clone) |
-| `vmnl::raw::PrimitiveTopology` | `eq` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [`eq`](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html#method.eq) |
-| `vmnl::raw::PrimitiveTopology` | `fmt` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html#method.fmt) |
-| `vmnl::raw::Resources` | `builder` | [Resources](../reference/raw/resources/resources.md) | [`builder`](../../../target/doc/vmnl/raw/struct.Resources.html#method.builder) |
-| `vmnl::raw::ResourcesBuilder` | `build` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [`build`](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html#method.build) |
-| `vmnl::raw::ResourcesBuilder` | `frame_uniform` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [`frame_uniform`](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html#method.frame_uniform) |
-| `vmnl::raw::ResourcesBuilder` | `uniform` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [`uniform`](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html#method.uniform) |
-| `vmnl::raw::Scissor` | `clone` | [Scissor](../reference/raw/pipeline/scissor.md) | [`clone`](../../../target/doc/vmnl/raw/struct.Scissor.html#method.clone) |
-| `vmnl::raw::Scissor` | `eq` | [Scissor](../reference/raw/pipeline/scissor.md) | [`eq`](../../../target/doc/vmnl/raw/struct.Scissor.html#method.eq) |
-| `vmnl::raw::Scissor` | `fmt` | [Scissor](../reference/raw/pipeline/scissor.md) | [`fmt`](../../../target/doc/vmnl/raw/struct.Scissor.html#method.fmt) |
-| `vmnl::raw::ScissorPolicy` | `clone` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [`clone`](../../../target/doc/vmnl/raw/enum.ScissorPolicy.html#method.clone) |
-| `vmnl::raw::ScissorPolicy` | `default` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [`default`](../../../target/doc/vmnl/raw/enum.ScissorPolicy.html#method.default) |
-| `vmnl::raw::ScissorPolicy` | `eq` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [`eq`](../../../target/doc/vmnl/raw/enum.ScissorPolicy.html#method.eq) |
-| `vmnl::raw::ScissorPolicy` | `fmt` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.ScissorPolicy.html#method.fmt) |
-| `vmnl::raw::ScissorPolicy` | `resolve` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [`resolve`](../../../target/doc/vmnl/raw/enum.ScissorPolicy.html#method.resolve) |
-| `vmnl::raw::Uniform` | `builder` | [Uniform](../reference/raw/uniforms/uniform.md) | [`builder`](../../../target/doc/vmnl/raw/struct.Uniform.html#method.builder) |
-| `vmnl::raw::Uniform` | `write` | [Uniform](../reference/raw/uniforms/uniform.md) | [`write`](../../../target/doc/vmnl/raw/struct.Uniform.html#method.write) |
-| `vmnl::raw::UniformBuilder` | `buffer_memory_preference` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl/raw/struct.UniformBuilder.html#method.buffer_memory_preference) |
-| `vmnl::raw::UniformBuilder` | `build` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [`build`](../../../target/doc/vmnl/raw/struct.UniformBuilder.html#method.build) |
-| `vmnl::raw::Viewport` | `clone` | [Viewport](../reference/raw/pipeline/viewport.md) | [`clone`](../../../target/doc/vmnl/raw/struct.Viewport.html#method.clone) |
-| `vmnl::raw::Viewport` | `eq` | [Viewport](../reference/raw/pipeline/viewport.md) | [`eq`](../../../target/doc/vmnl/raw/struct.Viewport.html#method.eq) |
-| `vmnl::raw::Viewport` | `fmt` | [Viewport](../reference/raw/pipeline/viewport.md) | [`fmt`](../../../target/doc/vmnl/raw/struct.Viewport.html#method.fmt) |
-| `vmnl::raw::ViewportPolicy` | `clone` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [`clone`](../../../target/doc/vmnl/raw/enum.ViewportPolicy.html#method.clone) |
-| `vmnl::raw::ViewportPolicy` | `default` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [`default`](../../../target/doc/vmnl/raw/enum.ViewportPolicy.html#method.default) |
-| `vmnl::raw::ViewportPolicy` | `eq` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [`eq`](../../../target/doc/vmnl/raw/enum.ViewportPolicy.html#method.eq) |
-| `vmnl::raw::ViewportPolicy` | `fmt` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [`fmt`](../../../target/doc/vmnl/raw/enum.ViewportPolicy.html#method.fmt) |
-| `vmnl::raw::ViewportPolicy` | `resolve` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [`resolve`](../../../target/doc/vmnl/raw/enum.ViewportPolicy.html#method.resolve) |
+| `vmnl_graphics::ColorFormat` | `clone` | [ColorFormat](../reference/window/color_format.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.ColorFormat.html#method.clone) |
+| `vmnl_graphics::ColorFormat` | `eq` | [ColorFormat](../reference/window/color_format.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.ColorFormat.html#method.eq) |
+| `vmnl_graphics::ColorFormat` | `fmt` | [ColorFormat](../reference/window/color_format.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.ColorFormat.html#method.fmt) |
+| `vmnl_graphics::Context` | `builder` | [Context](../reference/context.md) | [`builder`](../../../target/doc/vmnl_graphics/struct.Context.html#method.builder) |
+| `vmnl_graphics::Context` | `clone` | [Context](../reference/context.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.Context.html#method.clone) |
+| `vmnl_graphics::Context` | `device_name` | [Context](../reference/context.md) | [`device_name`](../../../target/doc/vmnl_graphics/struct.Context.html#method.device_name) |
+| `vmnl_graphics::Context` | `get_key_name` | [Context](../reference/context.md) | [`get_key_name`](../../../target/doc/vmnl_graphics/struct.Context.html#method.get_key_name) |
+| `vmnl_graphics::Context` | `get_key_scancode` | [Context](../reference/context.md) | [`get_key_scancode`](../../../target/doc/vmnl_graphics/struct.Context.html#method.get_key_scancode) |
+| `vmnl_graphics::Context` | `get_scancode_name` | [Context](../reference/context.md) | [`get_scancode_name`](../../../target/doc/vmnl_graphics/struct.Context.html#method.get_scancode_name) |
+| `vmnl_graphics::Context` | `is_device_feature_enabled` | [Context](../reference/context.md) | [`is_device_feature_enabled`](../../../target/doc/vmnl_graphics/struct.Context.html#method.is_device_feature_enabled) |
+| `vmnl_graphics::Context` | `is_device_feature_supported` | [Context](../reference/context.md) | [`is_device_feature_supported`](../../../target/doc/vmnl_graphics/struct.Context.html#method.is_device_feature_supported) |
+| `vmnl_graphics::Context` | `is_raw_mouse_motion_supported` | [Context](../reference/context.md) | [`is_raw_mouse_motion_supported`](../../../target/doc/vmnl_graphics/struct.Context.html#method.is_raw_mouse_motion_supported) |
+| `vmnl_graphics::Context` | `line_width_limits` | [Context](../reference/context.md) | [`line_width_limits`](../../../target/doc/vmnl_graphics/struct.Context.html#method.line_width_limits) |
+| `vmnl_graphics::Context` | `new` | [Context](../reference/context.md) | [`new`](../../../target/doc/vmnl_graphics/struct.Context.html#method.new) |
+| `vmnl_graphics::ContextBuilder` | `build` | [ContextBuilder](../reference/context_builder.md) | [`build`](../../../target/doc/vmnl_graphics/struct.ContextBuilder.html#method.build) |
+| `vmnl_graphics::ContextBuilder` | `clone` | [ContextBuilder](../reference/context_builder.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.ContextBuilder.html#method.clone) |
+| `vmnl_graphics::ContextBuilder` | `default` | [ContextBuilder](../reference/context_builder.md) | [`default`](../../../target/doc/vmnl_graphics/struct.ContextBuilder.html#method.default) |
+| `vmnl_graphics::ContextBuilder` | `device` | [ContextBuilder](../reference/context_builder.md) | [`device`](../../../target/doc/vmnl_graphics/struct.ContextBuilder.html#method.device) |
+| `vmnl_graphics::ContextBuilder` | `device_config` | [ContextBuilder](../reference/context_builder.md) | [`device_config`](../../../target/doc/vmnl_graphics/struct.ContextBuilder.html#method.device_config) |
+| `vmnl_graphics::ContextBuilder` | `fmt` | [ContextBuilder](../reference/context_builder.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.ContextBuilder.html#method.fmt) |
+| `vmnl_graphics::Cursor` | `clone` | [Cursor](../reference/window/input/cursor.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.Cursor.html#method.clone) |
+| `vmnl_graphics::Cursor` | `eq` | [Cursor](../reference/window/input/cursor.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.Cursor.html#method.eq) |
+| `vmnl_graphics::Cursor` | `fmt` | [Cursor](../reference/window/input/cursor.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.Cursor.html#method.fmt) |
+| `vmnl_graphics::Cursor` | `rgba8` | [Cursor](../reference/window/input/cursor.md) | [`rgba8`](../../../target/doc/vmnl_graphics/struct.Cursor.html#method.rgba8) |
+| `vmnl_graphics::Cursor` | `standard` | [Cursor](../reference/window/input/cursor.md) | [`standard`](../../../target/doc/vmnl_graphics/struct.Cursor.html#method.standard) |
+| `vmnl_graphics::CursorBuilder` | `build` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [`build`](../../../target/doc/vmnl_graphics/struct.CursorBuilder.html#method.build) |
+| `vmnl_graphics::CursorBuilder` | `hotspot` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [`hotspot`](../../../target/doc/vmnl_graphics/struct.CursorBuilder.html#method.hotspot) |
+| `vmnl_graphics::CursorBuilder` | `hotspot_marker` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [`hotspot_marker`](../../../target/doc/vmnl_graphics/struct.CursorBuilder.html#method.hotspot_marker) |
+| `vmnl_graphics::CursorMode` | `clone` | [CursorMode](../reference/window/input/cursor_mode.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.CursorMode.html#method.clone) |
+| `vmnl_graphics::CursorMode` | `default` | [CursorMode](../reference/window/input/cursor_mode.md) | [`default`](../../../target/doc/vmnl_graphics/enum.CursorMode.html#method.default) |
+| `vmnl_graphics::CursorMode` | `eq` | [CursorMode](../reference/window/input/cursor_mode.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.CursorMode.html#method.eq) |
+| `vmnl_graphics::CursorMode` | `fmt` | [CursorMode](../reference/window/input/cursor_mode.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.CursorMode.html#method.fmt) |
+| `vmnl_graphics::CursorMode` | `hash` | [CursorMode](../reference/window/input/cursor_mode.md) | [`hash`](../../../target/doc/vmnl_graphics/enum.CursorMode.html#method.hash) |
+| `vmnl_graphics::DepthFormat` | `clone` | [DepthFormat](../reference/window/depth_format.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.DepthFormat.html#method.clone) |
+| `vmnl_graphics::DepthFormat` | `eq` | [DepthFormat](../reference/window/depth_format.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.DepthFormat.html#method.eq) |
+| `vmnl_graphics::DepthFormat` | `fmt` | [DepthFormat](../reference/window/depth_format.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.DepthFormat.html#method.fmt) |
+| `vmnl_graphics::DeviceConfig` | `clone` | [DeviceConfig](../reference/device_config.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.DeviceConfig.html#method.clone) |
+| `vmnl_graphics::DeviceConfig` | `default` | [DeviceConfig](../reference/device_config.md) | [`default`](../../../target/doc/vmnl_graphics/struct.DeviceConfig.html#method.default) |
+| `vmnl_graphics::DeviceConfig` | `fmt` | [DeviceConfig](../reference/device_config.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.DeviceConfig.html#method.fmt) |
+| `vmnl_graphics::DeviceConfig` | `require_feature` | [DeviceConfig](../reference/device_config.md) | [`require_feature`](../../../target/doc/vmnl_graphics/struct.DeviceConfig.html#method.require_feature) |
+| `vmnl_graphics::DeviceConfig` | `require_features` | [DeviceConfig](../reference/device_config.md) | [`require_features`](../../../target/doc/vmnl_graphics/struct.DeviceConfig.html#method.require_features) |
+| `vmnl_graphics::DeviceConfig` | `required_features` | [DeviceConfig](../reference/device_config.md) | [`required_features`](../../../target/doc/vmnl_graphics/struct.DeviceConfig.html#method.required_features) |
+| `vmnl_graphics::DeviceFeature` | `clone` | [DeviceFeature](../reference/device_feature.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.DeviceFeature.html#method.clone) |
+| `vmnl_graphics::DeviceFeature` | `eq` | [DeviceFeature](../reference/device_feature.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.DeviceFeature.html#method.eq) |
+| `vmnl_graphics::DeviceFeature` | `fmt` | [DeviceFeature](../reference/device_feature.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.DeviceFeature.html#method.fmt) |
+| `vmnl_graphics::Event` | `clone` | [Event](../reference/window/events/event.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.Event.html#method.clone) |
+| `vmnl_graphics::Event` | `eq` | [Event](../reference/window/events/event.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.Event.html#method.eq) |
+| `vmnl_graphics::Event` | `fmt` | [Event](../reference/window/events/event.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.Event.html#method.fmt) |
+| `vmnl_graphics::Event` | `into_kind` | [Event](../reference/window/events/event.md) | [`into_kind`](../../../target/doc/vmnl_graphics/struct.Event.html#method.into_kind) |
+| `vmnl_graphics::Event` | `kind` | [Event](../reference/window/events/event.md) | [`kind`](../../../target/doc/vmnl_graphics/struct.Event.html#method.kind) |
+| `vmnl_graphics::Event` | `timestamp_seconds` | [Event](../reference/window/events/event.md) | [`timestamp_seconds`](../../../target/doc/vmnl_graphics/struct.Event.html#method.timestamp_seconds) |
+| `vmnl_graphics::EventKind` | `clone` | [EventKind](../reference/window/events/event_kind.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.EventKind.html#method.clone) |
+| `vmnl_graphics::EventKind` | `eq` | [EventKind](../reference/window/events/event_kind.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.EventKind.html#method.eq) |
+| `vmnl_graphics::EventKind` | `fmt` | [EventKind](../reference/window/events/event_kind.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.EventKind.html#method.fmt) |
+| `vmnl_graphics::FrameRenderer` | `draw2d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw2d`](../../../target/doc/vmnl_graphics/struct.FrameRenderer.html#method.draw2d) |
+| `vmnl_graphics::FrameRenderer` | `draw3d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw3d`](../../../target/doc/vmnl_graphics/struct.FrameRenderer.html#method.draw3d) |
+| `vmnl_graphics::FrameRenderer` | `draw_raw_2d` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw_2d`](../../../target/doc/vmnl_graphics/struct.FrameRenderer.html#method.draw_raw_2d) |
+| `vmnl_graphics::FrameRenderer` | `draw_raw_2d_with` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`draw_raw_2d_with`](../../../target/doc/vmnl_graphics/struct.FrameRenderer.html#method.draw_raw_2d_with) |
+| `vmnl_graphics::FrameRenderer` | `mode` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`mode`](../../../target/doc/vmnl_graphics/struct.FrameRenderer.html#method.mode) |
+| `vmnl_graphics::FrameRenderer` | `submit` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`submit`](../../../target/doc/vmnl_graphics/struct.FrameRenderer.html#method.submit) |
+| `vmnl_graphics::FrameRenderer` | `write_frame_uniform` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [`write_frame_uniform`](../../../target/doc/vmnl_graphics/struct.FrameRenderer.html#method.write_frame_uniform) |
+| `vmnl_graphics::GamepadAxis` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.GamepadAxis.html#method.clone) |
+| `vmnl_graphics::GamepadAxis` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.GamepadAxis.html#method.eq) |
+| `vmnl_graphics::GamepadAxis` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.GamepadAxis.html#method.fmt) |
+| `vmnl_graphics::GamepadAxis` | `hash` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hash`](../../../target/doc/vmnl_graphics/enum.GamepadAxis.html#method.hash) |
+| `vmnl_graphics::GamepadButton` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.GamepadButton.html#method.clone) |
+| `vmnl_graphics::GamepadButton` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.GamepadButton.html#method.eq) |
+| `vmnl_graphics::GamepadButton` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.GamepadButton.html#method.fmt) |
+| `vmnl_graphics::GamepadButton` | `hash` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hash`](../../../target/doc/vmnl_graphics/enum.GamepadButton.html#method.hash) |
+| `vmnl_graphics::GamepadState` | `axes` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`axes`](../../../target/doc/vmnl_graphics/struct.GamepadState.html#method.axes) |
+| `vmnl_graphics::GamepadState` | `axis` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`axis`](../../../target/doc/vmnl_graphics/struct.GamepadState.html#method.axis) |
+| `vmnl_graphics::GamepadState` | `button` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`button`](../../../target/doc/vmnl_graphics/struct.GamepadState.html#method.button) |
+| `vmnl_graphics::GamepadState` | `buttons` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`buttons`](../../../target/doc/vmnl_graphics/struct.GamepadState.html#method.buttons) |
+| `vmnl_graphics::GamepadState` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.GamepadState.html#method.clone) |
+| `vmnl_graphics::GamepadState` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.GamepadState.html#method.eq) |
+| `vmnl_graphics::GamepadState` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.GamepadState.html#method.fmt) |
+| `vmnl_graphics::GamepadState` | `name` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`name`](../../../target/doc/vmnl_graphics/struct.GamepadState.html#method.name) |
+| `vmnl_graphics::Input` | `default` | [Input](../reference/window/input/input.md) | [`default`](../../../target/doc/vmnl_graphics/struct.Input.html#method.default) |
+| `vmnl_graphics::Input` | `joystick` | [Input](../reference/window/input/input.md) | [`joystick`](../../../target/doc/vmnl_graphics/struct.Input.html#method.joystick) |
+| `vmnl_graphics::Input` | `keyboard` | [Input](../reference/window/input/input.md) | [`keyboard`](../../../target/doc/vmnl_graphics/struct.Input.html#method.keyboard) |
+| `vmnl_graphics::Input` | `mouse` | [Input](../reference/window/input/input.md) | [`mouse`](../../../target/doc/vmnl_graphics/struct.Input.html#method.mouse) |
+| `vmnl_graphics::Input` | `new` | [Input](../reference/window/input/input.md) | [`new`](../../../target/doc/vmnl_graphics/struct.Input.html#method.new) |
+| `vmnl_graphics::InputRuntime` | `acquire` | [InputRuntime](../reference/input_runtime.md) | [`acquire`](../../../target/doc/vmnl_graphics/struct.InputRuntime.html#method.acquire) |
+| `vmnl_graphics::InputRuntime` | `builder` | [InputRuntime](../reference/input_runtime.md) | [`builder`](../../../target/doc/vmnl_graphics/struct.InputRuntime.html#method.builder) |
+| `vmnl_graphics::InputRuntime` | `configuration` | [InputRuntime](../reference/input_runtime.md) | [`configuration`](../../../target/doc/vmnl_graphics/struct.InputRuntime.html#method.configuration) |
+| `vmnl_graphics::InputRuntime` | `joystick_user_pointer` | [InputRuntime](../reference/input_runtime.md) | [`joystick_user_pointer`](../../../target/doc/vmnl_graphics/struct.InputRuntime.html#method.joystick_user_pointer) |
+| `vmnl_graphics::InputRuntime` | `poll_events` | [InputRuntime](../reference/input_runtime.md) | [`poll_events`](../../../target/doc/vmnl_graphics/struct.InputRuntime.html#method.poll_events) |
+| `vmnl_graphics::InputRuntime` | `sample_joystick` | [InputRuntime](../reference/input_runtime.md) | [`sample_joystick`](../../../target/doc/vmnl_graphics/struct.InputRuntime.html#method.sample_joystick) |
+| `vmnl_graphics::InputRuntime` | `set_joystick_callback` | [InputRuntime](../reference/input_runtime.md) | [`set_joystick_callback`](../../../target/doc/vmnl_graphics/struct.InputRuntime.html#method.set_joystick_callback) |
+| `vmnl_graphics::InputRuntime` | `set_joystick_user_pointer` | [InputRuntime](../reference/input_runtime.md) | [`set_joystick_user_pointer`](../../../target/doc/vmnl_graphics/struct.InputRuntime.html#method.set_joystick_user_pointer) |
+| `vmnl_graphics::InputRuntime` | `unset_joystick_callback` | [InputRuntime](../reference/input_runtime.md) | [`unset_joystick_callback`](../../../target/doc/vmnl_graphics/struct.InputRuntime.html#method.unset_joystick_callback) |
+| `vmnl_graphics::InputRuntime` | `update_gamepad_mappings` | [InputRuntime](../reference/input_runtime.md) | [`update_gamepad_mappings`](../../../target/doc/vmnl_graphics/struct.InputRuntime.html#method.update_gamepad_mappings) |
+| `vmnl_graphics::InputRuntimeBuilder` | `build` | [InputRuntime](../reference/input_runtime.md) | [`build`](../../../target/doc/vmnl_graphics/struct.InputRuntimeBuilder.html#method.build) |
+| `vmnl_graphics::InputRuntimeBuilder` | `clone` | [InputRuntime](../reference/input_runtime.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.InputRuntimeBuilder.html#method.clone) |
+| `vmnl_graphics::InputRuntimeBuilder` | `default` | [InputRuntime](../reference/input_runtime.md) | [`default`](../../../target/doc/vmnl_graphics/struct.InputRuntimeBuilder.html#method.default) |
+| `vmnl_graphics::InputRuntimeBuilder` | `fmt` | [InputRuntime](../reference/input_runtime.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.InputRuntimeBuilder.html#method.fmt) |
+| `vmnl_graphics::InputRuntimeBuilder` | `hat_buttons` | [InputRuntime](../reference/input_runtime.md) | [`hat_buttons`](../../../target/doc/vmnl_graphics/struct.InputRuntimeBuilder.html#method.hat_buttons) |
+| `vmnl_graphics::InputRuntimeConfig` | `clone` | [InputRuntime](../reference/input_runtime.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.InputRuntimeConfig.html#method.clone) |
+| `vmnl_graphics::InputRuntimeConfig` | `default` | [InputRuntime](../reference/input_runtime.md) | [`default`](../../../target/doc/vmnl_graphics/struct.InputRuntimeConfig.html#method.default) |
+| `vmnl_graphics::InputRuntimeConfig` | `eq` | [InputRuntime](../reference/input_runtime.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.InputRuntimeConfig.html#method.eq) |
+| `vmnl_graphics::InputRuntimeConfig` | `fmt` | [InputRuntime](../reference/input_runtime.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.InputRuntimeConfig.html#method.fmt) |
+| `vmnl_graphics::InputRuntimeConfig` | `hat_buttons` | [InputRuntime](../reference/input_runtime.md) | [`hat_buttons`](../../../target/doc/vmnl_graphics/struct.InputRuntimeConfig.html#method.hat_buttons) |
+| `vmnl_graphics::JoystickButtonState` | `as_raw` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`as_raw`](../../../target/doc/vmnl_graphics/enum.JoystickButtonState.html#method.as_raw) |
+| `vmnl_graphics::JoystickButtonState` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.JoystickButtonState.html#method.clone) |
+| `vmnl_graphics::JoystickButtonState` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.JoystickButtonState.html#method.eq) |
+| `vmnl_graphics::JoystickButtonState` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.JoystickButtonState.html#method.fmt) |
+| `vmnl_graphics::JoystickButtonState` | `hash` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hash`](../../../target/doc/vmnl_graphics/enum.JoystickButtonState.html#method.hash) |
+| `vmnl_graphics::JoystickButtonState` | `is_pressed` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_pressed`](../../../target/doc/vmnl_graphics/enum.JoystickButtonState.html#method.is_pressed) |
+| `vmnl_graphics::JoystickHatState` | `as_raw` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`as_raw`](../../../target/doc/vmnl_graphics/struct.JoystickHatState.html#method.as_raw) |
+| `vmnl_graphics::JoystickHatState` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.JoystickHatState.html#method.clone) |
+| `vmnl_graphics::JoystickHatState` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.JoystickHatState.html#method.eq) |
+| `vmnl_graphics::JoystickHatState` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.JoystickHatState.html#method.fmt) |
+| `vmnl_graphics::JoystickHatState` | `from_raw` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`from_raw`](../../../target/doc/vmnl_graphics/struct.JoystickHatState.html#method.from_raw) |
+| `vmnl_graphics::JoystickHatState` | `hash` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hash`](../../../target/doc/vmnl_graphics/struct.JoystickHatState.html#method.hash) |
+| `vmnl_graphics::JoystickHatState` | `is_down` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_down`](../../../target/doc/vmnl_graphics/struct.JoystickHatState.html#method.is_down) |
+| `vmnl_graphics::JoystickHatState` | `is_left` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_left`](../../../target/doc/vmnl_graphics/struct.JoystickHatState.html#method.is_left) |
+| `vmnl_graphics::JoystickHatState` | `is_right` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_right`](../../../target/doc/vmnl_graphics/struct.JoystickHatState.html#method.is_right) |
+| `vmnl_graphics::JoystickHatState` | `is_up` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_up`](../../../target/doc/vmnl_graphics/struct.JoystickHatState.html#method.is_up) |
+| `vmnl_graphics::JoystickId` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.JoystickId.html#method.clone) |
+| `vmnl_graphics::JoystickId` | `cmp` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`cmp`](../../../target/doc/vmnl_graphics/enum.JoystickId.html#method.cmp) |
+| `vmnl_graphics::JoystickId` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.JoystickId.html#method.eq) |
+| `vmnl_graphics::JoystickId` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.JoystickId.html#method.fmt) |
+| `vmnl_graphics::JoystickId` | `from_index` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`from_index`](../../../target/doc/vmnl_graphics/enum.JoystickId.html#method.from_index) |
+| `vmnl_graphics::JoystickId` | `hash` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hash`](../../../target/doc/vmnl_graphics/enum.JoystickId.html#method.hash) |
+| `vmnl_graphics::JoystickId` | `index` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`index`](../../../target/doc/vmnl_graphics/enum.JoystickId.html#method.index) |
+| `vmnl_graphics::JoystickId` | `partial_cmp` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`partial_cmp`](../../../target/doc/vmnl_graphics/enum.JoystickId.html#method.partial_cmp) |
+| `vmnl_graphics::JoystickSample` | `axes` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`axes`](../../../target/doc/vmnl_graphics/struct.JoystickSample.html#method.axes) |
+| `vmnl_graphics::JoystickSample` | `buttons` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`buttons`](../../../target/doc/vmnl_graphics/struct.JoystickSample.html#method.buttons) |
+| `vmnl_graphics::JoystickSample` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.JoystickSample.html#method.clone) |
+| `vmnl_graphics::JoystickSample` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.JoystickSample.html#method.eq) |
+| `vmnl_graphics::JoystickSample` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.JoystickSample.html#method.fmt) |
+| `vmnl_graphics::JoystickSample` | `gamepad` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`gamepad`](../../../target/doc/vmnl_graphics/struct.JoystickSample.html#method.gamepad) |
+| `vmnl_graphics::JoystickSample` | `guid` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`guid`](../../../target/doc/vmnl_graphics/struct.JoystickSample.html#method.guid) |
+| `vmnl_graphics::JoystickSample` | `hats` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`hats`](../../../target/doc/vmnl_graphics/struct.JoystickSample.html#method.hats) |
+| `vmnl_graphics::JoystickSample` | `id` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`id`](../../../target/doc/vmnl_graphics/struct.JoystickSample.html#method.id) |
+| `vmnl_graphics::JoystickSample` | `name` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`name`](../../../target/doc/vmnl_graphics/struct.JoystickSample.html#method.name) |
+| `vmnl_graphics::JoystickState` | `default` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`default`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.default) |
+| `vmnl_graphics::JoystickState` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.fmt) |
+| `vmnl_graphics::JoystickState` | `gamepad` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`gamepad`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.gamepad) |
+| `vmnl_graphics::JoystickState` | `is_any_down` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_any_down`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.is_any_down) |
+| `vmnl_graphics::JoystickState` | `is_any_pressed` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_any_pressed`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.is_any_pressed) |
+| `vmnl_graphics::JoystickState` | `is_any_released` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_any_released`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.is_any_released) |
+| `vmnl_graphics::JoystickState` | `is_down` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_down`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.is_down) |
+| `vmnl_graphics::JoystickState` | `is_pressed` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_pressed`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.is_pressed) |
+| `vmnl_graphics::JoystickState` | `is_released` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`is_released`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.is_released) |
+| `vmnl_graphics::JoystickState` | `left_stick` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`left_stick`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.left_stick) |
+| `vmnl_graphics::JoystickState` | `right_stick` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`right_stick`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.right_stick) |
+| `vmnl_graphics::JoystickState` | `sample` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`sample`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.sample) |
+| `vmnl_graphics::JoystickState` | `status` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`status`](../../../target/doc/vmnl_graphics/struct.JoystickState.html#method.status) |
+| `vmnl_graphics::JoystickStatus` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.JoystickStatus.html#method.clone) |
+| `vmnl_graphics::JoystickStatus` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.JoystickStatus.html#method.eq) |
+| `vmnl_graphics::JoystickStatus` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.JoystickStatus.html#method.fmt) |
+| `vmnl_graphics::Key` | `clone` | [Key](../reference/window/input/key.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.Key.html#method.clone) |
+| `vmnl_graphics::Key` | `eq` | [Key](../reference/window/input/key.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.Key.html#method.eq) |
+| `vmnl_graphics::Key` | `fmt` | [Key](../reference/window/input/key.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.Key.html#method.fmt) |
+| `vmnl_graphics::Key` | `hash` | [Key](../reference/window/input/key.md) | [`hash`](../../../target/doc/vmnl_graphics/enum.Key.html#method.hash) |
+| `vmnl_graphics::KeyboardState` | `default` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`default`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.default) |
+| `vmnl_graphics::KeyboardState` | `is_any_down` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_any_down`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.is_any_down) |
+| `vmnl_graphics::KeyboardState` | `is_any_pressed` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_any_pressed`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.is_any_pressed) |
+| `vmnl_graphics::KeyboardState` | `is_any_released` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_any_released`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.is_any_released) |
+| `vmnl_graphics::KeyboardState` | `is_any_used` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_any_used`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.is_any_used) |
+| `vmnl_graphics::KeyboardState` | `is_down` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_down`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.is_down) |
+| `vmnl_graphics::KeyboardState` | `is_one_down` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_one_down`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.is_one_down) |
+| `vmnl_graphics::KeyboardState` | `is_one_pressed` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_one_pressed`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.is_one_pressed) |
+| `vmnl_graphics::KeyboardState` | `is_one_released` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_one_released`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.is_one_released) |
+| `vmnl_graphics::KeyboardState` | `is_one_used` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_one_used`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.is_one_used) |
+| `vmnl_graphics::KeyboardState` | `is_pressed` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_pressed`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.is_pressed) |
+| `vmnl_graphics::KeyboardState` | `is_released` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`is_released`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.is_released) |
+| `vmnl_graphics::KeyboardState` | `new` | [KeyboardState](../reference/window/input/keyboard_state.md) | [`new`](../../../target/doc/vmnl_graphics/struct.KeyboardState.html#method.new) |
+| `vmnl_graphics::LineWidthLimits` | `clone` | [LineWidthLimits](../reference/line_width_limits.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.LineWidthLimits.html#method.clone) |
+| `vmnl_graphics::LineWidthLimits` | `eq` | [LineWidthLimits](../reference/line_width_limits.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.LineWidthLimits.html#method.eq) |
+| `vmnl_graphics::LineWidthLimits` | `fmt` | [LineWidthLimits](../reference/line_width_limits.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.LineWidthLimits.html#method.fmt) |
+| `vmnl_graphics::Modifiers` | `bitand` | [Modifiers](../reference/window/input/modifiers.md) | [`bitand`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.bitand) |
+| `vmnl_graphics::Modifiers` | `bitand_assign` | [Modifiers](../reference/window/input/modifiers.md) | [`bitand_assign`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.bitand_assign) |
+| `vmnl_graphics::Modifiers` | `bitor` | [Modifiers](../reference/window/input/modifiers.md) | [`bitor`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.bitor) |
+| `vmnl_graphics::Modifiers` | `bitor_assign` | [Modifiers](../reference/window/input/modifiers.md) | [`bitor_assign`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.bitor_assign) |
+| `vmnl_graphics::Modifiers` | `bits` | [Modifiers](../reference/window/input/modifiers.md) | [`bits`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.bits) |
+| `vmnl_graphics::Modifiers` | `clone` | [Modifiers](../reference/window/input/modifiers.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.clone) |
+| `vmnl_graphics::Modifiers` | `contains` | [Modifiers](../reference/window/input/modifiers.md) | [`contains`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.contains) |
+| `vmnl_graphics::Modifiers` | `default` | [Modifiers](../reference/window/input/modifiers.md) | [`default`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.default) |
+| `vmnl_graphics::Modifiers` | `eq` | [Modifiers](../reference/window/input/modifiers.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.eq) |
+| `vmnl_graphics::Modifiers` | `fmt` | [Modifiers](../reference/window/input/modifiers.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.fmt) |
+| `vmnl_graphics::Modifiers` | `hash` | [Modifiers](../reference/window/input/modifiers.md) | [`hash`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.hash) |
+| `vmnl_graphics::Modifiers` | `is_empty` | [Modifiers](../reference/window/input/modifiers.md) | [`is_empty`](../../../target/doc/vmnl_graphics/struct.Modifiers.html#method.is_empty) |
+| `vmnl_graphics::MonitorInfo` | `clone` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.MonitorInfo.html#method.clone) |
+| `vmnl_graphics::MonitorInfo` | `fmt` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.MonitorInfo.html#method.fmt) |
+| `vmnl_graphics::Monitors` | `clone` | [Monitors](../reference/window/monitors/monitors.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.Monitors.html#method.clone) |
+| `vmnl_graphics::Monitors` | `fmt` | [Monitors](../reference/window/monitors/monitors.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.Monitors.html#method.fmt) |
+| `vmnl_graphics::Monitors` | `infos` | [Monitors](../reference/window/monitors/monitors.md) | [`infos`](../../../target/doc/vmnl_graphics/struct.Monitors.html#method.infos) |
+| `vmnl_graphics::Monitors` | `names` | [Monitors](../reference/window/monitors/monitors.md) | [`names`](../../../target/doc/vmnl_graphics/struct.Monitors.html#method.names) |
+| `vmnl_graphics::Monitors` | `primary` | [Monitors](../reference/window/monitors/monitors.md) | [`primary`](../../../target/doc/vmnl_graphics/struct.Monitors.html#method.primary) |
+| `vmnl_graphics::MouseButton` | `clone` | [MouseButton](../reference/window/input/mouse_button.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.MouseButton.html#method.clone) |
+| `vmnl_graphics::MouseButton` | `eq` | [MouseButton](../reference/window/input/mouse_button.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.MouseButton.html#method.eq) |
+| `vmnl_graphics::MouseButton` | `fmt` | [MouseButton](../reference/window/input/mouse_button.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.MouseButton.html#method.fmt) |
+| `vmnl_graphics::MouseButton` | `hash` | [MouseButton](../reference/window/input/mouse_button.md) | [`hash`](../../../target/doc/vmnl_graphics/enum.MouseButton.html#method.hash) |
+| `vmnl_graphics::MouseState` | `default` | [MouseState](../reference/window/input/mouse_state.md) | [`default`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.default) |
+| `vmnl_graphics::MouseState` | `is_any_down` | [MouseState](../reference/window/input/mouse_state.md) | [`is_any_down`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.is_any_down) |
+| `vmnl_graphics::MouseState` | `is_any_pressed` | [MouseState](../reference/window/input/mouse_state.md) | [`is_any_pressed`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.is_any_pressed) |
+| `vmnl_graphics::MouseState` | `is_any_released` | [MouseState](../reference/window/input/mouse_state.md) | [`is_any_released`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.is_any_released) |
+| `vmnl_graphics::MouseState` | `is_any_used` | [MouseState](../reference/window/input/mouse_state.md) | [`is_any_used`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.is_any_used) |
+| `vmnl_graphics::MouseState` | `is_down` | [MouseState](../reference/window/input/mouse_state.md) | [`is_down`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.is_down) |
+| `vmnl_graphics::MouseState` | `is_one_down` | [MouseState](../reference/window/input/mouse_state.md) | [`is_one_down`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.is_one_down) |
+| `vmnl_graphics::MouseState` | `is_one_pressed` | [MouseState](../reference/window/input/mouse_state.md) | [`is_one_pressed`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.is_one_pressed) |
+| `vmnl_graphics::MouseState` | `is_one_released` | [MouseState](../reference/window/input/mouse_state.md) | [`is_one_released`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.is_one_released) |
+| `vmnl_graphics::MouseState` | `is_one_used` | [MouseState](../reference/window/input/mouse_state.md) | [`is_one_used`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.is_one_used) |
+| `vmnl_graphics::MouseState` | `is_pressed` | [MouseState](../reference/window/input/mouse_state.md) | [`is_pressed`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.is_pressed) |
+| `vmnl_graphics::MouseState` | `is_released` | [MouseState](../reference/window/input/mouse_state.md) | [`is_released`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.is_released) |
+| `vmnl_graphics::MouseState` | `new` | [MouseState](../reference/window/input/mouse_state.md) | [`new`](../../../target/doc/vmnl_graphics/struct.MouseState.html#method.new) |
+| `vmnl_graphics::PresentMode` | `clone` | [PresentMode](../reference/window/present_mode.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.PresentMode.html#method.clone) |
+| `vmnl_graphics::PresentMode` | `default` | [PresentMode](../reference/window/present_mode.md) | [`default`](../../../target/doc/vmnl_graphics/enum.PresentMode.html#method.default) |
+| `vmnl_graphics::PresentMode` | `eq` | [PresentMode](../reference/window/present_mode.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.PresentMode.html#method.eq) |
+| `vmnl_graphics::PresentMode` | `fmt` | [PresentMode](../reference/window/present_mode.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.PresentMode.html#method.fmt) |
+| `vmnl_graphics::PresentMode` | `hash` | [PresentMode](../reference/window/present_mode.md) | [`hash`](../../../target/doc/vmnl_graphics/enum.PresentMode.html#method.hash) |
+| `vmnl_graphics::RenderMode` | `clone` | [RenderMode](../reference/window/rendering/render_mode.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.RenderMode.html#method.clone) |
+| `vmnl_graphics::RenderMode` | `default` | [RenderMode](../reference/window/rendering/render_mode.md) | [`default`](../../../target/doc/vmnl_graphics/enum.RenderMode.html#method.default) |
+| `vmnl_graphics::RenderMode` | `eq` | [RenderMode](../reference/window/rendering/render_mode.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.RenderMode.html#method.eq) |
+| `vmnl_graphics::RenderMode` | `fmt` | [RenderMode](../reference/window/rendering/render_mode.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.RenderMode.html#method.fmt) |
+| `vmnl_graphics::RenderMode` | `hash` | [RenderMode](../reference/window/rendering/render_mode.md) | [`hash`](../../../target/doc/vmnl_graphics/enum.RenderMode.html#method.hash) |
+| `vmnl_graphics::RenderTargetConfig` | `clear_depth` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`clear_depth`](../../../target/doc/vmnl_graphics/struct.RenderTargetConfig.html#method.clear_depth) |
+| `vmnl_graphics::RenderTargetConfig` | `clear_depth_value` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`clear_depth_value`](../../../target/doc/vmnl_graphics/struct.RenderTargetConfig.html#method.clear_depth_value) |
+| `vmnl_graphics::RenderTargetConfig` | `clone` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.RenderTargetConfig.html#method.clone) |
+| `vmnl_graphics::RenderTargetConfig` | `default` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`default`](../../../target/doc/vmnl_graphics/struct.RenderTargetConfig.html#method.default) |
+| `vmnl_graphics::RenderTargetConfig` | `depth` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`depth`](../../../target/doc/vmnl_graphics/struct.RenderTargetConfig.html#method.depth) |
+| `vmnl_graphics::RenderTargetConfig` | `depth_value` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`depth_value`](../../../target/doc/vmnl_graphics/struct.RenderTargetConfig.html#method.depth_value) |
+| `vmnl_graphics::RenderTargetConfig` | `eq` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.RenderTargetConfig.html#method.eq) |
+| `vmnl_graphics::RenderTargetConfig` | `fmt` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.RenderTargetConfig.html#method.fmt) |
+| `vmnl_graphics::RenderTargetConfig` | `validate` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`validate`](../../../target/doc/vmnl_graphics/struct.RenderTargetConfig.html#method.validate) |
+| `vmnl_graphics::RenderTargetConfig` | `without_depth` | [RenderTargetConfig](../reference/window/render_target_config.md) | [`without_depth`](../../../target/doc/vmnl_graphics/struct.RenderTargetConfig.html#method.without_depth) |
+| `vmnl_graphics::RenderTargetInfo` | `clone` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.RenderTargetInfo.html#method.clone) |
+| `vmnl_graphics::RenderTargetInfo` | `color_format` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`color_format`](../../../target/doc/vmnl_graphics/struct.RenderTargetInfo.html#method.color_format) |
+| `vmnl_graphics::RenderTargetInfo` | `depth_format` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`depth_format`](../../../target/doc/vmnl_graphics/struct.RenderTargetInfo.html#method.depth_format) |
+| `vmnl_graphics::RenderTargetInfo` | `eq` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.RenderTargetInfo.html#method.eq) |
+| `vmnl_graphics::RenderTargetInfo` | `fmt` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.RenderTargetInfo.html#method.fmt) |
+| `vmnl_graphics::RenderTargetInfo` | `sample_count` | [RenderTargetInfo](../reference/window/render_target_info.md) | [`sample_count`](../../../target/doc/vmnl_graphics/struct.RenderTargetInfo.html#method.sample_count) |
+| `vmnl_graphics::Scancode` | `as_raw` | [Scancode](../reference/window/input/scancode.md) | [`as_raw`](../../../target/doc/vmnl_graphics/struct.Scancode.html#method.as_raw) |
+| `vmnl_graphics::Scancode` | `clone` | [Scancode](../reference/window/input/scancode.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.Scancode.html#method.clone) |
+| `vmnl_graphics::Scancode` | `eq` | [Scancode](../reference/window/input/scancode.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.Scancode.html#method.eq) |
+| `vmnl_graphics::Scancode` | `fmt` | [Scancode](../reference/window/input/scancode.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.Scancode.html#method.fmt) |
+| `vmnl_graphics::Scancode` | `from_raw` | [Scancode](../reference/window/input/scancode.md) | [`from_raw`](../../../target/doc/vmnl_graphics/struct.Scancode.html#method.from_raw) |
+| `vmnl_graphics::Scancode` | `hash` | [Scancode](../reference/window/input/scancode.md) | [`hash`](../../../target/doc/vmnl_graphics/struct.Scancode.html#method.hash) |
+| `vmnl_graphics::StandardCursor` | `clone` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.StandardCursor.html#method.clone) |
+| `vmnl_graphics::StandardCursor` | `eq` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.StandardCursor.html#method.eq) |
+| `vmnl_graphics::StandardCursor` | `fmt` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.StandardCursor.html#method.fmt) |
+| `vmnl_graphics::StandardCursor` | `hash` | [StandardCursor](../reference/window/input/standard_cursor.md) | [`hash`](../../../target/doc/vmnl_graphics/enum.StandardCursor.html#method.hash) |
+| `vmnl_graphics::StandardCursorBuilder` | `build` | [StandardCursorBuilder](../reference/window/input/standard_cursor_builder.md) | [`build`](../../../target/doc/vmnl_graphics/struct.StandardCursorBuilder.html#method.build) |
+| `vmnl_graphics::StickAngleConvention` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl_graphics/enum.StickAngleConvention.html#method.clone) |
+| `vmnl_graphics::StickAngleConvention` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl_graphics/enum.StickAngleConvention.html#method.eq) |
+| `vmnl_graphics::StickAngleConvention` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.StickAngleConvention.html#method.fmt) |
+| `vmnl_graphics::StickConfig` | `angle_convention` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`angle_convention`](../../../target/doc/vmnl_graphics/struct.StickConfig.html#method.angle_convention) |
+| `vmnl_graphics::StickConfig` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.StickConfig.html#method.clone) |
+| `vmnl_graphics::StickConfig` | `default` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`default`](../../../target/doc/vmnl_graphics/struct.StickConfig.html#method.default) |
+| `vmnl_graphics::StickConfig` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.StickConfig.html#method.eq) |
+| `vmnl_graphics::StickConfig` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.StickConfig.html#method.fmt) |
+| `vmnl_graphics::StickConfig` | `new` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`new`](../../../target/doc/vmnl_graphics/struct.StickConfig.html#method.new) |
+| `vmnl_graphics::StickConfig` | `process` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`process`](../../../target/doc/vmnl_graphics/struct.StickConfig.html#method.process) |
+| `vmnl_graphics::StickConfig` | `radial_dead_zone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`radial_dead_zone`](../../../target/doc/vmnl_graphics/struct.StickConfig.html#method.radial_dead_zone) |
+| `vmnl_graphics::StickConfig` | `with_angle_convention` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`with_angle_convention`](../../../target/doc/vmnl_graphics/struct.StickConfig.html#method.with_angle_convention) |
+| `vmnl_graphics::StickConfig` | `with_radial_dead_zone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`with_radial_dead_zone`](../../../target/doc/vmnl_graphics/struct.StickConfig.html#method.with_radial_dead_zone) |
+| `vmnl_graphics::StickState` | `angle` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`angle`](../../../target/doc/vmnl_graphics/struct.StickState.html#method.angle) |
+| `vmnl_graphics::StickState` | `clone` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.StickState.html#method.clone) |
+| `vmnl_graphics::StickState` | `eq` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.StickState.html#method.eq) |
+| `vmnl_graphics::StickState` | `fmt` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.StickState.html#method.fmt) |
+| `vmnl_graphics::StickState` | `magnitude` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`magnitude`](../../../target/doc/vmnl_graphics/struct.StickState.html#method.magnitude) |
+| `vmnl_graphics::StickState` | `x` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`x`](../../../target/doc/vmnl_graphics/struct.StickState.html#method.x) |
+| `vmnl_graphics::StickState` | `y` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [`y`](../../../target/doc/vmnl_graphics/struct.StickState.html#method.y) |
+| `vmnl_graphics::VMNLError` | `fmt` | [VMNLError](../reference/errors/vmnl_error.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.VMNLError.html#method.fmt) |
+| `vmnl_graphics::VMNLError` | `kind` | [VMNLError](../reference/errors/vmnl_error.md) | [`kind`](../../../target/doc/vmnl_graphics/struct.VMNLError.html#method.kind) |
+| `vmnl_graphics::VMNLError` | `location` | [VMNLError](../reference/errors/vmnl_error.md) | [`location`](../../../target/doc/vmnl_graphics/struct.VMNLError.html#method.location) |
+| `vmnl_graphics::VMNLError` | `new` | [VMNLError](../reference/errors/vmnl_error.md) | [`new`](../../../target/doc/vmnl_graphics/struct.VMNLError.html#method.new) |
+| `vmnl_graphics::VMNLError` | `report` | [VMNLError](../reference/errors/vmnl_error.md) | [`report`](../../../target/doc/vmnl_graphics/struct.VMNLError.html#method.report) |
+| `vmnl_graphics::VMNLErrorKind` | `fmt` | [VMNLErrorKind](../reference/errors/vmnl_error_kind.md) | [`fmt`](../../../target/doc/vmnl_graphics/enum.VMNLErrorKind.html#method.fmt) |
+| `vmnl_graphics::VMNLErrorLocation` | `clone` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.VMNLErrorLocation.html#method.clone) |
+| `vmnl_graphics::VMNLErrorLocation` | `column` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [`column`](../../../target/doc/vmnl_graphics/struct.VMNLErrorLocation.html#method.column) |
+| `vmnl_graphics::VMNLErrorLocation` | `file` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [`file`](../../../target/doc/vmnl_graphics/struct.VMNLErrorLocation.html#method.file) |
+| `vmnl_graphics::VMNLErrorLocation` | `fmt` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.VMNLErrorLocation.html#method.fmt) |
+| `vmnl_graphics::VMNLErrorLocation` | `line` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [`line`](../../../target/doc/vmnl_graphics/struct.VMNLErrorLocation.html#method.line) |
+| `vmnl_graphics::VideoMode` | `clone` | [VideoMode](../reference/window/monitors/video_mode.md) | [`clone`](../../../target/doc/vmnl_graphics/struct.VideoMode.html#method.clone) |
+| `vmnl_graphics::VideoMode` | `eq` | [VideoMode](../reference/window/monitors/video_mode.md) | [`eq`](../../../target/doc/vmnl_graphics/struct.VideoMode.html#method.eq) |
+| `vmnl_graphics::VideoMode` | `fmt` | [VideoMode](../reference/window/monitors/video_mode.md) | [`fmt`](../../../target/doc/vmnl_graphics/struct.VideoMode.html#method.fmt) |
+| `vmnl_graphics::VideoMode` | `from` | [VideoMode](../reference/window/monitors/video_mode.md) | [`from`](../../../target/doc/vmnl_graphics/struct.VideoMode.html#method.from) |
+| `vmnl_graphics::VideoMode` | `hash` | [VideoMode](../reference/window/monitors/video_mode.md) | [`hash`](../../../target/doc/vmnl_graphics/struct.VideoMode.html#method.hash) |
+| `vmnl_graphics::Window` | `builder` | [Window](../reference/window/window.md) | [`builder`](../../../target/doc/vmnl_graphics/struct.Window.html#method.builder) |
+| `vmnl_graphics::Window` | `clear_input_transitions` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`clear_input_transitions`](../../../target/doc/vmnl_graphics/struct.Window.html#method.clear_input_transitions) |
+| `vmnl_graphics::Window` | `close` | [Window lifecycle](../reference/window/lifecycle.md) | [`close`](../../../target/doc/vmnl_graphics/struct.Window.html#method.close) |
+| `vmnl_graphics::Window` | `configure_window_polling` | [Window polling](../reference/window/polling.md) | [`configure_window_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.configure_window_polling) |
+| `vmnl_graphics::Window` | `cursor` | [Cursor controls](../reference/window/cursor.md) | [`cursor`](../../../target/doc/vmnl_graphics/struct.Window.html#method.cursor) |
+| `vmnl_graphics::Window` | `disable_keyboard_polling` | [Window polling](../reference/window/polling.md) | [`disable_keyboard_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.disable_keyboard_polling) |
+| `vmnl_graphics::Window` | `disable_mouse_polling` | [Window polling](../reference/window/polling.md) | [`disable_mouse_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.disable_mouse_polling) |
+| `vmnl_graphics::Window` | `disable_window_state_polling` | [Window polling](../reference/window/polling.md) | [`disable_window_state_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.disable_window_state_polling) |
+| `vmnl_graphics::Window` | `enable_all_polling` | [Window polling](../reference/window/polling.md) | [`enable_all_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.enable_all_polling) |
+| `vmnl_graphics::Window` | `enable_keyboard_polling` | [Window polling](../reference/window/polling.md) | [`enable_keyboard_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.enable_keyboard_polling) |
+| `vmnl_graphics::Window` | `enable_mouse_polling` | [Window polling](../reference/window/polling.md) | [`enable_mouse_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.enable_mouse_polling) |
+| `vmnl_graphics::Window` | `enable_window_state_polling` | [Window polling](../reference/window/polling.md) | [`enable_window_state_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.enable_window_state_polling) |
+| `vmnl_graphics::Window` | `focus` | [Window lifecycle](../reference/window/lifecycle.md) | [`focus`](../../../target/doc/vmnl_graphics/struct.Window.html#method.focus) |
+| `vmnl_graphics::Window` | `get_content_scale` | [Window configuration](../reference/window/configuration.md) | [`get_content_scale`](../../../target/doc/vmnl_graphics/struct.Window.html#method.get_content_scale) |
+| `vmnl_graphics::Window` | `get_cursor_mode` | [Cursor controls](../reference/window/cursor.md) | [`get_cursor_mode`](../../../target/doc/vmnl_graphics/struct.Window.html#method.get_cursor_mode) |
+| `vmnl_graphics::Window` | `get_cursor_position` | [Cursor controls](../reference/window/cursor.md) | [`get_cursor_position`](../../../target/doc/vmnl_graphics/struct.Window.html#method.get_cursor_position) |
+| `vmnl_graphics::Window` | `get_framebuffer_size` | [Window configuration](../reference/window/configuration.md) | [`get_framebuffer_size`](../../../target/doc/vmnl_graphics/struct.Window.html#method.get_framebuffer_size) |
+| `vmnl_graphics::Window` | `get_opacity` | [Window configuration](../reference/window/configuration.md) | [`get_opacity`](../../../target/doc/vmnl_graphics/struct.Window.html#method.get_opacity) |
+| `vmnl_graphics::Window` | `get_position` | [Window configuration](../reference/window/configuration.md) | [`get_position`](../../../target/doc/vmnl_graphics/struct.Window.html#method.get_position) |
+| `vmnl_graphics::Window` | `get_size` | [Window configuration](../reference/window/configuration.md) | [`get_size`](../../../target/doc/vmnl_graphics/struct.Window.html#method.get_size) |
+| `vmnl_graphics::Window` | `get_time` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`get_time`](../../../target/doc/vmnl_graphics/struct.Window.html#method.get_time) |
+| `vmnl_graphics::Window` | `get_timer_frequency` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`get_timer_frequency`](../../../target/doc/vmnl_graphics/struct.Window.html#method.get_timer_frequency) |
+| `vmnl_graphics::Window` | `get_timer_value` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`get_timer_value`](../../../target/doc/vmnl_graphics/struct.Window.html#method.get_timer_value) |
+| `vmnl_graphics::Window` | `get_title` | [Window configuration](../reference/window/configuration.md) | [`get_title`](../../../target/doc/vmnl_graphics/struct.Window.html#method.get_title) |
+| `vmnl_graphics::Window` | `height` | [Window configuration](../reference/window/configuration.md) | [`height`](../../../target/doc/vmnl_graphics/struct.Window.html#method.height) |
+| `vmnl_graphics::Window` | `hide` | [Window lifecycle](../reference/window/lifecycle.md) | [`hide`](../../../target/doc/vmnl_graphics/struct.Window.html#method.hide) |
+| `vmnl_graphics::Window` | `iconify` | [Window lifecycle](../reference/window/lifecycle.md) | [`iconify`](../../../target/doc/vmnl_graphics/struct.Window.html#method.iconify) |
+| `vmnl_graphics::Window` | `input` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`input`](../../../target/doc/vmnl_graphics/struct.Window.html#method.input) |
+| `vmnl_graphics::Window` | `is_char_mods_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_char_mods_polling_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_char_mods_polling_enabled) |
+| `vmnl_graphics::Window` | `is_char_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_char_polling_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_char_polling_enabled) |
+| `vmnl_graphics::Window` | `is_cursor_enter_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_cursor_enter_polling_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_cursor_enter_polling_enabled) |
+| `vmnl_graphics::Window` | `is_cursor_hovered` | [Cursor controls](../reference/window/cursor.md) | [`is_cursor_hovered`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_cursor_hovered) |
+| `vmnl_graphics::Window` | `is_cursor_pos_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_cursor_pos_polling_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_cursor_pos_polling_enabled) |
+| `vmnl_graphics::Window` | `is_focused` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_focused`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_focused) |
+| `vmnl_graphics::Window` | `is_iconified` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_iconified`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_iconified) |
+| `vmnl_graphics::Window` | `is_joystick_event_delivery_enabled` | [Window](../reference/window/window.md) | [`is_joystick_event_delivery_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_joystick_event_delivery_enabled) |
+| `vmnl_graphics::Window` | `is_joystick_tracking_enabled` | [Window](../reference/window/window.md) | [`is_joystick_tracking_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_joystick_tracking_enabled) |
+| `vmnl_graphics::Window` | `is_key_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_key_polling_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_key_polling_enabled) |
+| `vmnl_graphics::Window` | `is_lock_key_modifier_reporting_enabled` | [Input modes](../reference/window/input/modes.md) | [`is_lock_key_modifier_reporting_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_lock_key_modifier_reporting_enabled) |
+| `vmnl_graphics::Window` | `is_maximized` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_maximized`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_maximized) |
+| `vmnl_graphics::Window` | `is_mouse_button_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_mouse_button_polling_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_mouse_button_polling_enabled) |
+| `vmnl_graphics::Window` | `is_open` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_open`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_open) |
+| `vmnl_graphics::Window` | `is_raw_mouse_motion_enabled` | [Cursor controls](../reference/window/cursor.md) | [`is_raw_mouse_motion_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_raw_mouse_motion_enabled) |
+| `vmnl_graphics::Window` | `is_ready` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_ready`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_ready) |
+| `vmnl_graphics::Window` | `is_scroll_polling_enabled` | [Window polling](../reference/window/polling.md) | [`is_scroll_polling_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_scroll_polling_enabled) |
+| `vmnl_graphics::Window` | `is_sticky_keys_enabled` | [Input modes](../reference/window/input/modes.md) | [`is_sticky_keys_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_sticky_keys_enabled) |
+| `vmnl_graphics::Window` | `is_sticky_mouse_buttons_enabled` | [Input modes](../reference/window/input/modes.md) | [`is_sticky_mouse_buttons_enabled`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_sticky_mouse_buttons_enabled) |
+| `vmnl_graphics::Window` | `is_visible` | [Window lifecycle](../reference/window/lifecycle.md) | [`is_visible`](../../../target/doc/vmnl_graphics/struct.Window.html#method.is_visible) |
+| `vmnl_graphics::Window` | `maximize` | [Window lifecycle](../reference/window/lifecycle.md) | [`maximize`](../../../target/doc/vmnl_graphics/struct.Window.html#method.maximize) |
+| `vmnl_graphics::Window` | `monitor` | [Window configuration](../reference/window/configuration.md) | [`monitor`](../../../target/doc/vmnl_graphics/struct.Window.html#method.monitor) |
+| `vmnl_graphics::Window` | `new` | [Window](../reference/window/window.md) | [`new`](../../../target/doc/vmnl_graphics/struct.Window.html#method.new) |
+| `vmnl_graphics::Window` | `opacity` | [Window configuration](../reference/window/configuration.md) | [`opacity`](../../../target/doc/vmnl_graphics/struct.Window.html#method.opacity) |
+| `vmnl_graphics::Window` | `poll_events` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`poll_events`](../../../target/doc/vmnl_graphics/struct.Window.html#method.poll_events) |
+| `vmnl_graphics::Window` | `post_empty_event` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`post_empty_event`](../../../target/doc/vmnl_graphics/struct.Window.html#method.post_empty_event) |
+| `vmnl_graphics::Window` | `render` | [Window rendering](../reference/window/rendering/README.md) | [`render`](../../../target/doc/vmnl_graphics/struct.Window.html#method.render) |
+| `vmnl_graphics::Window` | `render_target_config` | [Window](../reference/window/window.md) | [`render_target_config`](../../../target/doc/vmnl_graphics/struct.Window.html#method.render_target_config) |
+| `vmnl_graphics::Window` | `render_target_info` | [Window](../reference/window/window.md) | [`render_target_info`](../../../target/doc/vmnl_graphics/struct.Window.html#method.render_target_info) |
+| `vmnl_graphics::Window` | `restore` | [Window lifecycle](../reference/window/lifecycle.md) | [`restore`](../../../target/doc/vmnl_graphics/struct.Window.html#method.restore) |
+| `vmnl_graphics::Window` | `set_aspect_ratio` | [Window configuration](../reference/window/configuration.md) | [`set_aspect_ratio`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_aspect_ratio) |
+| `vmnl_graphics::Window` | `set_char_mods_polling` | [Window polling](../reference/window/polling.md) | [`set_char_mods_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_char_mods_polling) |
+| `vmnl_graphics::Window` | `set_char_polling` | [Window polling](../reference/window/polling.md) | [`set_char_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_char_polling) |
+| `vmnl_graphics::Window` | `set_clear_color` | [Window configuration](../reference/window/configuration.md) | [`set_clear_color`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_clear_color) |
+| `vmnl_graphics::Window` | `set_close_polling` | [Window polling](../reference/window/polling.md) | [`set_close_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_close_polling) |
+| `vmnl_graphics::Window` | `set_content_scale_polling` | [Window polling](../reference/window/polling.md) | [`set_content_scale_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_content_scale_polling) |
+| `vmnl_graphics::Window` | `set_cursor` | [Cursor controls](../reference/window/cursor.md) | [`set_cursor`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_cursor) |
+| `vmnl_graphics::Window` | `set_cursor_enter_polling` | [Window polling](../reference/window/polling.md) | [`set_cursor_enter_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_cursor_enter_polling) |
+| `vmnl_graphics::Window` | `set_cursor_mode` | [Cursor controls](../reference/window/cursor.md) | [`set_cursor_mode`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_cursor_mode) |
+| `vmnl_graphics::Window` | `set_cursor_pos_polling` | [Window polling](../reference/window/polling.md) | [`set_cursor_pos_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_cursor_pos_polling) |
+| `vmnl_graphics::Window` | `set_cursor_position` | [Cursor controls](../reference/window/cursor.md) | [`set_cursor_position`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_cursor_position) |
+| `vmnl_graphics::Window` | `set_drag_and_drop_polling` | [Window polling](../reference/window/polling.md) | [`set_drag_and_drop_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_drag_and_drop_polling) |
+| `vmnl_graphics::Window` | `set_error_callback` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`set_error_callback`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_error_callback) |
+| `vmnl_graphics::Window` | `set_focus_polling` | [Window polling](../reference/window/polling.md) | [`set_focus_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_focus_polling) |
+| `vmnl_graphics::Window` | `set_framebuffer_size_polling` | [Window polling](../reference/window/polling.md) | [`set_framebuffer_size_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_framebuffer_size_polling) |
+| `vmnl_graphics::Window` | `set_iconify_polling` | [Window polling](../reference/window/polling.md) | [`set_iconify_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_iconify_polling) |
+| `vmnl_graphics::Window` | `set_joystick_event_delivery` | [Window](../reference/window/window.md) | [`set_joystick_event_delivery`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_joystick_event_delivery) |
+| `vmnl_graphics::Window` | `set_joystick_tracking` | [Window](../reference/window/window.md) | [`set_joystick_tracking`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_joystick_tracking) |
+| `vmnl_graphics::Window` | `set_key_polling` | [Window polling](../reference/window/polling.md) | [`set_key_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_key_polling) |
+| `vmnl_graphics::Window` | `set_left_stick_config` | [Window](../reference/window/window.md) | [`set_left_stick_config`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_left_stick_config) |
+| `vmnl_graphics::Window` | `set_lock_key_modifier_reporting` | [Input modes](../reference/window/input/modes.md) | [`set_lock_key_modifier_reporting`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_lock_key_modifier_reporting) |
+| `vmnl_graphics::Window` | `set_maximize_polling` | [Window polling](../reference/window/polling.md) | [`set_maximize_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_maximize_polling) |
+| `vmnl_graphics::Window` | `set_mouse_button_polling` | [Window polling](../reference/window/polling.md) | [`set_mouse_button_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_mouse_button_polling) |
+| `vmnl_graphics::Window` | `set_position` | [Window configuration](../reference/window/configuration.md) | [`set_position`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_position) |
+| `vmnl_graphics::Window` | `set_raw_mouse_motion` | [Cursor controls](../reference/window/cursor.md) | [`set_raw_mouse_motion`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_raw_mouse_motion) |
+| `vmnl_graphics::Window` | `set_refresh_polling` | [Window polling](../reference/window/polling.md) | [`set_refresh_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_refresh_polling) |
+| `vmnl_graphics::Window` | `set_right_stick_config` | [Window](../reference/window/window.md) | [`set_right_stick_config`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_right_stick_config) |
+| `vmnl_graphics::Window` | `set_scroll_polling` | [Window polling](../reference/window/polling.md) | [`set_scroll_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_scroll_polling) |
+| `vmnl_graphics::Window` | `set_size` | [Window configuration](../reference/window/configuration.md) | [`set_size`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_size) |
+| `vmnl_graphics::Window` | `set_size_limits` | [Window configuration](../reference/window/configuration.md) | [`set_size_limits`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_size_limits) |
+| `vmnl_graphics::Window` | `set_size_polling` | [Window polling](../reference/window/polling.md) | [`set_size_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_size_polling) |
+| `vmnl_graphics::Window` | `set_stick_configs` | [Window](../reference/window/window.md) | [`set_stick_configs`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_stick_configs) |
+| `vmnl_graphics::Window` | `set_sticky_keys` | [Input modes](../reference/window/input/modes.md) | [`set_sticky_keys`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_sticky_keys) |
+| `vmnl_graphics::Window` | `set_sticky_mouse_buttons` | [Input modes](../reference/window/input/modes.md) | [`set_sticky_mouse_buttons`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_sticky_mouse_buttons) |
+| `vmnl_graphics::Window` | `set_time` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`set_time`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_time) |
+| `vmnl_graphics::Window` | `set_title` | [Window configuration](../reference/window/configuration.md) | [`set_title`](../../../target/doc/vmnl_graphics/struct.Window.html#method.set_title) |
+| `vmnl_graphics::Window` | `show` | [Window lifecycle](../reference/window/lifecycle.md) | [`show`](../../../target/doc/vmnl_graphics/struct.Window.html#method.show) |
+| `vmnl_graphics::Window` | `unconfigure_window_polling` | [Window polling](../reference/window/polling.md) | [`unconfigure_window_polling`](../../../target/doc/vmnl_graphics/struct.Window.html#method.unconfigure_window_polling) |
+| `vmnl_graphics::Window` | `unset_error_callback` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`unset_error_callback`](../../../target/doc/vmnl_graphics/struct.Window.html#method.unset_error_callback) |
+| `vmnl_graphics::Window` | `wait_events` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`wait_events`](../../../target/doc/vmnl_graphics/struct.Window.html#method.wait_events) |
+| `vmnl_graphics::Window` | `wait_events_timeout` | [Events and timers](../reference/window/events/event_processing_and_timers.md) | [`wait_events_timeout`](../../../target/doc/vmnl_graphics/struct.Window.html#method.wait_events_timeout) |
+| `vmnl_graphics::Window` | `width` | [Window configuration](../reference/window/configuration.md) | [`width`](../../../target/doc/vmnl_graphics/struct.Window.html#method.width) |
+| `vmnl_graphics::WindowBuilder` | `build` | [WindowBuilder](../reference/window/window_builder.md) | [`build`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.build) |
+| `vmnl_graphics::WindowBuilder` | `default` | [WindowBuilder](../reference/window/window_builder.md) | [`default`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.default) |
+| `vmnl_graphics::WindowBuilder` | `fragment_shader` | [WindowBuilder](../reference/window/window_builder.md) | [`fragment_shader`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.fragment_shader) |
+| `vmnl_graphics::WindowBuilder` | `joystick_event_delivery` | [WindowBuilder](../reference/window/window_builder.md) | [`joystick_event_delivery`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.joystick_event_delivery) |
+| `vmnl_graphics::WindowBuilder` | `joystick_tracking` | [WindowBuilder](../reference/window/window_builder.md) | [`joystick_tracking`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.joystick_tracking) |
+| `vmnl_graphics::WindowBuilder` | `left_stick_config` | [WindowBuilder](../reference/window/window_builder.md) | [`left_stick_config`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.left_stick_config) |
+| `vmnl_graphics::WindowBuilder` | `preferred_present_mode` | [WindowBuilder](../reference/window/window_builder.md) | [`preferred_present_mode`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.preferred_present_mode) |
+| `vmnl_graphics::WindowBuilder` | `present_mode` | [WindowBuilder](../reference/window/window_builder.md) | [`present_mode`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.present_mode) |
+| `vmnl_graphics::WindowBuilder` | `render_target` | [WindowBuilder](../reference/window/window_builder.md) | [`render_target`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.render_target) |
+| `vmnl_graphics::WindowBuilder` | `render_target_value` | [WindowBuilder](../reference/window/window_builder.md) | [`render_target_value`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.render_target_value) |
+| `vmnl_graphics::WindowBuilder` | `right_stick_config` | [WindowBuilder](../reference/window/window_builder.md) | [`right_stick_config`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.right_stick_config) |
+| `vmnl_graphics::WindowBuilder` | `set_clear_color` | [WindowBuilder](../reference/window/window_builder.md) | [`set_clear_color`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.set_clear_color) |
+| `vmnl_graphics::WindowBuilder` | `size` | [WindowBuilder](../reference/window/window_builder.md) | [`size`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.size) |
+| `vmnl_graphics::WindowBuilder` | `size_limit` | [WindowBuilder](../reference/window/window_builder.md) | [`size_limit`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.size_limit) |
+| `vmnl_graphics::WindowBuilder` | `title` | [WindowBuilder](../reference/window/window_builder.md) | [`title`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.title) |
+| `vmnl_graphics::WindowBuilder` | `unset_configure_window_polling` | [WindowBuilder](../reference/window/window_builder.md) | [`unset_configure_window_polling`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.unset_configure_window_polling) |
+| `vmnl_graphics::WindowBuilder` | `vertex_shader` | [WindowBuilder](../reference/window/window_builder.md) | [`vertex_shader`](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html#method.vertex_shader) |
+| `vmnl_graphics::common::BufferMemoryPreference` | `clone` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [`clone`](../../../target/doc/vmnl_graphics/common/enum.BufferMemoryPreference.html#method.clone) |
+| `vmnl_graphics::common::BufferMemoryPreference` | `default` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [`default`](../../../target/doc/vmnl_graphics/common/enum.BufferMemoryPreference.html#method.default) |
+| `vmnl_graphics::common::BufferMemoryPreference` | `eq` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [`eq`](../../../target/doc/vmnl_graphics/common/enum.BufferMemoryPreference.html#method.eq) |
+| `vmnl_graphics::common::BufferMemoryPreference` | `fmt` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [`fmt`](../../../target/doc/vmnl_graphics/common/enum.BufferMemoryPreference.html#method.fmt) |
+| `vmnl_graphics::common::BufferMemoryPreference` | `hash` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [`hash`](../../../target/doc/vmnl_graphics/common/enum.BufferMemoryPreference.html#method.hash) |
+| `vmnl_graphics::common::Rgba` | `add_assign` | [Rgba](../reference/common/rgba.md) | [`add_assign`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.add_assign) |
+| `vmnl_graphics::common::Rgba` | `clone` | [Rgba](../reference/common/rgba.md) | [`clone`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.clone) |
+| `vmnl_graphics::common::Rgba` | `cmp` | [Rgba](../reference/common/rgba.md) | [`cmp`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.cmp) |
+| `vmnl_graphics::common::Rgba` | `default` | [Rgba](../reference/common/rgba.md) | [`default`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.default) |
+| `vmnl_graphics::common::Rgba` | `eq` | [Rgba](../reference/common/rgba.md) | [`eq`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.eq) |
+| `vmnl_graphics::common::Rgba` | `fmt` | [Rgba](../reference/common/rgba.md) | [`fmt`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.fmt) |
+| `vmnl_graphics::common::Rgba` | `from` | [Rgba](../reference/common/rgba.md) | [`from`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.from) |
+| `vmnl_graphics::common::Rgba` | `mul` | [Rgba](../reference/common/rgba.md) | [`mul`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.mul) |
+| `vmnl_graphics::common::Rgba` | `new` | [Rgba](../reference/common/rgba.md) | [`new`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.new) |
+| `vmnl_graphics::common::Rgba` | `partial_cmp` | [Rgba](../reference/common/rgba.md) | [`partial_cmp`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.partial_cmp) |
+| `vmnl_graphics::common::Rgba` | `rgb` | [Rgba](../reference/common/rgba.md) | [`rgb`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.rgb) |
+| `vmnl_graphics::common::Rgba` | `rgba` | [Rgba](../reference/common/rgba.md) | [`rgba`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.rgba) |
+| `vmnl_graphics::common::Rgba` | `sub` | [Rgba](../reference/common/rgba.md) | [`sub`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.sub) |
+| `vmnl_graphics::common::Rgba` | `sub_assign` | [Rgba](../reference/common/rgba.md) | [`sub_assign`](../../../target/doc/vmnl_graphics/common/struct.Rgba.html#method.sub_assign) |
+| `vmnl_graphics::common::ShaderSource` | `clone` | [ShaderSource](../reference/common/shader_source.md) | [`clone`](../../../target/doc/vmnl_graphics/common/enum.ShaderSource.html#method.clone) |
+| `vmnl_graphics::common::ShaderSource` | `cmp` | [ShaderSource](../reference/common/shader_source.md) | [`cmp`](../../../target/doc/vmnl_graphics/common/enum.ShaderSource.html#method.cmp) |
+| `vmnl_graphics::common::ShaderSource` | `eq` | [ShaderSource](../reference/common/shader_source.md) | [`eq`](../../../target/doc/vmnl_graphics/common/enum.ShaderSource.html#method.eq) |
+| `vmnl_graphics::common::ShaderSource` | `fmt` | [ShaderSource](../reference/common/shader_source.md) | [`fmt`](../../../target/doc/vmnl_graphics/common/enum.ShaderSource.html#method.fmt) |
+| `vmnl_graphics::common::ShaderSource` | `hash` | [ShaderSource](../reference/common/shader_source.md) | [`hash`](../../../target/doc/vmnl_graphics/common/enum.ShaderSource.html#method.hash) |
+| `vmnl_graphics::common::ShaderSource` | `partial_cmp` | [ShaderSource](../reference/common/shader_source.md) | [`partial_cmp`](../../../target/doc/vmnl_graphics/common/enum.ShaderSource.html#method.partial_cmp) |
+| `vmnl_graphics::d2::Anchor` | `clone` | [Anchor](../reference/d2/shapes/anchor.md) | [`clone`](../../../target/doc/vmnl_graphics/d2/enum.Anchor.html#method.clone) |
+| `vmnl_graphics::d2::Anchor` | `default` | [Anchor](../reference/d2/shapes/anchor.md) | [`default`](../../../target/doc/vmnl_graphics/d2/enum.Anchor.html#method.default) |
+| `vmnl_graphics::d2::Anchor` | `eq` | [Anchor](../reference/d2/shapes/anchor.md) | [`eq`](../../../target/doc/vmnl_graphics/d2/enum.Anchor.html#method.eq) |
+| `vmnl_graphics::d2::Anchor` | `fmt` | [Anchor](../reference/d2/shapes/anchor.md) | [`fmt`](../../../target/doc/vmnl_graphics/d2/enum.Anchor.html#method.fmt) |
+| `vmnl_graphics::d2::Anchor` | `hash` | [Anchor](../reference/d2/shapes/anchor.md) | [`hash`](../../../target/doc/vmnl_graphics/d2/enum.Anchor.html#method.hash) |
+| `vmnl_graphics::d2::CornerRadii` | `all` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`all`](../../../target/doc/vmnl_graphics/d2/struct.CornerRadii.html#method.all) |
+| `vmnl_graphics::d2::CornerRadii` | `clone` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`clone`](../../../target/doc/vmnl_graphics/d2/struct.CornerRadii.html#method.clone) |
+| `vmnl_graphics::d2::CornerRadii` | `default` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`default`](../../../target/doc/vmnl_graphics/d2/struct.CornerRadii.html#method.default) |
+| `vmnl_graphics::d2::CornerRadii` | `eq` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`eq`](../../../target/doc/vmnl_graphics/d2/struct.CornerRadii.html#method.eq) |
+| `vmnl_graphics::d2::CornerRadii` | `fmt` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`fmt`](../../../target/doc/vmnl_graphics/d2/struct.CornerRadii.html#method.fmt) |
+| `vmnl_graphics::d2::CornerRadii` | `new` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [`new`](../../../target/doc/vmnl_graphics/d2/struct.CornerRadii.html#method.new) |
+| `vmnl_graphics::d2::Drawable2D` | `render_item_2d` | [Drawable2D](../reference/d2/drawable_2d.md) | [`render_item_2d`](../../../target/doc/vmnl_graphics/d2/trait.Drawable2D.html#tymethod.render_item_2d) |
+| `vmnl_graphics::d2::IndexedShapeBuilder` | `buffer_memory_preference` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl_graphics/d2/struct.IndexedShapeBuilder.html#method.buffer_memory_preference) |
+| `vmnl_graphics::d2::IndexedShapeBuilder` | `build` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [`build`](../../../target/doc/vmnl_graphics/d2/struct.IndexedShapeBuilder.html#method.build) |
+| `vmnl_graphics::d2::LineBuilder` | `buffer_memory_preference` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl_graphics/d2/struct.LineBuilder.html#method.buffer_memory_preference) |
+| `vmnl_graphics::d2::LineBuilder` | `build` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [`build`](../../../target/doc/vmnl_graphics/d2/struct.LineBuilder.html#method.build) |
+| `vmnl_graphics::d2::LineBuilder` | `cap` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [`cap`](../../../target/doc/vmnl_graphics/d2/struct.LineBuilder.html#method.cap) |
+| `vmnl_graphics::d2::LineBuilder` | `color` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [`color`](../../../target/doc/vmnl_graphics/d2/struct.LineBuilder.html#method.color) |
+| `vmnl_graphics::d2::LineBuilder` | `width` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [`width`](../../../target/doc/vmnl_graphics/d2/struct.LineBuilder.html#method.width) |
+| `vmnl_graphics::d2::LineCap` | `clone` | [LineCap](../reference/d2/shapes/line_cap.md) | [`clone`](../../../target/doc/vmnl_graphics/d2/enum.LineCap.html#method.clone) |
+| `vmnl_graphics::d2::LineCap` | `default` | [LineCap](../reference/d2/shapes/line_cap.md) | [`default`](../../../target/doc/vmnl_graphics/d2/enum.LineCap.html#method.default) |
+| `vmnl_graphics::d2::LineCap` | `eq` | [LineCap](../reference/d2/shapes/line_cap.md) | [`eq`](../../../target/doc/vmnl_graphics/d2/enum.LineCap.html#method.eq) |
+| `vmnl_graphics::d2::LineCap` | `fmt` | [LineCap](../reference/d2/shapes/line_cap.md) | [`fmt`](../../../target/doc/vmnl_graphics/d2/enum.LineCap.html#method.fmt) |
+| `vmnl_graphics::d2::LineCap` | `hash` | [LineCap](../reference/d2/shapes/line_cap.md) | [`hash`](../../../target/doc/vmnl_graphics/d2/enum.LineCap.html#method.hash) |
+| `vmnl_graphics::d2::LineJoin` | `clone` | [LineJoin](../reference/d2/shapes/line_join.md) | [`clone`](../../../target/doc/vmnl_graphics/d2/enum.LineJoin.html#method.clone) |
+| `vmnl_graphics::d2::LineJoin` | `default` | [LineJoin](../reference/d2/shapes/line_join.md) | [`default`](../../../target/doc/vmnl_graphics/d2/enum.LineJoin.html#method.default) |
+| `vmnl_graphics::d2::LineJoin` | `eq` | [LineJoin](../reference/d2/shapes/line_join.md) | [`eq`](../../../target/doc/vmnl_graphics/d2/enum.LineJoin.html#method.eq) |
+| `vmnl_graphics::d2::LineJoin` | `fmt` | [LineJoin](../reference/d2/shapes/line_join.md) | [`fmt`](../../../target/doc/vmnl_graphics/d2/enum.LineJoin.html#method.fmt) |
+| `vmnl_graphics::d2::LineJoin` | `hash` | [LineJoin](../reference/d2/shapes/line_join.md) | [`hash`](../../../target/doc/vmnl_graphics/d2/enum.LineJoin.html#method.hash) |
+| `vmnl_graphics::d2::PolygonBuilder` | `buffer_memory_preference` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl_graphics/d2/struct.PolygonBuilder.html#method.buffer_memory_preference) |
+| `vmnl_graphics::d2::PolygonBuilder` | `build` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`build`](../../../target/doc/vmnl_graphics/d2/struct.PolygonBuilder.html#method.build) |
+| `vmnl_graphics::d2::PolygonBuilder` | `color` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`color`](../../../target/doc/vmnl_graphics/d2/struct.PolygonBuilder.html#method.color) |
+| `vmnl_graphics::d2::PolygonBuilder` | `vertex_colors` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [`vertex_colors`](../../../target/doc/vmnl_graphics/d2/struct.PolygonBuilder.html#method.vertex_colors) |
+| `vmnl_graphics::d2::PolylineBuilder` | `buffer_memory_preference` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl_graphics/d2/struct.PolylineBuilder.html#method.buffer_memory_preference) |
+| `vmnl_graphics::d2::PolylineBuilder` | `build` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`build`](../../../target/doc/vmnl_graphics/d2/struct.PolylineBuilder.html#method.build) |
+| `vmnl_graphics::d2::PolylineBuilder` | `cap` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`cap`](../../../target/doc/vmnl_graphics/d2/struct.PolylineBuilder.html#method.cap) |
+| `vmnl_graphics::d2::PolylineBuilder` | `closed` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`closed`](../../../target/doc/vmnl_graphics/d2/struct.PolylineBuilder.html#method.closed) |
+| `vmnl_graphics::d2::PolylineBuilder` | `color` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`color`](../../../target/doc/vmnl_graphics/d2/struct.PolylineBuilder.html#method.color) |
+| `vmnl_graphics::d2::PolylineBuilder` | `join` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`join`](../../../target/doc/vmnl_graphics/d2/struct.PolylineBuilder.html#method.join) |
+| `vmnl_graphics::d2::PolylineBuilder` | `miter_limit` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`miter_limit`](../../../target/doc/vmnl_graphics/d2/struct.PolylineBuilder.html#method.miter_limit) |
+| `vmnl_graphics::d2::PolylineBuilder` | `point_colors` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`point_colors`](../../../target/doc/vmnl_graphics/d2/struct.PolylineBuilder.html#method.point_colors) |
+| `vmnl_graphics::d2::PolylineBuilder` | `segment_colors` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`segment_colors`](../../../target/doc/vmnl_graphics/d2/struct.PolylineBuilder.html#method.segment_colors) |
+| `vmnl_graphics::d2::PolylineBuilder` | `width` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [`width`](../../../target/doc/vmnl_graphics/d2/struct.PolylineBuilder.html#method.width) |
+| `vmnl_graphics::d2::RectBuilder` | `anchor` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`anchor`](../../../target/doc/vmnl_graphics/d2/struct.RectBuilder.html#method.anchor) |
+| `vmnl_graphics::d2::RectBuilder` | `buffer_memory_preference` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl_graphics/d2/struct.RectBuilder.html#method.buffer_memory_preference) |
+| `vmnl_graphics::d2::RectBuilder` | `build` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`build`](../../../target/doc/vmnl_graphics/d2/struct.RectBuilder.html#method.build) |
+| `vmnl_graphics::d2::RectBuilder` | `color` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`color`](../../../target/doc/vmnl_graphics/d2/struct.RectBuilder.html#method.color) |
+| `vmnl_graphics::d2::RectBuilder` | `corner_radii` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`corner_radii`](../../../target/doc/vmnl_graphics/d2/struct.RectBuilder.html#method.corner_radii) |
+| `vmnl_graphics::d2::RectBuilder` | `corner_radius` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`corner_radius`](../../../target/doc/vmnl_graphics/d2/struct.RectBuilder.html#method.corner_radius) |
+| `vmnl_graphics::d2::RectBuilder` | `corner_segments` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`corner_segments`](../../../target/doc/vmnl_graphics/d2/struct.RectBuilder.html#method.corner_segments) |
+| `vmnl_graphics::d2::RectBuilder` | `origin` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`origin`](../../../target/doc/vmnl_graphics/d2/struct.RectBuilder.html#method.origin) |
+| `vmnl_graphics::d2::RectBuilder` | `position` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`position`](../../../target/doc/vmnl_graphics/d2/struct.RectBuilder.html#method.position) |
+| `vmnl_graphics::d2::RectBuilder` | `rotation` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [`rotation`](../../../target/doc/vmnl_graphics/d2/struct.RectBuilder.html#method.rotation) |
+| `vmnl_graphics::d2::RenderItem2D` | `clone` | [RenderItem2D](../reference/d2/render_item_2d.md) | [`clone`](../../../target/doc/vmnl_graphics/d2/struct.RenderItem2D.html#method.clone) |
+| `vmnl_graphics::d2::Shape` | `as_ref` | [Shape](../reference/d2/shapes/shape.md) | [`as_ref`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.as_ref) |
+| `vmnl_graphics::d2::Shape` | `circle` | [Shape](../reference/d2/shapes/shape.md) | [`circle`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.circle) |
+| `vmnl_graphics::d2::Shape` | `drop` | [Shape](../reference/d2/shapes/shape.md) | [`drop`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.drop) |
+| `vmnl_graphics::d2::Shape` | `indexed` | [Shape](../reference/d2/shapes/shape.md) | [`indexed`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.indexed) |
+| `vmnl_graphics::d2::Shape` | `line` | [Shape](../reference/d2/shapes/shape.md) | [`line`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.line) |
+| `vmnl_graphics::d2::Shape` | `polygon` | [Shape](../reference/d2/shapes/shape.md) | [`polygon`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.polygon) |
+| `vmnl_graphics::d2::Shape` | `polygon_from_vertices` | [Shape](../reference/d2/shapes/shape.md) | [`polygon_from_vertices`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.polygon_from_vertices) |
+| `vmnl_graphics::d2::Shape` | `polyline` | [Shape](../reference/d2/shapes/shape.md) | [`polyline`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.polyline) |
+| `vmnl_graphics::d2::Shape` | `rect` | [Shape](../reference/d2/shapes/shape.md) | [`rect`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.rect) |
+| `vmnl_graphics::d2::Shape` | `render_item_2d` | [Shape](../reference/d2/shapes/shape.md) | [`render_item_2d`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.render_item_2d) |
+| `vmnl_graphics::d2::Shape` | `triangle` | [Shape](../reference/d2/shapes/shape.md) | [`triangle`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.triangle) |
+| `vmnl_graphics::d2::Shape` | `triangle_from_vertices` | [Shape](../reference/d2/shapes/shape.md) | [`triangle_from_vertices`](../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.triangle_from_vertices) |
+| `vmnl_graphics::d2::TriangleBuilder` | `buffer_memory_preference` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl_graphics/d2/struct.TriangleBuilder.html#method.buffer_memory_preference) |
+| `vmnl_graphics::d2::TriangleBuilder` | `build` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [`build`](../../../target/doc/vmnl_graphics/d2/struct.TriangleBuilder.html#method.build) |
+| `vmnl_graphics::d2::TriangleBuilder` | `color` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [`color`](../../../target/doc/vmnl_graphics/d2/struct.TriangleBuilder.html#method.color) |
+| `vmnl_graphics::d2::TriangleBuilder` | `vertex_colors` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [`vertex_colors`](../../../target/doc/vmnl_graphics/d2/struct.TriangleBuilder.html#method.vertex_colors) |
+| `vmnl_graphics::d2::Vector2f` | `add` | [Vector2f](../reference/d2/vector_2f.md) | [`add`](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html#method.add) |
+| `vmnl_graphics::d2::Vector2f` | `add_assign` | [Vector2f](../reference/d2/vector_2f.md) | [`add_assign`](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html#method.add_assign) |
+| `vmnl_graphics::d2::Vector2f` | `clone` | [Vector2f](../reference/d2/vector_2f.md) | [`clone`](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html#method.clone) |
+| `vmnl_graphics::d2::Vector2f` | `cmp` | [Vector2f](../reference/d2/vector_2f.md) | [`cmp`](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html#method.cmp) |
+| `vmnl_graphics::d2::Vector2f` | `default` | [Vector2f](../reference/d2/vector_2f.md) | [`default`](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html#method.default) |
+| `vmnl_graphics::d2::Vector2f` | `eq` | [Vector2f](../reference/d2/vector_2f.md) | [`eq`](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html#method.eq) |
+| `vmnl_graphics::d2::Vector2f` | `fmt` | [Vector2f](../reference/d2/vector_2f.md) | [`fmt`](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html#method.fmt) |
+| `vmnl_graphics::d2::Vector2f` | `mul` | [Vector2f](../reference/d2/vector_2f.md) | [`mul`](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html#method.mul) |
+| `vmnl_graphics::d2::Vector2f` | `partial_cmp` | [Vector2f](../reference/d2/vector_2f.md) | [`partial_cmp`](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html#method.partial_cmp) |
+| `vmnl_graphics::d2::Vector2f` | `sub` | [Vector2f](../reference/d2/vector_2f.md) | [`sub`](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html#method.sub) |
+| `vmnl_graphics::d2::Vector2f` | `sub_assign` | [Vector2f](../reference/d2/vector_2f.md) | [`sub_assign`](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html#method.sub_assign) |
+| `vmnl_graphics::d2::Vertex2D` | `add_assign` | [Vertex2D](../reference/d2/vertex_2d.md) | [`add_assign`](../../../target/doc/vmnl_graphics/d2/struct.Vertex2D.html#method.add_assign) |
+| `vmnl_graphics::d2::Vertex2D` | `clone` | [Vertex2D](../reference/d2/vertex_2d.md) | [`clone`](../../../target/doc/vmnl_graphics/d2/struct.Vertex2D.html#method.clone) |
+| `vmnl_graphics::d2::Vertex2D` | `default` | [Vertex2D](../reference/d2/vertex_2d.md) | [`default`](../../../target/doc/vmnl_graphics/d2/struct.Vertex2D.html#method.default) |
+| `vmnl_graphics::d2::Vertex2D` | `eq` | [Vertex2D](../reference/d2/vertex_2d.md) | [`eq`](../../../target/doc/vmnl_graphics/d2/struct.Vertex2D.html#method.eq) |
+| `vmnl_graphics::d2::Vertex2D` | `fmt` | [Vertex2D](../reference/d2/vertex_2d.md) | [`fmt`](../../../target/doc/vmnl_graphics/d2/struct.Vertex2D.html#method.fmt) |
+| `vmnl_graphics::d2::Vertex2D` | `mul` | [Vertex2D](../reference/d2/vertex_2d.md) | [`mul`](../../../target/doc/vmnl_graphics/d2/struct.Vertex2D.html#method.mul) |
+| `vmnl_graphics::d2::Vertex2D` | `sub` | [Vertex2D](../reference/d2/vertex_2d.md) | [`sub`](../../../target/doc/vmnl_graphics/d2/struct.Vertex2D.html#method.sub) |
+| `vmnl_graphics::d2::Vertex2D` | `sub_assign` | [Vertex2D](../reference/d2/vertex_2d.md) | [`sub_assign`](../../../target/doc/vmnl_graphics/d2/struct.Vertex2D.html#method.sub_assign) |
+| `vmnl_graphics::d3::Camera` | `clone` | [Camera](../reference/d3/camera.md) | [`clone`](../../../target/doc/vmnl_graphics/d3/struct.Camera.html#method.clone) |
+| `vmnl_graphics::d3::Camera` | `default` | [Camera](../reference/d3/camera.md) | [`default`](../../../target/doc/vmnl_graphics/d3/struct.Camera.html#method.default) |
+| `vmnl_graphics::d3::Camera` | `eq` | [Camera](../reference/d3/camera.md) | [`eq`](../../../target/doc/vmnl_graphics/d3/struct.Camera.html#method.eq) |
+| `vmnl_graphics::d3::Camera` | `fmt` | [Camera](../reference/d3/camera.md) | [`fmt`](../../../target/doc/vmnl_graphics/d3/struct.Camera.html#method.fmt) |
+| `vmnl_graphics::d3::Camera` | `new` | [Camera](../reference/d3/camera.md) | [`new`](../../../target/doc/vmnl_graphics/d3/struct.Camera.html#method.new) |
+| `vmnl_graphics::d3::Drawable3D` | `render_item_3d` | [Drawable3D](../reference/d3/drawable_3d.md) | [`render_item_3d`](../../../target/doc/vmnl_graphics/d3/trait.Drawable3D.html#tymethod.render_item_3d) |
+| `vmnl_graphics::d3::Mesh` | `as_ref` | [Mesh](../reference/d3/mesh/mesh.md) | [`as_ref`](../../../target/doc/vmnl_graphics/d3/struct.Mesh.html#method.as_ref) |
+| `vmnl_graphics::d3::Mesh` | `indexed` | [Mesh](../reference/d3/mesh/mesh.md) | [`indexed`](../../../target/doc/vmnl_graphics/d3/struct.Mesh.html#method.indexed) |
+| `vmnl_graphics::d3::Mesh` | `render_item_3d` | [Mesh](../reference/d3/mesh/mesh.md) | [`render_item_3d`](../../../target/doc/vmnl_graphics/d3/struct.Mesh.html#method.render_item_3d) |
+| `vmnl_graphics::d3::MeshBuilder` | `buffer_memory_preference` | [MeshBuilder](../reference/d3/mesh/mesh_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl_graphics/d3/struct.MeshBuilder.html#method.buffer_memory_preference) |
+| `vmnl_graphics::d3::MeshBuilder` | `build` | [MeshBuilder](../reference/d3/mesh/mesh_builder.md) | [`build`](../../../target/doc/vmnl_graphics/d3/struct.MeshBuilder.html#method.build) |
+| `vmnl_graphics::d3::RenderItem3D` | `clone` | [RenderItem3D](../reference/d3/render_item_3d.md) | [`clone`](../../../target/doc/vmnl_graphics/d3/struct.RenderItem3D.html#method.clone) |
+| `vmnl_graphics::d3::Vector3f` | `add_assign` | [Vector3f](../reference/d3/vector_3f.md) | [`add_assign`](../../../target/doc/vmnl_graphics/d3/struct.Vector3f.html#method.add_assign) |
+| `vmnl_graphics::d3::Vector3f` | `clone` | [Vector3f](../reference/d3/vector_3f.md) | [`clone`](../../../target/doc/vmnl_graphics/d3/struct.Vector3f.html#method.clone) |
+| `vmnl_graphics::d3::Vector3f` | `default` | [Vector3f](../reference/d3/vector_3f.md) | [`default`](../../../target/doc/vmnl_graphics/d3/struct.Vector3f.html#method.default) |
+| `vmnl_graphics::d3::Vector3f` | `eq` | [Vector3f](../reference/d3/vector_3f.md) | [`eq`](../../../target/doc/vmnl_graphics/d3/struct.Vector3f.html#method.eq) |
+| `vmnl_graphics::d3::Vector3f` | `fmt` | [Vector3f](../reference/d3/vector_3f.md) | [`fmt`](../../../target/doc/vmnl_graphics/d3/struct.Vector3f.html#method.fmt) |
+| `vmnl_graphics::d3::Vector3f` | `mul` | [Vector3f](../reference/d3/vector_3f.md) | [`mul`](../../../target/doc/vmnl_graphics/d3/struct.Vector3f.html#method.mul) |
+| `vmnl_graphics::d3::Vector3f` | `sub` | [Vector3f](../reference/d3/vector_3f.md) | [`sub`](../../../target/doc/vmnl_graphics/d3/struct.Vector3f.html#method.sub) |
+| `vmnl_graphics::d3::Vector3f` | `sub_assign` | [Vector3f](../reference/d3/vector_3f.md) | [`sub_assign`](../../../target/doc/vmnl_graphics/d3/struct.Vector3f.html#method.sub_assign) |
+| `vmnl_graphics::d3::Vertex3D` | `clone` | [Vertex3D](../reference/d3/vertex_3d.md) | [`clone`](../../../target/doc/vmnl_graphics/d3/struct.Vertex3D.html#method.clone) |
+| `vmnl_graphics::d3::Vertex3D` | `default` | [Vertex3D](../reference/d3/vertex_3d.md) | [`default`](../../../target/doc/vmnl_graphics/d3/struct.Vertex3D.html#method.default) |
+| `vmnl_graphics::d3::Vertex3D` | `eq` | [Vertex3D](../reference/d3/vertex_3d.md) | [`eq`](../../../target/doc/vmnl_graphics/d3/struct.Vertex3D.html#method.eq) |
+| `vmnl_graphics::d3::Vertex3D` | `fmt` | [Vertex3D](../reference/d3/vertex_3d.md) | [`fmt`](../../../target/doc/vmnl_graphics/d3/struct.Vertex3D.html#method.fmt) |
+| `vmnl_graphics::raw::BlendMode` | `clone` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/enum.BlendMode.html#method.clone) |
+| `vmnl_graphics::raw::BlendMode` | `eq` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [`eq`](../../../target/doc/vmnl_graphics/raw/enum.BlendMode.html#method.eq) |
+| `vmnl_graphics::raw::BlendMode` | `fmt` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/enum.BlendMode.html#method.fmt) |
+| `vmnl_graphics::raw::CompareOp` | `clone` | [CompareOp](../reference/raw/pipeline/compare_op.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/enum.CompareOp.html#method.clone) |
+| `vmnl_graphics::raw::CompareOp` | `eq` | [CompareOp](../reference/raw/pipeline/compare_op.md) | [`eq`](../../../target/doc/vmnl_graphics/raw/enum.CompareOp.html#method.eq) |
+| `vmnl_graphics::raw::CompareOp` | `fmt` | [CompareOp](../reference/raw/pipeline/compare_op.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/enum.CompareOp.html#method.fmt) |
+| `vmnl_graphics::raw::CullMode` | `clone` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/enum.CullMode.html#method.clone) |
+| `vmnl_graphics::raw::CullMode` | `eq` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [`eq`](../../../target/doc/vmnl_graphics/raw/enum.CullMode.html#method.eq) |
+| `vmnl_graphics::raw::CullMode` | `fmt` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/enum.CullMode.html#method.fmt) |
+| `vmnl_graphics::raw::DepthState` | `clone` | [DepthState](../reference/raw/pipeline/depth_state.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/enum.DepthState.html#method.clone) |
+| `vmnl_graphics::raw::DepthState` | `default` | [DepthState](../reference/raw/pipeline/depth_state.md) | [`default`](../../../target/doc/vmnl_graphics/raw/enum.DepthState.html#method.default) |
+| `vmnl_graphics::raw::DepthState` | `eq` | [DepthState](../reference/raw/pipeline/depth_state.md) | [`eq`](../../../target/doc/vmnl_graphics/raw/enum.DepthState.html#method.eq) |
+| `vmnl_graphics::raw::DepthState` | `fmt` | [DepthState](../reference/raw/pipeline/depth_state.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/enum.DepthState.html#method.fmt) |
+| `vmnl_graphics::raw::FrameUniform` | `builder` | [FrameUniform](../reference/raw/uniforms/frame_uniform.md) | [`builder`](../../../target/doc/vmnl_graphics/raw/struct.FrameUniform.html#method.builder) |
+| `vmnl_graphics::raw::FrameUniformBuilder` | `buffer_memory_preference` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl_graphics/raw/struct.FrameUniformBuilder.html#method.buffer_memory_preference) |
+| `vmnl_graphics::raw::FrameUniformBuilder` | `build` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [`build`](../../../target/doc/vmnl_graphics/raw/struct.FrameUniformBuilder.html#method.build) |
+| `vmnl_graphics::raw::FrontFace` | `clone` | [FrontFace](../reference/raw/pipeline/front_face.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/enum.FrontFace.html#method.clone) |
+| `vmnl_graphics::raw::FrontFace` | `eq` | [FrontFace](../reference/raw/pipeline/front_face.md) | [`eq`](../../../target/doc/vmnl_graphics/raw/enum.FrontFace.html#method.eq) |
+| `vmnl_graphics::raw::FrontFace` | `fmt` | [FrontFace](../reference/raw/pipeline/front_face.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/enum.FrontFace.html#method.fmt) |
+| `vmnl_graphics::raw::Geometry` | `builder` | [Geometry](../reference/raw/geometry/geometry.md) | [`builder`](../../../target/doc/vmnl_graphics/raw/struct.Geometry.html#method.builder) |
+| `vmnl_graphics::raw::GeometryBuilder` | `buffer_memory_preference` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl_graphics/raw/struct.GeometryBuilder.html#method.buffer_memory_preference) |
+| `vmnl_graphics::raw::GeometryBuilder` | `build` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [`build`](../../../target/doc/vmnl_graphics/raw/struct.GeometryBuilder.html#method.build) |
+| `vmnl_graphics::raw::GeometryBuilder` | `indices` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [`indices`](../../../target/doc/vmnl_graphics/raw/struct.GeometryBuilder.html#method.indices) |
+| `vmnl_graphics::raw::Pipeline` | `builder` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`builder`](../../../target/doc/vmnl_graphics/raw/struct.Pipeline.html#method.builder) |
+| `vmnl_graphics::raw::Pipeline` | `depth_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`depth_value`](../../../target/doc/vmnl_graphics/raw/struct.Pipeline.html#method.depth_value) |
+| `vmnl_graphics::raw::Pipeline` | `line_width_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`line_width_value`](../../../target/doc/vmnl_graphics/raw/struct.Pipeline.html#method.line_width_value) |
+| `vmnl_graphics::raw::Pipeline` | `polygon_mode_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`polygon_mode_value`](../../../target/doc/vmnl_graphics/raw/struct.Pipeline.html#method.polygon_mode_value) |
+| `vmnl_graphics::raw::Pipeline` | `render_target_info` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`render_target_info`](../../../target/doc/vmnl_graphics/raw/struct.Pipeline.html#method.render_target_info) |
+| `vmnl_graphics::raw::Pipeline` | `scissor_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`scissor_value`](../../../target/doc/vmnl_graphics/raw/struct.Pipeline.html#method.scissor_value) |
+| `vmnl_graphics::raw::Pipeline` | `validate_target` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`validate_target`](../../../target/doc/vmnl_graphics/raw/struct.Pipeline.html#method.validate_target) |
+| `vmnl_graphics::raw::Pipeline` | `viewport_value` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [`viewport_value`](../../../target/doc/vmnl_graphics/raw/struct.Pipeline.html#method.viewport_value) |
+| `vmnl_graphics::raw::PipelineSpec` | `blend_mode` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`blend_mode`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.blend_mode) |
+| `vmnl_graphics::raw::PipelineSpec` | `blend_mode_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`blend_mode_value`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.blend_mode_value) |
+| `vmnl_graphics::raw::PipelineSpec` | `build` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`build`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.build) |
+| `vmnl_graphics::raw::PipelineSpec` | `clone` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.clone) |
+| `vmnl_graphics::raw::PipelineSpec` | `cull_mode` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`cull_mode`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.cull_mode) |
+| `vmnl_graphics::raw::PipelineSpec` | `cull_mode_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`cull_mode_value`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.cull_mode_value) |
+| `vmnl_graphics::raw::PipelineSpec` | `default` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`default`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.default) |
+| `vmnl_graphics::raw::PipelineSpec` | `depth` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`depth`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.depth) |
+| `vmnl_graphics::raw::PipelineSpec` | `depth_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`depth_value`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.depth_value) |
+| `vmnl_graphics::raw::PipelineSpec` | `fmt` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.fmt) |
+| `vmnl_graphics::raw::PipelineSpec` | `fragment_shader` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`fragment_shader`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.fragment_shader) |
+| `vmnl_graphics::raw::PipelineSpec` | `front_face` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`front_face`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.front_face) |
+| `vmnl_graphics::raw::PipelineSpec` | `front_face_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`front_face_value`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.front_face_value) |
+| `vmnl_graphics::raw::PipelineSpec` | `line_width` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`line_width`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.line_width) |
+| `vmnl_graphics::raw::PipelineSpec` | `line_width_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`line_width_value`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.line_width_value) |
+| `vmnl_graphics::raw::PipelineSpec` | `polygon_mode` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`polygon_mode`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.polygon_mode) |
+| `vmnl_graphics::raw::PipelineSpec` | `polygon_mode_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`polygon_mode_value`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.polygon_mode_value) |
+| `vmnl_graphics::raw::PipelineSpec` | `scissor` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`scissor`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.scissor) |
+| `vmnl_graphics::raw::PipelineSpec` | `scissor_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`scissor_value`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.scissor_value) |
+| `vmnl_graphics::raw::PipelineSpec` | `topology` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`topology`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.topology) |
+| `vmnl_graphics::raw::PipelineSpec` | `topology_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`topology_value`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.topology_value) |
+| `vmnl_graphics::raw::PipelineSpec` | `vertex_shader` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`vertex_shader`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.vertex_shader) |
+| `vmnl_graphics::raw::PipelineSpec` | `viewport` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`viewport`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.viewport) |
+| `vmnl_graphics::raw::PipelineSpec` | `viewport_value` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [`viewport_value`](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html#method.viewport_value) |
+| `vmnl_graphics::raw::PolygonMode` | `clone` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/enum.PolygonMode.html#method.clone) |
+| `vmnl_graphics::raw::PolygonMode` | `eq` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [`eq`](../../../target/doc/vmnl_graphics/raw/enum.PolygonMode.html#method.eq) |
+| `vmnl_graphics::raw::PolygonMode` | `fmt` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/enum.PolygonMode.html#method.fmt) |
+| `vmnl_graphics::raw::PrimitiveTopology` | `clone` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/enum.PrimitiveTopology.html#method.clone) |
+| `vmnl_graphics::raw::PrimitiveTopology` | `eq` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [`eq`](../../../target/doc/vmnl_graphics/raw/enum.PrimitiveTopology.html#method.eq) |
+| `vmnl_graphics::raw::PrimitiveTopology` | `fmt` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/enum.PrimitiveTopology.html#method.fmt) |
+| `vmnl_graphics::raw::Resources` | `builder` | [Resources](../reference/raw/resources/resources.md) | [`builder`](../../../target/doc/vmnl_graphics/raw/struct.Resources.html#method.builder) |
+| `vmnl_graphics::raw::ResourcesBuilder` | `build` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [`build`](../../../target/doc/vmnl_graphics/raw/struct.ResourcesBuilder.html#method.build) |
+| `vmnl_graphics::raw::ResourcesBuilder` | `frame_uniform` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [`frame_uniform`](../../../target/doc/vmnl_graphics/raw/struct.ResourcesBuilder.html#method.frame_uniform) |
+| `vmnl_graphics::raw::ResourcesBuilder` | `uniform` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [`uniform`](../../../target/doc/vmnl_graphics/raw/struct.ResourcesBuilder.html#method.uniform) |
+| `vmnl_graphics::raw::Scissor` | `clone` | [Scissor](../reference/raw/pipeline/scissor.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/struct.Scissor.html#method.clone) |
+| `vmnl_graphics::raw::Scissor` | `eq` | [Scissor](../reference/raw/pipeline/scissor.md) | [`eq`](../../../target/doc/vmnl_graphics/raw/struct.Scissor.html#method.eq) |
+| `vmnl_graphics::raw::Scissor` | `fmt` | [Scissor](../reference/raw/pipeline/scissor.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/struct.Scissor.html#method.fmt) |
+| `vmnl_graphics::raw::ScissorPolicy` | `clone` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/enum.ScissorPolicy.html#method.clone) |
+| `vmnl_graphics::raw::ScissorPolicy` | `default` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [`default`](../../../target/doc/vmnl_graphics/raw/enum.ScissorPolicy.html#method.default) |
+| `vmnl_graphics::raw::ScissorPolicy` | `eq` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [`eq`](../../../target/doc/vmnl_graphics/raw/enum.ScissorPolicy.html#method.eq) |
+| `vmnl_graphics::raw::ScissorPolicy` | `fmt` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/enum.ScissorPolicy.html#method.fmt) |
+| `vmnl_graphics::raw::ScissorPolicy` | `resolve` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [`resolve`](../../../target/doc/vmnl_graphics/raw/enum.ScissorPolicy.html#method.resolve) |
+| `vmnl_graphics::raw::Uniform` | `builder` | [Uniform](../reference/raw/uniforms/uniform.md) | [`builder`](../../../target/doc/vmnl_graphics/raw/struct.Uniform.html#method.builder) |
+| `vmnl_graphics::raw::Uniform` | `write` | [Uniform](../reference/raw/uniforms/uniform.md) | [`write`](../../../target/doc/vmnl_graphics/raw/struct.Uniform.html#method.write) |
+| `vmnl_graphics::raw::UniformBuilder` | `buffer_memory_preference` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [`buffer_memory_preference`](../../../target/doc/vmnl_graphics/raw/struct.UniformBuilder.html#method.buffer_memory_preference) |
+| `vmnl_graphics::raw::UniformBuilder` | `build` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [`build`](../../../target/doc/vmnl_graphics/raw/struct.UniformBuilder.html#method.build) |
+| `vmnl_graphics::raw::Viewport` | `clone` | [Viewport](../reference/raw/pipeline/viewport.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/struct.Viewport.html#method.clone) |
+| `vmnl_graphics::raw::Viewport` | `eq` | [Viewport](../reference/raw/pipeline/viewport.md) | [`eq`](../../../target/doc/vmnl_graphics/raw/struct.Viewport.html#method.eq) |
+| `vmnl_graphics::raw::Viewport` | `fmt` | [Viewport](../reference/raw/pipeline/viewport.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/struct.Viewport.html#method.fmt) |
+| `vmnl_graphics::raw::ViewportPolicy` | `clone` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [`clone`](../../../target/doc/vmnl_graphics/raw/enum.ViewportPolicy.html#method.clone) |
+| `vmnl_graphics::raw::ViewportPolicy` | `default` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [`default`](../../../target/doc/vmnl_graphics/raw/enum.ViewportPolicy.html#method.default) |
+| `vmnl_graphics::raw::ViewportPolicy` | `eq` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [`eq`](../../../target/doc/vmnl_graphics/raw/enum.ViewportPolicy.html#method.eq) |
+| `vmnl_graphics::raw::ViewportPolicy` | `fmt` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [`fmt`](../../../target/doc/vmnl_graphics/raw/enum.ViewportPolicy.html#method.fmt) |
+| `vmnl_graphics::raw::ViewportPolicy` | `resolve` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [`resolve`](../../../target/doc/vmnl_graphics/raw/enum.ViewportPolicy.html#method.resolve) |

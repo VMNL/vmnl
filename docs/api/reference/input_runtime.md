@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import paths: `vmnl::InputRuntime`, `vmnl::InputRuntimeBuilder`, and `vmnl::InputRuntimeConfig`.
+Import paths: `vmnl_graphics::InputRuntime`, `vmnl_graphics::InputRuntimeBuilder`, and `vmnl_graphics::InputRuntimeConfig`.
 Status: experimental; exposes shared GLFW lifecycle, initialization configuration, standalone
 joystick sampling, connection notifications, gamepad mapping updates, and GLFW joystick user
 pointers.
@@ -104,10 +104,10 @@ applies only at the next GLFW initialization.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{InputRuntime, JoystickId};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{InputRuntime, JoystickId};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let runtime = InputRuntime::builder().hat_buttons(false).build()?;
     assert!(!runtime.configuration().hat_buttons());
     if let Some(sample) = runtime.sample_joystick(JoystickId::Joystick1)? {

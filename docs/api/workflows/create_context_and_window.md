@@ -6,10 +6,10 @@
 4. Treat creation as GPU/display-dependent and propagate `VMNLResult`.
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, PresentMode, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, PresentMode, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let window = Window::builder()
         .title("VMNL")
@@ -28,9 +28,9 @@ fn main() -> vmnl::VMNLResult<()> {
 Pass a reusable `RenderTargetConfig` directly to `WindowBuilder::render_target`. The default stays color-only. Select an explicit depth-only format; unsupported requests fail rather than substituting a format or selecting another GPU.
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, DepthFormat, RenderTargetConfig, Window};
-fn main() -> vmnl::VMNLResult<()> {
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, DepthFormat, RenderTargetConfig, Window};
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let target = RenderTargetConfig::default()
         .depth(DepthFormat::D32Sfloat).clear_depth(1.0);
@@ -48,10 +48,10 @@ Each swapchain image receives a separate depth image/view, recreated at its actu
 Pass a CPU-side `DeviceConfig` to `Context::builder().device(config)`. Configuration can be cloned for reuse; passing another config replaces the previous one. Without a config, `Context::builder().build()` preserves `Context::new()` defaults.
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, DeviceConfig, DeviceFeature};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, DeviceConfig, DeviceFeature};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::builder()
         .device(DeviceConfig::default().require_features([
             DeviceFeature::FillModeNonSolid,

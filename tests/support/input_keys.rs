@@ -3,7 +3,7 @@
 
 //! Named public VMNL keys shared by client-facing input tests.
 
-use vmnl::Key;
+use vmnl_graphics::Key;
 
 macro_rules! named_keys {
     ($($key:ident),+ $(,)?) => {

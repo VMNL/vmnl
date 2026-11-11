@@ -1,6 +1,6 @@
 ---
 name: develop-vmnl-graphics
-description: Develop, fix, review, document, and validate VMNL graphics work across the public facade, vmnl-graphics, related macros, Vulkan, windowing, input, rendering, GPU resources, tests, examples, and graphics tooling. Use for any VMNL task affecting graphics architecture, public API, GPU behavior, graphics correctness, tests, examples, or performance; do not use for unrelated audio or networking work.
+description: Develop, fix, review, document, and validate VMNL graphics work across the public vmnl-graphics API, related macros, Vulkan, windowing, input, rendering, GPU resources, tests, examples, and graphics tooling. Use for any VMNL task affecting graphics architecture, public API, GPU behavior, graphics correctness, tests, examples, or performance; do not use for unrelated audio or networking work.
 ---
 
 # Develop VMNL Graphics
@@ -18,7 +18,7 @@ description: Develop, fix, review, document, and validate VMNL graphics work acr
 
 | Impact | Read |
 | --- | --- |
-| Architecture, facade, builders, public API | [`docs/architecture.md`](../../../docs/architecture.md), [`docs/API.md`](../../../docs/API.md) |
+| Architecture, builders, public API | [`docs/architecture.md`](../../../docs/architecture.md), [`docs/API.md`](../../../docs/API.md) |
 | Build, dependencies, shaderc | [`docs/build.md`](../../../docs/build.md), [`docs/troubleshooting.md`](../../../docs/troubleshooting.md) |
 | Tests | [`docs/testing.md`](../../../docs/testing.md) |
 | Examples | [`docs/examples.md`](../../../docs/examples.md), [`examples/README.md`](../../../examples/README.md) |
@@ -30,7 +30,7 @@ Treat `docs/` as the canonical home for stable architecture, contracts, and proc
 ## Route Agent References
 
 - Read [`../../references/module-design.md`](../../references/module-design.md) for a module
-  interface, crate boundary, facade, raw API, backend adapter, or FFI seam decision.
+  interface, crate boundary, raw API, backend adapter, or FFI seam decision.
 - Read [`../../references/diagnostic-protocol.md`](../../references/diagnostic-protocol.md) for a
   bug, regression, incorrect result, crash, hang, or performance diagnosis.
 - Read [`references/current-limitations.md`](references/current-limitations.md) before changing context/device selection, GLFW initialization, 3D status, or GPU test routing.
@@ -43,5 +43,5 @@ Treat `docs/` as the canonical home for stable architecture, contracts, and proc
 - Keep every observable high-level default inspectable and replaceable without requiring the raw API.
 - Do not expose backend types as stable public contracts without an explicit raw-API decision.
 - Do not present 3D rendering as operational while its backend remains scaffolding.
-- For a public graphics change, decide facade exposure and document applicable units, coordinates, defaults, valid ranges, ownership, lifecycle, costs, synchronization, errors, panic/safety conditions, and platform/GPU requirements.
+- For a public graphics change, decide public crate exposure and document applicable units, coordinates, defaults, valid ranges, ownership, lifecycle, costs, synchronization, errors, panic/safety conditions, and platform/GPU requirements.
 - Verify claims such as allocation-free, zero-copy, asynchronous, non-blocking, deterministic, or constant-time before documenting them.

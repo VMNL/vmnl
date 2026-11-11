@@ -1,14 +1,14 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! GPU frame-submission contracts through the public facade.
+//! GPU frame-submission contracts through the public graphics API.
 
-use vmnl::{
+use vmnl_gpu_tests::gpu_test_guard;
+use vmnl_graphics::{
     common::{BufferMemoryPreference, Rgba},
     d2::{Anchor, LineCap, Shape, Vector2f, Vertex2D},
     Context, RenderMode, VMNLResult, Window,
 };
-use vmnl_gpu_tests::gpu_test_guard;
 
 fn vector(x: f32, y: f32) -> Vector2f {
     Vector2f { x, y }

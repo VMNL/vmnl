@@ -2,7 +2,7 @@
 
 ## Scope
 
-Use this reference when designing or reviewing a module interface, crate boundary, facade, raw API,
+Use this reference when designing or reviewing a module interface, crate boundary, raw API,
 backend adapter, or FFI seam. It supplements the project direction in
 [`docs/architecture.md`](../../docs/architecture.md); it does not replace that contract or authorize
 an architecture change.
@@ -65,7 +65,7 @@ control decisions into opaque configuration solely to make an interface appear d
 
 A seam is justified when it isolates at least one real concern:
 
-- domain independence through the `vmnl` facade;
+- graphics API ownership and private backend isolation;
 - ownership or lifecycle policy;
 - unsafe, FFI, or backend-specific behavior;
 - an actual platform or implementation variation;

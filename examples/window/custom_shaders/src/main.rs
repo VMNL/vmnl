@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-use vmnl::{
+use vmnl_graphics::{
     common::Rgba,
     d2::{Shape, Vector2f},
     Context, Key, PresentMode, RenderMode, ShaderSource, VMNLResult, Window,

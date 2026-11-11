@@ -3,11 +3,11 @@
 After defining a `BufferContents` vertex type, pass a non-empty vertex collection to `Geometry::builder`. Add optional non-empty in-bounds `u32` indices and choose a memory preference before `build(&Context)`.
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::Context;
-use vmnl::raw::Geometry;
+# extern crate vmnl_graphics;
+use vmnl_graphics::Context;
+use vmnl_graphics::raw::Geometry;
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let geometry = Geometry::<[f32; 2]>::builder([
         [0.0, -0.5], [0.5, 0.5], [-0.5, 0.5],

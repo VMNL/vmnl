@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Headless render-target configuration through the public facade.
+//! Headless render-target configuration through the public graphics API.
 
-use vmnl::{DepthFormat, RenderTargetConfig, VMNLErrorKind, VMNLResult, Window};
+use vmnl_graphics::{DepthFormat, RenderTargetConfig, VMNLErrorKind, VMNLResult, Window};
 
 #[test]
 fn render_target_defaults_do_not_request_depth() -> VMNLResult<()> {

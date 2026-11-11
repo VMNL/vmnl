@@ -1,11 +1,10 @@
 <div align="center">
 
-# VMNL
+# VMNL Graphics
 
-**Vulkan Multimedia Networking Library**
+**Vulkan graphics, windows, and input for Rust**
 
-A modular Rust foundation for Vulkan graphics, audio, and networking, from useful defaults to
-explicit low-level control.
+A Rust graphics library for games and engines, from useful defaults to explicit low-level control.
 
 <br>
 
@@ -17,9 +16,9 @@ explicit low-level control.
 
 <br>
 
-![CI](https://img.shields.io/github/actions/workflow/status/VMNL/vmnl/ci.yml?style=flat-square&label=CI)
-![License](https://img.shields.io/github/license/VMNL/vmnl?style=flat-square)
-![Repo size](https://img.shields.io/github/repo-size/VMNL/vmnl?style=flat-square)
+![CI](https://img.shields.io/github/actions/workflow/status/VMNL/vmnl-graphics/ci.yml?style=flat-square&label=CI)
+![License](https://img.shields.io/github/license/VMNL/vmnl-graphics?style=flat-square)
+![Repo size](https://img.shields.io/github/repo-size/VMNL/vmnl-graphics?style=flat-square)
 ![Stability](https://img.shields.io/badge/stability-experimental-orange?style=flat-square)
 
 </div>
@@ -48,17 +47,17 @@ explicit low-level control.
 
 ## Overview
 
-**VMNL** is a modular Rust library for building a game engine, a real-time application, or a game
-without first implementing a complete engine. Its graphics domain uses Vulkan; audio and networking
-are planned as independent domains with their own backends.
+**VMNL Graphics** provides Vulkan rendering, windowing, events, input, and GPU resources for
+games, real-time applications, and engines. Applications depend directly on the `vmnl-graphics`
+package and import `vmnl_graphics`. The procedural macros used by its raw API are provided through
+the same public crate.
 
-It is designed to compose three domains behind one facade:
-
-| Domain        | Purpose                                  |
-| ------------- | ---------------------------------------- |
-| **Graphics**  | Explicit Vulkan rendering pipeline       |
-| **Audio**     | Real-time audio (planned)                |
-| **Network**   | Transport, framing, and reliable/unreliable channels (planned) |
+| Area | Purpose |
+| --- | --- |
+| **Windowing and input** | Native windows, events, monitors, keyboard, mouse, and joystick/gamepad access |
+| **2D** | Shapes, indexed geometry, and per-object rendering |
+| **Raw graphics** | Typed pipelines, geometry, uniform buffers, and explicit frame composition |
+| **3D** | Data and resource scaffolding; rendering is not operational |
 
 The guiding constraint is progressive control: start with documented defaults, replace only the
 policies that matter, and descend to explicit raw control without changing the conceptual model.
@@ -76,8 +75,8 @@ VMNL applies these principles to every stable public contract:
   identifiable owners.
 - **Scoped determinism** - VMNL claims deterministic behavior only for decisions it controls;
   backend and platform choices are reported explicitly.
-- **Modularity** - graphics, audio, network, and optional high-level layers remain independently
-  selectable and composable.
+- **Composition** - windowing, input, 2D, and raw graphics share explicit ownership and compose
+  with the application's own loop and other libraries.
 - **Safe defaults** - defaults simplify common use without removing lower-level control or accepting
   invalid public combinations silently.
 
@@ -87,11 +86,10 @@ VMNL applies these principles to every stable public contract:
 
 ```mermaid
 flowchart TD
-    APP["Your application"] --> VMNL["vmnl (facade)"]
-    VMNL --> G["graphics"]
-    VMNL -. planned .-> A["audio"]
-    VMNL -. planned .-> N["network"]
+    APP["Your application"] --> G["vmnl_graphics"]
+    G --> W["window, input, and monitors"]
     G --> D2["d2 - 2D primitives · available"]
+    G --> R["raw - typed graphics control"]
     G --> D3["d3 - mesh / camera · scaffolding"]
 ```
 
@@ -145,16 +143,22 @@ current capabilities. The canonical direction and boundaries are documented in
 | Graphics - 2D       | Available        |
 | Graphics - 3D       | Scaffolding only |
 | Windowing / Input   | Available        |
-| Audio               | Planned          |
-| Networking          | Planned          |
 
 ---
 
 ## Installation
 
-VMNL has no public release and cannot currently be installed from crates.io. The first publication
+`vmnl-graphics` has no public release and cannot currently be installed from crates.io. The first publication
 will establish the `0.1.0` compatibility baseline. Until then, use a development checkout and
-expect public contracts to change.
+expect public contracts to change. From a neighboring application, use the checkout directly:
+
+```toml
+[dependencies]
+vmnl-graphics = { path = "../vmnl-graphics/crates/vmnl_graphics" }
+```
+
+Import types with `use vmnl_graphics::{Context, Window};`. See
+[Deployment](docs/deployment.md#current-publication-blockers) for the unresolved Cargo publication graph.
 
 ### Requirements
 
@@ -168,8 +172,8 @@ expect public contracts to change.
 ## Building from Source
 
 ```bash
-git clone https://github.com/VMNL/vmnl.git
-cd vmnl
+git clone https://github.com/VMNL/vmnl-graphics.git
+cd vmnl-graphics
 just build-workspace
 ```
 
@@ -188,14 +192,12 @@ Technical documentation starts at [docs/README.md](docs/README.md).
 
 ## Roadmap
 
-1. **`0.1.0`** - stable window/input, 2D shapes, minimal raw graphics, and an operational audio
-   contract.
-2. **`0.2.0`** - textures without breaking `0.1.0`; text, batching, and networking begin in
-   parallel.
-3. **Later `0.x`** - scene helpers, operational 3D, broader networking, and reference
-   applications.
-4. **`1.0.0`** - complete stable Rust domains, qualified platform support, stable C ABI, priority
-   C++ wrapper, and demonstrated high-level game and low-level engine paths.
+1. **`0.1.0`** - stable window/input, 2D shapes, minimal raw graphics, and a reviewed initial
+   graphics compatibility baseline.
+2. **`0.2.0`** - textures without breaking `0.1.0`; text and batching begin in parallel.
+3. **Later `0.x`** - optional graphics composition helpers, operational 3D, and reference applications.
+4. **`1.0.0`** - complete stable graphics APIs, qualified platform support, stable C ABI, priority
+   C++ wrapper, and demonstrated game and engine rendering workflows.
 
 VMNL preserves published `0.x` Rust contracts after `0.1.0`; deprecated APIs remain until `1.0.0`.
 See [Deployment](docs/deployment.md) for the exact compatibility, release, and distribution policy.
@@ -212,7 +214,9 @@ See [Deployment](docs/deployment.md) for the exact compatibility, release, and d
 
 ## Authors
 
-| Name | Role |
+Original VMNL project contributors and their historical roles:
+
+| Name | Historical role |
 | ---- | ---- |
 | [Hugo Duda](https://github.com/HugoDuda) | Product Owner · Graphics Lead (low-level & high-level) |
 | [Maxence Pierre](https://github.com/Anexoms) | Low-level developer |

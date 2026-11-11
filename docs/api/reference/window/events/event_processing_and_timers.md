@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Methods on `vmnl::Window`. Status: experimental, operational.
+Methods on `vmnl_graphics::Window`. Status: experimental, operational.
 
 ## Purpose and use cases
 
@@ -64,10 +64,10 @@ Requires an initialized GLFW window/display environment. Some platforms require 
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, EventKind, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, EventKind, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
     window.wait_events_timeout(0.016);

@@ -99,21 +99,21 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 name = "d2_advanced_geometry"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
 name = "d2_circles"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
 name = "d2_shapes"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
@@ -230,7 +230,7 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 name = "joystick_runtime"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
@@ -462,28 +462,28 @@ dependencies = [
 name = "raw_d2_composition"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
 name = "raw_pipeline"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
 name = "raw_triangle"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
 name = "raw_uniform"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
@@ -670,18 +670,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "vmnl"
-version = "0.1.0"
-dependencies = [
- "vmnl-graphics",
-]
-
-[[package]]
 name = "vmnl-api-tests"
 version = "0.1.0"
 dependencies = [
  "glfw",
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
@@ -690,7 +683,7 @@ version = "0.1.0"
 dependencies = [
  "libc",
  "serde_json",
- "vmnl",
+ "vmnl-graphics",
  "x11rb",
 ]
 
@@ -711,7 +704,7 @@ dependencies = [
 name = "vmnl-input-client"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
@@ -740,7 +733,7 @@ dependencies = [
 name = "vmnl-smoke-tests"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
@@ -813,21 +806,21 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 name = "window_custom_shaders"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
 name = "window_events_input"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]
 name = "window_wait_events"
 version = "0.1.0"
 dependencies = [
- "vmnl",
+ "vmnl-graphics",
 ]
 
 [[package]]

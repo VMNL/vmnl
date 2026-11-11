@@ -3,7 +3,7 @@
 
 //! Public error and builder validation contracts.
 
-use vmnl::{VMNLError, VMNLErrorKind, VMNLResult, Window};
+use vmnl_graphics::{VMNLError, VMNLErrorKind, VMNLResult, Window};
 
 type SetAspectRatio = fn(&mut Window, Option<(u32, u32)>) -> VMNLResult<()>;
 

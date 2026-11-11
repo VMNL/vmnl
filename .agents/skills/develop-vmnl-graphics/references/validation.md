@@ -9,7 +9,7 @@ graphics behavior:
 | Behavior | Evidence |
 | --- | --- |
 | Private or local headless behavior | Unit test next to the implementation |
-| Public headless behavior | API test through `vmnl` under `tests/api` |
+| Public headless behavior | API test through `vmnl_graphics` under `tests/api` |
 | Executable startup without a window | Smoke test under `tests/smoke` |
 | GLFW `NoApi` behavior without Vulkan | Platform test under `tests/platform` |
 | Vulkan, device, queue, pipeline, surface, presentation, or display behavior | GPU test under `tests/gpu` |
@@ -57,7 +57,7 @@ Add checks by impact:
 
 | Impact | Additional evidence |
 | --- | --- |
-| Public API | Headless API tests through `vmnl`, relevant Rustdoc, API-book update, and API-book check |
+| Public API | Headless API tests through `vmnl_graphics`, relevant Rustdoc, API-book update, and API-book check |
 | Example workflow | `just build <example>` |
 | Relevant visual diagnosis and supported environment | Codex may run `just run <example>` after defining the expected observation, but this does not count as human manual validation |
 | Tooling/build script | Targeted syntax or behavior check; Rust suite if behavior changed |

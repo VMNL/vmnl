@@ -3,7 +3,7 @@
 
 //! Minimal 2D shape rendering workflow.
 
-use vmnl::{
+use vmnl_graphics::{
     common::Rgba,
     d2::{Shape, Vector2f},
     Context, Key, PresentMode, VMNLResult, Window,

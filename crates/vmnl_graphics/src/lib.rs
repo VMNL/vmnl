@@ -1,7 +1,34 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Graphics and windowing primitives for VMNL.
+//! VMNL Graphics: Vulkan rendering, windowing, input, and GPU resources.
+//!
+//! Depend directly on the `vmnl-graphics` package and import `vmnl_graphics`.
+//! The root exports context, windowing, events, input, monitoring, rendering,
+//! and error types; [`common`], [`d2`], [`d3`], and [`raw`] group the remaining
+//! public surface. Procedural macros are re-exported through [`raw`].
+//!
+//! The API is experimental. The 2D and raw rendering paths are operational
+//! within their documented constraints. The 3D types are scaffolding:
+//! submitting a frame containing a 3D pass returns an explicit error.
+//!
+//! Cross-cutting concepts, workflows, status, and coverage are maintained in
+//! the [public API book](https://github.com/VMNL/vmnl-graphics/tree/main/docs/api).
+//!
+//! # Example
+//!
+//! ```rust,no_run
+//! use vmnl_graphics::{Context, Window};
+//! use vmnl_graphics::d2::Shape;
+//!
+//! # fn main() -> vmnl_graphics::VMNLResult<()> {
+//! let context = Context::new()?;
+//! let mut window = Window::new(&context)?;
+//! let rectangle = Shape::rect(100.0, 50.0).build(&context)?;
+//! window.render().draw2d([&rectangle]).submit()?;
+//! # Ok(())
+//! # }
+//! ```
 
 /// Shared graphics primitives used by 2D and 3D resources.
 pub mod common;

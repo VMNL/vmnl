@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Macro-namespace paths: `vmnl::raw::Pod`, `vmnl::raw::Zeroable`, and `vmnl::raw::Vertex`. Status: experimental procedural macros. They are distinct from the same-named traits.
+Macro-namespace paths: `vmnl_graphics::raw::Pod`, `vmnl_graphics::raw::Zeroable`, and `vmnl_graphics::raw::Vertex`. Status: experimental procedural macros. They are distinct from the same-named traits.
 
 ## Purpose and use cases
 
@@ -41,8 +41,8 @@ Format identifiers must be valid Vulkano `Format` variants and compatible with t
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{Pod, Vertex, Zeroable};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{Pod, Vertex, Zeroable};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable, Vertex)]

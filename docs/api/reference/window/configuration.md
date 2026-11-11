@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Methods on `vmnl::Window`. Status: experimental, operational.
+Methods on `vmnl_graphics::Window`. Status: experimental, operational.
 
 ## Purpose and use cases
 
@@ -58,10 +58,10 @@ submitted until renderable again. See the generated
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
     window.set_size(1024, 768)?;

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::DepthFormat`. Status: experimental.
+Import path: `vmnl_graphics::DepthFormat`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Follows [Vulkan depth formats](https://docs.vulkan.org/guide/latest/depth.html).
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::{DepthFormat, RenderTargetConfig};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{DepthFormat, RenderTargetConfig};
 let config = RenderTargetConfig::default().depth(DepthFormat::D32Sfloat);
 assert_eq!(config.depth_value(), Some(DepthFormat::D32Sfloat));
 ```

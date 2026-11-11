@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d3::Camera`. Status: experimental data scaffold; 3D rendering is not operational.
+Import path: `vmnl_graphics::d3::Camera`. Status: experimental data scaffold; 3D rendering is not operational.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Platform-independent data; there is no operational Vulkan 3D path.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::d3::{Camera, Vector3f};
+# extern crate vmnl_graphics;
+use vmnl_graphics::d3::{Camera, Vector3f};
 
 let camera = Camera::new(
     Vector3f { x: 0.0, y: 0.0, z: 5.0 },

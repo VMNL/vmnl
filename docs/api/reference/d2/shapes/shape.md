@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::Shape`. Status: experimental, operational GPU resource.
+Import path: `vmnl_graphics::d2::Shape`. Status: experimental, operational GPU resource.
 
 ## Purpose and use cases
 
@@ -55,11 +55,11 @@ Build requires a Vulkan context; drawing additionally requires a compatible wind
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::Context;
-use vmnl::d2::Shape;
+# extern crate vmnl_graphics;
+use vmnl_graphics::Context;
+use vmnl_graphics::d2::Shape;
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let rect = Shape::rect(100.0, 50.0).position(20.0, 30.0).build(&context)?;
     drop(rect);

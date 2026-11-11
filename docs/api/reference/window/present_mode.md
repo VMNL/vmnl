@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::PresentMode`. Status: experimental.
+Import path: `vmnl_graphics::PresentMode`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ The enum itself has no cost. Presentation mode affects pacing, blocking, latency
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::PresentMode;
+# extern crate vmnl_graphics;
+use vmnl_graphics::PresentMode;
 
 assert_eq!(PresentMode::default(), PresentMode::Auto);
 ```

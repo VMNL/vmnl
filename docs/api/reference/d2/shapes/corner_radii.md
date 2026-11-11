@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::CornerRadii`. Status: experimental, operational.
+Import path: `vmnl_graphics::d2::CornerRadii`. Status: experimental, operational.
 
 ## Purpose and use cases
 
@@ -50,8 +50,8 @@ None beyond the owning rectangle build and draw requirements.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::d2::CornerRadii;
+# extern crate vmnl_graphics;
+use vmnl_graphics::d2::CornerRadii;
 
 let uniform = CornerRadii::all(16.0);
 let asymmetric = CornerRadii::new(24.0, 8.0, 32.0, 0.0);

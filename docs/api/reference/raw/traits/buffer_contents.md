@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::BufferContents`. Status: experimental marker trait.
+Import path: `vmnl_graphics::raw::BufferContents`. Status: experimental marker trait.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Layout must be compatible with the Vulkan buffer/shader use selected by the clie
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::BufferContents;
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::BufferContents;
 
 fn accepts<T: BufferContents>(_value: T) {}
 accepts([1.0_f32, 2.0]);

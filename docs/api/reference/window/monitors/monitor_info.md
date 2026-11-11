@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::MonitorInfo`. Status: experimental snapshot.
+Import path: `vmnl_graphics::MonitorInfo`. Status: experimental snapshot.
 
 ## Purpose and use cases
 
@@ -41,8 +41,8 @@ Names, physical dimensions, content scale, work area, primary ordering, and mode
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::MonitorInfo;
+# extern crate vmnl_graphics;
+use vmnl_graphics::MonitorInfo;
 
 fn label(info: &MonitorInfo) -> &str {
     info.name.as_deref().unwrap_or("Unknown")

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::VMNLResult<T>`. Status: experimental alias.
+Import path: `vmnl_graphics::VMNLResult<T>`. Status: experimental alias.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ None beyond the operation returning it.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::{VMNLError, VMNLErrorKind, VMNLResult};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{VMNLError, VMNLErrorKind, VMNLResult};
 
 fn reject() -> VMNLResult<()> {
     Err(VMNLError::new(VMNLErrorKind::InvalidState("rejected".into())))

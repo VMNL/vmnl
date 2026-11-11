@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::CullMode`. Status: experimental.
+Import path: `vmnl_graphics::raw::CullMode`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Requires no optional Vulkan device feature. Semantics follow [Vulkan triangle cu
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{CullMode, PipelineSpec};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{CullMode, PipelineSpec};
 
 let spec = PipelineSpec::<[f32; 2]>::default().cull_mode(CullMode::Back);
 assert_eq!(spec.cull_mode_value(), CullMode::Back);

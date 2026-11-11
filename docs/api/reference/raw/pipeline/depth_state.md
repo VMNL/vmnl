@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::DepthState`. Status: experimental.
+Import path: `vmnl_graphics::raw::DepthState`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -41,13 +41,13 @@ Basic depth testing/writes require no optional device feature. Rendering needs t
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, DepthFormat, RenderTargetConfig, ShaderSource, Window};
-use vmnl::raw::{CompareOp, DepthState, Pipeline, Pod, Vertex, Zeroable};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, DepthFormat, RenderTargetConfig, ShaderSource, Window};
+use vmnl_graphics::raw::{CompareOp, DepthState, Pipeline, Pod, Vertex, Zeroable};
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable, Vertex)]
 struct V { #[format(R32G32B32_SFLOAT)] position: [f32; 3] }
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let window = Window::builder()
         .render_target(RenderTargetConfig::default().depth(DepthFormat::D16Unorm))

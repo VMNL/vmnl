@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use std::ffi::c_void;
-use vmnl::{
+use vmnl_graphics::{
     Event, EventKind, GamepadAxis, GamepadButton, GamepadState, InputRuntime, InputRuntimeBuilder,
     InputRuntimeConfig, JoystickButtonState, JoystickHatState, JoystickId, JoystickSample,
     VMNLResult, Window, WindowBuilder,
@@ -83,14 +83,14 @@ fn standalone_joystick_runtime_samples_and_updates_mappings_without_vulkan() {
         .expect_err("GLFW parser callback error must not be reported as success");
     assert!(matches!(
         invalid_guid.kind(),
-        vmnl::VMNLErrorKind::GlfwInputOperationFailed { .. }
+        vmnl_graphics::VMNLErrorKind::GlfwInputOperationFailed { .. }
     ));
     assert!(matches!(
         runtime.update_gamepad_mappings("non-ASCII é"),
-        Err(error) if matches!(error.kind(), vmnl::VMNLErrorKind::InvalidGamepadMapping(_))
+        Err(error) if matches!(error.kind(), vmnl_graphics::VMNLErrorKind::InvalidGamepadMapping(_))
     ));
     assert!(matches!(
         runtime.update_gamepad_mappings("contains\0nul"),
-        Err(error) if matches!(error.kind(), vmnl::VMNLErrorKind::InvalidGamepadMapping(_))
+        Err(error) if matches!(error.kind(), vmnl_graphics::VMNLErrorKind::InvalidGamepadMapping(_))
     ));
 }

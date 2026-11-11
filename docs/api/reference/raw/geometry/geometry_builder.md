@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::GeometryBuilder<TVertex>`. Status: experimental, operational.
+Import path: `vmnl_graphics::raw::GeometryBuilder<TVertex>`. Status: experimental, operational.
 
 ## Purpose and use cases
 
@@ -39,12 +39,12 @@ Depends on device memory types and buffer size limits.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::Context;
-use vmnl::common::BufferMemoryPreference;
-use vmnl::raw::Geometry;
+# extern crate vmnl_graphics;
+use vmnl_graphics::Context;
+use vmnl_graphics::common::BufferMemoryPreference;
+use vmnl_graphics::raw::Geometry;
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let geometry = Geometry::<[f32; 2]>::builder([
         [0.0, 0.0], [1.0, 0.0], [0.0, 1.0],

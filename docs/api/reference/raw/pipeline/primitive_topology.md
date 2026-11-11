@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::PrimitiveTopology`. Status: experimental.
+Import path: `vmnl_graphics::raw::PrimitiveTopology`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Mapped directly to the corresponding Vulkano topology supported by the graphics 
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{PipelineSpec, PrimitiveTopology};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{PipelineSpec, PrimitiveTopology};
 
 let spec = PipelineSpec::<[f32; 2]>::default().topology(PrimitiveTopology::LineList);
 assert_eq!(spec.topology_value(), PrimitiveTopology::LineList);

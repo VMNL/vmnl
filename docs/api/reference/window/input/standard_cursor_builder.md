@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::StandardCursorBuilder`. Status: experimental, operational when the active
+Import path: `vmnl_graphics::StandardCursorBuilder`. Status: experimental, operational when the active
 system cursor theme provides the requested shape.
 
 ## Purpose and use cases
@@ -48,10 +48,10 @@ come from the platform theme. Vulkan and the GPU do not participate.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Cursor, StandardCursor};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Cursor, StandardCursor};
 
-# fn main() -> vmnl::VMNLResult<()> {
+# fn main() -> vmnl_graphics::VMNLResult<()> {
 let context = Context::new()?;
 let cursor = Cursor::standard(StandardCursor::PointingHand).build(&context)?;
 # let _ = cursor;

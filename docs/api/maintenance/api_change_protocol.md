@@ -2,7 +2,7 @@
 
 For every public API change:
 
-1. Change the facade contract and implementation together; do not expose implementation-only modules.
+1. Change the graphics API contract and implementation together; do not expose implementation-only modules.
 2. Add or update the narrowest deterministic test for the observable contract.
 3. Update the item's Rustdoc and its reference page, including defaults, validation, failures, ownership, GPU cost, and platform constraints.
 4. Update workflows, examples, matrices, and navigation only where the public contract changes.

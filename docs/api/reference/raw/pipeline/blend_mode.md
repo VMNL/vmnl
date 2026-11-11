@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::BlendMode`. Status: experimental.
+Import path: `vmnl_graphics::raw::BlendMode`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Requires a compatible color attachment; VMNL creates the state for its window re
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{BlendMode, PipelineSpec};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{BlendMode, PipelineSpec};
 
 let spec = PipelineSpec::<[f32; 2]>::default().blend_mode(BlendMode::Alpha);
 assert_eq!(spec.blend_mode_value(), BlendMode::Alpha);

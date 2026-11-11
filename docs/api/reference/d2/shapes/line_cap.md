@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::LineCap`. Status: experimental.
+Import path: `vmnl_graphics::d2::LineCap`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -45,8 +45,8 @@ None beyond the consuming shape's rendering requirements.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::d2::LineCap;
+# extern crate vmnl_graphics;
+use vmnl_graphics::d2::LineCap;
 
 assert_eq!(LineCap::default(), LineCap::Butt);
 ```

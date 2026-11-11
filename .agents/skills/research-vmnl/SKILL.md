@@ -38,10 +38,6 @@ Prefer the source that owns each claim:
 4. maintainer issues or discussions when the primary contract is incomplete;
 5. secondary articles only to locate a primary source or identify terminology.
 
-For the planned C network backend, inspect only the pinned revision's exported headers, ABI
-documentation, tests, build metadata, and implementation. Treat the backend as read-only and do not
-advance its revision.
-
 Do not promote an implementation detail, issue comment, search snippet, or secondary explanation
 into a normative guarantee. When authoritative sources disagree, report the contradiction, affected
 versions, and contract owner instead of silently choosing one.

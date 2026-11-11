@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import paths: `vmnl::d2::PolygonBuilder` and `vmnl_graphics::d2::PolygonBuilder`.
+Import paths: `vmnl_graphics::d2::PolygonBuilder` and `vmnl_graphics::d2::PolygonBuilder`.
 Created by `Shape::polygon(points)` or `Shape::polygon_from_vertices(vertices)`.
 Status: experimental, operational.
 
@@ -101,10 +101,10 @@ drawing additionally requires a compatible window/display. Both `PerObject` and
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, common::Rgba, d2::{Shape, Vector2f}};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, common::Rgba, d2::{Shape, Vector2f}};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let polygon = Shape::polygon([
         Vector2f { x: 100.0, y: 100.0 },

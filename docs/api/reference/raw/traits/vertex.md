@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Type-namespace path: `vmnl::raw::Vertex`. Status: experimental marker trait.
+Type-namespace path: `vmnl_graphics::raw::Vertex`. Status: experimental marker trait.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Formats and shader interfaces must be supported by Vulkano/Vulkan and match the 
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{Pod, Vertex, Zeroable};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{Pod, Vertex, Zeroable};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable, Vertex)]

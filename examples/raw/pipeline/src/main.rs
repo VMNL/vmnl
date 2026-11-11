@@ -3,7 +3,7 @@
 
 use std::path::PathBuf;
 
-use vmnl::{
+use vmnl_graphics::{
     common::BufferMemoryPreference, raw, Context, DeviceConfig, DeviceFeature, Key, PresentMode,
     VMNLResult, Window,
 };

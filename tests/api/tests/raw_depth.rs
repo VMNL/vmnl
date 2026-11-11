@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Headless raw depth configuration through the public facade.
+//! Headless raw depth configuration through the public graphics API.
 
-use vmnl::raw::{CompareOp, DepthState, Pipeline};
+use vmnl_graphics::raw::{CompareOp, DepthState, Pipeline};
 
 #[derive(Clone)]
 struct Vertex;

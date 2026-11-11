@@ -3,7 +3,9 @@
 
 //! Event-driven redraw using an explicit blocking wait.
 
-use vmnl::{common::Rgba, d2::Shape, Context, EventKind, Key, PresentMode, VMNLResult, Window};
+use vmnl_graphics::{
+    common::Rgba, d2::Shape, Context, EventKind, Key, PresentMode, VMNLResult, Window,
+};
 
 fn main() -> VMNLResult<()> {
     let context = Context::new()?;

@@ -1,9 +1,9 @@
 # Summary
 
-[VMNL Public API](README.md)
+[VMNL Graphics Public API](README.md)
 
 - [Concepts](concepts/README.md)
-  - [Facade and modules](concepts/facade_and_modules.md)
+  - [Crate and modules](concepts/crate_and_modules.md)
   - [API layers](concepts/api_layers.md)
   - [Builders, defaults, and validation](concepts/builders_defaults_and_validation.md)
   - [Coordinates, units, and colors](concepts/coordinates_units_and_colors.md)
@@ -14,7 +14,7 @@
   - [Platform, GPU, and display](concepts/platform_gpu_and_display.md)
   - [Maturity, compatibility, and deprecation](concepts/maturity_compatibility_and_deprecation.md)
 - [Reference](reference/README.md)
-  - [Facade](reference/facade.md)
+  - [Graphics crate](reference/graphics_crate.md)
   - [Context](reference/context.md)
   - [ContextBuilder](reference/context_builder.md)
   - [DeviceConfig](reference/device_config.md)

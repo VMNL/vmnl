@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::Input`. Status: experimental, operational.
+Import path: `vmnl_graphics::Input`. Status: experimental, operational.
 
 ## Purpose and use cases
 
@@ -50,8 +50,8 @@ window's `poll_events` call when tracking is enabled.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::{Input, JoystickId, JoystickStatus, Key};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Input, JoystickId, JoystickStatus, Key};
 
 let input = Input::new();
 assert!(!input.keyboard().is_down(Key::Escape));

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::Modifiers`. Status: experimental, operational flags.
+Import path: `vmnl_graphics::Modifiers`. Status: experimental, operational flags.
 
 ## Purpose and use cases
 
@@ -41,8 +41,8 @@ Caps Lock and Num Lock bits require `Window::set_lock_key_modifier_reporting(tru
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::Modifiers;
+# extern crate vmnl_graphics;
+use vmnl_graphics::Modifiers;
 
 let modifiers = Modifiers::SHIFT | Modifiers::CONTROL;
 assert!(modifiers.contains(Modifiers::SHIFT));

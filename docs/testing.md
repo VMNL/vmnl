@@ -6,7 +6,7 @@ These tests preserve the existing unit/API/Null suites and reuse #91's bounded, 
 drained process transport, strict READY/INJECTED/OBSERVED barriers, five-second observation
 deadlines and per-check terminal report. Shared transport/report code lives in `tests/support`.
 The Linux uinput fixture stays in the driver; the separate client depends directly only on
-`vmnl`. There is no production API or synthetic VMNL event injection added for testing.
+`vmnl_graphics`. There is no production API or synthetic VMNL event injection added for testing.
 
 ```bash
 just joystick-test x11 runtime     # public InputRuntime; no window or Vulkan initialization
@@ -131,7 +131,7 @@ is added to the public clients.
 
 ### Joystick callback lifecycle regressions
 
-`cargo test -p vmnl-api-tests --test input_runtime_callbacks` exercises the public facade under
+`cargo test -p vmnl-api-tests --test input_runtime_callbacks` exercises the public graphics API under
 Null. A separate test driver invokes the installed GLFW C trampoline with synthetic connection
 notifications; it creates no device, window or Vulkan resource. Cases cover callback self-removal,
 self-replacement, last-subscriber removal, immediate resubscription and cleanup before a user
@@ -202,7 +202,7 @@ physical devices and Windows/macOS virtual fixtures remain unqualified.
 ### Hosted Linux joystick evidence (workload 2)
 
 On 2026-10-22, the `joystick-linux-1` artifact from
-[CI run #39711518595](https://github.com/VMNL/vmnl/actions/runs/39711518595), attempt 1, was
+[CI run #39711518595](https://github.com/VMNL/vmnl-graphics/actions/runs/39711518595), attempt 1, was
 downloaded and checked against its GitHub SHA-256 digest. All twelve native reports were
 revalidated with the existing exact-workload validator, then checked against their repetition
 summaries, client logs and successful Linux job steps.
@@ -408,7 +408,7 @@ implemented or installed by this protocol; those separate injection paths remain
 
 ### Windows and macOS joystick evidence
 
-[CI run #40248972120](https://github.com/VMNL/vmnl/actions/runs/40248972120) observed successful
+[CI run #40248972120](https://github.com/VMNL/vmnl-graphics/actions/runs/40248972120) observed successful
 `Validation: Windows` and `Validation: macOS` jobs on `windows-2022` and `macos-14-arm64` runners.
 Both checked out merge `d117935eeafe43f9ff6e1c2840a4a62a578ffe81` (PR head `22a0137`, `main`
 at `e710938`). The evidence is scoped to that source and those runner environments.
@@ -429,7 +429,7 @@ its runtime/window hardware reports remain outstanding. Virtual injection has th
 
 ```text
 unit test   = close to implementation, small scope, may test private internals
-API test    = black-box public behavior through the vmnl facade
+API test    = black-box public behavior through the vmnl_graphics public API
 smoke test  = executable startup path, no window, exit code is the oracle
 platform test = GLFW NoApi window behavior, no Vulkan or GPU surface
 GPU test    = Vulkan/display behavior, may create a window
@@ -444,7 +444,7 @@ public Rustdoc, upstream specification, or an approved measured baseline. Select
 practical deterministic seam that exercises that contract rather than an implementation detail
 that merely correlates with it.
 
-- Public facade behavior belongs in an API test when it can remain headless.
+- Public graphics API behavior belongs in an API test when it can remain headless.
 - A private invariant or algorithm may be covered by a focused unit test.
 - Backend, platform, GPU, FFI, and hardware behavior requires evidence that crosses the real
   boundary; a mock, Null backend, stub, or Rust-only seam proves only its modeled behavior.
@@ -521,12 +521,12 @@ just input-test cocoa
 ```
 
 The public VMNL `Window::poll_events()` → `Event`/`Input` scenario is a separate opt-in GPU test.
-Its executable client lives in `tests/gpu/input_client` and has only `vmnl` as a direct
+Its executable client lives in `tests/gpu/input_client` and has only `vmnl_graphics` as a direct
 dependency. It creates the context/window and observes native events and input snapshots on
-its main thread, through the public facade. The separate test driver uses X11/XTEST/XKB for
+its main thread, through the public graphics API. The separate test driver uses X11/XTEST/XKB for
 injection and physical fixtures; neither process calls GLFW directly. The GLFW-specific
 `tests/platform` probes remain a separate backend contract.
-The client and headless API tests share only the 120 named `vmnl::Key` values in
+The client and headless API tests share only the 120 named `vmnl_graphics::Key` values in
 [tests/support/input_keys.rs](../tests/support/input_keys.rs). This inventory contains no native
 identifiers and does not include files from `tests/platform`. Physical XKB/evdev/Win32/Cocoa
 correspondences remain in the injectors' table under `tests/platform/src/input_key_table.rs`;
@@ -591,7 +591,7 @@ and input state checks; an unavailable alternate is explicitly excluded.
 Release checks compare the same key and scancode with the acknowledged press. Comparisons use
 the opaque `Scancode` type, without arithmetic or positivity requirements. A missing query
 mapping after a matching named-key press fails explicitly; it does not exclude the input.
-The headless facade and client tests check that the neutral inventory contains 120 distinct
+The headless graphics API and client tests check that the neutral inventory contains 120 distinct
 named VMNL keys, excluding `Unknown`, using `Eq`/`Hash` without numeric casts or ordering.
 An exhaustive match generated from the same literal names makes adding a public `Key` variant
 fail test compilation until the inventory is updated. These inventory checks do not require
@@ -642,7 +642,7 @@ This requires the X11 prerequisites above, XTEST, and a Vulkan-capable GPU with 
 The scenario presents a first frame before requesting focus so an Xwayland window has a buffer
 the compositor can display. It resolves physical XKB names and aliases, not layout characters
 or runtime scancode lookups, to choose the injected key and independently expected VMNL key.
-The client queries only the public facade for scancode metadata. This checks query/event and
+The client queries only the public graphics API for scancode metadata. This checks query/event and
 press/release consistency in one context with a stable keyboard layout; it does not establish
 the correctness of an exact native numeric encoding. A shared query/event encoding defect
 could pass this check. Raw backend encoding and translation checks remain in the unit/platform
@@ -708,7 +708,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored
 ```
 
 This exercises physical A press/release, scancode and batch snapshots, pointer motion/position,
-GLFW mouse buttons 1–6, and both scroll axes in both directions through the public facade.
+GLFW mouse buttons 1–6, and both scroll axes in both directions through the public graphics API.
 It does not qualify buttons 7–8, every key, text, repeat, enter/leave, or public focus-loss batches,
 other display/GPU stacks, or human manual graphical validation.
 
@@ -875,7 +875,7 @@ re-entry uses the client's confirmed screen-space center rather than a sampled d
 Win32 bare Win-key release can open Start and remove focus; these keys are explicitly excluded
 from this profile. Cocoa Caps Lock and lock-modifier restoration remain not yet qualified.
 Any mapped key that fails delivery, focus, event order, or cleanup fails the test rather than being
-reclassified as unsupported. [CI run #38206068512](https://github.com/VMNL/vmnl/actions/runs/38206068512)
+reclassified as unsupported. [CI run #38206068512](https://github.com/VMNL/vmnl-graphics/actions/runs/38206068512)
 at `32f8b3e` retained 161/161 extended X11 cases, 161/161 nested-Wayland cases, 142/142 Win32 cases,
 and 152/152 Cocoa cases, with no error records. These totals match each eligibility manifest and
 include respectively 118, 118, 116, and 110 named-key cases. Exclusions are not passes, and the
@@ -912,9 +912,9 @@ SendInput for GLFW buttons 1–5; the Cocoa probe checks CGEventPost for all eig
 numbers. Both also check native pointer motion, leave/enter, and vertical/horizontal scroll
 direction. The hosted Xvfb mapping
 currently exposes 10 buttons. CI run
-[#38073455968](https://github.com/VMNL/vmnl/actions/runs/38073455968) showed XTEST rejecting
+[#38073455968](https://github.com/VMNL/vmnl-graphics/actions/runs/38073455968) showed XTEST rejecting
 server button 11 (`BadValue`), so GLFW `Button7` and `Button8` are not qualified by hosted CI.
-CI run [#38091799251](https://github.com/VMNL/vmnl/actions/runs/38091799251) stopped at the
+CI run [#38091799251](https://github.com/VMNL/vmnl-graphics/actions/runs/38091799251) stopped at the
 nested Weston hover-boundary case, before X11. The test moved outside the compositor's X11 output
 and received no Wayland leave/enter events. Weston 13.0.0's
 [`clear_pointer_focus()` implementation](https://github.com/wayland-mirror/weston/blob/13.0.0/libweston/input.c#L2533-L2537)
@@ -924,7 +924,7 @@ later background enter occurred after the probe exited, not during the injected 
 The corrected Wayland probe crosses from the GLFW content area to the default desktop shell's top
 panel inside the Weston output, waits 100 ms, then returns to the original position using XTEST.
 It requires the default desktop shell with its top panel; output bounds and both pointer targets
-are checked and logged. The Linux job in [CI run #38109958980](https://github.com/VMNL/vmnl/actions/runs/38109958980) passed this ordered leave/enter pair on both
+are checked and logged. The Linux job in [CI run #38109958980](https://github.com/VMNL/vmnl-graphics/actions/runs/38109958980) passed this ordered leave/enter pair on both
 backends, all 17 Wayland operations, and all 19 X11 operations. The eligible GLFW buttons 1–6,
 pointer motion, and four scroll directions passed; buttons 7–8 are recorded as not injectable
 with the hosted 10-button map. Windows and macOS remain experimental and non-blocking.
@@ -1045,3 +1045,15 @@ Run them explicitly:
 ```bash
 just test-gpu
 ```
+
+
+## Standalone graphics consumers
+
+`just test-consumer` builds and runs two temporary clients outside this workspace. Each declares
+only package `vmnl-graphics`: one uses the usual `vmnl_graphics` import and the other renames the
+dependency to `graphics_backend`. Both exercise the public `Vertex`, `Pod`, and `Zeroable` derives,
+raw trait bounds, and device-free public values. They do not initialize GLFW, Vulkan, or a window.
+
+The check seeds each temporary lockfile from the reviewed workspace lockfile, runs Cargo offline,
+and rejects dependency identities not present in that baseline. Repository sources and lockfiles
+are not rewritten. CI runs the same check on the existing Linux, Windows, and macOS matrix.

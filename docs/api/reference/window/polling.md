@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Methods on `vmnl::Window`. Status: experimental.
+Methods on `vmnl_graphics::Window`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -80,10 +80,10 @@ Available native events and delivery semantics depend on GLFW and the platform w
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::builder()
         .unset_configure_window_polling()

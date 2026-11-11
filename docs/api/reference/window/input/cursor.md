@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::Cursor`. Status: experimental, operational with backend/theme restrictions.
+Import path: `vmnl_graphics::Cursor`. Status: experimental, operational with backend/theme restrictions.
 
 ## Purpose and use cases
 
@@ -63,10 +63,10 @@ resource participates in the cursor contract.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Cursor, StandardCursor, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Cursor, StandardCursor, Window};
 
-# fn main() -> vmnl::VMNLResult<()> {
+# fn main() -> vmnl_graphics::VMNLResult<()> {
 let context = Context::new()?;
 let mut window = Window::new(&context)?;
 let cursor = Cursor::standard(StandardCursor::PointingHand).build(&context)?;

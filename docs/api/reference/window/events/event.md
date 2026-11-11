@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::Event`. Status: experimental, operational translated window event.
+Import path: `vmnl_graphics::Event`. Status: experimental, operational translated window event.
 
 ## Purpose and use cases
 
@@ -46,8 +46,8 @@ Delivery and available native events depend on GLFW/platform. Delivery settings 
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::{Event, EventKind};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Event, EventKind};
 
 fn inspect(event: Event) {
     let timestamp = event.timestamp_seconds();

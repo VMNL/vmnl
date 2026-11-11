@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::FrontFace`. Status: experimental.
+Import path: `vmnl_graphics::raw::FrontFace`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Requires no optional Vulkan device feature. Semantics follow [Vulkan front-face 
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{FrontFace, PipelineSpec};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{FrontFace, PipelineSpec};
 
 let spec = PipelineSpec::<[f32; 2]>::default().front_face(FrontFace::Clockwise);
 assert_eq!(spec.front_face_value(), FrontFace::Clockwise);

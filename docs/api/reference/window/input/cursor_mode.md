@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::CursorMode`. Status: experimental, operational with backend restrictions.
+Import path: `vmnl_graphics::CursorMode`. Status: experimental, operational with backend restrictions.
 
 ## Purpose and use cases
 
@@ -57,10 +57,10 @@ pointer-constraint/relative-pointer protocols. Raw motion only affects events in
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, CursorMode, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, CursorMode, Window};
 
-# fn main() -> vmnl::VMNLResult<()> {
+# fn main() -> vmnl_graphics::VMNLResult<()> {
 let context = Context::new()?;
 let mut window = Window::new(&context)?;
 window.set_cursor_mode(CursorMode::Disabled)?;

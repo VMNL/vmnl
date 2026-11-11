@@ -1,10 +1,10 @@
-# VMNL Repository Agent Rules
+# VMNL Graphics Repository Agent Rules
 
 ## Scope and Routing
 
 These rules apply repository-wide. Read any closer `AGENTS.md` before editing within its scope.
 
-For every graphics task affecting the facade, `vmnl-graphics`, related macros, Vulkan, windowing, input, rendering, GPU resources, graphics tests, examples, documentation, or tooling, use [`$develop-vmnl-graphics`](.agents/skills/develop-vmnl-graphics/SKILL.md) and follow only the references it routes. Do not apply graphics-specific requirements to unrelated subsystems.
+For every graphics task affecting `vmnl-graphics`, related macros, Vulkan, windowing, input, rendering, GPU resources, graphics tests, examples, documentation, or tooling, use [`$develop-vmnl-graphics`](.agents/skills/develop-vmnl-graphics/SKILL.md) and follow only the references it routes. Do not apply graphics-specific requirements to unrelated subsystems.
 
 ## Establish the Contract
 
@@ -43,20 +43,17 @@ Make the smallest coherent patch. Avoid unrelated refactors, renames, formatting
 
 ## Preserve Repository Boundaries
 
-- `crates/vmnl` is the public facade for normal consumers.
-- `crates/vmnl_graphics` owns graphics, windowing, input, and GPU-resource behavior.
+- `crates/vmnl_graphics` is the public crate and owns graphics, windowing, input, and GPU-resource behavior.
 - `crates/vmnl_macros` owns internal procedural macros used by VMNL crates.
-- `tests/api` validates headless public behavior through the facade.
+- `tests/api` validates headless public behavior through `vmnl_graphics`.
 - `tests/smoke` validates executable startup without a window.
 - `tests/platform` isolates GLFW backend behavior without Vulkan.
 - `tests/gpu` isolates Vulkan, surface, presentation, GPU, and display-dependent behavior.
 - `examples` contains user-facing visual workflows.
 
-New audio, network, scene, or interoperability surfaces must preserve the modular target in `docs/architecture.md`. Headless audio and network clients must not acquire graphics dependencies through the facade.
-
-The planned C network backend is a read-only integration dependency for agents. Agents may inspect
-its pinned headers, ABI documentation, tests, build metadata, and implementation while developing
-the Rust integration, but must not edit backend files or advance the pinned revision.
+This repository owns graphics only. Keep its public crate directly consumable; backend details
+and procedural-macro implementation remain private. Other VMNL domains belong to separate
+repositories and must not become requirements of graphics development or publication.
 
 Keep stable architecture, contracts, procedures, and status in `docs/`; public contracts in Rustdoc; and local `README.md` files as navigation.
 
@@ -72,7 +69,7 @@ Add or upgrade a dependency only when required. State why the current graph is i
 
 ## Release Policy
 
-All VMNL releases are performed manually. The repository MUST NOT contain an automatic release or publication workflow unless the policy is explicitly changed.
+All VMNL Graphics releases are performed manually. The repository MUST NOT contain an automatic release or publication workflow unless the policy is explicitly changed.
 
 `docs/deployment.md` is authoritative for release preconditions and current publication blockers. Manual release policy does not imply that the current crates.io dependency graph is publishable.
 

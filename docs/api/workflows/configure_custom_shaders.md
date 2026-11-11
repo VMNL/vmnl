@@ -5,10 +5,10 @@ Supply `ShaderSource::Src` or `ShaderSource::Path` to `WindowBuilder::vertex_sha
 The custom shaders must preserve VMNL's expected 2D vertex interface, push-constant/window-size contract, entry point, and fragment output. Treat a path as runtime data relative to the process working directory.
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, ShaderSource, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, ShaderSource, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let window = Window::builder()
         .vertex_shader(ShaderSource::Path("shaders/color.vert".into()))

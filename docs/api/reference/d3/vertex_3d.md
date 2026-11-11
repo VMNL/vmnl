@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d3::Vertex3D`. Status: experimental value type; 3D rendering is not operational.
+Import path: `vmnl_graphics::d3::Vertex3D`. Status: experimental value type; 3D rendering is not operational.
 
 ## Purpose and use cases
 
@@ -39,9 +39,9 @@ Buffer creation requires Vulkan; no operational 3D display path.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::common::Rgba;
-use vmnl::d3::{Vector3f, Vertex3D};
+# extern crate vmnl_graphics;
+use vmnl_graphics::common::Rgba;
+use vmnl_graphics::d3::{Vector3f, Vertex3D};
 
 let vertex = Vertex3D { position: Vector3f::default(), color: Rgba::WHITE };
 assert_eq!(vertex.color.a, 255);

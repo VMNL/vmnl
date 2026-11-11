@@ -13,21 +13,20 @@ explicitly.
 ## Clone
 
 ```bash
-git clone https://github.com/VMNL/vmnl.git
-cd vmnl
+git clone https://github.com/VMNL/vmnl-graphics.git
+cd vmnl-graphics
 ```
 
 ## Render a First Example
 
 ```bash
-just run d2_shapes
+just run d2_circles
 ```
 
-Cargo builds `d2_shapes` when needed. Expected result: a window opens and renders the 2D shapes
+Cargo builds `d2_circles` when needed. Expected result: a window opens and renders the circle-family
 example. This requires a Vulkan-capable GPU, a Vulkan loader, GLFW, and a display server.
 
-Current limitation: `d2_shapes` returns `InvalidState` because its sector is missing an explicit
-cap. For the circle-family workflow, use `just run d2_circles`; see [Examples](examples.md#commands).
+The other workflows and current example limitations are listed in [Examples](examples.md#commands).
 
 ## Verify the Checkout
 

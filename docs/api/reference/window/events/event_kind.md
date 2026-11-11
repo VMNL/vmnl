@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::EventKind`. Status: experimental, operational event payload.
+Import path: `vmnl_graphics::EventKind`. Status: experimental, operational event payload.
 
 ## Purpose and use cases
 
@@ -58,8 +58,8 @@ platform input methods.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::{EventKind, Key, Modifiers, Scancode};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{EventKind, Key, Modifiers, Scancode};
 
 let kind = EventKind::KeyPressed {
     key: Key::Unknown,

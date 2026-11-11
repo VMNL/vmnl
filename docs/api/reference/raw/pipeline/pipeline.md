@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::Pipeline<TVertex>`. Status: experimental, operational within raw limits.
+Import path: `vmnl_graphics::raw::Pipeline<TVertex>`. Status: experimental, operational within raw limits.
 
 ## Purpose and use cases
 

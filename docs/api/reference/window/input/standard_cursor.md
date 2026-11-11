@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::StandardCursor`. Status: experimental, operational when the active system
+Import path: `vmnl_graphics::StandardCursor`. Status: experimental, operational when the active system
 cursor theme provides the requested shape.
 
 ## Purpose and use cases
@@ -60,10 +60,10 @@ private system API. Exact appearance is platform/theme-defined.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Cursor, StandardCursor};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Cursor, StandardCursor};
 
-# fn main() -> vmnl::VMNLResult<()> {
+# fn main() -> vmnl_graphics::VMNLResult<()> {
 let context = Context::new()?;
 let text_cursor = Cursor::standard(StandardCursor::IBeam).build(&context)?;
 # let _ = text_cursor;

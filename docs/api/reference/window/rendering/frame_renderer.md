@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::FrameRenderer<'w, 'g>`; created by `Window::render()`. Status: experimental; 2D/raw operational, 3D scaffolded.
+Import path: `vmnl_graphics::FrameRenderer<'w, 'g>`; created by `Window::render()`. Status: experimental; 2D/raw operational, 3D scaffolded.
 
 ## Purpose and use cases
 
@@ -57,11 +57,11 @@ Requires a ready window and renderable framebuffer. Resize can trigger swapchain
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Window};
-use vmnl::d2::Shape;
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Window};
+use vmnl_graphics::d2::Shape;
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
     let shape = Shape::rect(100.0, 50.0).build(&context)?;

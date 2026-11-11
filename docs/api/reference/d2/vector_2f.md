@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::Vector2f`. Status: experimental value type.
+Import path: `vmnl_graphics::d2::Vector2f`. Status: experimental value type.
 
 ## Purpose and use cases
 
@@ -44,8 +44,8 @@ None; rendering interpretation depends on shaders and framebuffer state.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::d2::Vector2f;
+# extern crate vmnl_graphics;
+use vmnl_graphics::d2::Vector2f;
 
 let mut value = Vector2f { x: 1.0, y: 2.0 };
 value += Vector2f { x: 3.0, y: 4.0 };

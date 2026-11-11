@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::LineBuilder`; created by `Shape::line`. Status: experimental, operational.
+Import path: `vmnl_graphics::d2::LineBuilder`; created by `Shape::line`. Status: experimental, operational.
 
 ## Purpose and use cases
 
@@ -39,11 +39,11 @@ Requires Vulkan for build and compatible display/window for drawing.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::Context;
-use vmnl::d2::{LineCap, Shape, Vector2f};
+# extern crate vmnl_graphics;
+use vmnl_graphics::Context;
+use vmnl_graphics::d2::{LineCap, Shape, Vector2f};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let line = Shape::line(
         Vector2f { x: 0.0, y: 0.0 },

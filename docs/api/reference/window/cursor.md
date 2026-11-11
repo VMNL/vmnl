@@ -2,8 +2,8 @@
 
 ## Public path and maturity
 
-`vmnl::Cursor`, `vmnl::CursorBuilder`, `vmnl::StandardCursor`,
-`vmnl::StandardCursorBuilder`, methods on `vmnl::Window`, plus
+`vmnl_graphics::Cursor`, `vmnl_graphics::CursorBuilder`, `vmnl_graphics::StandardCursor`,
+`vmnl_graphics::StandardCursorBuilder`, methods on `vmnl_graphics::Window`, plus
 `Context::is_raw_mouse_motion_supported`. Status: experimental, operational where the active
 backend supports the requested cursor or mode.
 
@@ -106,10 +106,10 @@ with some X11 or Wayland cursor themes. See [platform compatibility](platform_co
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Cursor, CursorMode, StandardCursor, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Cursor, CursorMode, StandardCursor, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
 let context = Context::new()?;
 let mut window = Window::new(&context)?;
 let pointer = Cursor::standard(StandardCursor::PointingHand).build(&context)?;

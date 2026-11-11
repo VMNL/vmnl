@@ -6,4 +6,4 @@ publish = false
 
 [dependencies]
 glfw = { workspace = true }
-vmnl = { path = "../../crates/vmnl" }
+vmnl-graphics = { path = "../../crates/vmnl_graphics" }

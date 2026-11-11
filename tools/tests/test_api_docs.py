@@ -23,27 +23,59 @@ class SurfaceTests(unittest.TestCase):
     def test_parses_reexports_generics_methods_variants_and_macros(self) -> None:
         surface = api_docs.parse_surface(FIXTURE.read_text(encoding="utf-8"))
 
-        self.assertIn(api_docs.PublicItem("struct", "vmnl::Context"), surface.items)
-        self.assertIn(api_docs.PublicItem("struct", "vmnl::raw::Geometry"), surface.items)
-        self.assertIn(api_docs.PublicItem("macro", "vmnl::raw::Vertex"), surface.items)
-        self.assertIn(api_docs.PublicItem("trait", "vmnl::raw::Vertex"), surface.items)
-        self.assertIn(api_docs.PublicItem("alias", "vmnl::VMNLResult"), surface.items)
+        self.assertIn(api_docs.PublicItem("struct", "vmnl_graphics::Context"), surface.items)
+        self.assertIn(api_docs.PublicItem("struct", "vmnl_graphics::raw::Geometry"), surface.items)
+        self.assertIn(api_docs.PublicItem("macro", "vmnl_graphics::raw::Vertex"), surface.items)
+        self.assertIn(api_docs.PublicItem("trait", "vmnl_graphics::raw::Vertex"), surface.items)
+        self.assertIn(api_docs.PublicItem("alias", "vmnl_graphics::VMNLResult"), surface.items)
         self.assertEqual(
             surface.methods,
             (
-                api_docs.PublicMethod("vmnl::Context", "new"),
-                api_docs.PublicMethod("vmnl::raw::Geometry", "builder"),
+                api_docs.PublicMethod("vmnl_graphics::Context", "new"),
+                api_docs.PublicMethod("vmnl_graphics::raw::Geometry", "builder"),
             ),
         )
 
     def test_rejects_unknown_inventory_format(self) -> None:
         with self.assertRaisesRegex(api_docs.ApiDocsError, "unknown"):
-            api_docs.parse_surface("pub bewildering vmnl::Thing\n")
+            api_docs.parse_surface("pub bewildering vmnl_graphics::Thing\n")
 
-    def test_parses_facade_reexports(self) -> None:
-        exports = api_docs.parse_facade_exports(FIXTURE.read_text(encoding="utf-8"))
+    def test_parses_graphics_reexports(self) -> None:
+        exports = api_docs.parse_reexports(FIXTURE.read_text(encoding="utf-8"))
 
-        self.assertEqual(exports, ("vmnl::Context",))
+        self.assertEqual(exports, ("vmnl_graphics::Context", "vmnl_graphics::raw::Vertex"))
+
+    def test_keeps_graphics_namespace_and_rejects_legacy_namespace(self) -> None:
+        surface = api_docs.parse_surface("pub struct vmnl_graphics::Context\n")
+        self.assertEqual(surface.items, (api_docs.PublicItem("struct", "vmnl_graphics::Context"),))
+        with self.assertRaisesRegex(api_docs.ApiDocsError, "unknown"):
+            api_docs.parse_surface("pub struct vmnl::Context\n")
+
+    def test_private_macros_require_actual_graphics_reexports(self) -> None:
+        text = FIXTURE.read_text(encoding="utf-8")
+        text += "pub proc macro vmnl_macros::#[derive(Pod)]\n"
+        surface = api_docs.parse_surface(text)
+        with self.assertRaisesRegex(api_docs.ApiDocsError, "not reexported"):
+            api_docs.validate_public_reexports(surface)
+        surface = api_docs.parse_surface(text + "pub use vmnl_graphics::raw::Pod\n")
+        api_docs.validate_public_reexports(surface)
+
+    def test_shader_aliases_share_one_item_and_method_owner(self) -> None:
+        surface = api_docs.parse_surface(
+            "pub enum vmnl_graphics::common::ShaderSource\n"
+            "pub enum vmnl_graphics::ShaderSource\n"
+            "pub enum vmnl_graphics::raw::ShaderSource\n"
+            "pub fn vmnl_graphics::ShaderSource::clone(&self) -> Self\n"
+        )
+        self.assertEqual(surface.items, (api_docs.PublicItem("enum", "vmnl_graphics::common::ShaderSource"),))
+        self.assertEqual(surface.methods, (api_docs.PublicMethod("vmnl_graphics::common::ShaderSource", "clone"),))
+
+    def test_distinct_types_with_the_same_name_are_not_merged(self) -> None:
+        surface = api_docs.parse_surface(
+            "pub struct vmnl_graphics::d2::Value\n"
+            "pub struct vmnl_graphics::d3::Value\n"
+        )
+        self.assertEqual(len(surface.items), 2)
 
 
 class MatrixTests(unittest.TestCase):
@@ -56,12 +88,33 @@ class MatrixTests(unittest.TestCase):
         )
         return matrix
 
+    def test_missing_and_stale_matrix_items_fail(self) -> None:
+        item = api_docs.PublicItem("struct", "vmnl_graphics::Context")
+        row = api_docs.CoverageRow(item, "Context", "context.md", "Rustdoc", "context.html", "test")
+        with self.assertRaisesRegex(api_docs.ApiDocsError, "missing from matrix"):
+            api_docs.validate_coverage(api_docs.Surface("surface", (item,), ()), ())
+        with self.assertRaisesRegex(api_docs.ApiDocsError, "not present"):
+            api_docs.validate_coverage(api_docs.Surface("surface", (), ()), (row,))
+
+    def test_stale_generated_output_is_not_rewritten(self) -> None:
+        with tempfile.TemporaryDirectory() as value:
+            path = Path(value) / "snapshot.md"
+            path.write_text("old\n", encoding="utf-8")
+            with self.assertRaisesRegex(api_docs.ApiDocsError, "stale"):
+                api_docs.verify_outputs({path: "new\n"})
+            self.assertEqual(path.read_text(encoding="utf-8"), "old\n")
+
+    def test_method_without_an_exported_owner_fails(self) -> None:
+        surface = api_docs.Surface("surface", (), (api_docs.PublicMethod("vmnl_graphics::Missing", "new"),))
+        with self.assertRaisesRegex(api_docs.ApiDocsError, "no owning matrix item"):
+            api_docs.render_method_index(surface, ())
+
     def test_rejects_duplicate(self) -> None:
         with tempfile.TemporaryDirectory() as value:
             root = Path(value)
             rows = (
-                "| struct | `vmnl::Context` | [Context](context.md) | [Rustdoc](context.html) | test |\n"
-                "| struct | `vmnl::Context` | [Context](context.md) | [Rustdoc](context.html) | test |\n"
+                "| struct | `vmnl_graphics::Context` | [Context](context.md) | [Rustdoc](context.html) | test |\n"
+                "| struct | `vmnl_graphics::Context` | [Context](context.md) | [Rustdoc](context.html) | test |\n"
             )
             with self.assertRaisesRegex(api_docs.ApiDocsError, "duplicate"):
                 api_docs.parse_matrix(self.write_matrix(root, rows))
@@ -72,7 +125,7 @@ class MatrixTests(unittest.TestCase):
             rows = api_docs.parse_matrix(
                 self.write_matrix(
                     root,
-                    "| struct | `vmnl::Context` | [Context](missing.md#new) | [Rustdoc](context.html) | test |\n",
+                    "| struct | `vmnl_graphics::Context` | [Context](missing.md#new) | [Rustdoc](context.html) | test |\n",
                 )
             )
             with self.assertRaisesRegex(api_docs.ApiDocsError, "missing canonical page"):
@@ -88,7 +141,7 @@ class MatrixTests(unittest.TestCase):
             rustdoc = root / "context.html"
             rustdoc.write_text('<main id="top"></main>', encoding="utf-8")
             row = api_docs.CoverageRow(
-                api_docs.PublicItem("struct", "vmnl::Context"),
+                api_docs.PublicItem("struct", "vmnl_graphics::Context"),
                 "Context",
                 "context.md",
                 "Rustdoc",
@@ -98,7 +151,7 @@ class MatrixTests(unittest.TestCase):
             surface = api_docs.Surface(
                 "surface\n",
                 (row.item,),
-                (api_docs.PublicMethod("vmnl::Context", "new"),),
+                (api_docs.PublicMethod("vmnl_graphics::Context", "new"),),
             )
             old_matrix = api_docs.MATRIX_PATH
             try:
@@ -110,7 +163,7 @@ class MatrixTests(unittest.TestCase):
 
     def test_routes_sticky_key_methods_to_input_modes(self) -> None:
         row = api_docs.CoverageRow(
-            api_docs.PublicItem("struct", "vmnl::Window"),
+            api_docs.PublicItem("struct", "vmnl_graphics::Window"),
             "Window",
             "../reference/window/window.md",
             "Rustdoc",
@@ -122,7 +175,7 @@ class MatrixTests(unittest.TestCase):
             self.assertEqual(
                 api_docs.method_page(
                     row,
-                    api_docs.PublicMethod("vmnl::Window", name),
+                    api_docs.PublicMethod("vmnl_graphics::Window", name),
                 ),
                 ("Input modes", "../reference/window/input/modes.md"),
             )

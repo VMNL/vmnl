@@ -3,106 +3,106 @@
 
 | Kind | Symbol | Canonical page | Rustdoc |
 |---|---|---|---|
-| struct | `vmnl::ColorFormat` | [ColorFormat](../reference/window/color_format.md) | [Rustdoc](../../../target/doc/vmnl/struct.ColorFormat.html) |
-| struct | `vmnl::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl/struct.Context.html) |
-| struct | `vmnl::ContextBuilder` | [ContextBuilder](../reference/context_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.ContextBuilder.html) |
-| struct | `vmnl::Cursor` | [Cursor](../reference/window/input/cursor.md) | [Rustdoc](../../../target/doc/vmnl/struct.Cursor.html) |
-| struct | `vmnl::CursorBuilder` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.CursorBuilder.html) |
-| enum | `vmnl::CursorMode` | [CursorMode](../reference/window/input/cursor_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.CursorMode.html) |
-| enum | `vmnl::DepthFormat` | [DepthFormat](../reference/window/depth_format.md) | [Rustdoc](../../../target/doc/vmnl/enum.DepthFormat.html) |
-| struct | `vmnl::DeviceConfig` | [DeviceConfig](../reference/device_config.md) | [Rustdoc](../../../target/doc/vmnl/struct.DeviceConfig.html) |
-| enum | `vmnl::DeviceFeature` | [DeviceFeature](../reference/device_feature.md) | [Rustdoc](../../../target/doc/vmnl/enum.DeviceFeature.html) |
-| struct | `vmnl::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl/struct.Event.html) |
-| enum | `vmnl::EventKind` | [EventKind](../reference/window/events/event_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.EventKind.html) |
-| struct | `vmnl::FrameRenderer` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [Rustdoc](../../../target/doc/vmnl/struct.FrameRenderer.html) |
-| enum | `vmnl::GamepadAxis` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.GamepadAxis.html) |
-| enum | `vmnl::GamepadButton` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.GamepadButton.html) |
-| struct | `vmnl::GamepadState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.GamepadState.html) |
-| struct | `vmnl::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl/struct.Input.html) |
-| struct | `vmnl::InputRuntime` | [InputRuntime](../reference/input_runtime.md) | [Rustdoc](../../../target/doc/vmnl/struct.InputRuntime.html) |
-| struct | `vmnl::InputRuntimeBuilder` | [InputRuntime](../reference/input_runtime.md) | [Rustdoc](../../../target/doc/vmnl/struct.InputRuntimeBuilder.html) |
-| struct | `vmnl::InputRuntimeConfig` | [InputRuntime](../reference/input_runtime.md) | [Rustdoc](../../../target/doc/vmnl/struct.InputRuntimeConfig.html) |
-| enum | `vmnl::JoystickButtonState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.JoystickButtonState.html) |
-| struct | `vmnl::JoystickHatState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickHatState.html) |
-| enum | `vmnl::JoystickId` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.JoystickId.html) |
-| struct | `vmnl::JoystickSample` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickSample.html) |
-| struct | `vmnl::JoystickState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.JoystickState.html) |
-| enum | `vmnl::JoystickStatus` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.JoystickStatus.html) |
-| enum | `vmnl::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl/enum.Key.html) |
-| struct | `vmnl::KeyboardState` | [KeyboardState](../reference/window/input/keyboard_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.KeyboardState.html) |
-| struct | `vmnl::LineWidthLimits` | [LineWidthLimits](../reference/line_width_limits.md) | [Rustdoc](../../../target/doc/vmnl/struct.LineWidthLimits.html) |
-| struct | `vmnl::Modifiers` | [Modifiers](../reference/window/input/modifiers.md) | [Rustdoc](../../../target/doc/vmnl/struct.Modifiers.html) |
-| struct | `vmnl::MonitorInfo` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [Rustdoc](../../../target/doc/vmnl/struct.MonitorInfo.html) |
-| struct | `vmnl::Monitors` | [Monitors](../reference/window/monitors/monitors.md) | [Rustdoc](../../../target/doc/vmnl/struct.Monitors.html) |
-| enum | `vmnl::MouseButton` | [MouseButton](../reference/window/input/mouse_button.md) | [Rustdoc](../../../target/doc/vmnl/enum.MouseButton.html) |
-| struct | `vmnl::MouseState` | [MouseState](../reference/window/input/mouse_state.md) | [Rustdoc](../../../target/doc/vmnl/struct.MouseState.html) |
-| enum | `vmnl::PresentMode` | [PresentMode](../reference/window/present_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.PresentMode.html) |
-| enum | `vmnl::RenderMode` | [RenderMode](../reference/window/rendering/render_mode.md) | [Rustdoc](../../../target/doc/vmnl/enum.RenderMode.html) |
-| struct | `vmnl::RenderTargetConfig` | [RenderTargetConfig](../reference/window/render_target_config.md) | [Rustdoc](../../../target/doc/vmnl/struct.RenderTargetConfig.html) |
-| struct | `vmnl::RenderTargetInfo` | [RenderTargetInfo](../reference/window/render_target_info.md) | [Rustdoc](../../../target/doc/vmnl/struct.RenderTargetInfo.html) |
-| struct | `vmnl::Scancode` | [Scancode](../reference/window/input/scancode.md) | [Rustdoc](../../../target/doc/vmnl/struct.Scancode.html) |
-| enum | `vmnl::StandardCursor` | [StandardCursor](../reference/window/input/standard_cursor.md) | [Rustdoc](../../../target/doc/vmnl/enum.StandardCursor.html) |
-| struct | `vmnl::StandardCursorBuilder` | [StandardCursorBuilder](../reference/window/input/standard_cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.StandardCursorBuilder.html) |
-| enum | `vmnl::StickAngleConvention` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/enum.StickAngleConvention.html) |
-| struct | `vmnl::StickConfig` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickConfig.html) |
-| struct | `vmnl::StickState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl/struct.StickState.html) |
-| struct | `vmnl::VMNLError` | [VMNLError](../reference/errors/vmnl_error.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLError.html) |
-| enum | `vmnl::VMNLErrorKind` | [VMNLErrorKind](../reference/errors/vmnl_error_kind.md) | [Rustdoc](../../../target/doc/vmnl/enum.VMNLErrorKind.html) |
-| struct | `vmnl::VMNLErrorLocation` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [Rustdoc](../../../target/doc/vmnl/struct.VMNLErrorLocation.html) |
-| alias | `vmnl::VMNLResult` | [VMNLResult](../reference/errors/vmnl_result.md) | [Rustdoc](../../../target/doc/vmnl/type.VMNLResult.html) |
-| struct | `vmnl::VideoMode` | [VideoMode](../reference/window/monitors/video_mode.md) | [Rustdoc](../../../target/doc/vmnl/struct.VideoMode.html) |
-| struct | `vmnl::Window` | [Window](../reference/window/window.md) | [Rustdoc](../../../target/doc/vmnl/struct.Window.html) |
-| struct | `vmnl::WindowBuilder` | [WindowBuilder](../reference/window/window_builder.md) | [Rustdoc](../../../target/doc/vmnl/struct.WindowBuilder.html) |
-| enum | `vmnl::common::BufferMemoryPreference` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [Rustdoc](../../../target/doc/vmnl/common/enum.BufferMemoryPreference.html) |
-| struct | `vmnl::common::Rgba` | [Rgba](../reference/common/rgba.md) | [Rustdoc](../../../target/doc/vmnl/common/struct.Rgba.html) |
-| enum | `vmnl::common::ShaderSource` | [ShaderSource](../reference/common/shader_source.md) | [Rustdoc](../../../target/doc/vmnl/common/enum.ShaderSource.html) |
-| enum | `vmnl::d2::Anchor` | [Anchor](../reference/d2/shapes/anchor.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.Anchor.html) |
-| struct | `vmnl::d2::CornerRadii` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.CornerRadii.html) |
-| trait | `vmnl::d2::Drawable2D` | [Drawable2D](../reference/d2/drawable_2d.md) | [Rustdoc](../../../target/doc/vmnl/d2/trait.Drawable2D.html) |
-| struct | `vmnl::d2::IndexedShapeBuilder` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.IndexedShapeBuilder.html) |
-| struct | `vmnl::d2::LineBuilder` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.LineBuilder.html) |
-| enum | `vmnl::d2::LineCap` | [LineCap](../reference/d2/shapes/line_cap.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.LineCap.html) |
-| enum | `vmnl::d2::LineJoin` | [LineJoin](../reference/d2/shapes/line_join.md) | [Rustdoc](../../../target/doc/vmnl/d2/enum.LineJoin.html) |
-| struct | `vmnl::d2::PolygonBuilder` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.PolygonBuilder.html) |
-| struct | `vmnl::d2::PolylineBuilder` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.PolylineBuilder.html) |
-| struct | `vmnl::d2::RectBuilder` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.RectBuilder.html) |
-| struct | `vmnl::d2::RenderItem2D` | [RenderItem2D](../reference/d2/render_item_2d.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.RenderItem2D.html) |
-| struct | `vmnl::d2::Shape` | [Shape](../reference/d2/shapes/shape.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.Shape.html) |
-| struct | `vmnl::d2::TriangleBuilder` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.TriangleBuilder.html) |
-| struct | `vmnl::d2::Vector2f` | [Vector2f](../reference/d2/vector_2f.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.Vector2f.html) |
-| struct | `vmnl::d2::Vertex2D` | [Vertex2D](../reference/d2/vertex_2d.md) | [Rustdoc](../../../target/doc/vmnl/d2/struct.Vertex2D.html) |
-| struct | `vmnl::d3::Camera` | [Camera](../reference/d3/camera.md) | [Rustdoc](../../../target/doc/vmnl/d3/struct.Camera.html) |
-| trait | `vmnl::d3::Drawable3D` | [Drawable3D](../reference/d3/drawable_3d.md) | [Rustdoc](../../../target/doc/vmnl/d3/trait.Drawable3D.html) |
-| struct | `vmnl::d3::Mesh` | [Mesh](../reference/d3/mesh/mesh.md) | [Rustdoc](../../../target/doc/vmnl/d3/struct.Mesh.html) |
-| struct | `vmnl::d3::MeshBuilder` | [MeshBuilder](../reference/d3/mesh/mesh_builder.md) | [Rustdoc](../../../target/doc/vmnl/d3/struct.MeshBuilder.html) |
-| struct | `vmnl::d3::RenderItem3D` | [RenderItem3D](../reference/d3/render_item_3d.md) | [Rustdoc](../../../target/doc/vmnl/d3/struct.RenderItem3D.html) |
-| struct | `vmnl::d3::Vector3f` | [Vector3f](../reference/d3/vector_3f.md) | [Rustdoc](../../../target/doc/vmnl/d3/struct.Vector3f.html) |
-| struct | `vmnl::d3::Vertex3D` | [Vertex3D](../reference/d3/vertex_3d.md) | [Rustdoc](../../../target/doc/vmnl/d3/struct.Vertex3D.html) |
-| enum | `vmnl::raw::BlendMode` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.BlendMode.html) |
-| trait | `vmnl::raw::BufferContents` | [BufferContents](../reference/raw/traits/buffer_contents.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.BufferContents.html) |
-| enum | `vmnl::raw::CompareOp` | [CompareOp](../reference/raw/pipeline/compare_op.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.CompareOp.html) |
-| enum | `vmnl::raw::CullMode` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.CullMode.html) |
-| enum | `vmnl::raw::DepthState` | [DepthState](../reference/raw/pipeline/depth_state.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.DepthState.html) |
-| struct | `vmnl::raw::FrameUniform` | [FrameUniform](../reference/raw/uniforms/frame_uniform.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.FrameUniform.html) |
-| struct | `vmnl::raw::FrameUniformBuilder` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.FrameUniformBuilder.html) |
-| enum | `vmnl::raw::FrontFace` | [FrontFace](../reference/raw/pipeline/front_face.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.FrontFace.html) |
-| struct | `vmnl::raw::Geometry` | [Geometry](../reference/raw/geometry/geometry.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Geometry.html) |
-| struct | `vmnl::raw::GeometryBuilder` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.GeometryBuilder.html) |
-| struct | `vmnl::raw::Pipeline` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Pipeline.html) |
-| struct | `vmnl::raw::PipelineSpec` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.PipelineSpec.html) |
-| macro | `vmnl::raw::Pod` | [Pod derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Pod.html) |
-| trait | `vmnl::raw::Pod` | [Pod trait](../reference/raw/traits/pod.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Pod.html) |
-| enum | `vmnl::raw::PolygonMode` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PolygonMode.html) |
-| enum | `vmnl::raw::PrimitiveTopology` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.PrimitiveTopology.html) |
-| struct | `vmnl::raw::Resources` | [Resources](../reference/raw/resources/resources.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Resources.html) |
-| struct | `vmnl::raw::ResourcesBuilder` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.ResourcesBuilder.html) |
-| struct | `vmnl::raw::Scissor` | [Scissor](../reference/raw/pipeline/scissor.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Scissor.html) |
-| enum | `vmnl::raw::ScissorPolicy` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.ScissorPolicy.html) |
-| struct | `vmnl::raw::Uniform` | [Uniform](../reference/raw/uniforms/uniform.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Uniform.html) |
-| struct | `vmnl::raw::UniformBuilder` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.UniformBuilder.html) |
-| macro | `vmnl::raw::Vertex` | [Vertex derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Vertex.html) |
-| trait | `vmnl::raw::Vertex` | [Vertex trait](../reference/raw/traits/vertex.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Vertex.html) |
-| struct | `vmnl::raw::Viewport` | [Viewport](../reference/raw/pipeline/viewport.md) | [Rustdoc](../../../target/doc/vmnl/raw/struct.Viewport.html) |
-| enum | `vmnl::raw::ViewportPolicy` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [Rustdoc](../../../target/doc/vmnl/raw/enum.ViewportPolicy.html) |
-| macro | `vmnl::raw::Zeroable` | [Zeroable derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl/raw/derive.Zeroable.html) |
-| trait | `vmnl::raw::Zeroable` | [Zeroable trait](../reference/raw/traits/zeroable.md) | [Rustdoc](../../../target/doc/vmnl/raw/trait.Zeroable.html) |
+| struct | `vmnl_graphics::ColorFormat` | [ColorFormat](../reference/window/color_format.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.ColorFormat.html) |
+| struct | `vmnl_graphics::Context` | [Context](../reference/context.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.Context.html) |
+| struct | `vmnl_graphics::ContextBuilder` | [ContextBuilder](../reference/context_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.ContextBuilder.html) |
+| struct | `vmnl_graphics::Cursor` | [Cursor](../reference/window/input/cursor.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.Cursor.html) |
+| struct | `vmnl_graphics::CursorBuilder` | [CursorBuilder](../reference/window/input/cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.CursorBuilder.html) |
+| enum | `vmnl_graphics::CursorMode` | [CursorMode](../reference/window/input/cursor_mode.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.CursorMode.html) |
+| enum | `vmnl_graphics::DepthFormat` | [DepthFormat](../reference/window/depth_format.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.DepthFormat.html) |
+| struct | `vmnl_graphics::DeviceConfig` | [DeviceConfig](../reference/device_config.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.DeviceConfig.html) |
+| enum | `vmnl_graphics::DeviceFeature` | [DeviceFeature](../reference/device_feature.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.DeviceFeature.html) |
+| struct | `vmnl_graphics::Event` | [Event](../reference/window/events/event.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.Event.html) |
+| enum | `vmnl_graphics::EventKind` | [EventKind](../reference/window/events/event_kind.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.EventKind.html) |
+| struct | `vmnl_graphics::FrameRenderer` | [FrameRenderer](../reference/window/rendering/frame_renderer.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.FrameRenderer.html) |
+| enum | `vmnl_graphics::GamepadAxis` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.GamepadAxis.html) |
+| enum | `vmnl_graphics::GamepadButton` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.GamepadButton.html) |
+| struct | `vmnl_graphics::GamepadState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.GamepadState.html) |
+| struct | `vmnl_graphics::Input` | [Input](../reference/window/input/input.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.Input.html) |
+| struct | `vmnl_graphics::InputRuntime` | [InputRuntime](../reference/input_runtime.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.InputRuntime.html) |
+| struct | `vmnl_graphics::InputRuntimeBuilder` | [InputRuntime](../reference/input_runtime.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.InputRuntimeBuilder.html) |
+| struct | `vmnl_graphics::InputRuntimeConfig` | [InputRuntime](../reference/input_runtime.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.InputRuntimeConfig.html) |
+| enum | `vmnl_graphics::JoystickButtonState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.JoystickButtonState.html) |
+| struct | `vmnl_graphics::JoystickHatState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.JoystickHatState.html) |
+| enum | `vmnl_graphics::JoystickId` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.JoystickId.html) |
+| struct | `vmnl_graphics::JoystickSample` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.JoystickSample.html) |
+| struct | `vmnl_graphics::JoystickState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.JoystickState.html) |
+| enum | `vmnl_graphics::JoystickStatus` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.JoystickStatus.html) |
+| enum | `vmnl_graphics::Key` | [Key](../reference/window/input/key.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.Key.html) |
+| struct | `vmnl_graphics::KeyboardState` | [KeyboardState](../reference/window/input/keyboard_state.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.KeyboardState.html) |
+| struct | `vmnl_graphics::LineWidthLimits` | [LineWidthLimits](../reference/line_width_limits.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.LineWidthLimits.html) |
+| struct | `vmnl_graphics::Modifiers` | [Modifiers](../reference/window/input/modifiers.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.Modifiers.html) |
+| struct | `vmnl_graphics::MonitorInfo` | [MonitorInfo](../reference/window/monitors/monitor_info.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.MonitorInfo.html) |
+| struct | `vmnl_graphics::Monitors` | [Monitors](../reference/window/monitors/monitors.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.Monitors.html) |
+| enum | `vmnl_graphics::MouseButton` | [MouseButton](../reference/window/input/mouse_button.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.MouseButton.html) |
+| struct | `vmnl_graphics::MouseState` | [MouseState](../reference/window/input/mouse_state.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.MouseState.html) |
+| enum | `vmnl_graphics::PresentMode` | [PresentMode](../reference/window/present_mode.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.PresentMode.html) |
+| enum | `vmnl_graphics::RenderMode` | [RenderMode](../reference/window/rendering/render_mode.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.RenderMode.html) |
+| struct | `vmnl_graphics::RenderTargetConfig` | [RenderTargetConfig](../reference/window/render_target_config.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.RenderTargetConfig.html) |
+| struct | `vmnl_graphics::RenderTargetInfo` | [RenderTargetInfo](../reference/window/render_target_info.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.RenderTargetInfo.html) |
+| struct | `vmnl_graphics::Scancode` | [Scancode](../reference/window/input/scancode.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.Scancode.html) |
+| enum | `vmnl_graphics::StandardCursor` | [StandardCursor](../reference/window/input/standard_cursor.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.StandardCursor.html) |
+| struct | `vmnl_graphics::StandardCursorBuilder` | [StandardCursorBuilder](../reference/window/input/standard_cursor_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.StandardCursorBuilder.html) |
+| enum | `vmnl_graphics::StickAngleConvention` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.StickAngleConvention.html) |
+| struct | `vmnl_graphics::StickConfig` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.StickConfig.html) |
+| struct | `vmnl_graphics::StickState` | [Joystick and gamepad samples](../reference/joystick_gamepad.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.StickState.html) |
+| struct | `vmnl_graphics::VMNLError` | [VMNLError](../reference/errors/vmnl_error.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.VMNLError.html) |
+| enum | `vmnl_graphics::VMNLErrorKind` | [VMNLErrorKind](../reference/errors/vmnl_error_kind.md) | [Rustdoc](../../../target/doc/vmnl_graphics/enum.VMNLErrorKind.html) |
+| struct | `vmnl_graphics::VMNLErrorLocation` | [VMNLErrorLocation](../reference/errors/vmnl_error_location.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.VMNLErrorLocation.html) |
+| alias | `vmnl_graphics::VMNLResult` | [VMNLResult](../reference/errors/vmnl_result.md) | [Rustdoc](../../../target/doc/vmnl_graphics/type.VMNLResult.html) |
+| struct | `vmnl_graphics::VideoMode` | [VideoMode](../reference/window/monitors/video_mode.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.VideoMode.html) |
+| struct | `vmnl_graphics::Window` | [Window](../reference/window/window.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.Window.html) |
+| struct | `vmnl_graphics::WindowBuilder` | [WindowBuilder](../reference/window/window_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/struct.WindowBuilder.html) |
+| enum | `vmnl_graphics::common::BufferMemoryPreference` | [BufferMemoryPreference](../reference/common/buffer_memory_preference.md) | [Rustdoc](../../../target/doc/vmnl_graphics/common/enum.BufferMemoryPreference.html) |
+| struct | `vmnl_graphics::common::Rgba` | [Rgba](../reference/common/rgba.md) | [Rustdoc](../../../target/doc/vmnl_graphics/common/struct.Rgba.html) |
+| enum | `vmnl_graphics::common::ShaderSource` | [ShaderSource](../reference/common/shader_source.md) | [Rustdoc](../../../target/doc/vmnl_graphics/common/enum.ShaderSource.html) |
+| enum | `vmnl_graphics::d2::Anchor` | [Anchor](../reference/d2/shapes/anchor.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/enum.Anchor.html) |
+| struct | `vmnl_graphics::d2::CornerRadii` | [CornerRadii](../reference/d2/shapes/corner_radii.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/struct.CornerRadii.html) |
+| trait | `vmnl_graphics::d2::Drawable2D` | [Drawable2D](../reference/d2/drawable_2d.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/trait.Drawable2D.html) |
+| struct | `vmnl_graphics::d2::IndexedShapeBuilder` | [IndexedShapeBuilder](../reference/d2/shapes/indexed_shape_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/struct.IndexedShapeBuilder.html) |
+| struct | `vmnl_graphics::d2::LineBuilder` | [LineBuilder](../reference/d2/shapes/line_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/struct.LineBuilder.html) |
+| enum | `vmnl_graphics::d2::LineCap` | [LineCap](../reference/d2/shapes/line_cap.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/enum.LineCap.html) |
+| enum | `vmnl_graphics::d2::LineJoin` | [LineJoin](../reference/d2/shapes/line_join.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/enum.LineJoin.html) |
+| struct | `vmnl_graphics::d2::PolygonBuilder` | [PolygonBuilder](../reference/d2/shapes/polygon_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/struct.PolygonBuilder.html) |
+| struct | `vmnl_graphics::d2::PolylineBuilder` | [PolylineBuilder](../reference/d2/shapes/polyline_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/struct.PolylineBuilder.html) |
+| struct | `vmnl_graphics::d2::RectBuilder` | [RectBuilder](../reference/d2/shapes/rect_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/struct.RectBuilder.html) |
+| struct | `vmnl_graphics::d2::RenderItem2D` | [RenderItem2D](../reference/d2/render_item_2d.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/struct.RenderItem2D.html) |
+| struct | `vmnl_graphics::d2::Shape` | [Shape](../reference/d2/shapes/shape.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/struct.Shape.html) |
+| struct | `vmnl_graphics::d2::TriangleBuilder` | [TriangleBuilder](../reference/d2/shapes/triangle_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/struct.TriangleBuilder.html) |
+| struct | `vmnl_graphics::d2::Vector2f` | [Vector2f](../reference/d2/vector_2f.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/struct.Vector2f.html) |
+| struct | `vmnl_graphics::d2::Vertex2D` | [Vertex2D](../reference/d2/vertex_2d.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d2/struct.Vertex2D.html) |
+| struct | `vmnl_graphics::d3::Camera` | [Camera](../reference/d3/camera.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d3/struct.Camera.html) |
+| trait | `vmnl_graphics::d3::Drawable3D` | [Drawable3D](../reference/d3/drawable_3d.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d3/trait.Drawable3D.html) |
+| struct | `vmnl_graphics::d3::Mesh` | [Mesh](../reference/d3/mesh/mesh.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d3/struct.Mesh.html) |
+| struct | `vmnl_graphics::d3::MeshBuilder` | [MeshBuilder](../reference/d3/mesh/mesh_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d3/struct.MeshBuilder.html) |
+| struct | `vmnl_graphics::d3::RenderItem3D` | [RenderItem3D](../reference/d3/render_item_3d.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d3/struct.RenderItem3D.html) |
+| struct | `vmnl_graphics::d3::Vector3f` | [Vector3f](../reference/d3/vector_3f.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d3/struct.Vector3f.html) |
+| struct | `vmnl_graphics::d3::Vertex3D` | [Vertex3D](../reference/d3/vertex_3d.md) | [Rustdoc](../../../target/doc/vmnl_graphics/d3/struct.Vertex3D.html) |
+| enum | `vmnl_graphics::raw::BlendMode` | [BlendMode](../reference/raw/pipeline/blend_mode.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/enum.BlendMode.html) |
+| trait | `vmnl_graphics::raw::BufferContents` | [BufferContents](../reference/raw/traits/buffer_contents.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/trait.BufferContents.html) |
+| enum | `vmnl_graphics::raw::CompareOp` | [CompareOp](../reference/raw/pipeline/compare_op.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/enum.CompareOp.html) |
+| enum | `vmnl_graphics::raw::CullMode` | [CullMode](../reference/raw/pipeline/cull_mode.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/enum.CullMode.html) |
+| enum | `vmnl_graphics::raw::DepthState` | [DepthState](../reference/raw/pipeline/depth_state.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/enum.DepthState.html) |
+| struct | `vmnl_graphics::raw::FrameUniform` | [FrameUniform](../reference/raw/uniforms/frame_uniform.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.FrameUniform.html) |
+| struct | `vmnl_graphics::raw::FrameUniformBuilder` | [FrameUniformBuilder](../reference/raw/uniforms/frame_uniform_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.FrameUniformBuilder.html) |
+| enum | `vmnl_graphics::raw::FrontFace` | [FrontFace](../reference/raw/pipeline/front_face.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/enum.FrontFace.html) |
+| struct | `vmnl_graphics::raw::Geometry` | [Geometry](../reference/raw/geometry/geometry.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.Geometry.html) |
+| struct | `vmnl_graphics::raw::GeometryBuilder` | [GeometryBuilder](../reference/raw/geometry/geometry_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.GeometryBuilder.html) |
+| struct | `vmnl_graphics::raw::Pipeline` | [Pipeline](../reference/raw/pipeline/pipeline.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.Pipeline.html) |
+| struct | `vmnl_graphics::raw::PipelineSpec` | [PipelineSpec](../reference/raw/pipeline/pipeline_spec.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.PipelineSpec.html) |
+| macro | `vmnl_graphics::raw::Pod` | [Pod derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/derive.Pod.html) |
+| trait | `vmnl_graphics::raw::Pod` | [Pod trait](../reference/raw/traits/pod.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/trait.Pod.html) |
+| enum | `vmnl_graphics::raw::PolygonMode` | [PolygonMode](../reference/raw/pipeline/polygon_mode.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/enum.PolygonMode.html) |
+| enum | `vmnl_graphics::raw::PrimitiveTopology` | [PrimitiveTopology](../reference/raw/pipeline/primitive_topology.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/enum.PrimitiveTopology.html) |
+| struct | `vmnl_graphics::raw::Resources` | [Resources](../reference/raw/resources/resources.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.Resources.html) |
+| struct | `vmnl_graphics::raw::ResourcesBuilder` | [ResourcesBuilder](../reference/raw/resources/resources_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.ResourcesBuilder.html) |
+| struct | `vmnl_graphics::raw::Scissor` | [Scissor](../reference/raw/pipeline/scissor.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.Scissor.html) |
+| enum | `vmnl_graphics::raw::ScissorPolicy` | [ScissorPolicy](../reference/raw/pipeline/scissor_policy.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/enum.ScissorPolicy.html) |
+| struct | `vmnl_graphics::raw::Uniform` | [Uniform](../reference/raw/uniforms/uniform.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.Uniform.html) |
+| struct | `vmnl_graphics::raw::UniformBuilder` | [UniformBuilder](../reference/raw/uniforms/uniform_builder.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.UniformBuilder.html) |
+| macro | `vmnl_graphics::raw::Vertex` | [Vertex derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/derive.Vertex.html) |
+| trait | `vmnl_graphics::raw::Vertex` | [Vertex trait](../reference/raw/traits/vertex.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/trait.Vertex.html) |
+| struct | `vmnl_graphics::raw::Viewport` | [Viewport](../reference/raw/pipeline/viewport.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/struct.Viewport.html) |
+| enum | `vmnl_graphics::raw::ViewportPolicy` | [ViewportPolicy](../reference/raw/pipeline/viewport_policy.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/enum.ViewportPolicy.html) |
+| macro | `vmnl_graphics::raw::Zeroable` | [Zeroable derive](../reference/raw/traits/derive_macros.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/derive.Zeroable.html) |
+| trait | `vmnl_graphics::raw::Zeroable` | [Zeroable trait](../reference/raw/traits/zeroable.md) | [Rustdoc](../../../target/doc/vmnl_graphics/raw/trait.Zeroable.html) |

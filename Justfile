@@ -34,6 +34,10 @@ test-api:
 test-smoke:
     @JUST_TEMPDIR="${TMPDIR:-/tmp}" just _test-report smoke
 
+# Verify standalone and renamed client dependencies without opening a native device.
+test-consumer:
+    python3 tools/check_graphics_consumer.py
+
 # Run portable GLFW error conversion and Null-backend tests.
 [no-exit-message]
 test-platform:
@@ -162,7 +166,7 @@ _test-report suite:
             ;;
         api)
             suite_name='API'
-            suite_scope='public headless facade'
+            suite_scope='public headless graphics API'
             suite_kind='tests'
             test_command=(cargo "${color_args[@]}" test -p vmnl-api-tests)
             ;;
@@ -463,19 +467,10 @@ _docs-api-check:
     [[ $(cargo public-api --version) == *'0.52.0'* ]]
     [[ $(lychee --version) == *'0.24.2'* ]]
     rustc +nightly-2026-03-12 --version >/dev/null
-    cargo build -p vmnl
+    cargo build -p vmnl-graphics
     python3 -m unittest discover -s tools/tests
     api_lib_dir="$PWD/target/api-book-libs"
-    api_deps_dir="$PWD/target/debug/deps"
-    mkdir -p "$api_lib_dir"
-    for artifact in "$api_deps_dir"/*; do
-        artifact_name=${artifact##*/}
-        case "$artifact_name" in
-            libvmnl-[0-9a-f]*.rlib|libvmnl-[0-9a-f]*.rmeta) continue ;;
-        esac
-        ln -sf "$artifact" "$api_lib_dir/$artifact_name"
-    done
-    ln -sf "$PWD/target/debug/libvmnl.rlib" "$api_lib_dir/libvmnl.rlib"
+    python3 tools/api_book_libraries.py
     CARGO_MANIFEST_DIR="$PWD/examples/raw/triangle" mdbook test docs/api -L "$api_lib_dir"
     mdbook build docs/api
     python3 tools/api_docs.py check

@@ -45,7 +45,7 @@ action.
 - For architecture, feature, public API, module, or roadmap changes, apply
   [`docs/architecture.md`](../../../docs/architecture.md), including progressive control, domain
   independence, ownership, lifecycle, threading, synchronization, cost, and error boundaries.
-- For a changed module interface, crate boundary, facade, raw API, backend adapter, or FFI seam,
+- For a changed module interface, crate boundary, raw API, backend adapter, or FFI seam,
   read [`module-design.md`](../../references/module-design.md) and verify the concrete use case,
   caller burden, retained control, locality, and validation boundary.
 - Report contradictions between documentation, tests, implementation, examples, and the request;

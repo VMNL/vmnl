@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-use vmnl::{
+use vmnl_gpu_tests::gpu_test_guard;
+use vmnl_graphics::{
     common::Rgba,
     d3::{Camera, Mesh, Vector3f, Vertex3D},
     Context, PresentMode, VMNLError, VMNLErrorKind, VMNLResult, Window,
 };
-use vmnl_gpu_tests::gpu_test_guard;
 
 fn v3(x: f32, y: f32, z: f32) -> Vector3f {
     Vector3f { x, y, z }

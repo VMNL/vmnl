@@ -5,10 +5,10 @@
 
 use std::path::PathBuf;
 
-use vmnl::{
+use vmnl_gpu_tests::gpu_test_guard;
+use vmnl_graphics::{
     raw, Context, DeviceConfig, DeviceFeature, VMNLError, VMNLErrorKind, VMNLResult, Window,
 };
-use vmnl_gpu_tests::gpu_test_guard;
 
 const UNIFORM_VERT: &str = r#"
 #version 460
@@ -133,12 +133,15 @@ fn depth_attachments_submit_raw_resources_and_d2_across_resize() -> VMNLResult<(
     let _guard = gpu_test_guard();
     let context = Context::new()?;
     let geometry = triangle(&context)?;
-    let marker = vmnl::d2::Shape::rect(40.0, 40.0)
+    let marker = vmnl_graphics::d2::Shape::rect(40.0, 40.0)
         .position(20.0, 20.0)
         .build(&context)?;
     let mut supported = 0;
-    for format in [vmnl::DepthFormat::D16Unorm, vmnl::DepthFormat::D32Sfloat] {
-        let config = vmnl::RenderTargetConfig::default()
+    for format in [
+        vmnl_graphics::DepthFormat::D16Unorm,
+        vmnl_graphics::DepthFormat::D32Sfloat,
+    ] {
+        let config = vmnl_graphics::RenderTargetConfig::default()
             .depth(format)
             .clear_depth(0.25);
         let result = Window::builder()
@@ -195,7 +198,7 @@ fn depth_clear_is_validated_before_window_shader_io() -> VMNLResult<()> {
     let context = Context::new()?;
     for value in [f32::NAN, f32::INFINITY, -0.01, 1.01] {
         let result = Window::builder()
-            .render_target(vmnl::RenderTargetConfig::default().clear_depth(value))
+            .render_target(vmnl_graphics::RenderTargetConfig::default().clear_depth(value))
             .vertex_shader(raw::ShaderSource::Path(fixture("missing-depth.vert")))
             .fragment_shader(raw::ShaderSource::Path(fixture("missing-depth.frag")))
             .build(&context);
@@ -204,7 +207,7 @@ fn depth_clear_is_validated_before_window_shader_io() -> VMNLResult<()> {
     let mut window = Window::new(&context)?;
     assert_eq!(
         window.render_target_config(),
-        vmnl::RenderTargetConfig::default()
+        vmnl_graphics::RenderTargetConfig::default()
     );
     window.render().submit()
 }
@@ -216,7 +219,7 @@ fn raw_target_preflight_rejects_other_windows_even_with_equal_properties() -> VM
     let context = Context::new()?;
     let source = Window::new(&context)?;
     let mut same_properties = Window::builder()
-        .render_target(vmnl::RenderTargetConfig::default().clear_depth(0.25))
+        .render_target(vmnl_graphics::RenderTargetConfig::default().clear_depth(0.25))
         .build(&context)?;
     let info = source.render_target_info();
     assert_eq!(info, same_properties.render_target_info());
@@ -239,7 +242,10 @@ fn raw_target_preflight_rejects_other_windows_even_with_equal_properties() -> VM
     )?;
 
     let depth_window = Window::builder()
-        .render_target(vmnl::RenderTargetConfig::default().depth(vmnl::DepthFormat::D16Unorm))
+        .render_target(
+            vmnl_graphics::RenderTargetConfig::default()
+                .depth(vmnl_graphics::DepthFormat::D16Unorm),
+        )
         .build(&context)?;
     assert_ne!(info, depth_window.render_target_info());
     assert_invalid_state(
@@ -290,9 +296,12 @@ fn raw_depth_policies_submit_with_d2_and_survive_resize() -> VMNLResult<()> {
     let _guard = gpu_test_guard();
     let context = Context::new()?;
     let mut supported = 0;
-    for format in [vmnl::DepthFormat::D16Unorm, vmnl::DepthFormat::D32Sfloat] {
+    for format in [
+        vmnl_graphics::DepthFormat::D16Unorm,
+        vmnl_graphics::DepthFormat::D32Sfloat,
+    ] {
         let result = Window::builder()
-            .render_target(vmnl::RenderTargetConfig::default().depth(format))
+            .render_target(vmnl_graphics::RenderTargetConfig::default().depth(format))
             .build(&context);
         let mut window = match result {
             Err(error) if matches!(error.kind(), VMNLErrorKind::VulkanFormatNotSupported) => {
@@ -303,7 +312,7 @@ fn raw_depth_policies_submit_with_d2_and_survive_resize() -> VMNLResult<()> {
         };
         supported += 1;
         let geometry = triangle(&context)?;
-        let marker = vmnl::d2::Shape::rect(40.0, 40.0).build(&context)?;
+        let marker = vmnl_graphics::d2::Shape::rect(40.0, 40.0).build(&context)?;
         let uniform = raw::Uniform::builder(Tint { tint: [1.0; 4] }).build(&context)?;
         let disabled = uniform_pipeline(&window)?;
         let mut pipelines = Vec::new();
@@ -426,7 +435,7 @@ fn raw_viewport_scissor_policies_submit_mixed_passes_before_and_after_resize() -
     let context = Context::new()?;
     let mut window = Window::builder().size(640, 480).build(&context)?;
     let geometry = triangle(&context)?;
-    let marker = vmnl::d2::Shape::rect(40.0, 40.0)
+    let marker = vmnl_graphics::d2::Shape::rect(40.0, 40.0)
         .position(20.0, 20.0)
         .build(&context)?;
     let spec = raw::Pipeline::<RawVertex>::builder()

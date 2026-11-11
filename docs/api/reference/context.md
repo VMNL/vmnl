@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::Context`. Status: experimental, operational Vulkan context.
+Import path: `vmnl_graphics::Context`. Status: experimental, operational Vulkan context.
 
 ## Purpose and use cases
 
@@ -95,10 +95,10 @@ event before the first successful query. Raw mouse motion is unavailable on Coco
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Key};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Key};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let _key_name = context.get_key_name(Key::A);
     let cloned = context.clone();

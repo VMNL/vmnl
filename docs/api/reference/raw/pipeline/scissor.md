@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::Scissor`. Status: experimental.
+Import path: `vmnl_graphics::raw::Scissor`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,11 +39,11 @@ Follows [Vulkan scissor bounds](https://docs.vulkan.org/refpages/latest/refpages
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{Scissor, ScissorPolicy};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{Scissor, ScissorPolicy};
 let value = Scissor { offset: [200, 100], extent: [250, 250] };
 assert_eq!(ScissorPolicy::Fixed(value).resolve([800, 600])?, value);
-# Ok::<(), vmnl::VMNLError>(())
+# Ok::<(), vmnl_graphics::VMNLError>(())
 ```
 
 Related: [`ScissorPolicy`](scissor_policy.md), [`Viewport`](viewport.md), [`PipelineSpec`](pipeline_spec.md).

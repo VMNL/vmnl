@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d3::Vector3f`. Status: experimental value type; 3D rendering is not operational.
+Import path: `vmnl_graphics::d3::Vector3f`. Status: experimental value type; 3D rendering is not operational.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ None as data; 3D Vulkan rendering is unavailable.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::d3::Vector3f;
+# extern crate vmnl_graphics;
+use vmnl_graphics::d3::Vector3f;
 
 let scaled = Vector3f { x: 1.0, y: 2.0, z: 3.0 } * 2.0;
 assert_eq!(scaled.z, 6.0);

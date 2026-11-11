@@ -3,6 +3,6 @@
 
 //! Standalone entry point for the public VMNL native-input client.
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     vmnl_input_client::run()
 }

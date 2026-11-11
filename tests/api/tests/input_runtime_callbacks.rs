@@ -12,7 +12,7 @@ use std::{
     panic::{catch_unwind, AssertUnwindSafe},
     rc::Rc,
 };
-use vmnl::{Event, EventKind, InputRuntime, JoystickId};
+use vmnl_graphics::{Event, EventKind, InputRuntime, JoystickId};
 
 fn assert_connection_pair(events: &[Event]) {
     assert_eq!(events.len(), 2);

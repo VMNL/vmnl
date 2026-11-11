@@ -2,7 +2,7 @@
 
 | Term | Meaning in VMNL |
 |---|---|
-| Facade | The client dependency boundary exposed by crate `vmnl`. |
+| Graphics crate | The client dependency boundary provided by package `vmnl-graphics`, imported as `vmnl_graphics`. |
 | Context | Shared single-threaded owner of Vulkan device/queue/allocators. |
 | Window | Native window plus Vulkan presentation/render-target state. |
 | Logical pass | One ordered `draw2d`, `draw3d`, `draw_raw_2d`, or `draw_raw_2d_with` addition. |

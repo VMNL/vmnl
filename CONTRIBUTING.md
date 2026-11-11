@@ -16,6 +16,7 @@ just docs-api-check
 just test-unit
 just test-api
 just test-smoke
+just test-consumer         # standalone and renamed graphics dependencies
 just test-platform         # GLFW error conversion and Null backend
 just test-platform-compile # every OS for GLFW-facing changes
 just test-platform-wayland # when a qualified Wayland compositor is available

@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Backend-independent color-format inspection through the public facade.
+//! Backend-independent color-format inspection through the public graphics API.
 
-use vmnl::ColorFormat;
+use vmnl_graphics::ColorFormat;
 
 #[test]
 fn color_formats_distinguish_component_order_and_encoding() {

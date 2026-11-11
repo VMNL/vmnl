@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::Window`. Status: experimental, operational window/render target.
+Import path: `vmnl_graphics::Window`. Status: experimental, operational window/render target.
 
 ## Purpose and use cases
 
@@ -50,10 +50,10 @@ Requires a compatible `Context`, GLFW, Vulkan presentation support, and a usable
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
     while window.is_open() {

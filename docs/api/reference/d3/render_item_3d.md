@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d3::RenderItem3D`. Status: experimental opaque scaffold; 3D rendering is not operational.
+Import path: `vmnl_graphics::d3::RenderItem3D`. Status: experimental opaque scaffold; 3D rendering is not operational.
 
 ## Purpose and use cases
 

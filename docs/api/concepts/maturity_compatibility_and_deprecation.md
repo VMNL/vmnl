@@ -1,6 +1,6 @@
 # Maturity, compatibility, and deprecation
 
-VMNL has no public release yet. The current public API is experimental and may change while the
+`vmnl-graphics` has no public release yet. The current public API is experimental and may change while the
 initial `0.1.0` contract is prepared.
 
 Publishing `0.1.0` starts the compatibility policy defined in

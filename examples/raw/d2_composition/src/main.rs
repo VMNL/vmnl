@@ -3,7 +3,7 @@
 
 //! One frame combining high-level 2D and a raw render pass.
 
-use vmnl::{
+use vmnl_graphics::{
     common::Rgba,
     d2::{Shape, Vector2f},
     raw, Context, DepthFormat, Key, PresentMode, RenderTargetConfig, VMNLError, VMNLErrorKind,

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::ContextBuilder`. Status: experimental.
+Import path: `vmnl_graphics::ContextBuilder`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,10 +39,10 @@ Uses the existing Vulkan/GLFW prerequisites. Requested capabilities must be supp
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, DeviceConfig, DeviceFeature};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, DeviceConfig, DeviceFeature};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::builder()
         .device(DeviceConfig::default().require_feature(DeviceFeature::WideLines))
         .build()?;

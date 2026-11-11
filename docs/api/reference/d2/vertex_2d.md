@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::Vertex2D`. Status: experimental value type.
+Import path: `vmnl_graphics::d2::Vertex2D`. Status: experimental value type.
 
 ## Purpose and use cases
 
@@ -39,9 +39,9 @@ The public layout is stable for Rust FFI/layout purposes through `repr(C)`, but 
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::common::Rgba;
-use vmnl::d2::{Vector2f, Vertex2D};
+# extern crate vmnl_graphics;
+use vmnl_graphics::common::Rgba;
+use vmnl_graphics::d2::{Vector2f, Vertex2D};
 
 let vertex = Vertex2D {
     position: Vector2f { x: 10.0, y: 20.0 },
