@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::PipelineSpec<TVertex>`. Status: experimental, operational within raw limits.
+Import path: `vmnl_graphics::raw::PipelineSpec<TVertex>`. Status: experimental, operational within raw limits.
 
 ## Purpose and use cases
 
@@ -47,15 +47,15 @@ Depth defaults to [`DepthState::Disabled`](depth_state.md). `DepthState::Test { 
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, ShaderSource, Window};
-use vmnl::raw::{Pipeline, Pod, Vertex, Zeroable};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, ShaderSource, Window};
+use vmnl_graphics::raw::{Pipeline, Pod, Vertex, Zeroable};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable, Vertex)]
 struct V { #[format(R32G32_SFLOAT)] position: [f32; 2] }
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let window = Window::new(&context)?;
     let pipeline = Pipeline::<V>::builder()

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::PolygonMode`. Status: experimental.
+Import path: `vmnl_graphics::raw::PolygonMode`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Follows [Vulkan polygon rasterization](https://docs.vulkan.org/spec/latest/chapt
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{PipelineSpec, PolygonMode};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{PipelineSpec, PolygonMode};
 let spec = PipelineSpec::<[f32; 2]>::default().polygon_mode(PolygonMode::Line);
 assert_eq!(spec.polygon_mode_value(), PolygonMode::Line);
 ```

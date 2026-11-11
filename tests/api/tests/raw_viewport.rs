@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Headless viewport/scissor policies and resolution through the facade.
+//! Headless viewport/scissor policies and resolution through the graphics API.
 
-use vmnl::{raw, VMNLResult};
+use vmnl_graphics::{raw, VMNLResult};
 
 fn viewport() -> raw::Viewport {
     raw::Viewport {

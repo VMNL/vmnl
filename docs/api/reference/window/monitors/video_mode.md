@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::VideoMode`. Status: experimental value type.
+Import path: `vmnl_graphics::VideoMode`. Status: experimental value type.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Reported modes depend on GLFW, the OS, monitor, and graphics driver.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::VideoMode;
+# extern crate vmnl_graphics;
+use vmnl_graphics::VideoMode;
 
 let mode = VideoMode {
     width: 1920, height: 1080,

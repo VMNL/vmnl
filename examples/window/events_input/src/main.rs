@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-use vmnl::{
+use vmnl_graphics::{
     Context, Cursor, CursorMode, Event, EventKind, GamepadButton, JoystickId, Key, MouseButton,
     PresentMode, StandardCursor, StickAngleConvention, StickConfig, VMNLResult, Window,
 };
@@ -52,8 +52,8 @@ fn print_key_event(
     timestamp: f64,
     action: &str,
     key: Key,
-    event_scancode: vmnl::Scancode,
-    modifiers: &vmnl::Modifiers,
+    event_scancode: vmnl_graphics::Scancode,
+    modifiers: &vmnl_graphics::Modifiers,
     repeat: Option<bool>,
 ) {
     let queried_scancode = context.get_key_scancode(key);

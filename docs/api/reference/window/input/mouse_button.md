@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::MouseButton`. Status: experimental.
+Import path: `vmnl_graphics::MouseButton`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Availability of auxiliary buttons depends on device/platform. Cursor positions a
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::MouseButton;
+# extern crate vmnl_graphics;
+use vmnl_graphics::MouseButton;
 
 assert_ne!(MouseButton::Left, MouseButton::Right);
 ```

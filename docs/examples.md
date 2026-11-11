@@ -54,7 +54,8 @@ workflow while that example is corrected.
 
 1. Create `examples/<name>/Cargo.toml`.
 2. Add it to workspace `members`.
-3. Depend on `vmnl` through `path = "../../crates/vmnl"`.
+3. Depend on package `vmnl-graphics` through the relative path to `crates/vmnl_graphics`, and
+   import `vmnl_graphics`.
 4. Add a row to `examples/README.md`.
 5. Keep the example runnable through `just run <name>`.
 

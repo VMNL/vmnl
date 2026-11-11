@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::RenderItem2D`. Status: experimental opaque backend descriptor.
+Import path: `vmnl_graphics::d2::RenderItem2D`. Status: experimental opaque backend descriptor.
 
 ## Purpose and use cases
 
@@ -39,11 +39,11 @@ Usable only with VMNL's compatible 2D render backend.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::Context;
-use vmnl::d2::{Drawable2D, Shape};
+# extern crate vmnl_graphics;
+use vmnl_graphics::Context;
+use vmnl_graphics::d2::{Drawable2D, Shape};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let shape = Shape::rect(2.0, 2.0).build(&context)?;
     let item = shape.render_item_2d();

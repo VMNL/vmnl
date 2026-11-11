@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::Drawable2D`. Status: experimental trait, operational for VMNL-provided implementations.
+Import path: `vmnl_graphics::d2::Drawable2D`. Status: experimental trait, operational for VMNL-provided implementations.
 
 ## Purpose and use cases
 
@@ -39,15 +39,15 @@ Returned items target VMNL's 2D Vulkan pipeline and require a compatible renderi
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::Context;
-use vmnl::d2::{Drawable2D, Shape};
+# extern crate vmnl_graphics;
+use vmnl_graphics::Context;
+use vmnl_graphics::d2::{Drawable2D, Shape};
 
-fn item<D: Drawable2D>(drawable: &D) -> vmnl::d2::RenderItem2D {
+fn item<D: Drawable2D>(drawable: &D) -> vmnl_graphics::d2::RenderItem2D {
     drawable.render_item_2d()
 }
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let shape = Shape::rect(1.0, 1.0).build(&context)?;
     let _ = item(&shape);

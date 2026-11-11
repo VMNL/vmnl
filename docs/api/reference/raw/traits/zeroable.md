@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Type-namespace path: `vmnl::raw::Zeroable`. Status: experimental marker trait.
+Type-namespace path: `vmnl_graphics::raw::Zeroable`. Status: experimental marker trait.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Does not establish Vulkan/shader compatibility by itself.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{Pod, Zeroable};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{Pod, Zeroable};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]

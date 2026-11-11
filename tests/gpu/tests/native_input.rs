@@ -33,8 +33,8 @@ mod native_input_process;
 use std::panic::{catch_unwind, resume_unwind, AssertUnwindSafe};
 use std::process::Command;
 use std::time::{Duration, Instant};
-use vmnl::{Key, MouseButton, VMNLError, VMNLErrorKind, VMNLResult};
 use vmnl_gpu_tests::gpu_test_guard;
+use vmnl_graphics::{Key, MouseButton, VMNLError, VMNLErrorKind, VMNLResult};
 
 const INPUT_TIMEOUT: Duration = Duration::from_secs(5);
 const KEY_PRESS: u8 = x11rb::protocol::xproto::KEY_PRESS_EVENT;

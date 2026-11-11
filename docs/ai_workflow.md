@@ -1,4 +1,4 @@
-# IA Workflow for VMNL
+# IA Workflow for VMNL Graphics
 
 ## ChatGPT Plus
 
@@ -61,10 +61,10 @@
   | --- | --- | --- |
   | Symbol inventory, factual documentation, mechanical edits | Luna Medium | Luna Medium |
   | Reproduced local bug with an established contract | Luna High | Luna High |
-  | Unit or facade API tests with an independent expected result | Luna High | Luna High |
+  | Unit or public graphics API tests with an independent expected result | Luna High | Luna High |
   | Bounded feature using existing abstractions | Sol Medium | Luna High after a precise plan; Sol Medium if decisions remain |
   | Public API, ownership, or crate boundaries | Sol High | Sol Medium; High when invariants remain difficult |
-  | Unsafe code, FFI, Vulkan synchronization, or audio callbacks | Sol High; Extra High for an identified difficult question | Sol High |
+  | Unsafe code, FFI, Vulkan synchronization, or native callbacks | Sol High; Extra High for an identified difficult question | Sol High |
   | Intermittent platform, GPU, or threading failure | Sol High for hypotheses and measurement design | Luna High for prescribed instrumentation; Sol High for interpretation |
   | Difficult isolated algorithm with a strong oracle | Compare Luna Max with Sol Medium or High | Use the configuration supported by measurements |
 

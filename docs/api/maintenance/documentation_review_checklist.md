@@ -1,6 +1,6 @@
 # Documentation review checklist
 
-- The facade surface, Rustdoc, reference page, coverage matrix, and snapshot agree.
+- The graphics API surface, Rustdoc, reference page, coverage matrix, and snapshot agree.
 - Every public field, variant, method, relevant explicit impl, trait, alias, and derive macro is covered.
 - `pub(crate)`, `pub(super)`, `raw::__private`, and blanket impls are absent.
 - Defaults, validation, units, ownership, errors, allocations, synchronization, and platform limits are explicit.

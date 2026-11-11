@@ -3,7 +3,7 @@
 
 //! Headless public input-state contracts.
 
-use vmnl::{
+use vmnl_graphics::{
     Context, Cursor, CursorBuilder, CursorMode, Event, EventKind, GamepadButton, Input, JoystickId,
     JoystickStatus, Key, Modifiers, MouseButton, Scancode, StandardCursor, StandardCursorBuilder,
     StickAngleConvention, StickConfig, VMNLResult, Window, WindowBuilder,
@@ -54,7 +54,7 @@ fn joystick_snapshot_and_stick_configuration_are_exposed_through_public_facade()
     let _: fn(WindowBuilder, bool) -> WindowBuilder = WindowBuilder::joystick_tracking;
     let _: fn(WindowBuilder, StickConfig) -> WindowBuilder = WindowBuilder::left_stick_config;
     let _: fn(WindowBuilder, StickConfig) -> WindowBuilder = WindowBuilder::right_stick_config;
-    let _: fn(&vmnl::JoystickState) = |state| {
+    let _: fn(&vmnl_graphics::JoystickState) = |state| {
         let _ = state.sample();
         let _ = state.gamepad();
         let _ = state.left_stick();

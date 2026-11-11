@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::VMNLErrorKind`. Status: experimental and `#[non_exhaustive]`.
+Import path: `vmnl_graphics::VMNLErrorKind`. Status: experimental and `#[non_exhaustive]`.
 
 ## Purpose and use cases
 
@@ -58,8 +58,8 @@ Variant availability does not imply that every backend emits every category. Map
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::VMNLErrorKind;
+# extern crate vmnl_graphics;
+use vmnl_graphics::VMNLErrorKind;
 
 fn retryable(kind: &VMNLErrorKind) -> bool {
     matches!(kind, VMNLErrorKind::VulkanOutOfDate)

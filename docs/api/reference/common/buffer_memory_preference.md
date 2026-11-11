@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::common::BufferMemoryPreference`. Status: experimental.
+Import path: `vmnl_graphics::common::BufferMemoryPreference`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Actual placement depends on Vulkan memory types exposed by the selected device/d
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::common::BufferMemoryPreference;
+# extern crate vmnl_graphics;
+use vmnl_graphics::common::BufferMemoryPreference;
 
 assert_eq!(BufferMemoryPreference::default(), BufferMemoryPreference::Device);
 ```

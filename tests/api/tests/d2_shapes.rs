@@ -3,7 +3,7 @@
 
 //! Headless public API coverage for 2D shape builders.
 
-use vmnl::{
+use vmnl_graphics::{
     common::{BufferMemoryPreference, Rgba},
     d2::{
         Anchor, CornerRadii, IndexedShapeBuilder, LineCap, LineJoin, PolylineBuilder, RectBuilder,

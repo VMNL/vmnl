@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Methods on `vmnl::Window`. Status: experimental, operational.
+Methods on `vmnl_graphics::Window`. Status: experimental, operational.
 
 ## Purpose and use cases
 
@@ -44,10 +44,10 @@ compositor-dependent; X11 focus and maximization depend on the EWMH window manag
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
     if window.is_open() {

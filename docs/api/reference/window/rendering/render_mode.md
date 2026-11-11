@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::RenderMode`. Status: experimental.
+Import path: `vmnl_graphics::RenderMode`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ None beyond the renderer using it.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::RenderMode;
+# extern crate vmnl_graphics;
+use vmnl_graphics::RenderMode;
 
 assert_eq!(RenderMode::default(), RenderMode::PerObject);
 ```

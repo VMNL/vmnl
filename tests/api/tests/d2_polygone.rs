@@ -3,7 +3,7 @@
 
 //! Headless coverage of the public polygon builder.
 
-use vmnl::{
+use vmnl_graphics::{
     common::{BufferMemoryPreference, Rgba},
     d2::{PolygonBuilder, Shape, Vector2f, Vertex2D},
     Context, VMNLResult,
@@ -59,6 +59,6 @@ fn concave_boundary_uses_the_existing_public_builder_in_both_windings() {
         }));
         points.reverse();
     }
-    // Headless configuration proves facade compatibility; CPU acceptance is covered
+    // Headless configuration proves public API compatibility; CPU acceptance is covered
     // by unit tests, since the public build boundary requires a Vulkan context.
 }

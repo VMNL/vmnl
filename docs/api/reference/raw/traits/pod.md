@@ -2,11 +2,11 @@
 
 ## Public path and maturity
 
-Type-namespace path: `vmnl::raw::Pod`. Status: experimental marker trait.
+Type-namespace path: `vmnl_graphics::raw::Pod`. Status: experimental marker trait.
 
 ## Purpose and use cases
 
-Exposes the bytemuck plain-old-data contract through the VMNL facade for raw buffer layouts.
+Exposes the bytemuck plain-old-data contract through the public graphics API for raw buffer layouts.
 
 ## Public API
 
@@ -39,8 +39,8 @@ Rust layout and shader layout must still agree; `Pod` alone does not prove shade
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{Pod, Zeroable};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{Pod, Zeroable};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]

@@ -2,7 +2,7 @@
 
 Test crates are split by execution boundary:
 
-- `api`: headless public behavior through the `vmnl` facade.
+- `api`: headless public behavior through the `vmnl_graphics` API.
 - `smoke`: executable startup checks without opening a window.
 - `gpu`: Vulkan/display checks, run explicitly.
 
@@ -17,3 +17,6 @@ just test
 ```
 
 See [docs/testing.md](../docs/testing.md) for the full policy.
+
+Standalone and renamed dependency consumers are checked by `just test-consumer`; see
+[the consumer contract](../docs/testing.md#standalone-graphics-consumers).

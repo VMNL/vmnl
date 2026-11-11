@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::Viewport`. Status: experimental.
+Import path: `vmnl_graphics::raw::Viewport`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,11 +39,11 @@ Follows [Vulkan viewport limits](https://docs.vulkan.org/refpages/latest/refpage
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{Viewport, ViewportPolicy};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{Viewport, ViewportPolicy};
 let value = Viewport { offset: [100.0, 50.0], extent: [320.0, 200.0], depth_range: [0.0, 1.0] };
 assert_eq!(ViewportPolicy::Fixed(value).resolve([800, 600])?, value);
-# Ok::<(), vmnl::VMNLError>(())
+# Ok::<(), vmnl_graphics::VMNLError>(())
 ```
 
 Related: [`ViewportPolicy`](viewport_policy.md), [`Scissor`](scissor.md), [`PipelineSpec`](pipeline_spec.md).

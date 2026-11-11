@@ -3,6 +3,6 @@
 
 //! Separate public client for standalone and window joystick observations.
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     vmnl_input_client::run_joystick()
 }

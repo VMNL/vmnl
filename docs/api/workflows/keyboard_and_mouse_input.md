@@ -12,10 +12,10 @@ For text entry, use `EventKind::Text` together with key events. `TextWithModifie
 compatibility with GLFW's deprecated modified-character callback.
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, CursorMode, Key, MouseButton, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, CursorMode, Key, MouseButton, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
     window.set_sticky_mouse_buttons(true);

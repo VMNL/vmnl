@@ -70,7 +70,7 @@ pub mod __private {
 
 /// Marker trait for raw buffer contents.
 ///
-/// This is a facade adapter for Vulkano's buffer-content contract. Incorrect
+/// This is a public adapter for Vulkano's buffer-content contract. Incorrect
 /// unsafe implementations of the underlying trait can make byte transfers
 /// unsound; prefer VMNL's marker derives where applicable.
 pub trait BufferContents: VulkanoBufferContents {}

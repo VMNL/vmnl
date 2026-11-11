@@ -1,4 +1,4 @@
-# VMNL API
+# VMNL Graphics API
 
 The exhaustive client-facing API book is under [`docs/api/`](api/README.md).
 

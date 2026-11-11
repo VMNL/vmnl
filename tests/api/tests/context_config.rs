@@ -3,7 +3,9 @@
 
 //! Headless contracts for context and device configuration.
 
-use vmnl::{Context, ContextBuilder, DeviceConfig, DeviceFeature, VMNLError, VMNLErrorKind};
+use vmnl_graphics::{
+    Context, ContextBuilder, DeviceConfig, DeviceFeature, VMNLError, VMNLErrorKind,
+};
 
 #[test]
 fn context_builder_defaults_require_no_device_features() {

@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Native-input client: all window, event and input access goes through the public facade.
+//! Native-input client: all window, event and input access goes through the public graphics API.
 
 use std::io::{self, BufRead, Write as _};
 use std::time::{Duration, Instant};
-use vmnl::{
+use vmnl_graphics::{
     common::Rgba, Context, Event, EventKind, Key, Modifiers, MouseButton, Scancode, VMNLError,
     VMNLErrorKind, VMNLResult, Window,
 };
@@ -21,7 +21,7 @@ mod scenarios;
 /// Runs public joystick observations in a separate test-client process.
 ///
 /// The driver selects standalone runtime or window snapshots; native injection stays outside
-/// this crate. This entry point is test tooling, not a VMNL facade API.
+/// this crate. This entry point is test tooling, not a public graphics API.
 ///
 /// # Errors
 /// Returns an error for initialization, invalid protocol, timeout or an incorrect observation.
@@ -43,7 +43,7 @@ const BUTTONS: [MouseButton; 8] = [
     MouseButton::Button8,
 ];
 
-/// Runs the test client on the calling thread through the public VMNL facade.
+/// Runs the test client on the calling thread through the public graphics API.
 ///
 /// A display and Vulkan device are required. The external driver supplies the
 /// private line protocol over stdin and receives observations on stdout.

@@ -47,7 +47,7 @@
 
 - Do not allocate inside:
   - render loops
-  - audio callbacks
+  - latency-sensitive callbacks
 ---
 
 ## Performance

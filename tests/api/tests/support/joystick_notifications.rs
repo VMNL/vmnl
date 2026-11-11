@@ -4,7 +4,7 @@
 //! Synthetic connection notifications through the installed GLFW C callback under Null.
 
 use std::sync::{Mutex, MutexGuard};
-use vmnl::InputRuntime;
+use vmnl_graphics::InputRuntime;
 
 static NULL_RUNTIME: Mutex<()> = Mutex::new(());
 

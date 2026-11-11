@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::ViewportPolicy`. Status: experimental.
+Import path: `vmnl_graphics::raw::ViewportPolicy`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,12 +39,12 @@ Headless resolution needs no Vulkan/display. Pipeline use requires a window; one
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{PipelineSpec, ViewportPolicy};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{PipelineSpec, ViewportPolicy};
 let spec = PipelineSpec::<()>::default();
 assert_eq!(spec.viewport_value(), ViewportPolicy::FullFramebuffer);
 assert_eq!(spec.viewport_value().resolve([800, 600])?.extent, [800.0, 600.0]);
-# Ok::<(), vmnl::VMNLError>(())
+# Ok::<(), vmnl_graphics::VMNLError>(())
 ```
 
 Related: [`Viewport`](viewport.md), [`ScissorPolicy`](scissor_policy.md), [composition workflow](../../../workflows/compose_2d_and_raw.md).

@@ -5,7 +5,7 @@
 
 use super::{all_snapshots, invalid, require};
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
-use vmnl::{
+use vmnl_graphics::{
     JoystickState, StickAngleConvention as Angle, StickConfig, StickState, VMNLResult, Window,
 };
 

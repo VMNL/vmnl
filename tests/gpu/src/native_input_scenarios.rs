@@ -5,7 +5,7 @@
 
 use super::{invalid_state, ClientProcess, InputTestReport, X11Injector};
 use std::{thread, time::Duration};
-use vmnl::{Key, Modifiers, MouseButton, VMNLResult};
+use vmnl_graphics::{Key, Modifiers, MouseButton, VMNLResult};
 
 struct ModifierCase {
     name: String,

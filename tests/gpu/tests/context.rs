@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! GPU context initialization contract through the public facade.
+//! GPU context initialization contract through the public graphics API.
 
-use vmnl::{Context, DeviceConfig, DeviceFeature, VMNLResult, Window};
 use vmnl_gpu_tests::gpu_test_guard;
+use vmnl_graphics::{Context, DeviceConfig, DeviceFeature, VMNLResult, Window};
 
 #[test]
 #[ignore = "Requires Vulkan + GLFW display."]

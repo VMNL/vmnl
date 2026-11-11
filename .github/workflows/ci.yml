@@ -106,6 +106,8 @@ jobs:
         run: cargo test -p vmnl-api-tests --locked
       - name: Run Smoke Tests
         run: cargo run -p vmnl-smoke-tests --locked
+      - name: Test standalone and renamed graphics dependencies
+        run: python3 tools/check_graphics_consumer.py
       - name: Run portable platform tests
         run: cargo test -p vmnl-platform-tests --locked
       - name: Test Wayland under Weston/Xvfb with Pixman
@@ -379,8 +381,8 @@ jobs:
         run: cargo +1.87.0 doc --workspace --no-deps --locked
       - name: Run doctests
         run: cargo +1.87.0 test --workspace --all-features --doc --locked
-      - name: Build public facade
-        run: cargo +1.87.0 build -p vmnl --locked
+      - name: Build public graphics crate
+        run: cargo +1.87.0 build -p vmnl-graphics --locked
       - name: Check API documentation
         env:
           RUSTUP_TOOLCHAIN: 1.87.0

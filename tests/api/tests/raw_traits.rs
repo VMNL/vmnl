@@ -3,7 +3,7 @@
 
 //! Public raw derive-macro compatibility contracts.
 
-use vmnl::{raw, FrameRenderer, VMNLResult};
+use vmnl_graphics::{raw, FrameRenderer, VMNLResult};
 
 #[repr(C)]
 #[derive(Clone, Copy, raw::Vertex, raw::Pod, raw::Zeroable)]

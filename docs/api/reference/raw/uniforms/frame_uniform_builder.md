@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::FrameUniformBuilder<TData>`. Status: experimental, operational.
+Import path: `vmnl_graphics::raw::FrameUniformBuilder<TData>`. Status: experimental, operational.
 
 ## Purpose and use cases
 

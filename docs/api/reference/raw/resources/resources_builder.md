@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::ResourcesBuilder`. Status: experimental, operational for uniform buffers.
+Import path: `vmnl_graphics::raw::ResourcesBuilder`. Status: experimental, operational for uniform buffers.
 
 ## Purpose and use cases
 
@@ -41,16 +41,16 @@ Subject to Vulkan descriptor limits and the current restricted raw layout model.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-# use vmnl::{Context, ShaderSource, Window};
-# use vmnl::raw::{Pipeline, Pod, Resources, Uniform, Vertex, Zeroable};
+# extern crate vmnl_graphics;
+# use vmnl_graphics::{Context, ShaderSource, Window};
+# use vmnl_graphics::raw::{Pipeline, Pod, Resources, Uniform, Vertex, Zeroable};
 # #[repr(C)] #[derive(Clone, Copy, Pod, Zeroable, Vertex)]
 # struct V { #[format(R32G32_SFLOAT)] position: [f32; 2] }
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 struct Data { color: [f32; 4] }
 
-# fn main() -> vmnl::VMNLResult<()> {
+# fn main() -> vmnl_graphics::VMNLResult<()> {
 # let context = Context::new()?;
 # let window = Window::new(&context)?;
 # let pipeline = Pipeline::<V>::builder()

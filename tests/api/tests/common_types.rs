@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-use vmnl::{
+use vmnl_graphics::{
     common::Rgba,
     d2::{Vector2f, Vertex2D},
     d3::{Vector3f, Vertex3D},

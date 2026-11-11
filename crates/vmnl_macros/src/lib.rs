@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! Proc macros for VMNL public derives.
+//! Internal proc macros for VMNL Graphics public derives.
 
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
@@ -42,8 +42,8 @@ pub fn derive_zeroable(input: TokenStream) -> TokenStream {
 }
 
 fn derive_marker_impl(input: &DeriveInput, marker: MarkerTrait) -> SynResult<TokenStream2> {
-    let vmnl: TokenStream2 = vmnl_crate_path()?;
-    let bytemuck = quote!(#vmnl::raw::__private::bytemuck);
+    let graphics: TokenStream2 = graphics_crate_path()?;
+    let bytemuck = quote!(#graphics::raw::__private::bytemuck);
     let ident: &Ident = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let trait_name = marker.ident();
@@ -56,8 +56,8 @@ fn derive_marker_impl(input: &DeriveInput, marker: MarkerTrait) -> SynResult<Tok
 }
 
 fn derive_vertex_impl(input: &DeriveInput) -> SynResult<TokenStream2> {
-    let vmnl = vmnl_crate_path()?;
-    let vulkano = quote!(#vmnl::raw::__private::vulkano);
+    let graphics = graphics_crate_path()?;
+    let vulkano = quote!(#graphics::raw::__private::vulkano);
     let struct_name = &input.ident;
     let (_, ty_generics, _) = input.generics.split_for_impl();
     let (impl_generics, ty_generics_impl, where_clause) = input.generics.split_for_impl();
@@ -199,21 +199,14 @@ fn vertex_field_format(field: &syn::Field, vulkano: &TokenStream2) -> SynResult<
     ))
 }
 
-fn vmnl_crate_path() -> SynResult<TokenStream2> {
-    match crate_name("vmnl") {
+fn graphics_crate_path() -> SynResult<TokenStream2> {
+    match crate_name("vmnl-graphics") {
         Ok(FoundCrate::Itself) => Ok(quote!(crate)),
         Ok(FoundCrate::Name(name)) => {
             let ident = Ident::new(&name, Span::call_site());
             Ok(quote!(::#ident))
         }
-        Err(_) => match crate_name("vmnl-graphics") {
-            Ok(FoundCrate::Itself) => Ok(quote!(crate)),
-            Ok(FoundCrate::Name(name)) => {
-                let ident = Ident::new(&name, Span::call_site());
-                Ok(quote!(::#ident))
-            }
-            Err(err) => Err(SynError::new(Span::call_site(), err)),
-        },
+        Err(err) => Err(SynError::new(Span::call_site(), err)),
     }
 }
 

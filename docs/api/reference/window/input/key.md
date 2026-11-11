@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::Key`. Status: experimental.
+Import path: `vmnl_graphics::Key`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -49,8 +49,8 @@ enum does not embed modifiers or scancodes; keyboard event variants expose them 
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::Key;
+# extern crate vmnl_graphics;
+use vmnl_graphics::Key;
 
 let quit = Key::Escape;
 assert_eq!(quit, Key::Escape);

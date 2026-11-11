@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::Anchor`. Status: experimental.
+Import path: `vmnl_graphics::d2::Anchor`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ None.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::d2::Anchor;
+# extern crate vmnl_graphics;
+use vmnl_graphics::d2::Anchor;
 
 assert_eq!(Anchor::default(), Anchor::TopLeft);
 ```

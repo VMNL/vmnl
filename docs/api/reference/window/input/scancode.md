@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::Scancode`. Status: experimental, operational keyboard-event metadata.
+Import path: `vmnl_graphics::Scancode`. Status: experimental, operational keyboard-event metadata.
 
 ## Purpose and use cases
 
@@ -46,8 +46,8 @@ context.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::Scancode;
+# extern crate vmnl_graphics;
+use vmnl_graphics::Scancode;
 
 let scancode = Scancode::from_raw(42);
 assert_eq!(scancode.as_raw(), 42);

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import paths: `vmnl::ShaderSource`, `vmnl::common::ShaderSource`, and `vmnl::raw::ShaderSource`. Status: experimental.
+Import paths: `vmnl_graphics::ShaderSource`, `vmnl_graphics::common::ShaderSource`, and `vmnl_graphics::raw::ShaderSource`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Filesystem paths must be available at build time. GLSL support is constrained by
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::ShaderSource;
+# extern crate vmnl_graphics;
+use vmnl_graphics::ShaderSource;
 
 let source = ShaderSource::Src("#version 450\nvoid main() {}".into());
 assert!(matches!(source, ShaderSource::Src(_)));

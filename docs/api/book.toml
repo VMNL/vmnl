@@ -1,6 +1,6 @@
 [book]
-title = "VMNL Public API"
-description = "Concepts, workflows, and cross-cutting reference for the VMNL facade"
+title = "VMNL Graphics Public API"
+description = "Concepts, workflows, and complete reference for vmnl_graphics"
 authors = ["VMNL contributors"]
 language = "en"
 src = "."
@@ -13,4 +13,4 @@ create-missing = false
 edition = "2021"
 
 [output.html]
-git-repository-url = "https://github.com/VMNL/vmnl"
+git-repository-url = "https://github.com/VMNL/vmnl-graphics"

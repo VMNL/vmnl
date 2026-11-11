@@ -3,8 +3,8 @@
 
 //! GPU/display contracts for deterministic window runtime behavior.
 
-use vmnl::{common::Rgba, Context, VMNLError, VMNLErrorKind, VMNLResult, Window};
 use vmnl_gpu_tests::gpu_test_guard;
+use vmnl_graphics::{common::Rgba, Context, VMNLError, VMNLErrorKind, VMNLResult, Window};
 
 #[test]
 #[ignore = "Requires Vulkan + GLFW display."]
@@ -19,14 +19,14 @@ fn default_window_joystick_state_stays_untracked_after_polling() -> VMNLResult<(
         let events = window.poll_events();
         assert!(!events.iter().any(|event| matches!(
             event.kind(),
-            vmnl::EventKind::JoystickConnected { .. }
-                | vmnl::EventKind::JoystickDisconnected { .. }
+            vmnl_graphics::EventKind::JoystickConnected { .. }
+                | vmnl_graphics::EventKind::JoystickDisconnected { .. }
         )));
-        for index in 0..vmnl::JoystickId::COUNT {
-            let id = vmnl::JoystickId::from_index(index).expect("valid public slot");
+        for index in 0..vmnl_graphics::JoystickId::COUNT {
+            let id = vmnl_graphics::JoystickId::from_index(index).expect("valid public slot");
             assert_eq!(
                 window.input().joystick(id).status(),
-                vmnl::JoystickStatus::NotTracked
+                vmnl_graphics::JoystickStatus::NotTracked
             );
         }
     }

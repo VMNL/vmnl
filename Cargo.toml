@@ -2,7 +2,6 @@
 members = [
     "crates/vmnl_graphics",
     "crates/vmnl_macros",
-    "crates/vmnl",
     "examples/d2/advanced_geometry",
     "examples/d2/shapes",
     "examples/input/joystick_runtime",
@@ -20,7 +19,7 @@ members = [
     "tests/platform",
     "tests/smoke",
 ]
-default-members = ["crates/vmnl_graphics", "crates/vmnl"]
+default-members = ["crates/vmnl_graphics"]
 resolver = "2"
 
 [workspace.package]
@@ -28,9 +27,9 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 rust-version = "1.87"
-repository = "https://github.com/VMNL/vmnl"
-homepage = "https://github.com/VMNL/vmnl"
-documentation = "https://docs.rs/vmnl"
+repository = "https://github.com/VMNL/vmnl-graphics"
+homepage = "https://github.com/VMNL/vmnl-graphics"
+documentation = "https://docs.rs/vmnl-graphics"
 
 [workspace.dependencies]
 glfw = { version = "0.62.0", git = "https://github.com/VMNL/glfw-rs", rev = "eee570b6f0881d49a678ebe8ec32b50c3dcea4de", default-features = false, features = ["raw-window-handle-v0-6", "src-build", "vulkan", "wayland", "x11"] }

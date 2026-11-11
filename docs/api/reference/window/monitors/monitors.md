@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::Monitors`. Status: experimental snapshot.
+Import path: `vmnl_graphics::Monitors`. Status: experimental snapshot.
 
 ## Purpose and use cases
 
@@ -39,10 +39,10 @@ Enumeration order and metadata completeness are GLFW/platform dependent.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let window = Window::new(&context)?;
     for monitor in window.monitor().infos() {

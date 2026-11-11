@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::ScissorPolicy`. Status: experimental.
+Import path: `vmnl_graphics::raw::ScissorPolicy`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,12 +39,12 @@ Headless resolution needs no Vulkan/display. Pipeline use requires a window; one
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{PipelineSpec, ScissorPolicy};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{PipelineSpec, ScissorPolicy};
 let spec = PipelineSpec::<()>::default();
 assert_eq!(spec.scissor_value(), ScissorPolicy::FullFramebuffer);
 assert_eq!(spec.scissor_value().resolve([800, 600])?.extent, [800, 600]);
-# Ok::<(), vmnl::VMNLError>(())
+# Ok::<(), vmnl_graphics::VMNLError>(())
 ```
 
 Related: [`Scissor`](scissor.md), [`ViewportPolicy`](viewport_policy.md), [composition workflow](../../../workflows/compose_2d_and_raw.md).

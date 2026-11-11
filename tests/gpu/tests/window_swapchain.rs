@@ -3,8 +3,8 @@
 
 //! GPU contract for swapchain recreation after a logical resize.
 
-use vmnl::{common::Rgba, d2::Shape, Context, VMNLResult, Window};
 use vmnl_gpu_tests::gpu_test_guard;
+use vmnl_graphics::{common::Rgba, d2::Shape, Context, VMNLResult, Window};
 
 #[test]
 #[ignore = "Requires Vulkan + GLFW display."]

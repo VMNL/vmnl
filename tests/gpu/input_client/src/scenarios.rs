@@ -5,7 +5,9 @@
 
 use super::{check, invalid_state, poll_until, require, BUTTONS, INPUT_TIMEOUT, KEYS};
 use std::time::{Duration, Instant};
-use vmnl::{Context, Event, EventKind, Key, Modifiers, MouseButton, Scancode, VMNLResult, Window};
+use vmnl_graphics::{
+    Context, Event, EventKind, Key, Modifiers, MouseButton, Scancode, VMNLResult, Window,
+};
 
 pub(super) enum Action {
     Key {

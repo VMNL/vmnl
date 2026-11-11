@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::Uniform<TData>`. Status: experimental, operational direct-write buffer.
+Import path: `vmnl_graphics::raw::Uniform<TData>`. Status: experimental, operational direct-write buffer.
 
 ## Purpose and use cases
 
@@ -42,15 +42,15 @@ Size/alignment/layout must match shader and device requirements; current raw des
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::Context;
-use vmnl::raw::{Pod, Uniform, Zeroable};
+# extern crate vmnl_graphics;
+use vmnl_graphics::Context;
+use vmnl_graphics::raw::{Pod, Uniform, Zeroable};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 struct Data { color: [f32; 4] }
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let mut uniform = Uniform::builder(Data { color: [1.0; 4] }).build(&context)?;
     uniform.write(Data { color: [0.5; 4] })?;

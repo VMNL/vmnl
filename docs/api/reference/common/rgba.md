@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::common::Rgba`. Status: experimental, operational value type.
+Import path: `vmnl_graphics::common::Rgba`. Status: experimental, operational value type.
 
 ## Purpose and use cases
 
@@ -41,8 +41,8 @@ None. Color-space conversion, blending, framebuffer format, and display calibrat
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::common::Rgba;
+# extern crate vmnl_graphics;
+use vmnl_graphics::common::Rgba;
 
 let color = Rgba::rgb(20, 24, 32);
 assert_eq!(color, Rgba::new(20, 24, 32, 255));

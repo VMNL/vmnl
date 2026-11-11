@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::ColorFormat`. Status: experimental.
+Import path: `vmnl_graphics::ColorFormat`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Constants and comparisons are headless. The actual selected surface format depen
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::ColorFormat;
+# extern crate vmnl_graphics;
+use vmnl_graphics::ColorFormat;
 assert_ne!(ColorFormat::B8G8R8A8_SRGB, ColorFormat::B8G8R8A8_UNORM);
 assert_eq!(ColorFormat::R8G8B8A8_SRGB.to_string(), "R8G8B8A8_SRGB");
 ```

@@ -3,7 +3,7 @@
 
 //! Public 3D data contracts that do not require a renderer.
 
-use vmnl::{
+use vmnl_graphics::{
     d3::{Camera, Vector3f},
     VMNLResult,
 };

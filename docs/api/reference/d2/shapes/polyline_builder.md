@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::PolylineBuilder`; created by `Shape::polyline(points)`. Status: experimental, operational GPU resource.
+Import path: `vmnl_graphics::d2::PolylineBuilder`; created by `Shape::polyline(points)`. Status: experimental, operational GPU resource.
 
 ## Purpose and use cases
 
@@ -47,12 +47,12 @@ Building requires a Vulkan context. Drawing requires a compatible window/render 
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::common::Rgba;
-use vmnl::d2::{LineCap, LineJoin, Shape, Vector2f};
-use vmnl::Context;
+# extern crate vmnl_graphics;
+use vmnl_graphics::common::Rgba;
+use vmnl_graphics::d2::{LineCap, LineJoin, Shape, Vector2f};
+use vmnl_graphics::Context;
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let path = Shape::polyline([
         Vector2f { x: 100.0, y: 100.0 },

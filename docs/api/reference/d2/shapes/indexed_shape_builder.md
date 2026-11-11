@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::IndexedShapeBuilder`; created by `Shape::indexed`. Status: experimental, operational.
+Import path: `vmnl_graphics::d2::IndexedShapeBuilder`; created by `Shape::indexed`. Status: experimental, operational.
 
 ## Purpose and use cases
 
@@ -55,12 +55,12 @@ Requires a supported Vulkan context; visual rendering requires a compatible wind
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::Context;
-use vmnl::common::Rgba;
-use vmnl::d2::{Shape, Vector2f, Vertex2D};
+# extern crate vmnl_graphics;
+use vmnl_graphics::Context;
+use vmnl_graphics::common::Rgba;
+use vmnl_graphics::d2::{Shape, Vector2f, Vertex2D};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let vertices = [
         Vertex2D { position: Vector2f { x: 0.0, y: 0.0 }, color: Rgba::RED },

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::CursorBuilder`. Status: experimental, operational with native cursor support.
+Import path: `vmnl_graphics::CursorBuilder`. Status: experimental, operational with native cursor support.
 
 ## Purpose and use cases
 
@@ -58,10 +58,10 @@ the displayed size. Vulkan and the GPU do not participate.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{common::Rgba, Context, Cursor};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{common::Rgba, Context, Cursor};
 
-# fn main() -> vmnl::VMNLResult<()> {
+# fn main() -> vmnl_graphics::VMNLResult<()> {
 let context = Context::new()?;
 let pixels = [255_u8; 4 * 4 * 4];
 let cursor = Cursor::rgba8(4, 4, &pixels)

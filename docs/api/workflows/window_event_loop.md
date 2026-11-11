@@ -19,10 +19,10 @@ baseline without press/release transitions. Each window advances only its own sn
 `InputRuntime::poll_events()` does not update it.
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, EventKind, Window};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, EventKind, Window};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::builder()
         .unset_configure_window_polling()

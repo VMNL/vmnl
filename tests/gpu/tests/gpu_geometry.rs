@@ -3,13 +3,13 @@
 
 //! GPU integration coverage for 2D geometry and Vulkan resources.
 
-use vmnl::{
+use vmnl_gpu_tests::gpu_test_guard;
+use vmnl_graphics::{
     common::{BufferMemoryPreference, Rgba},
     d2::{Anchor, CornerRadii, LineCap, LineJoin, Shape, Vector2f, Vertex2D},
     d3::{Mesh, Vector3f, Vertex3D},
     raw, Context, PresentMode, RenderMode, VMNLError, VMNLErrorKind, VMNLResult, Window,
 };
-use vmnl_gpu_tests::gpu_test_guard;
 
 #[repr(C)]
 #[derive(Clone, Copy, raw::Pod, raw::Zeroable)]

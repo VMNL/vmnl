@@ -3,7 +3,7 @@
 
 //! Advanced 2D geometry construction and rendering options.
 
-use vmnl::{
+use vmnl_graphics::{
     common::{BufferMemoryPreference, Rgba},
     d2::{Anchor, CornerRadii, LineCap, LineJoin, Shape, Vector2f, Vertex2D},
     Context, Key, PresentMode, RenderMode, VMNLResult, Window,

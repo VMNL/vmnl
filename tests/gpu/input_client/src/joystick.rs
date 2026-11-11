@@ -13,7 +13,7 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
-use vmnl::{
+use vmnl_graphics::{
     Context, Event, EventKind, GamepadButton, InputRuntime, JoystickButtonState, JoystickId,
     JoystickSample, JoystickStatus, StickState, VMNLError, VMNLErrorKind, VMNLResult, Window,
 };

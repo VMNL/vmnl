@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::LineWidthLimits`. Status: experimental.
+Import path: `vmnl_graphics::LineWidthLimits`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,9 +39,9 @@ The getter requires an initialized Vulkan context. Semantics follow [Vulkan line
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::Context;
-# fn main() -> vmnl::VMNLResult<()> {
+# extern crate vmnl_graphics;
+use vmnl_graphics::Context;
+# fn main() -> vmnl_graphics::VMNLResult<()> {
 let context = Context::new()?;
 let limits = context.line_width_limits();
 assert!(limits.min <= 1.0 && limits.max >= 1.0);

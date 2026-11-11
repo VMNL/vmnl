@@ -10,4 +10,4 @@ The experimental raw layer is operational within documented limits. It provides 
 | Uniform buffers | [Uniforms](uniforms/README.md) |
 | Descriptor bindings | [Resources](resources/README.md) |
 
-`vmnl::raw::__private` is excluded: it is a hidden macro-expansion implementation path, not client API.
+`vmnl_graphics::raw::__private` is excluded: it is a hidden macro-expansion implementation path, not client API.

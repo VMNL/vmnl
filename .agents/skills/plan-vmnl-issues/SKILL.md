@@ -46,9 +46,8 @@ uncommitted work from another issue.
   green vertical slice is impractical.
 - Do not create speculative prefactoring, abstraction, manager, or framework issues without a
   current use case.
-- Distinguish work owned by VMNL from work owned by another repository. The C network backend is
-  read-only to VMNL agents; do not plan edits or issue mutations in that repository without separate
-  authority.
+- Distinguish graphics work owned by this repository from work owned by another repository.
+  External dependency changes and issue mutations require their own authority.
 
 Size an issue as the smallest coherent change that can be implemented, validated, reviewed, and
 merged independently. Do not split solely by source layer, file, or implementation phase.
@@ -66,7 +65,7 @@ coordinate them without inventing a dependency.
 For submodules and cross-repository work, distinguish:
 
 - backend behavior and revision owned by the backend repository;
-- version pin, build integration, safe wrapper, facade, and validation owned by VMNL.
+- version pin, build integration, public graphics API, and validation owned by VMNL Graphics.
 
 ## Draft Each Issue
 

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::DeviceFeature`. Status: experimental, `#[non_exhaustive]`.
+Import path: `vmnl_graphics::DeviceFeature`. Status: experimental, `#[non_exhaustive]`.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Capabilities are queried per physical device and separately enabled on the logic
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::{DeviceConfig, DeviceFeature};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{DeviceConfig, DeviceFeature};
 
 let config = DeviceConfig::default().require_feature(DeviceFeature::FillModeNonSolid);
 assert_eq!(config.required_features(), &[DeviceFeature::FillModeNonSolid]);

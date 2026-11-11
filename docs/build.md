@@ -40,6 +40,7 @@ just test                  unit + API + smoke tests
 just test-unit             unit tests
 just test-api              API tests
 just test-smoke            smoke tests
+just test-consumer         standalone and renamed client dependencies
 just test-platform         portable error conversion + GLFW Null backend
 just test-platform-compile compile every platform probe without running it
 just test-platform-null    isolated GLFW Null-backend probe
@@ -148,6 +149,9 @@ field and fails before producing an inventory. The pinned 2026-03-12 nightly emi
 format 57 while stable VMNL compilation remains on Rust 1.87.
 
 `just docs-api-check` does not change tracked files, but may populate `target/api-tools`.
+Snippet libraries are staged under `target/api-book-libs` with only the current
+`libvmnl_graphics.rlib`. This staging operation replaces its own symlinks and preserves Cargo's
+artifacts under `target/debug`, including older builds.
 `just docs-api-update` rewrites only
 `public_api_snapshot.md`, `public_symbol_index.md`, `method_index.md`,
 `glfw_platform_inventory.md`, and `platform_compatibility.md`; review their diff.

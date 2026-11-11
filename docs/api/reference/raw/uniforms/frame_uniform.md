@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::raw::FrameUniform<TData>`. Status: experimental, operational frame-varying uniform buffer.
+Import path: `vmnl_graphics::raw::FrameUniform<TData>`. Status: experimental, operational frame-varying uniform buffer.
 
 ## Purpose and use cases
 
@@ -42,15 +42,15 @@ Size/alignment/layout must match the shader and device requirements. Current raw
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Window};
-use vmnl::raw::{FrameUniform, Pod, Zeroable};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Window};
+use vmnl_graphics::raw::{FrameUniform, Pod, Zeroable};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 struct Data { tint: [f32; 4] }
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
     let mut uniform = FrameUniform::builder(Data { tint: [1.0; 4] }).build(&window)?;

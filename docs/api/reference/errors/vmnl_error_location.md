@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::VMNLErrorLocation`. Status: experimental, operational value type.
+Import path: `vmnl_graphics::VMNLErrorLocation`. Status: experimental, operational value type.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ None. Paths may differ between build environments.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::{VMNLError, VMNLErrorKind};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{VMNLError, VMNLErrorKind};
 
 let location = VMNLError::new(VMNLErrorKind::InvalidWindowSize).location();
 assert!(!location.file().is_empty());

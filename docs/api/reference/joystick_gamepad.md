@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import paths: `vmnl::{JoystickId, JoystickSample, JoystickButtonState, JoystickHatState,
+Import paths: `vmnl_graphics::{JoystickId, JoystickSample, JoystickButtonState, JoystickHatState,
 GamepadButton, GamepadAxis, GamepadState, JoystickState, JoystickStatus, StickConfig,
 StickAngleConvention, StickState}`. Status: experimental input API.
 
@@ -111,10 +111,10 @@ Vulkan object. Native controller availability and names vary by machine.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{GamepadAxis, InputRuntime, JoystickId};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{GamepadAxis, InputRuntime, JoystickId};
 
-# fn main() -> vmnl::VMNLResult<()> {
+# fn main() -> vmnl_graphics::VMNLResult<()> {
 let runtime = InputRuntime::acquire()?;
 if let Some(sample) = runtime.sample_joystick(JoystickId::Joystick1)? {
     for (index, value) in sample.axes().iter().enumerate() {

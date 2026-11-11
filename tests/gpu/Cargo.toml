@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-vmnl = { path = "../../crates/vmnl" }
+vmnl-graphics = { path = "../../crates/vmnl_graphics" }
 
 [dev-dependencies]
 serde_json = "1.0.145"

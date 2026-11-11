@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::DeviceConfig`. Status: experimental.
+Import path: `vmnl_graphics::DeviceConfig`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Configuration is headless. Activation requires an operational graphics context a
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::{Context, DeviceConfig, DeviceFeature};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, DeviceConfig, DeviceFeature};
 
 let config = DeviceConfig::default()
     .require_features([DeviceFeature::WideLines, DeviceFeature::LargePoints])

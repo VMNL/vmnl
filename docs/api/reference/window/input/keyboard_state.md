@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::KeyboardState`. Status: experimental, operational snapshot.
+Import path: `vmnl_graphics::KeyboardState`. Status: experimental, operational snapshot.
 
 ## Purpose and use cases
 
@@ -43,8 +43,8 @@ Focus, keyboard layout, native mapping, and repeat delivery are platform depende
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::{Key, KeyboardState};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Key, KeyboardState};
 
 let state = KeyboardState::new();
 assert!(!state.is_any_used(&[Key::A, Key::Escape]));

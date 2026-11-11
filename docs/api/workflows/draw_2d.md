@@ -16,12 +16,12 @@ The [`d2_circles` example](../../../examples/d2/circles/src/main.rs) demonstrate
 sectors, rings, circles, and a round-capped elliptical arc; run it with `just run d2_circles`.
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, Window};
-use vmnl::common::Rgba;
-use vmnl::d2::Shape;
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, Window};
+use vmnl_graphics::common::Rgba;
+use vmnl_graphics::d2::Shape;
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let mut window = Window::new(&context)?;
     let rect = Shape::rect(200.0, 100.0).color(Rgba::RED).build(&context)?;

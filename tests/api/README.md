@@ -2,7 +2,7 @@
 
 Test policy lives in [docs/testing.md](../../docs/testing.md).
 
-API tests validate public behavior across the facade crate.
+API tests validate public behavior across the graphics crate.
 
 They are headless and assertion-based:
 

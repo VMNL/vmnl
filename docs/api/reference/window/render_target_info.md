@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::RenderTargetInfo`. Status: experimental.
+Import path: `vmnl_graphics::RenderTargetInfo`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,9 +39,9 @@ Obtaining a window snapshot requires a built Vulkan window. Comparing existing c
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, DepthFormat, RenderTargetConfig, Window};
-fn main() -> vmnl::VMNLResult<()> {
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, DepthFormat, RenderTargetConfig, Window};
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let window = Window::builder()
         .render_target(RenderTargetConfig::default().depth(DepthFormat::D16Unorm))

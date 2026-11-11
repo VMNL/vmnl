@@ -2,10 +2,10 @@
 
 ## Public path and maturity
 
-Entry point: `vmnl::d2::Shape::circle(radius)`. Status: experimental, operational geometry builder.
+Entry point: `vmnl_graphics::d2::Shape::circle(radius)`. Status: experimental, operational geometry builder.
 The returned type currently has no public import path: keep its type inferred. In particular,
-`vmnl::d2::CircleBuilder` is not exported, and Rustdoc does not expose a standalone builder page.
-The accessible Rustdoc entry is [`Shape::circle`](../../../../../target/doc/vmnl/d2/struct.Shape.html#method.circle).
+`vmnl_graphics::d2::CircleBuilder` is not exported, and Rustdoc does not expose a standalone builder page.
+The accessible Rustdoc entry is [`Shape::circle`](../../../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.circle).
 
 ## Purpose and use cases
 
@@ -124,10 +124,10 @@ correct pixels or platform qualification.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{Context, d2::{LineCap, Shape}};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{Context, d2::{LineCap, Shape}};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let ellipse = Shape::circle(70.0)
         .ellipse(40.0)

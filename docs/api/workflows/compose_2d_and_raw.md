@@ -3,11 +3,11 @@
 Append `draw2d`, `draw_raw_2d`, and `draw_raw_2d_with` calls in the required logical order on one `FrameRenderer`; `RenderMode` does not reorder passes. Submit once.
 
 ```rust,no_run
-# extern crate vmnl;
-# use vmnl::{Context, Window};
-# use vmnl::d2::Shape;
-# use vmnl::raw::{Geometry, Pipeline};
-# fn render<T>(window: &mut Window, shape: &Shape, pipeline: &Pipeline<T>, geometry: &Geometry<T>) -> vmnl::VMNLResult<()> {
+# extern crate vmnl_graphics;
+# use vmnl_graphics::{Context, Window};
+# use vmnl_graphics::d2::Shape;
+# use vmnl_graphics::raw::{Geometry, Pipeline};
+# fn render<T>(window: &mut Window, shape: &Shape, pipeline: &Pipeline<T>, geometry: &Geometry<T>) -> vmnl_graphics::VMNLResult<()> {
 window.render()
     .draw2d([shape])
     .draw_raw_2d(pipeline, [geometry])
@@ -35,8 +35,8 @@ An operator should verify those observations, then run `raw_triangle`, `raw_pipe
 Policies are independent and immutable on a built pipeline. Inspect resolution without a GPU:
 
 ```rust
-# extern crate vmnl;
-use vmnl::raw::{PipelineSpec, Scissor, ScissorPolicy, Viewport, ViewportPolicy};
+# extern crate vmnl_graphics;
+use vmnl_graphics::raw::{PipelineSpec, Scissor, ScissorPolicy, Viewport, ViewportPolicy};
 let spec = PipelineSpec::<()>::default()
     .viewport(ViewportPolicy::Fixed(Viewport {
         offset: [100.0, 50.0], extent: [450.0, 300.0], depth_range: [0.0, 1.0],
@@ -44,7 +44,7 @@ let spec = PipelineSpec::<()>::default()
     .scissor(ScissorPolicy::Fixed(Scissor { offset: [250, 150], extent: [100, 100] }));
 assert_eq!(spec.viewport_value().resolve([900, 600])?.extent, [450.0, 300.0]);
 assert_eq!(spec.scissor_value().resolve([900, 600])?.offset, [250, 150]);
-# Ok::<(), vmnl::VMNLError>(())
+# Ok::<(), vmnl_graphics::VMNLError>(())
 ```
 
 ## Optional depth attachment regression
@@ -73,9 +73,9 @@ Closing/reopening should work for both formats when supported. Run `raw_triangle
 The example prints `resolved attachments` at startup and checks each built pipeline against its window. `RenderTargetInfo` reports color format, samples per pixel and optional depth format; it excludes extent and clear values. Current windows use one sample per pixel. Automatic surface format selection and the displayed scene retain their existing policies.
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::{raw::Pipeline, Window};
-fn inspect<V>(pipeline: &Pipeline<V>, window: &Window) -> vmnl::VMNLResult<()> {
+# extern crate vmnl_graphics;
+use vmnl_graphics::{raw::Pipeline, Window};
+fn inspect<V>(pipeline: &Pipeline<V>, window: &Window) -> vmnl_graphics::VMNLResult<()> {
     let info = window.render_target_info();
     println!("color: {}, samples: {}, depth: {:?}",
         info.color_format(), info.sample_count(), info.depth_format());

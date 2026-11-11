@@ -127,7 +127,7 @@ Treat the owning repository and its parent integration as separate diagnostic bo
 
 - establish the revision and worktree state of each repository;
 - diagnose subsystem behavior in the owning repository;
-- diagnose facade, feature, version-pin, and integration behavior in the parent repository;
+- diagnose public API, feature, version-pin, and integration behavior in this repository;
 - report commands and evidence per repository;
 - do not infer that passing one boundary validates the other.
 

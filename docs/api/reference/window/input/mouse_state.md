@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::MouseState`. Status: experimental, operational snapshot.
+Import path: `vmnl_graphics::MouseState`. Status: experimental, operational snapshot.
 
 ## Purpose and use cases
 
@@ -42,8 +42,8 @@ Focus, capture, auxiliary buttons, and event delivery depend on the platform.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::{MouseButton, MouseState};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{MouseButton, MouseState};
 
 let state = MouseState::new();
 assert!(!state.is_down(MouseButton::Left));

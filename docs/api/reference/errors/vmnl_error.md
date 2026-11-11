@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::VMNLError`. Status: experimental, operational error type.
+Import path: `vmnl_graphics::VMNLError`. Status: experimental, operational error type.
 
 ## Purpose and use cases
 
@@ -44,8 +44,8 @@ None; variants may describe platform/GPU failures without accessing those system
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::{VMNLError, VMNLErrorKind};
+# extern crate vmnl_graphics;
+use vmnl_graphics::{VMNLError, VMNLErrorKind};
 
 let error = VMNLError::new(VMNLErrorKind::InvalidWindowSize);
 assert!(error.report().contains("invalid window size"));

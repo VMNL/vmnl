@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::RectBuilder`; created by `Shape::rect`. Status: experimental, operational.
+Import path: `vmnl_graphics::d2::RectBuilder`; created by `Shape::rect`. Status: experimental, operational.
 
 ## Purpose and use cases
 
@@ -70,11 +70,11 @@ Requires Vulkan for build and compatible display/window for drawing.
 ## Example and related types
 
 ```rust,no_run
-# extern crate vmnl;
-use vmnl::Context;
-use vmnl::d2::{Anchor, CornerRadii, Shape};
+# extern crate vmnl_graphics;
+use vmnl_graphics::Context;
+use vmnl_graphics::d2::{Anchor, CornerRadii, Shape};
 
-fn main() -> vmnl::VMNLResult<()> {
+fn main() -> vmnl_graphics::VMNLResult<()> {
     let context = Context::new()?;
     let sharp = Shape::rect(100.0, 50.0)
         .anchor(Anchor::Center)

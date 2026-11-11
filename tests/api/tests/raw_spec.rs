@@ -3,7 +3,7 @@
 
 use std::path::PathBuf;
 
-use vmnl::{common::BufferMemoryPreference, raw, PresentMode, RenderMode, VMNLResult};
+use vmnl_graphics::{common::BufferMemoryPreference, raw, PresentMode, RenderMode, VMNLResult};
 
 #[derive(Clone)]
 struct RawSpecVertex;
@@ -47,7 +47,7 @@ fn raw_pipeline_spec_preserves_and_replaces_rasterization_values() {
 
 #[test]
 fn line_width_limits_and_errors_are_backend_independent() {
-    let limits = vmnl::LineWidthLimits {
+    let limits = vmnl_graphics::LineWidthLimits {
         min: 0.5,
         max: 4.0,
         granularity: 0.25,
@@ -57,14 +57,15 @@ fn line_width_limits_and_errors_are_backend_independent() {
     assert_eq!(limits.min, 0.5);
     assert_eq!(limits.max, 4.0);
     assert_eq!(limits.granularity, 0.25);
-    let error = vmnl::VMNLError::new(vmnl::VMNLErrorKind::DeviceFeatureNotEnabled {
-        feature: vmnl::DeviceFeature::WideLines,
-    });
+    let error =
+        vmnl_graphics::VMNLError::new(vmnl_graphics::VMNLErrorKind::DeviceFeatureNotEnabled {
+            feature: vmnl_graphics::DeviceFeature::WideLines,
+        });
     assert_eq!(
         error.to_string(),
         "device feature is not enabled: WideLines"
     );
-    let error = vmnl::VMNLError::new(vmnl::VMNLErrorKind::InvalidLineWidth {
+    let error = vmnl_graphics::VMNLError::new(vmnl_graphics::VMNLErrorKind::InvalidLineWidth {
         value: 5.0,
         min: limits.min,
         max: limits.max,

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl::d2::LineJoin`. Status: experimental.
+Import path: `vmnl_graphics::d2::LineJoin`. Status: experimental.
 
 ## Purpose and use cases
 
@@ -39,8 +39,8 @@ Not applicable beyond the polyline's graphics requirements.
 ## Example and related types
 
 ```rust
-# extern crate vmnl;
-use vmnl::d2::LineJoin;
+# extern crate vmnl_graphics;
+use vmnl_graphics::d2::LineJoin;
 
 assert_eq!(LineJoin::default(), LineJoin::Bevel);
 ```

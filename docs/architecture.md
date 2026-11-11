@@ -2,8 +2,8 @@
 
 ## Project Direction
 
-VMNL is a modular Rust multimedia library for building a game engine, a real-time application, or
-a game without first implementing a complete engine. It targets developers who want useful
+VMNL Graphics is an independent Rust library for Vulkan rendering, windowing, input, and GPU
+resources in engines, real-time applications, and games. It targets developers who want useful
 defaults initially and progressively deeper control when they need to optimize or customize a
 system.
 
@@ -28,33 +28,16 @@ directly; an optional high-level runner may provide a simpler path without remov
 
 ## Domain Scope
 
-| Domain | Direction | Current state |
-| --- | --- | --- |
-| Graphics | Vulkan rendering, windows, input, 2D, 3D, and explicit raw control. | Window/input, 2D, and limited raw capabilities are operational; 3D rendering is scaffolded. |
-| Audio | Independent real-time audio subsystem. Its detailed contract belongs to its maintainers. | Planned outside `main`. |
-| Network | Transport, framing, and reliable or unreliable channels. Higher-level replication may remain optional. | Planned. |
-| Scene | Optional high-level composition built only from public VMNL capabilities and reproducible manually by clients. | Planned. |
-| ECS | Reference application and dogfooding tool unless a concrete external use case justifies a public contract. | Not a core library contract. |
+This repository owns graphics only: Vulkan rendering, windows, events, input, monitors, 2D,
+3D data/resource scaffolding, and explicit raw graphics control. Windowing and input belong to
+this crate. Rendering 3D frames remains unimplemented.
 
-Windowing and input belong to graphics for now. This ownership may change only when a concrete
-cross-domain requirement justifies a separate platform boundary.
+Applications depend on the `vmnl-graphics` package and import `vmnl_graphics` directly. There is
+no aggregate facade or optional audio/network feature. Other VMNL domains are independent projects;
+using graphics neither owns their lifecycle nor changes their public contracts.
 
-The target crate model keeps domains independently selectable through the `vmnl` facade:
-
-```text
-vmnl
-  -> vmnl_graphics  default
-  -> vmnl_audio     opt-in
-  -> vmnl_network   opt-in
-  -> vmnl_scene     opt-in
-```
-
-A future `full` feature may enable every stable domain. A headless audio or network client must not
-need Vulkan or GLFW solely because it uses the facade.
-
-The network domain uses a Rust API over an externally owned C backend. The backend is expected to
-be pinned as a Git submodule and is read-only from VMNL integration work. The boundary, ownership,
-and evidence requirements are defined in [`network_integration.md`](network_integration.md).
+The crate keeps backend modules private. `common`, `d2`, `d3`, and `raw` expose public graphics
+concepts; `raw::__private` is reserved for derive macro expansion and is not client API.
 
 ## Workspace
 
@@ -62,9 +45,8 @@ The current workspace is defined in `Cargo.toml`.
 
 Core crates:
 
-- `crates/vmnl`: public facade crate.
-- `crates/vmnl_graphics`: graphics, windowing, input, raw rendering, 2D/3D types.
-- `crates/vmnl_macros`: internal proc macros used by VMNL crates.
+- `crates/vmnl_graphics`: public graphics crate, windowing, input, raw rendering, and 2D/3D types.
+- `crates/vmnl_macros`: internal proc macros re-exported through the graphics crate's `raw` module.
 
 Runnable visual examples:
 
@@ -90,24 +72,17 @@ Test crates:
 
 ```text
 application
-  -> vmnl facade
-    -> vmnl_graphics
-      -> window/input API
-      -> 2D API
-      -> 3D scaffold
-      -> raw Vulkan-facing API
-      -> internal Vulkan/window backend
+  -> vmnl_graphics
+    -> window/input API
+    -> 2D API
+    -> 3D scaffold
+    -> raw Vulkan-facing API
+    -> internal Vulkan/window backend
 ```
 
-The planned network branch is independent:
-
-```text
-application
-  -> vmnl facade (network feature)
-    -> vmnl_network safe Rust API
-      -> private C FFI layer
-        -> pinned C backend
-```
+The macros crate depends only on its parsing/code-generation dependencies. Its expansions resolve
+`vmnl-graphics`, including a dependency renamed by the client; clients do not depend on macros
+or Vulkano directly to use the public derives.
 
 ## Stable Contract Requirements
 
@@ -116,7 +91,7 @@ path already satisfies them. In particular, automatic device/queue selection and
 currently coupled to Vulkano must be made configurable or isolated before they enter the first
 stable compatibility baseline; their present behavior remains documented in the API book.
 
-- `vmnl` re-exports the public API; users should not need internal crates for normal use.
+- Applications use `vmnl-graphics` directly; private macros and backend crates are not client dependencies.
 - `vmnl_graphics` owns rendering, windowing, input, and GPU resource behavior.
 - `raw` exposes lower-level VMNL pipeline, geometry, and resource control.
 - Vulkan is the graphics backend; Vulkano remains an implementation detail of stable APIs.
@@ -138,7 +113,7 @@ stable compatibility baseline; their present behavior remains documented in the 
 
 ## Current Implementation Boundaries
 
-- `vmnl` re-exports the current public graphics API.
+- `vmnl_graphics` is the public dependency and import boundary.
 - `ContextBuilder::device(DeviceConfig)` configures required device features and exposes support/activation inspection through `Context`; GPU identity, queue and allocator selection remain automatic.
 - `vmnl_graphics` owns rendering, windowing, input, and GPU resource behavior.
 - `InputRuntime` and `Context` share the same GLFW owner; standalone input access does not create a
@@ -147,11 +122,11 @@ stable compatibility baseline; their present behavior remains documented in the 
 - `WindowBuilder::render_target(RenderTargetConfig)` optionally allocates depth-only attachments per swapchain image, recreated on resize. Defaults remain color-only. `RenderTargetInfo` exposes actual color format, samples and depth; raw target preflight retains the exact originating window's device/render-pass identity, including across resize. Matching descriptions do not allow cross-window pipeline sharing. Raw pipelines opt into immutable depth comparison/writes; high-level 2D always disables them. Submission waits for the acquired image's previous depth-use fence before reuse, without a device-wide wait.
 - 2D rendering is available.
 - 3D public types exist, but 3D rendering is still scaffolded.
-- Internal backend details stay out of the facade unless they are deliberate public API.
+- Internal backend details stay private unless they are deliberate public API.
 
 ## Public API Maturity
 
-No public release exists yet. Public APIs may change until the first `0.1.0` release establishes
+`vmnl-graphics` has no public release yet. Public APIs may change until the first `0.1.0` release establishes
 the initial compatibility baseline. After that release, the compatibility and deprecation policy
 in [`deployment.md`](deployment.md) applies.
 
@@ -181,16 +156,15 @@ Rustdoc defines the contract of a public item. This table only describes the cur
 - A mandatory editor, physics engine, scripting runtime, UI framework, or full asset pipeline.
 - A public ECS maintained solely as a test harness.
 
-A minimal asset path may be added when required by a supported graphics, audio, scene, or reference
-application workflow. Broader engine facilities require a concrete use case and remain optional.
+A minimal asset path may be added when required by a supported graphics or reference application
+workflow. Broader engine facilities require a concrete use case and remain optional.
 
 ## Development Order
 
-1. Stabilize windowing, input, raw graphics, and 2D rendering for `0.1.0`, together with the audio
-   acceptance contract owned by the audio maintainers.
+1. Stabilize windowing, input, raw graphics, and 2D rendering for the `0.1.0` graphics baseline.
 2. Add textures for `0.2.0` without breaking the published `0.1.0` contracts.
-3. Develop text, batching, and networking in parallel, while keeping their crates independent.
-4. Add optional scene facilities and operational 3D rendering from existing public primitives.
+3. Develop text and batching from the public graphics primitives.
+4. Add optional graphics composition helpers and operational 3D from existing public primitives.
 5. Complete the stable Rust surface, C ABI, C++ wrapper, platform qualification, and reference
    applications required for `1.0.0`.
 
