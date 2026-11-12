@@ -1,5 +1,9 @@
 # Cross-platform keyboard and mouse input test matrix
 
+Results recorded against the GLFW Git fork remain historical evidence for that source.
+Qualification of crates.io `glfw 0.63.0` starts separately; the Win32/Cocoa consecutive-run
+count restarts.
+
 Tracks issue [#91](https://github.com/VMNL/vmnl-graphics/issues/91) at baseline `4caa319`.
 The matrix records checked-in assertions separately from test execution and from evidence
 through a native GLFW backend or the public VMNL path. No test result is inferred from source

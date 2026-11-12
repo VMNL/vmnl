@@ -68,23 +68,14 @@ deprecations; internal refactors, tests, and documentation-only maintenance are 
 
 ## Current publication blockers
 
-`vmnl-graphics` temporarily depends on `https://github.com/VMNL/glfw-rs` at an exact Git revision. This fork
-makes GLFW 3.4 error conversion total and prevents unknown or newly introduced error codes from
-being converted with `transmute`.
-
-`vmnl-graphics` must not be published to crates.io while this Git dependency remains. Before the first
-publication:
-
-1. merge the correction upstream and wait for an official `glfw` release containing it;
-2. replace the Git dependency with that crates.io version;
-3. regenerate and review the GLFW portability audit;
-4. run the complete validation sequence;
-5. run `cargo publish --dry-run` for publishable crates in dependency order.
+The workspace now uses crates.io `glfw 0.63.0`, which includes the upstream fix for total error
+conversion. Platform qualification must be assessed for this dependency source and version;
+historical fork results do not qualify it.
 
 The graphics crate also depends on `vmnl-macros` through a local path without a version, while
 the macros crate has `publish = false`. A registry-compatible distribution for these required
-macros must be agreed and validated before publishing graphics. Removing the old facade does
-not resolve this dependency.
+macros must be agreed and validated before publishing graphics. Run the required publication
+dry-runs in dependency order after the registry-compatible distribution is prepared.
 
 A successful GitHub CI run does not remove these blockers and does not prove that the crates.io
 dependency graph is publishable.

@@ -109,9 +109,11 @@ def validate_inventory(data: dict[str, Any]) -> list[str]:
     audit = data.get("audit")
     if not isinstance(audit, dict):
         return ["missing [audit] table"]
-    for field in ("glfw", "glfw_sys", "glfw_c", "fork_url", "fork_rev"):
+    for field in ("glfw", "glfw_sys", "glfw_c", "registry"):
         if not audit.get(field):
             errors.append(f"audit.{field} is required")
+    if audit.get("registry") != "registry+https://github.com/rust-lang/crates.io-index":
+        errors.append("audit.registry must identify crates.io")
 
     functions = data.get("function")
     if not isinstance(functions, list) or not functions:
@@ -187,27 +189,33 @@ def cargo_metadata(root: Path = ROOT) -> dict[str, Any]:
     return json.loads(completed.stdout)
 
 
-def validate_dependency_audit(
-    data: dict[str, Any], root: Path = ROOT, *, require_fork: bool = True
-) -> list[str]:
+def validate_dependency_audit(data: dict[str, Any], root: Path = ROOT) -> list[str]:
     errors: list[str] = []
     audit = data["audit"]
-    manifest = (root / "Cargo.toml").read_text(encoding="utf-8")
-    dependency = re.search(r"(?m)^glfw\s*=\s*\{([^\n]+)\}", manifest)
-    if dependency is None:
+    with (root / "Cargo.toml").open("rb") as manifest:
+        dependency = tomllib.load(manifest).get("workspace", {}).get("dependencies", {}).get("glfw")
+    if not isinstance(dependency, dict):
         return ["workspace glfw dependency is missing"]
-    declaration = dependency.group(1)
-    expected_url = f'git = "{audit["fork_url"]}"'
-    expected_rev = f'rev = "{audit["fork_rev"]}"'
-    if require_fork and (expected_url not in declaration or expected_rev not in declaration):
-        errors.append("workspace glfw dependency does not match the audited fork URL and revision")
-    if '"src-build"' not in declaration or '"prebuilt-libs"' in declaration:
+    if any(key in dependency for key in ("git", "path", "registry", "registry-index")):
+        errors.append("workspace glfw dependency must use the default registry")
+    if dependency.get("version") != f"={audit['glfw']}":
+        errors.append("workspace glfw version must exactly match the audited version")
+    features = set(dependency.get("features", []))
+    required = {"src-build", "vulkan", "wayland", "x11", "raw-window-handle-v0-6"}
+    if (
+        not required.issubset(features)
+        or "prebuilt-libs" in features
+        or dependency.get("default-features") is not False
+    ):
         errors.append("workspace glfw dependency must force the audited bundled C sources")
 
     try:
         metadata = cargo_metadata(root)
     except RuntimeError as error:
         return errors + [str(error)]
+    for name in ("glfw", "glfw-sys"):
+        if sum(package["name"] == name for package in metadata["packages"]) != 1:
+            errors.append(f"missing or multiple resolved {name} packages")
     packages = {package["name"]: package for package in metadata["packages"]}
     versions = {name: package["version"] for name, package in packages.items()}
     if versions.get("glfw") != audit["glfw"]:
@@ -216,11 +224,9 @@ def validate_dependency_audit(
         errors.append(
             f"resolved glfw-sys version is {versions.get('glfw-sys')!r}, expected {audit['glfw_sys']}"
         )
-    glfw_source = packages.get("glfw", {}).get("source") or ""
-    if require_fork and (
-        audit["fork_url"] not in glfw_source or audit["fork_rev"] not in glfw_source
-    ):
-        errors.append("resolved glfw source does not match the audited fork revision")
+    for name in ("glfw", "glfw-sys"):
+        if packages.get(name, {}).get("source") != audit["registry"]:
+            errors.append(f"resolved {name} source does not match the audited registry")
 
     glfw_sys = packages.get("glfw-sys")
     if glfw_sys is not None:
@@ -286,7 +292,7 @@ def render_inventory(data: dict[str, Any]) -> str:
         "# GLFW platform inventory",
         "",
         f"Audited surface: `glfw {audit['glfw']}`, `glfw-sys {audit['glfw_sys']}`, "
-        f"GLFW C `{audit['glfw_c']}`, fork `{audit['fork_rev']}`.",
+        f"GLFW C `{audit['glfw_c']}`, registry `{audit['registry']}`.",
         "",
         "A status is scoped to the named backend and stated conditions. `unverified` is not a "
         "compatibility guarantee.",
@@ -386,17 +392,10 @@ def stale_outputs(data: dict[str, Any]) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=("check", "update"))
-    parser.add_argument(
-        "--skip-dependency-audit",
-        action="store_true",
-        help="development-only escape hatch while preparing an unpublished fork commit",
-    )
     arguments = parser.parse_args()
     data = load_inventory()
     errors = validate_inventory(data) + validate_source_coverage(data)
-    errors.extend(
-        validate_dependency_audit(data, require_fork=not arguments.skip_dependency_audit)
-    )
+    errors.extend(validate_dependency_audit(data))
     if errors:
         for error in errors:
             print(f"error: {error}", file=sys.stderr)

@@ -9,6 +9,10 @@
 - Mobile and Web are outside the VMNL scope.
 - Platform support applies only to the domains and backends explicitly exercised on that platform.
 
+The change from the GLFW Git fork to crates.io `glfw 0.63.0` starts a new qualification baseline.
+The results below identify earlier revisions and remain historical evidence for those revisions.
+They do not qualify the registry dependency. The Win32/Cocoa consecutive-run count restarts for it.
+
 The stage-3 schema-2 input expansion passed every eligible native case in
 [CI run #38206068512](https://github.com/VMNL/vmnl-graphics/actions/runs/38206068512) at `32f8b3e`:
 
