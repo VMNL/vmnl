@@ -103,7 +103,7 @@ VMNL exposes a control ladder:
 
 Textures, text, batching, an operational 3D backend, and scene helpers are planned rather than
 current capabilities. The canonical direction and boundaries are documented in
-[Architecture](docs/architecture.md).
+[Architecture](https://github.com/VMNL/vmnl-graphics/blob/main/docs/architecture.md).
 
 ---
 
@@ -158,7 +158,7 @@ vmnl-graphics = { path = "../vmnl-graphics/crates/vmnl_graphics" }
 ```
 
 Import types with `use vmnl_graphics::{Context, Window};`. See
-[Deployment](docs/deployment.md#current-publication-blockers) for the unresolved Cargo publication graph.
+[Deployment](https://github.com/VMNL/vmnl-graphics/blob/main/docs/deployment.md#current-publication-blockers) for the unresolved Cargo publication graph.
 
 ### Requirements
 
@@ -181,12 +181,12 @@ just build-workspace
 
 ## Technical Documentation
 
-Technical documentation starts at [docs/README.md](docs/README.md).
+Technical documentation starts at [docs/README.md](https://github.com/VMNL/vmnl-graphics/blob/main/docs/README.md).
 
-- [Getting Started](docs/getting_started.md)
-- [Coding Instructions](docs/INSTRUCTIONS.md)
-- [Build and platform support](docs/build.md)
-- [Testing](docs/testing.md)
+- [Getting Started](https://github.com/VMNL/vmnl-graphics/blob/main/docs/getting_started.md)
+- [Coding Instructions](https://github.com/VMNL/vmnl-graphics/blob/main/docs/INSTRUCTIONS.md)
+- [Build and platform support](https://github.com/VMNL/vmnl-graphics/blob/main/docs/build.md)
+- [Testing](https://github.com/VMNL/vmnl-graphics/blob/main/docs/testing.md)
 
 ---
 
@@ -200,7 +200,7 @@ Technical documentation starts at [docs/README.md](docs/README.md).
    C++ wrapper, and demonstrated game and engine rendering workflows.
 
 VMNL preserves published `0.x` Rust contracts after `0.1.0`; deprecated APIs remain until `1.0.0`.
-See [Deployment](docs/deployment.md) for the exact compatibility, release, and distribution policy.
+See [Deployment](https://github.com/VMNL/vmnl-graphics/blob/main/docs/deployment.md) for the exact compatibility, release, and distribution policy.
 
 ---
 

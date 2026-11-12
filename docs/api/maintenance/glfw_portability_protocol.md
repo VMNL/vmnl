@@ -29,10 +29,14 @@ discovery
 
 ## Dependency audit
 
-Any change to `glfw`, `glfw-sys`, the bundled GLFW C version, the fork URL, or its revision requires
+Any change to `glfw`, `glfw-sys`, their source, or the bundled GLFW C version requires
 a complete re-audit. Update the `[audit]` table only after comparing upstream release notes, error
 codes, backend remarks, and bundled header constants. The checker rejects a manifest/inventory
 mismatch.
+
+The workspace pins the audited `glfw` release exactly. The lockfile pins `glfw-sys` for repository
+validation, but client applications resolve their own dependency graph and may select another
+compatible `glfw-sys` version; that version needs separate qualification.
 
 VMNL intentionally enables `glfw/src-build`. Allowing `pkg-config` to substitute a distribution
 GLFW would make the audited C implementation depend on the host and invalidate backend evidence.
@@ -43,7 +47,7 @@ GLFW would make the audited C implementation depend on the host and invalidate b
 - Weston/Pixman proves only the recorded Wayland compositor environment.
 - Xvfb/Openbox proves only the recorded X11 server and EWMH window-manager environment.
 - Win32 and Cocoa remain experimental until ten consecutive successful runs use the same probe
-  schema, GLFW revision, and runner image. Any change resets the count.
+  schema, GLFW dependency source/version, and runner image. Any change resets the count.
 - A backend that did not execute must be reported as failed or unqualified, never as passed.
 
 GPU and Vulkan surface behavior stays in `tests/gpu`; `tests/platform` always uses

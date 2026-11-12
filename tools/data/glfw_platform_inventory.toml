@@ -2,11 +2,10 @@
 # SPDX-License-Identifier: MIT
 
 [audit]
-glfw = "0.62.0"
+glfw = "0.63.0"
 glfw_sys = "8.0.0"
 glfw_c = "3.4.0"
-fork_url = "https://github.com/VMNL/glfw-rs"
-fork_rev = "eee570b6f0881d49a678ebe8ec32b50c3dcea4de"
+registry = "registry+https://github.com/rust-lang/crates.io-index"
 
 # Every entry records at least one source-scoped backend conclusion and either a test identifier or
 # an explicit review justification. `unverified` means that VMNL makes no portability guarantee.

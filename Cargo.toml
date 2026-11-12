@@ -26,13 +26,13 @@ resolver = "2"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-rust-version = "1.87"
+rust-version = "1.95"
 repository = "https://github.com/VMNL/vmnl-graphics"
 homepage = "https://github.com/VMNL/vmnl-graphics"
 documentation = "https://docs.rs/vmnl-graphics"
 
 [workspace.dependencies]
-glfw = { version = "0.62.0", git = "https://github.com/VMNL/glfw-rs", rev = "eee570b6f0881d49a678ebe8ec32b50c3dcea4de", default-features = false, features = ["raw-window-handle-v0-6", "src-build", "vulkan", "wayland", "x11"] }
+glfw = { version = "=0.63.0", default-features = false, features = ["raw-window-handle-v0-6", "src-build", "vulkan", "wayland", "x11"] }
 
 [profile.dev]
 opt-level = 3

@@ -9,6 +9,9 @@ publications.
 a published compatibility promise. Public contracts may change until the first `0.1.0` release is
 prepared and reviewed.
 
+The minimum supported Rust version is 1.95. Changes to this minimum are documented and validated
+before release; no fixed schedule for increasing it is promised.
+
 The first public `0.1.0` starts a compatibility commitment stronger than Cargo's default treatment
 of pre-1.0 versions:
 
@@ -65,23 +68,15 @@ deprecations; internal refactors, tests, and documentation-only maintenance are 
 
 ## Current publication blockers
 
-`vmnl-graphics` temporarily depends on `https://github.com/VMNL/glfw-rs` at an exact Git revision. This fork
-makes GLFW 3.4 error conversion total and prevents unknown or newly introduced error codes from
-being converted with `transmute`.
+The workspace now uses crates.io `glfw 0.63.0`, which includes the upstream fix for total error
+conversion. Platform qualification must be assessed for this dependency source and version;
+historical fork results do not qualify it.
 
-`vmnl-graphics` must not be published to crates.io while this Git dependency remains. Before the first
-publication:
-
-1. merge the correction upstream and wait for an official `glfw` release containing it;
-2. replace the Git dependency with that crates.io version;
-3. regenerate and review the GLFW portability audit;
-4. run the complete validation sequence;
-5. run `cargo publish --dry-run` for publishable crates in dependency order.
-
-The graphics crate also depends on `vmnl-macros` through a local path without a version, while
-the macros crate has `publish = false`. A registry-compatible distribution for these required
-macros must be agreed and validated before publishing graphics. Removing the old facade does
-not resolve this dependency.
+The graphics crate depends on the internal `vmnl-macros` package. Clients depend only on
+`vmnl-graphics`; Cargo resolves the macros package as a dependency. The graphics manifest pins the
+matching macros version exactly because the derives generate code against the graphics crate.
+Before publishing graphics, publish the matching macros package and verify the registry distribution
+and required dry-runs in dependency order.
 
 A successful GitHub CI run does not remove these blockers and does not prove that the crates.io
 dependency graph is publishable.
@@ -91,3 +86,8 @@ dependency graph is publishable.
 After all blockers are removed, the release operator updates version metadata and release notes,
 runs the required dry-runs, creates and pushes the tag, creates the GitHub release, and publishes
 each crate manually. Credentials remain outside the repository.
+
+Use `cargo package --locked -p vmnl-macros -p vmnl-graphics` to verify both archives together.
+Inspect their normalized manifests, license files, and packaged resources before release. Publish
+the matching macros version first; verify graphics against the actual registry after it becomes
+available. Packaging and dry-runs do not establish native platform qualification.

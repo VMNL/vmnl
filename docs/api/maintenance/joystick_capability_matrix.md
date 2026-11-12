@@ -1,5 +1,8 @@
 # GLFW joystick and gamepad capability matrix
 
+Native results recorded against the GLFW Git fork remain historical evidence for that source.
+Qualification of crates.io `glfw 0.63.0` requires new executions.
+
 This matrix tracks issue [#94](https://github.com/VMNL/vmnl-graphics/issues/94) against the bundled GLFW
 3.4 joystick/gamepad surface. It complements the generated
 [GLFW platform inventory](glfw_platform_inventory.md): that inventory owns backend-specific

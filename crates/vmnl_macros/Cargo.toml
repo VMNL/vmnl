@@ -7,8 +7,10 @@ rust-version = { workspace = true }
 repository = { workspace = true }
 homepage = { workspace = true }
 documentation = "https://docs.rs/vmnl-macros"
-description = "Proc macros for VMNL."
-publish = false
+description = "Internal procedural macros for VMNL Graphics."
+readme = "README.md"
+keywords = ["graphics", "vulkan", "proc-macro"]
+categories = ["graphics"]
 
 [lib]
 proc-macro = true
