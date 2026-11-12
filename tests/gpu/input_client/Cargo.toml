@@ -10,4 +10,4 @@ publish = false
 default-run = "vmnl-input-client"
 
 [dependencies]
-vmnl-graphics = { path = "../../../crates/vmnl_graphics" }
+vmnl_graphics = { path = "../../../crates/vmnl_graphics" }

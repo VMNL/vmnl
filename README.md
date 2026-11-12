@@ -50,7 +50,7 @@ A Rust graphics library for games and engines, from useful defaults to explicit 
 ## Overview
 
 **VMNL Graphics** provides Vulkan rendering, windowing, events, input, and GPU resources for
-games, real-time applications, and engines. Applications depend directly on the `vmnl-graphics`
+games, real-time applications, and engines. Applications depend directly on the `vmnl_graphics`
 package and import `vmnl_graphics`. The procedural macros used by its raw API are provided through
 the same public crate.
 
@@ -111,7 +111,7 @@ current capabilities. The canonical direction and boundaries are documented in
 
 ## Status
 
-This documentation describes `vmnl-graphics 0.1.0`. Versioned public contracts follow the
+This documentation describes `vmnl_graphics 0.1.0`. Versioned public contracts follow the
 [compatibility policy](https://github.com/VMNL/vmnl-graphics/blob/main/docs/deployment.md#version-and-compatibility-policy);
 backend interoperability explicitly marked unstable is excluded.
 
@@ -154,17 +154,17 @@ backend interoperability explicitly marked unstable is excluded.
 
 ## Installation
 
-The current version is `0.1.0`. Its crates.io publication is pending; use a checkout from a
-neighboring application until the package is available on the registry:
+The current version is `0.1.0`. Publication under the package name `vmnl_graphics` is pending;
+use a checkout from a neighboring application until that package name is available on the registry:
 
 ```toml
 [dependencies]
-vmnl-graphics = { path = "../vmnl-graphics/crates/vmnl_graphics" }
+vmnl_graphics = { path = "../vmnl-graphics/crates/vmnl_graphics" }
 ```
 
 Import types with `use vmnl_graphics::{Context, Window};`. See
 [Deployment](https://github.com/VMNL/vmnl-graphics/blob/main/docs/deployment.md#publication-status-and-prerequisites)
-for registry availability and the manual publication procedure. Cargo resolves `vmnl-macros`
+for registry availability and the manual publication procedure. Cargo resolves `vmnl_macros`
 transitively; clients do not declare it directly.
 
 ### Requirements

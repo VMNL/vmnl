@@ -1,6 +1,6 @@
 # Feature status
 
-Capabilities of `vmnl-graphics 0.1.0`. Versioning does not qualify a native platform or complete a scaffolded feature.
+Capabilities of `vmnl_graphics 0.1.0`. Versioning does not qualify a native platform or complete a scaffolded feature.
 
 | Capability | Status | Evidence boundary |
 |---|---|---|

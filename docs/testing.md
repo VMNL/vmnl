@@ -1050,7 +1050,7 @@ just test-gpu
 ## Standalone graphics consumers
 
 `just test-consumer` builds and runs two temporary clients outside this workspace. Each declares
-only package `vmnl-graphics`: one uses the usual `vmnl_graphics` import and the other renames the
+only package `vmnl_graphics`: one uses the usual `vmnl_graphics` import and the other renames the
 dependency to `graphics_backend`. Both exercise the public `Vertex`, `Pod`, and `Zeroable` derives,
 raw trait bounds, and device-free public values. They do not initialize GLFW, Vulkan, or a window.
 

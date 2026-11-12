@@ -467,7 +467,7 @@ _docs-api-check:
     [[ $(cargo public-api --version) == *'0.52.0'* ]]
     [[ $(lychee --version) == *'0.24.2'* ]]
     rustc +nightly-2026-03-12 --version >/dev/null
-    cargo build -p vmnl-graphics
+    cargo build -p vmnl_graphics
     python3 -m unittest discover -s tools/tests
     api_lib_dir="$PWD/target/api-book-libs"
     python3 tools/api_book_libraries.py

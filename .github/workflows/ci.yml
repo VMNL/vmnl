@@ -396,7 +396,7 @@ jobs:
       - name: Run doctests
         run: cargo +1.95.0 test --workspace --all-features --doc --locked
       - name: Build public graphics crate
-        run: cargo +1.95.0 build -p vmnl-graphics --locked
+        run: cargo +1.95.0 build -p vmnl_graphics --locked
       - name: Check API documentation
         env:
           RUSTUP_TOOLCHAIN: 1.95.0

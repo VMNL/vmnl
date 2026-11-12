@@ -10,7 +10,7 @@ from pathlib import Path
 def stage_libraries(target: Path) -> Path:
     library = target / "debug/libvmnl_graphics.rlib"
     if not library.is_file():
-        raise RuntimeError("missing current graphics library; build vmnl-graphics first")
+        raise RuntimeError("missing current graphics library; build vmnl_graphics first")
     directory = target / "api-book-libs"
     if directory.is_symlink():
         raise RuntimeError("API-book library directory must not be a symlink")

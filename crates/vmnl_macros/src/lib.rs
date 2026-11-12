@@ -200,7 +200,7 @@ fn vertex_field_format(field: &syn::Field, vulkano: &TokenStream2) -> SynResult<
 }
 
 fn graphics_crate_path() -> SynResult<TokenStream2> {
-    match crate_name("vmnl-graphics") {
+    match crate_name("vmnl_graphics") {
         Ok(FoundCrate::Itself) => Ok(quote!(crate)),
         Ok(FoundCrate::Name(name)) => {
             let ident = Ident::new(&name, Span::call_site());

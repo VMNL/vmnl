@@ -4,7 +4,7 @@
 
 These rules apply repository-wide. Read any closer `AGENTS.md` before editing within its scope.
 
-For every graphics task affecting `vmnl-graphics`, related macros, Vulkan, windowing, input, rendering, GPU resources, graphics tests, examples, documentation, or tooling, use [`$develop-vmnl-graphics`](.agents/skills/develop-vmnl-graphics/SKILL.md) and follow only the references it routes. Do not apply graphics-specific requirements to unrelated subsystems.
+For every graphics task affecting `vmnl_graphics`, related macros, Vulkan, windowing, input, rendering, GPU resources, graphics tests, examples, documentation, or tooling, use [`$develop-vmnl-graphics`](.agents/skills/develop-vmnl-graphics/SKILL.md) and follow only the references it routes. Do not apply graphics-specific requirements to unrelated subsystems.
 
 ## Establish the Contract
 
