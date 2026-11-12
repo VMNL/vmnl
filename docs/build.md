@@ -131,7 +131,7 @@ Decision:
 The public API book uses these exact tools:
 
 - `just 1.57.0` for workflow orchestration;
-- precompiled `mdbook 0.5.4` (keeps VMNL source validation on Rust 1.87);
+- precompiled `mdbook 0.5.4` (keeps VMNL source validation on Rust 1.95);
 - `cargo-public-api 0.52.0` plus `nightly-2026-03-12`;
 - `lychee 0.24.2`.
 
@@ -146,7 +146,7 @@ extraction omits blanket implementations only.
 The earlier `nightly-2025-08-02` candidate emits rustdoc JSON format 55 without
 `external_crates.*.path`; the currently published `cargo-public-api 0.52.0` parser expects that
 field and fails before producing an inventory. The pinned 2026-03-12 nightly emits the compatible
-format 57 while stable VMNL compilation remains on Rust 1.87.
+format 57 while stable VMNL compilation remains on Rust 1.95.
 
 `just docs-api-check` does not change tracked files, but may populate `target/api-tools`.
 Snippet libraries are staged under `target/api-book-libs` with only the current

@@ -9,6 +9,9 @@ publications.
 a published compatibility promise. Public contracts may change until the first `0.1.0` release is
 prepared and reviewed.
 
+The minimum supported Rust version is 1.95. Changes to this minimum are documented and validated
+before release; no fixed schedule for increasing it is promised.
+
 The first public `0.1.0` starts a compatibility commitment stronger than Cargo's default treatment
 of pre-1.0 versions:
 

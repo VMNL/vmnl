@@ -27,8 +27,12 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
         with:
-          toolchain: 1.87.0
+          toolchain: 1.95.0
           components: rustfmt, clippy
+      - name: Verify compiler
+        run: |
+          rustc --version | grep '^rustc 1\.95\.0 '
+          cargo --version
       - name: Check formatting
         run: cargo fmt --all --check
       - name: Restore Cargo cache
@@ -51,9 +55,9 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 
   validation:
-    name: "Validation: ${{ matrix.name }}"
+    name: "Validation: ${{ matrix.platform.name }} / ${{ matrix.toolchain }}"
     needs: quality
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.platform.runner }}
     timeout-minutes: 45
     env:
       VMNL_CI_ARTIFACT_DIR: ${{ github.workspace }}/target/joystick-artifacts
@@ -61,7 +65,8 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        include:
+        toolchain: ["1.95.0", stable]
+        platform:
           - name: Linux
             runner: ubuntu-24.04
             backend: ""
@@ -77,7 +82,12 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
         with:
-          toolchain: 1.87.0
+          toolchain: ${{ matrix.toolchain }}
+      - name: Verify compiler
+        env:
+          VMNL_CI_TOOLCHAIN: ${{ matrix.toolchain }}
+        run: >-
+          python3 -c "import os, subprocess; selected = subprocess.check_output(['rustc', '--version'], text=True).strip(); expected = os.environ['VMNL_CI_TOOLCHAIN']; stable = subprocess.check_output(['rustup', 'run', 'stable', 'rustc', '--version'], text=True).strip() if expected == 'stable' else None; print(selected, flush=True); assert selected == stable if stable else selected.startswith('rustc ' + expected + ' '); print(subprocess.check_output(['cargo', '--version'], text=True).strip())"
       - name: Restore Cargo cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -299,7 +309,7 @@ jobs:
         if: always() && runner.os == 'Linux'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
         with:
-          name: joystick-linux-${{ github.run_attempt }}
+          name: joystick-linux-${{ matrix.toolchain }}-${{ github.run_attempt }}
           path: target/joystick-artifacts/
           if-no-files-found: error
       - name: Run native platform probes experimentally
@@ -307,7 +317,7 @@ jobs:
         continue-on-error: true
         env:
           VMNL_PLATFORM_ARTIFACT_DIR: ${{ github.workspace }}/target/platform-artifacts
-          VMNL_PLATFORM_TEST_BACKEND: ${{ matrix.backend }}
+          VMNL_PLATFORM_TEST_BACKEND: ${{ matrix.platform.backend }}
         run: >-
           cargo test -p vmnl-platform-tests --locked
           --test backend_contract selected_backend_contract
@@ -316,7 +326,7 @@ jobs:
         if: always() && runner.os == 'Linux'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
         with:
-          name: platform-linux-${{ github.run_attempt }}
+          name: platform-linux-${{ matrix.toolchain }}-${{ github.run_attempt }}
           path: |
             target/platform-artifacts/*.jsonl
             target/wayland-xvfb.log
@@ -330,7 +340,7 @@ jobs:
         if: always() && runner.os != 'Linux'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
         with:
-          name: platform-${{ matrix.backend }}-${{ github.run_attempt }}
+          name: platform-${{ matrix.platform.backend }}-${{ matrix.toolchain }}-${{ github.run_attempt }}
           path: target/platform-artifacts/*.jsonl
           if-no-files-found: warn
 
@@ -345,11 +355,15 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
         with:
-          toolchain: 1.87.0
+          toolchain: 1.95.0
       - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
         with:
           toolchain: nightly-2026-03-12
           profile: minimal
+      - name: Verify documentation toolchains
+        run: |
+          rustc +1.95.0 --version | grep '^rustc 1\.95\.0 '
+          rustc +nightly-2026-03-12 --version
       - name: Restore Cargo cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -378,12 +392,12 @@ jobs:
       - name: Build Rustdoc
         env:
           RUSTDOCFLAGS: "-D warnings"
-        run: cargo +1.87.0 doc --workspace --no-deps --locked
+        run: cargo +1.95.0 doc --workspace --no-deps --locked
       - name: Run doctests
-        run: cargo +1.87.0 test --workspace --all-features --doc --locked
+        run: cargo +1.95.0 test --workspace --all-features --doc --locked
       - name: Build public graphics crate
-        run: cargo +1.87.0 build -p vmnl-graphics --locked
+        run: cargo +1.95.0 build -p vmnl-graphics --locked
       - name: Check API documentation
         env:
-          RUSTUP_TOOLCHAIN: 1.87.0
+          RUSTUP_TOOLCHAIN: 1.95.0
         run: just _docs-api-check
