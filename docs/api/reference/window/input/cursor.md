@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::Cursor`. Status: experimental, operational with backend/theme restrictions.
+Import path: `vmnl_graphics::Cursor`. Status: 0.1.0, operational with backend/theme restrictions.
 
 ## Purpose and use cases
 

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::raw::Uniform<TData>`. Status: experimental, operational direct-write buffer.
+Import path: `vmnl_graphics::raw::Uniform<TData>`. Status: 0.1.0, operational direct-write buffer.
 
 ## Purpose and use cases
 

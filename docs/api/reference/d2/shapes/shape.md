@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::d2::Shape`. Status: experimental, operational GPU resource.
+Import path: `vmnl_graphics::d2::Shape`. Status: 0.1.0, operational GPU resource.
 
 ## Purpose and use cases
 

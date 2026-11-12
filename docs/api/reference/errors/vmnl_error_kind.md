@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::VMNLErrorKind`. Status: experimental and `#[non_exhaustive]`.
+Import path: `vmnl_graphics::VMNLErrorKind`. Status: 0.1.0 and `#[non_exhaustive]`.
 
 ## Purpose and use cases
 

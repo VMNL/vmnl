@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::MouseState`. Status: experimental, operational snapshot.
+Import path: `vmnl_graphics::MouseState`. Status: 0.1.0, operational snapshot.
 
 ## Purpose and use cases
 

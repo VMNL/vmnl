@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::d2::TriangleBuilder`; created by `Shape::triangle` or `Shape::triangle_from_vertices`. Status: experimental, operational.
+Import path: `vmnl_graphics::d2::TriangleBuilder`; created by `Shape::triangle` or `Shape::triangle_from_vertices`. Status: 0.1.0, operational.
 
 ## Purpose and use cases
 

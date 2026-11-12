@@ -4,7 +4,7 @@
 
 Import paths: `vmnl_graphics::d2::PolygonBuilder` and `vmnl_graphics::d2::PolygonBuilder`.
 Created by `Shape::polygon(points)` or `Shape::polygon_from_vertices(vertices)`.
-Status: experimental, operational.
+Status: 0.1.0, operational.
 
 ## Purpose and use cases
 

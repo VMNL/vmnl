@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import paths: `vmnl_graphics::ShaderSource`, `vmnl_graphics::common::ShaderSource`, and `vmnl_graphics::raw::ShaderSource`. Status: experimental.
+Import paths: `vmnl_graphics::ShaderSource`, `vmnl_graphics::common::ShaderSource`, and `vmnl_graphics::raw::ShaderSource`. Status: 0.1.0.
 
 ## Purpose and use cases
 

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::common::Rgba`. Status: experimental, operational value type.
+Import path: `vmnl_graphics::common::Rgba`. Status: 0.1.0, operational value type.
 
 ## Purpose and use cases
 

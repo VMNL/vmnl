@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::d2::Vector2f`. Status: experimental value type.
+Import path: `vmnl_graphics::d2::Vector2f`. Status: 0.1.0 value type.
 
 ## Purpose and use cases
 

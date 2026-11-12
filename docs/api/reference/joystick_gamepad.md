@@ -4,7 +4,7 @@
 
 Import paths: `vmnl_graphics::{JoystickId, JoystickSample, JoystickButtonState, JoystickHatState,
 GamepadButton, GamepadAxis, GamepadState, JoystickState, JoystickStatus, StickConfig,
-StickAngleConvention, StickState}`. Status: experimental input API.
+StickAngleConvention, StickState}`. Status: 0.1.0 input API.
 
 ## Purpose and use cases
 

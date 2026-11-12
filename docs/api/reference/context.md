@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::Context`. Status: experimental, operational Vulkan context.
+Import path: `vmnl_graphics::Context`. Status: 0.1.0, operational Vulkan context.
 
 ## Purpose and use cases
 

@@ -1,16 +1,18 @@
 // SPDX-FileCopyrightText: 2026 Hugo Duda
 // SPDX-License-Identifier: MIT
 
-//! VMNL Graphics: Vulkan rendering, windowing, input, and GPU resources.
+//! VMNL Graphics 0.1.0: Vulkan rendering, windowing, input, and GPU resources.
 //!
 //! Depend directly on the `vmnl-graphics` package and import `vmnl_graphics`.
 //! The root exports context, windowing, events, input, monitoring, rendering,
 //! and error types; [`common`], [`d2`], [`d3`], and [`raw`] group the remaining
 //! public surface. Procedural macros are re-exported through [`raw`].
 //!
-//! The API is experimental. The 2D and raw rendering paths are operational
+//! This is the initial graphics API baseline. The 2D and raw rendering paths are operational
 //! within their documented constraints. The 3D types are scaffolding:
 //! submitting a frame containing a 3D pass returns an explicit error.
+//! The [compatibility policy](https://github.com/VMNL/vmnl-graphics/blob/main/docs/deployment.md)
+//! covers published contracts throughout 0.x; explicitly unstable backend interoperability is excluded.
 //!
 //! Cross-cutting concepts, workflows, status, and coverage are maintained in
 //! the [public API book](https://github.com/VMNL/vmnl-graphics/tree/main/docs/api).

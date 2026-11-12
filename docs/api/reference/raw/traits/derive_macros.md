@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Macro-namespace paths: `vmnl_graphics::raw::Pod`, `vmnl_graphics::raw::Zeroable`, and `vmnl_graphics::raw::Vertex`. Status: experimental procedural macros. They are distinct from the same-named traits.
+Macro-namespace paths: `vmnl_graphics::raw::Pod`, `vmnl_graphics::raw::Zeroable`, and `vmnl_graphics::raw::Vertex`. Status: 0.1.0 procedural macros. They are distinct from the same-named traits.
 
 ## Purpose and use cases
 

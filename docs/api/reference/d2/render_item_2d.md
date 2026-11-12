@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::d2::RenderItem2D`. Status: experimental opaque backend descriptor.
+Import path: `vmnl_graphics::d2::RenderItem2D`. Status: 0.1.0 opaque backend descriptor.
 
 ## Purpose and use cases
 

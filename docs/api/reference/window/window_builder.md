@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::WindowBuilder`; normally created by `Window::builder()`. Status: experimental.
+Import path: `vmnl_graphics::WindowBuilder`; normally created by `Window::builder()`. Status: 0.1.0.
 
 ## Purpose and use cases
 

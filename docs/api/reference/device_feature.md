@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::DeviceFeature`. Status: experimental, `#[non_exhaustive]`.
+Import path: `vmnl_graphics::DeviceFeature`. Status: 0.1.0, `#[non_exhaustive]`.
 
 ## Purpose and use cases
 

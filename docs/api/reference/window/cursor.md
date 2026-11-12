@@ -4,7 +4,7 @@
 
 `vmnl_graphics::Cursor`, `vmnl_graphics::CursorBuilder`, `vmnl_graphics::StandardCursor`,
 `vmnl_graphics::StandardCursorBuilder`, methods on `vmnl_graphics::Window`, plus
-`Context::is_raw_mouse_motion_supported`. Status: experimental, operational where the active
+`Context::is_raw_mouse_motion_supported`. Status: 0.1.0, operational where the active
 backend supports the requested cursor or mode.
 
 ## Purpose and use cases

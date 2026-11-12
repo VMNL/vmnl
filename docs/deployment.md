@@ -5,14 +5,14 @@ publications.
 
 ## Version and compatibility policy
 
-`vmnl-graphics` has no public release yet. The current `0.1.0` workspace version is development metadata, not
-a published compatibility promise. Public contracts may change until the first `0.1.0` release is
-prepared and reviewed.
+The current version is `0.1.0` for both `vmnl-graphics` and its internal `vmnl-macros` dependency.
+This is the initial graphics API baseline, not a claim that every planned feature or platform is
+qualified. Registry availability and release prerequisites are tracked below.
 
 The minimum supported Rust version is 1.95. Changes to this minimum are documented and validated
 before release; no fixed schedule for increasing it is promised.
 
-The first public `0.1.0` starts a compatibility commitment stronger than Cargo's default treatment
+The `0.1.0` baseline starts a compatibility commitment stronger than Cargo's default treatment
 of pre-1.0 versions:
 
 - published Rust source APIs, documented behavior, defaults, and Cargo feature names remain
@@ -32,9 +32,13 @@ analysis even when the Rust signature is unchanged.
 
 ## Release milestones
 
-`0.1.0` requires stable window/input behavior, 2D shapes, and the minimal public raw graphics path. Its
-public API, defaults, tests, examples, and documentation must be reviewed as the initial
-compatibility baseline.
+`0.1.0` is the current window/input, 2D shapes, and minimal public raw graphics baseline.
+Its documented contracts define the initial compatibility surface. The
+[feature status](api/appendices/feature_status.md), [architecture limits](architecture.md#current-implementation-boundaries),
+and [platform qualification](platform_support.md) remain applicable; 3D rendering is scaffolded.
+Release review must cover its public API, defaults, tests, examples, and documentation, including
+the [stable contract requirements](architecture.md#stable-contract-requirements). The version
+number alone does not satisfy these release requirements.
 
 `0.2.0` adds textures without breaking the published `0.1.0` contracts. Text and batching
 development may proceed in parallel after that baseline.
@@ -66,7 +70,11 @@ change. The `0.1.0` release prepares one reviewed summary of its public contract
 capabilities. After `0.1.0`, `CHANGELOG.md` records only user-visible additions, changes, fixes, and
 deprecations; internal refactors, tests, and documentation-only maintenance are omitted.
 
-## Current publication blockers
+## Publication status and prerequisites
+
+Version `0.1.0` is the repository baseline. The `vmnl-graphics` and `vmnl-macros` packages are not
+yet available on crates.io. A repository version does not itself publish a crate, tag, or GitHub
+release; each distribution step remains manual.
 
 The workspace now uses crates.io `glfw 0.63.0`, which includes the upstream fix for total error
 conversion. Platform qualification must be assessed for this dependency source and version;
@@ -78,14 +86,16 @@ matching macros version exactly because the derives generate code against the gr
 Before publishing graphics, publish the matching macros package and verify the registry distribution
 and required dry-runs in dependency order.
 
-A successful GitHub CI run does not remove these blockers and does not prove that the crates.io
-dependency graph is publishable.
+A successful GitHub CI run does not establish registry availability or native platform
+qualification. Required archive inspections, dry-runs, and registry verification remain release
+checks even though the GLFW Git dependency has been removed.
 
 ## Manual release protocol
 
-After all blockers are removed, the release operator updates version metadata and release notes,
-runs the required dry-runs, creates and pushes the tag, creates the GitHub release, and publishes
-each crate manually. Credentials remain outside the repository.
+For `0.1.0`, the release operator verifies matching version metadata, reviews release notes and
+qualification limits, and runs the required dry-runs. Each crate is published manually, followed
+by registry verification; the tag and GitHub release identify the reviewed release commit.
+Credentials remain outside the repository.
 
 Use `cargo package --locked -p vmnl-macros -p vmnl-graphics` to verify both archives together.
 Inspect their normalized manifests, license files, and packaged resources before release. Publish

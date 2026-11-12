@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::VMNLResult<T>`. Status: experimental alias.
+Import path: `vmnl_graphics::VMNLResult<T>`. Status: 0.1.0 alias.
 
 ## Purpose and use cases
 

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::Scancode`. Status: experimental, operational keyboard-event metadata.
+Import path: `vmnl_graphics::Scancode`. Status: 0.1.0, operational keyboard-event metadata.
 
 ## Purpose and use cases
 

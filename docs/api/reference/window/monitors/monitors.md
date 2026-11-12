@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::Monitors`. Status: experimental snapshot.
+Import path: `vmnl_graphics::Monitors`. Status: 0.1.0 snapshot.
 
 ## Purpose and use cases
 

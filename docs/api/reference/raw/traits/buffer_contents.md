@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::raw::BufferContents`. Status: experimental marker trait.
+Import path: `vmnl_graphics::raw::BufferContents`. Status: 0.1.0 marker trait; Vulkano coupling remains explicitly unstable.
 
 ## Purpose and use cases
 

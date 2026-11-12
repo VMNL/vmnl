@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::Event`. Status: experimental, operational translated window event.
+Import path: `vmnl_graphics::Event`. Status: 0.1.0, operational translated window event.
 
 ## Purpose and use cases
 

@@ -19,15 +19,17 @@ A Rust graphics library for games and engines, from useful defaults to explicit 
 ![CI](https://img.shields.io/github/actions/workflow/status/VMNL/vmnl-graphics/ci.yml?style=flat-square&label=CI)
 ![License](https://img.shields.io/github/license/VMNL/vmnl-graphics?style=flat-square)
 ![Repo size](https://img.shields.io/github/repo-size/VMNL/vmnl-graphics?style=flat-square)
-![Stability](https://img.shields.io/badge/stability-experimental-orange?style=flat-square)
+![Version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)
 
 </div>
 
 ---
 
 > [!WARNING]
-> **Experimental and not yet released.** The API may change while the initial `0.1.0` contract is
-> prepared. Do not use in production.
+> **Version `0.1.0` — initial graphics API baseline.** 2D and raw rendering are available within
+> their documented limits; 3D rendering remains scaffolded. Platform qualification is incomplete;
+> see [Platform Support](https://github.com/VMNL/vmnl-graphics/blob/main/docs/platform_support.md).
+> Do not use in production.
 
 ## Table of Contents
 
@@ -109,6 +111,10 @@ current capabilities. The canonical direction and boundaries are documented in
 
 ## Status
 
+This documentation describes `vmnl-graphics 0.1.0`. Versioned public contracts follow the
+[compatibility policy](https://github.com/VMNL/vmnl-graphics/blob/main/docs/deployment.md#version-and-compatibility-policy);
+backend interoperability explicitly marked unstable is excluded.
+
 ### Graphics - available
 
 - Vulkan instance / device setup
@@ -148,9 +154,8 @@ current capabilities. The canonical direction and boundaries are documented in
 
 ## Installation
 
-`vmnl-graphics` has no public release and cannot currently be installed from crates.io. The first publication
-will establish the `0.1.0` compatibility baseline. Until then, use a development checkout and
-expect public contracts to change. From a neighboring application, use the checkout directly:
+The current version is `0.1.0`. Its crates.io publication is pending; use a checkout from a
+neighboring application until the package is available on the registry:
 
 ```toml
 [dependencies]
@@ -158,11 +163,13 @@ vmnl-graphics = { path = "../vmnl-graphics/crates/vmnl_graphics" }
 ```
 
 Import types with `use vmnl_graphics::{Context, Window};`. See
-[Deployment](https://github.com/VMNL/vmnl-graphics/blob/main/docs/deployment.md#current-publication-blockers) for the unresolved Cargo publication graph.
+[Deployment](https://github.com/VMNL/vmnl-graphics/blob/main/docs/deployment.md#publication-status-and-prerequisites)
+for registry availability and the manual publication procedure. Cargo resolves `vmnl-macros`
+transitively; clients do not declare it directly.
 
 ### Requirements
 
-- Rust (stable) + Cargo
+- Rust 1.95 or later + Cargo
 - Just
 - A Vulkan loader (`libvulkan.so`, `vulkan-1.dll`, `libvulkan.dylib`)
 - A Vulkan-compatible GPU
@@ -192,8 +199,8 @@ Technical documentation starts at [docs/README.md](https://github.com/VMNL/vmnl-
 
 ## Roadmap
 
-1. **`0.1.0`** - stable window/input, 2D shapes, minimal raw graphics, and a reviewed initial
-   graphics compatibility baseline.
+1. **`0.1.0` (current)** - window/input, 2D shapes, and minimal raw graphics form the initial
+   graphics API baseline; documented implementation and qualification limits still apply.
 2. **`0.2.0`** - textures without breaking `0.1.0`; text and batching begin in parallel.
 3. **Later `0.x`** - optional graphics composition helpers, operational 3D, and reference applications.
 4. **`1.0.0`** - complete stable graphics APIs, qualified platform support, stable C ABI, priority

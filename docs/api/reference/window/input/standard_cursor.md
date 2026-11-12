@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::StandardCursor`. Status: experimental, operational when the active system
+Import path: `vmnl_graphics::StandardCursor`. Status: 0.1.0, operational when the active system
 cursor theme provides the requested shape.
 
 ## Purpose and use cases

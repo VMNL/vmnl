@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics`. Status: experimental graphics API; all client-visible items documented by this book are re-exported here.
+Import path: `vmnl_graphics`. Status: 0.1.0 graphics API; all client-visible items documented by this book are re-exported here.
 
 ## Purpose and use cases
 

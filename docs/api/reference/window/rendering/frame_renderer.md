@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::FrameRenderer<'w, 'g>`; created by `Window::render()`. Status: experimental; 2D/raw operational, 3D scaffolded.
+Import path: `vmnl_graphics::FrameRenderer<'w, 'g>`; created by `Window::render()`. Status: 0.1.0; 2D/raw operational, 3D scaffolded.
 
 ## Purpose and use cases
 

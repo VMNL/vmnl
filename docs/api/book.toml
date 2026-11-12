@@ -1,6 +1,6 @@
 [book]
-title = "VMNL Graphics Public API"
-description = "Concepts, workflows, and complete reference for vmnl_graphics"
+title = "VMNL Graphics 0.1.0 Public API"
+description = "Concepts, workflows, and complete reference for vmnl_graphics 0.1.0"
 authors = ["VMNL contributors"]
 language = "en"
 src = "."
