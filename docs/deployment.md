@@ -72,10 +72,11 @@ The workspace now uses crates.io `glfw 0.63.0`, which includes the upstream fix 
 conversion. Platform qualification must be assessed for this dependency source and version;
 historical fork results do not qualify it.
 
-The graphics crate also depends on `vmnl-macros` through a local path without a version, while
-the macros crate has `publish = false`. A registry-compatible distribution for these required
-macros must be agreed and validated before publishing graphics. Run the required publication
-dry-runs in dependency order after the registry-compatible distribution is prepared.
+The graphics crate depends on the internal `vmnl-macros` package. Clients depend only on
+`vmnl-graphics`; Cargo resolves the macros package as a dependency. The graphics manifest pins the
+matching macros version exactly because the derives generate code against the graphics crate.
+Before publishing graphics, publish the matching macros package and verify the registry distribution
+and required dry-runs in dependency order.
 
 A successful GitHub CI run does not remove these blockers and does not prove that the crates.io
 dependency graph is publishable.
