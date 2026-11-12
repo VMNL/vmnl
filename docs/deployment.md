@@ -86,3 +86,8 @@ dependency graph is publishable.
 After all blockers are removed, the release operator updates version metadata and release notes,
 runs the required dry-runs, creates and pushes the tag, creates the GitHub release, and publishes
 each crate manually. Credentials remain outside the repository.
+
+Use `cargo package --locked -p vmnl-macros -p vmnl-graphics` to verify both archives together.
+Inspect their normalized manifests, license files, and packaged resources before release. Publish
+the matching macros version first; verify graphics against the actual registry after it becomes
+available. Packaging and dry-runs do not establish native platform qualification.
