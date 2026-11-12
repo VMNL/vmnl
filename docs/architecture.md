@@ -86,10 +86,11 @@ or Vulkano directly to use the public derives.
 
 ## Stable Contract Requirements
 
-These requirements define the release target. They are not claims that every current experimental
-path already satisfies them. In particular, automatic device/queue selection and the raw traits
-currently coupled to Vulkano must be made configurable or isolated before they enter the first
-stable compatibility baseline; their present behavior remains documented in the API book.
+These requirements define the stable architecture target, not a claim that `0.1.0` already
+satisfies every requirement. In particular, automatic device/queue selection and the raw traits
+currently coupled to Vulkano must be made configurable or isolated before they enter the stable
+compatibility baseline; their present behavior remains documented in the API book. Choosing the
+`0.1.0` version does not waive these requirements.
 
 - Applications use `vmnl-graphics` directly; private macros and backend crates are not client dependencies.
 - `vmnl_graphics` owns rendering, windowing, input, and GPU resource behavior.
@@ -118,7 +119,7 @@ stable compatibility baseline; their present behavior remains documented in the 
 - `vmnl_graphics` owns rendering, windowing, input, and GPU resource behavior.
 - `InputRuntime` and `Context` share the same GLFW owner; standalone input access does not create a
   Vulkan instance or window.
-- `raw` exposes experimental lower-level VMNL pipeline, geometry, and resource control; polygon rasterization and line width are fixed at pipeline creation and validated against enabled features and inspectable GPU limits.
+- `raw` exposes lower-level VMNL pipeline, geometry, and resource control in `0.1.0`; backend-coupled traits remain explicitly unstable. Polygon rasterization and line width are fixed at pipeline creation and validated against enabled features and inspectable GPU limits.
 - `WindowBuilder::render_target(RenderTargetConfig)` optionally allocates depth-only attachments per swapchain image, recreated on resize. Defaults remain color-only. `RenderTargetInfo` exposes actual color format, samples and depth; raw target preflight retains the exact originating window's device/render-pass identity, including across resize. Matching descriptions do not allow cross-window pipeline sharing. Raw pipelines opt into immutable depth comparison/writes; high-level 2D always disables them. Submission waits for the acquired image's previous depth-use fence before reuse, without a device-wide wait.
 - 2D rendering is available.
 - 3D public types exist, but 3D rendering is still scaffolded.
@@ -126,16 +127,16 @@ stable compatibility baseline; their present behavior remains documented in the 
 
 ## Public API Maturity
 
-`vmnl-graphics` has no public release yet. Public APIs may change until the first `0.1.0` release establishes
-the initial compatibility baseline. After that release, the compatibility and deprecation policy
-in [`deployment.md`](deployment.md) applies.
+The current version of `vmnl-graphics` is `0.1.0`. This initial API baseline follows the
+compatibility and deprecation policy in [`deployment.md`](deployment.md). Feature availability,
+backend independence, and native qualification remain separate from the version number.
 
 | Area | Maturity | Scope |
 |------|----------|-------|
 | `window` and input | Available | Window lifecycle, events, monitors, keyboard, and mouse. |
 | `d2` | Available | 2D shapes and rendering primitives. |
 | `d3` | Scaffolded | Public types exist; rendering is not implemented. |
-| `raw` | Experimental | Lower-level pipeline and geometry control. |
+| `raw` | Available within limits | Lower-level pipeline and geometry control; backend-coupled traits remain unstable. |
 
 Rustdoc defines the contract of a public item. This table only describes the current subsystem maturity.
 
@@ -161,7 +162,7 @@ workflow. Broader engine facilities require a concrete use case and remain optio
 
 ## Development Order
 
-1. Stabilize windowing, input, raw graphics, and 2D rendering for the `0.1.0` graphics baseline.
+1. Maintain the current `0.1.0` window/input, raw graphics, and 2D baseline, including its documented limits.
 2. Add textures for `0.2.0` without breaking the published `0.1.0` contracts.
 3. Develop text and batching from the public graphics primitives.
 4. Add optional graphics composition helpers and operational 3D from existing public primitives.

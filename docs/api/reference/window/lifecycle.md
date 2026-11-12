@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Methods on `vmnl_graphics::Window`. Status: experimental, operational.
+Methods on `vmnl_graphics::Window`. Status: 0.1.0, operational.
 
 ## Purpose and use cases
 

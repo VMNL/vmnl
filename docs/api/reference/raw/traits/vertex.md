@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Type-namespace path: `vmnl_graphics::raw::Vertex`. Status: experimental marker trait.
+Type-namespace path: `vmnl_graphics::raw::Vertex`. Status: 0.1.0 marker trait; Vulkano coupling remains explicitly unstable.
 
 ## Purpose and use cases
 

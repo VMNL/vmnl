@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide prepares a development checkout. To use VMNL as a dependency, see
+This guide prepares a VMNL Graphics `0.1.0` checkout. To use VMNL as a dependency, see
 [Installation](../README.md#installation).
 
 ## Prerequisites

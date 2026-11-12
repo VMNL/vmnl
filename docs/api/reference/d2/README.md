@@ -1,6 +1,6 @@
 # 2D API
 
-The experimental 2D path is operational. Builders validate CPU geometry, allocate GPU buffers from a `Context`, and produce `Shape` values submitted with `FrameRenderer::draw2d`.
+The 2D path in `0.1.0` is operational. Builders validate CPU geometry, allocate GPU buffers from a `Context`, and produce `Shape` values submitted with `FrameRenderer::draw2d`.
 
 | Item | Role |
 |---|---|

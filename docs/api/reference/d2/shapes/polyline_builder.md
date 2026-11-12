@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::d2::PolylineBuilder`; created by `Shape::polyline(points)`. Status: experimental, operational GPU resource.
+Import path: `vmnl_graphics::d2::PolylineBuilder`; created by `Shape::polyline(points)`. Status: 0.1.0, operational GPU resource.
 
 ## Purpose and use cases
 

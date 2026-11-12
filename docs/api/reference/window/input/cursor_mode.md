@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::CursorMode`. Status: experimental, operational with backend restrictions.
+Import path: `vmnl_graphics::CursorMode`. Status: 0.1.0, operational with backend restrictions.
 
 ## Purpose and use cases
 

@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::d3::Mesh`. Status: experimental GPU-resource scaffold; 3D rendering is not operational.
+Import path: `vmnl_graphics::d3::Mesh`. Status: 0.1.0 GPU-resource scaffold; 3D rendering is not operational.
 
 ## Purpose and use cases
 

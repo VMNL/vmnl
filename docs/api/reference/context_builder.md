@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::ContextBuilder`. Status: experimental.
+Import path: `vmnl_graphics::ContextBuilder`. Status: 0.1.0.
 
 ## Purpose and use cases
 

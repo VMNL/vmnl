@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Entry point: `vmnl_graphics::d2::Shape::circle(radius)`. Status: experimental, operational geometry builder.
+Entry point: `vmnl_graphics::d2::Shape::circle(radius)`. Status: 0.1.0, operational geometry builder.
 The returned type currently has no public import path: keep its type inferred. In particular,
 `vmnl_graphics::d2::CircleBuilder` is not exported, and Rustdoc does not expose a standalone builder page.
 The accessible Rustdoc entry is [`Shape::circle`](../../../../../target/doc/vmnl_graphics/d2/struct.Shape.html#method.circle).

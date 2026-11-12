@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::raw::Resources`. Status: experimental, operational for uniform buffers.
+Import path: `vmnl_graphics::raw::Resources`. Status: 0.1.0, operational for uniform buffers.
 
 ## Purpose and use cases
 

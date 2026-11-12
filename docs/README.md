@@ -1,6 +1,6 @@
 # VMNL Graphics Technical Documentation
 
-This directory is the canonical technical documentation for VMNL Graphics.
+This directory is the canonical technical documentation for VMNL Graphics `0.1.0`.
 
 Local `README.md` files are only navigation aids for their directory. Public API contracts belong in Rustdoc. Behavior must be covered by tests.
 
@@ -13,7 +13,7 @@ Local `README.md` files are only navigation aids for their directory. Public API
 - [Coding Instructions](INSTRUCTIONS.md): project coding and documentation standards.
 - [Contributing](../CONTRIBUTING.md): contribution workflow and commit convention.
 - [Deployment](deployment.md): compatibility, milestones, distribution, manual releases, and
-  current publication blockers.
+  publication status and prerequisites.
 - [Examples](examples.md): visual example rules and command conventions.
 - [Getting Started](getting_started.md): clone, build, test, and run the first visual example.
 - [Platform Support](platform_support.md): validated platforms and local environment scope.

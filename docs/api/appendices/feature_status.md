@@ -1,16 +1,18 @@
 # Feature status
 
+Capabilities of `vmnl-graphics 0.1.0`. Versioning does not qualify a native platform or complete a scaffolded feature.
+
 | Capability | Status | Evidence boundary |
 |---|---|---|
-| Context/device initialization | Operational, experimental | GPU/display runtime required for execution |
-| Native window, events, input, monitors | Operational, experimental | GLFW/display runtime required |
-| 2D predefined/indexed shapes | Operational, experimental | Unit/API checks plus GPU/examples for runtime visuals |
-| Custom 2D shaders | Operational, experimental | Shader compile and visual example |
-| Ordered 2D/raw frame composition | Operational, experimental | GPU/example behavior |
-| Raw typed pipeline/geometry | Operational, experimental | Restricted public contract |
-| Raw uniform buffers/resources | Operational, experimental | Single uniform-buffer descriptors only |
-| Render-target inspection / preflight | Operational, experimental | Actual color/depth formats and samples; strict originating-window identity; resize preserves validity |
-| Optional window depth attachments / raw depth tests | Operational, experimental | Explicit D16/D32, per-image ownership and resize; compare/write state on raw pipelines; high-level 3D remains scaffolded |
+| Context/device initialization | Operational in 0.1.0 | GPU/display runtime required for execution |
+| Native window, events, input, monitors | Operational in 0.1.0 | GLFW/display runtime required |
+| 2D predefined/indexed shapes | Operational in 0.1.0 | Unit/API checks plus GPU/examples for runtime visuals |
+| Custom 2D shaders | Operational in 0.1.0 | Shader compile and visual example |
+| Ordered 2D/raw frame composition | Operational in 0.1.0 | GPU/example behavior |
+| Raw typed pipeline/geometry | Operational in 0.1.0 | Restricted public contract |
+| Raw uniform buffers/resources | Operational in 0.1.0 | Single uniform-buffer descriptors only |
+| Render-target inspection / preflight | Operational in 0.1.0 | Actual color/depth formats and samples; strict originating-window identity; resize preserves validity |
+| Optional window depth attachments / raw depth tests | Operational in 0.1.0 | Explicit D16/D32, per-image ownership and resize; compare/write state on raw pipelines; high-level 3D remains scaffolded |
 | Raw textures/samplers/storage/descriptors arrays/push constants | Unsupported | Rejected by pipeline/resource validation |
 | `RenderMode::Batched` optimization | Not implemented | Falls back to `PerObject` |
 | 3D camera/vertex/mesh types | Scaffolded | Data/resource construction only |

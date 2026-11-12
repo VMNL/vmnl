@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::Window`. Status: experimental, operational window/render target.
+Import path: `vmnl_graphics::Window`. Status: 0.1.0, operational window/render target.
 
 ## Purpose and use cases
 

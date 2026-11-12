@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::Modifiers`. Status: experimental, operational flags.
+Import path: `vmnl_graphics::Modifiers`. Status: 0.1.0, operational flags.
 
 ## Purpose and use cases
 

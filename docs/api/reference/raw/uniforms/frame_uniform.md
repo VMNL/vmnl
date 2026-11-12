@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::raw::FrameUniform<TData>`. Status: experimental, operational frame-varying uniform buffer.
+Import path: `vmnl_graphics::raw::FrameUniform<TData>`. Status: 0.1.0, operational frame-varying uniform buffer.
 
 ## Purpose and use cases
 

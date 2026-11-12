@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Type-namespace path: `vmnl_graphics::raw::Pod`. Status: experimental marker trait.
+Type-namespace path: `vmnl_graphics::raw::Pod`. Status: 0.1.0 marker trait.
 
 ## Purpose and use cases
 

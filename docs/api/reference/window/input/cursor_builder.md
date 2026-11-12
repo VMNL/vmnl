@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::CursorBuilder`. Status: experimental, operational with native cursor support.
+Import path: `vmnl_graphics::CursorBuilder`. Status: 0.1.0, operational with native cursor support.
 
 ## Purpose and use cases
 

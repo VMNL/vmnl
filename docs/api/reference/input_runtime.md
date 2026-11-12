@@ -3,7 +3,7 @@
 ## Public path and maturity
 
 Import paths: `vmnl_graphics::InputRuntime`, `vmnl_graphics::InputRuntimeBuilder`, and `vmnl_graphics::InputRuntimeConfig`.
-Status: experimental; exposes shared GLFW lifecycle, initialization configuration, standalone
+Status: 0.1.0; exposes shared GLFW lifecycle, initialization configuration, standalone
 joystick sampling, connection notifications, gamepad mapping updates, and GLFW joystick user
 pointers.
 

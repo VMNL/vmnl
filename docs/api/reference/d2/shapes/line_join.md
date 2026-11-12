@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::d2::LineJoin`. Status: experimental.
+Import path: `vmnl_graphics::d2::LineJoin`. Status: 0.1.0.
 
 ## Purpose and use cases
 

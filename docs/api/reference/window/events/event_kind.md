@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::EventKind`. Status: experimental, operational event payload.
+Import path: `vmnl_graphics::EventKind`. Status: 0.1.0, operational event payload.
 
 ## Purpose and use cases
 

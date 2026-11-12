@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::Input`. Status: experimental, operational.
+Import path: `vmnl_graphics::Input`. Status: 0.1.0, operational.
 
 ## Purpose and use cases
 

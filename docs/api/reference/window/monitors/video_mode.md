@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::VideoMode`. Status: experimental value type.
+Import path: `vmnl_graphics::VideoMode`. Status: 0.1.0 value type.
 
 ## Purpose and use cases
 

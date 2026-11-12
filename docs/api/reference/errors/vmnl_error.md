@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::VMNLError`. Status: experimental, operational error type.
+Import path: `vmnl_graphics::VMNLError`. Status: 0.1.0, operational error type.
 
 ## Purpose and use cases
 

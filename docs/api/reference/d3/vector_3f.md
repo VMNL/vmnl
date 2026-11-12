@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::d3::Vector3f`. Status: experimental value type; 3D rendering is not operational.
+Import path: `vmnl_graphics::d3::Vector3f`. Status: 0.1.0 value type; 3D rendering is not operational.
 
 ## Purpose and use cases
 

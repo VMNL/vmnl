@@ -2,7 +2,7 @@
 
 ## Public path and maturity
 
-Import path: `vmnl_graphics::d2::Drawable2D`. Status: experimental trait, operational for VMNL-provided implementations.
+Import path: `vmnl_graphics::d2::Drawable2D`. Status: 0.1.0 trait, operational for VMNL-provided implementations.
 
 ## Purpose and use cases
 
