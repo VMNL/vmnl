@@ -1,6 +1,6 @@
 # Crate and modules
 
-Consumers depend directly on package `vmnl-graphics` and import `vmnl_graphics`. This crate owns
+Consumers depend directly on package `vmnl_graphics` and import `vmnl_graphics`. This crate owns
 the public graphics surface and its implementation; backend modules remain private. Public
 procedural macros are re-exported through `raw`, so clients need no macros dependency.
 

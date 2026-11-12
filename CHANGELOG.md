@@ -8,7 +8,7 @@ Initial release of VMNL Graphics for Vulkan rendering, windowing, and input.
 
 ### Added
 
-- Standalone `vmnl-graphics` crate, with procedural derives re-exported
+- Standalone `vmnl_graphics` crate, with procedural derives re-exported
   through its public API.
 - Native windows, events, monitors, keyboard, mouse, and cursor controls.
 - Joystick/gamepad sampling, per-window button transitions, and configurable

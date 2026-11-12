@@ -1,6 +1,6 @@
 ---
 name: develop-vmnl-graphics
-description: Develop, fix, review, document, and validate VMNL graphics work across the public vmnl-graphics API, related macros, Vulkan, windowing, input, rendering, GPU resources, tests, examples, and graphics tooling. Use for any VMNL task affecting graphics architecture, public API, GPU behavior, graphics correctness, tests, examples, or performance; do not use for unrelated audio or networking work.
+description: Develop, fix, review, document, and validate VMNL graphics work across the public vmnl_graphics API, related macros, Vulkan, windowing, input, rendering, GPU resources, tests, examples, and graphics tooling. Use for any VMNL task affecting graphics architecture, public API, GPU behavior, graphics correctness, tests, examples, or performance; do not use for unrelated audio or networking work.
 ---
 
 # Develop VMNL Graphics

@@ -1,12 +1,12 @@
 [package]
-name = "vmnl-macros"
+name = "vmnl_macros"
 version = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
 rust-version = { workspace = true }
 repository = { workspace = true }
 homepage = { workspace = true }
-documentation = "https://docs.rs/vmnl-macros"
+documentation = "https://docs.rs/vmnl_macros"
 description = "Internal procedural macros for VMNL Graphics."
 readme = "README.md"
 keywords = ["graphics", "vulkan", "proc-macro"]

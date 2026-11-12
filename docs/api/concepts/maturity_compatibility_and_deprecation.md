@@ -1,6 +1,6 @@
 # Maturity, compatibility, and deprecation
 
-The current version of `vmnl-graphics` is `0.1.0`, the initial graphics API baseline. Reference
+The current version of `vmnl_graphics` is `0.1.0`, the initial graphics API baseline. Reference
 page status labels identify this version and retain each item's operational limits.
 
 The `0.1.0` baseline follows the compatibility policy defined in

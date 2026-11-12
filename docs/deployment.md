@@ -5,7 +5,7 @@ publications.
 
 ## Version and compatibility policy
 
-The current version is `0.1.0` for both `vmnl-graphics` and its internal `vmnl-macros` dependency.
+The current version is `0.1.0` for both `vmnl_graphics` and its internal `vmnl_macros` dependency.
 This is the initial graphics API baseline, not a claim that every planned feature or platform is
 qualified. Registry availability and release prerequisites are tracked below.
 
@@ -45,7 +45,7 @@ development may proceed in parallel after that baseline.
 
 `1.0.0` requires:
 
-- a complete stable graphics API, consumed directly through `vmnl-graphics`;
+- a complete stable graphics API, consumed directly through `vmnl_graphics`;
 - a high-level path capable of supporting a small game;
 - a raw path capable of supporting a customized engine;
 - reference applications using only public VMNL APIs;
@@ -72,16 +72,22 @@ deprecations; internal refactors, tests, and documentation-only maintenance are 
 
 ## Publication status and prerequisites
 
-Version `0.1.0` is the repository baseline. The `vmnl-graphics` and `vmnl-macros` packages are not
-yet available on crates.io. A repository version does not itself publish a crate, tag, or GitHub
-release; each distribution step remains manual.
+Version `0.1.0` is the repository baseline. Publication under the canonical package names
+`vmnl_graphics` and `vmnl_macros` is pending. The GitHub repository remains `VMNL/vmnl-graphics`;
+Rust import paths remain `vmnl_graphics` and `vmnl_macros`. A repository version does not itself
+publish a crate, tag, or GitHub release; each distribution step remains manual.
+
+The earlier registry names were `vmnl-graphics` and `vmnl-macros`. Changing a manifest does not
+rename a published crate. Before publication under the underscore names, the release operator
+must check registry eligibility, name availability, and any deletion cooldown. Registry deletion
+and republication are separate manual operations; merging this change performs neither.
 
 The workspace now uses crates.io `glfw 0.63.0`, which includes the upstream fix for total error
 conversion. Platform qualification must be assessed for this dependency source and version;
 historical fork results do not qualify it.
 
-The graphics crate depends on the internal `vmnl-macros` package. Clients depend only on
-`vmnl-graphics`; Cargo resolves the macros package as a dependency. The graphics manifest pins the
+The graphics crate depends on the internal `vmnl_macros` package. Clients depend only on
+`vmnl_graphics`; Cargo resolves the macros package as a dependency. The graphics manifest pins the
 matching macros version exactly because the derives generate code against the graphics crate.
 Before publishing graphics, publish the matching macros package and verify the registry distribution
 and required dry-runs in dependency order.
@@ -97,7 +103,7 @@ qualification limits, and runs the required dry-runs. Each crate is published ma
 by registry verification; the tag and GitHub release identify the reviewed release commit.
 Credentials remain outside the repository.
 
-Use `cargo package --locked -p vmnl-macros -p vmnl-graphics` to verify both archives together.
+Use `cargo package --locked -p vmnl_macros -p vmnl_graphics` to verify both archives together.
 Inspect their normalized manifests, license files, and packaged resources before release. Publish
 the matching macros version first; verify graphics against the actual registry after it becomes
 available. Packaging and dry-runs do not establish native platform qualification.

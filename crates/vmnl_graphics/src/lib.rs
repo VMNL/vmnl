@@ -3,7 +3,7 @@
 
 //! VMNL Graphics 0.1.0: Vulkan rendering, windowing, input, and GPU resources.
 //!
-//! Depend directly on the `vmnl-graphics` package and import `vmnl_graphics`.
+//! Depend directly on the `vmnl_graphics` package and import `vmnl_graphics`.
 //! The root exports context, windowing, events, input, monitoring, rendering,
 //! and error types; [`common`], [`d2`], [`d3`], and [`raw`] group the remaining
 //! public surface. Procedural macros are re-exported through [`raw`].

@@ -32,7 +32,7 @@ This repository owns graphics only: Vulkan rendering, windows, events, input, mo
 3D data/resource scaffolding, and explicit raw graphics control. Windowing and input belong to
 this crate. Rendering 3D frames remains unimplemented.
 
-Applications depend on the `vmnl-graphics` package and import `vmnl_graphics` directly. There is
+Applications depend on the `vmnl_graphics` package and import `vmnl_graphics` directly. There is
 no aggregate facade or optional audio/network feature. Other VMNL domains are independent projects;
 using graphics neither owns their lifecycle nor changes their public contracts.
 
@@ -81,7 +81,7 @@ application
 ```
 
 The macros crate depends only on its parsing/code-generation dependencies. Its expansions resolve
-`vmnl-graphics`, including a dependency renamed by the client; clients do not depend on macros
+`vmnl_graphics`, including a dependency renamed by the client; clients do not depend on macros
 or Vulkano directly to use the public derives.
 
 ## Stable Contract Requirements
@@ -92,7 +92,7 @@ currently coupled to Vulkano must be made configurable or isolated before they e
 compatibility baseline; their present behavior remains documented in the API book. Choosing the
 `0.1.0` version does not waive these requirements.
 
-- Applications use `vmnl-graphics` directly; private macros and backend crates are not client dependencies.
+- Applications use `vmnl_graphics` directly; private macros and backend crates are not client dependencies.
 - `vmnl_graphics` owns rendering, windowing, input, and GPU resource behavior.
 - `raw` exposes lower-level VMNL pipeline, geometry, and resource control.
 - Vulkan is the graphics backend; Vulkano remains an implementation detail of stable APIs.
@@ -127,7 +127,7 @@ compatibility baseline; their present behavior remains documented in the API boo
 
 ## Public API Maturity
 
-The current version of `vmnl-graphics` is `0.1.0`. This initial API baseline follows the
+The current version of `vmnl_graphics` is `0.1.0`. This initial API baseline follows the
 compatibility and deprecation policy in [`deployment.md`](deployment.md). Feature availability,
 backend independence, and native qualification remain separate from the version number.
 

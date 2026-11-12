@@ -29,7 +29,7 @@ license = "MIT"
 rust-version = "1.95"
 repository = "https://github.com/VMNL/vmnl-graphics"
 homepage = "https://github.com/VMNL/vmnl-graphics"
-documentation = "https://docs.rs/vmnl-graphics"
+documentation = "https://docs.rs/vmnl_graphics"
 
 [workspace.dependencies]
 glfw = { version = "=0.63.0", default-features = false, features = ["raw-window-handle-v0-6", "src-build", "vulkan", "wayland", "x11"] }

@@ -31,13 +31,13 @@ def main() -> None:
     source = (ROOT / "tools/tests/fixtures/graphics_consumer.rs").read_text(encoding="utf-8")
     environment = os.environ.copy()
     environment["CARGO_TARGET_DIR"] = str(ROOT / "target")
-    for dependency, import_name in (("vmnl-graphics", "vmnl_graphics"), ("graphics_backend", "graphics_backend")):
+    for dependency, import_name in (("vmnl_graphics", "vmnl_graphics"), ("graphics_backend", "graphics_backend")):
         with tempfile.TemporaryDirectory(prefix="vmnl-graphics-client-") as directory:
             client = Path(directory)
             (client / "src").mkdir()
             (client / "src/main.rs").write_text(source.replace("GRAPHICS_DEP", import_name), encoding="utf-8")
             package = "vmnl-graphics-external-client"
-            package_field = '' if dependency == "vmnl-graphics" else 'package = "vmnl-graphics", '
+            package_field = '' if dependency == "vmnl_graphics" else 'package = "vmnl_graphics", '
             (client / "Cargo.toml").write_text(
                 f'[package]\nname = "{package}"\nversion = "0.0.0"\nedition = "2021"\n\n'
                 '[dependencies]\n'
@@ -56,7 +56,7 @@ def main() -> None:
                 ["cargo", "metadata", "--locked", "--offline", "--no-deps", "--format-version", "1"],
                 cwd=client, env=environment, text=True))
             dependencies = metadata["packages"][0]["dependencies"]
-            if len(dependencies) != 1 or dependencies[0]["name"] != "vmnl-graphics":
+            if len(dependencies) != 1 or dependencies[0]["name"] != "vmnl_graphics":
                 raise RuntimeError("external client must depend only on the graphics package")
             print(f"External client ({dependency}): public API and derives passed; no native device opened", flush=True)
 
